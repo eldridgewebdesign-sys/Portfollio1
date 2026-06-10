@@ -1,0 +1,6 @@
+# --- Secrets: never commit these ---
+# Local environment files hold private keys (e.g. Stripe secret key).
+# They must stay out of version control and out of any deployed bundle.
+.env
+.env.*
+!.env.example
