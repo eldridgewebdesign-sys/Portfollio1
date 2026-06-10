@@ -51,6 +51,9 @@
     .plan-select{margin-top:auto;width:100%}
     .plan-save{display:inline-block;align-self:flex-start;margin:-.6rem 0 1.2rem;padding:.3rem .7rem;border-radius:50px;font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#00ff88;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.28)}
 
+    /* ---- Plan groups (hosting vs. design) stacked within the card ---- */
+    .plan-group + .plan-group{margin-top:2.2rem}
+
     /* ---- Disabled "Message us" textarea ---- */
     textarea:disabled{opacity:.55;cursor:not-allowed;resize:none}
     .soon-tag{display:inline-block;margin-left:.5rem;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--p);border:1px solid rgba(108,99,255,.35);border-radius:50px;padding:.18rem .6rem;vertical-align:middle}
@@ -109,34 +112,69 @@
 
       <!-- Shown when there is NO row, or status is anything other than 'active' -->
       <div id="plan-none" class="hidden">
-        <div class="plan-grid">
-          <div class="plan-card">
-            <h3 class="plan-name">Frontend Only Monthly</h3>
-            <div class="plan-price">$30<span> /mo</span></div>
-            <div class="plan-interval">Billed monthly</div>
-            <button type="button" class="btn btn-p plan-select" data-plan="Frontend Only Monthly">Select this plan</button>
-          </div>
-          <div class="plan-card">
-            <h3 class="plan-name">Frontend Only Annual</h3>
-            <div class="plan-price">$250<span> /yr</span></div>
-            <div class="plan-interval">Billed annually</div>
-            <div class="plan-save">Save $110/yr vs monthly</div>
-            <button type="button" class="btn btn-p plan-select" data-plan="Frontend Only Annual">Select this plan</button>
-          </div>
-          <div class="plan-card">
-            <h3 class="plan-name">Full Stack Monthly</h3>
-            <div class="plan-price">$50<span> /mo</span></div>
-            <div class="plan-interval">Billed monthly</div>
-            <button type="button" class="btn btn-p plan-select" data-plan="Full Stack Monthly">Select this plan</button>
-          </div>
-          <div class="plan-card">
-            <h3 class="plan-name">Full Stack Annual</h3>
-            <div class="plan-price">$500<span> /yr</span></div>
-            <div class="plan-interval">Billed annually</div>
-            <div class="plan-save">Save $100/yr vs monthly</div>
-            <button type="button" class="btn btn-p plan-select" data-plan="Full Stack Annual">Select this plan</button>
+
+        <!-- ---- Group 1: recurring hosting plans ---- -->
+        <div class="plan-group">
+          <div class="sec-lbl">Hosting Plans</div>
+          <div class="plan-grid">
+            <div class="plan-card">
+              <h3 class="plan-name">Frontend Monthly</h3>
+              <div class="plan-price">$25<span> /mo</span></div>
+              <div class="plan-interval">Monthly</div>
+              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Tas6t5dqO1i8gb893TyaGKs">Select This Plan</button>
+            </div>
+            <div class="plan-card">
+              <h3 class="plan-name">Frontend Annual</h3>
+              <div class="plan-price">$250<span> /yr</span></div>
+              <div class="plan-interval">Annual</div>
+              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Tas4F5dqO1i8gb84xFztzu6">Select This Plan</button>
+            </div>
+            <div class="plan-card">
+              <h3 class="plan-name">Full Stack Monthly</h3>
+              <div class="plan-price">$49.99<span> /mo</span></div>
+              <div class="plan-interval">Monthly</div>
+              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Te82R5dqO1i8gb8tug1dYUD">Select This Plan</button>
+            </div>
+            <div class="plan-card">
+              <h3 class="plan-name">Full Stack Annual</h3>
+              <div class="plan-price">$500<span> /yr</span></div>
+              <div class="plan-interval">Annual</div>
+              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Te8595dqO1i8gb8nB40CyYe">Select This Plan</button>
+            </div>
           </div>
         </div>
+
+        <!-- ---- Group 2: one-time website design packages ---- -->
+        <div class="plan-group">
+          <div class="sec-lbl">Website Design Packages</div>
+          <div class="plan-grid">
+            <div class="plan-card">
+              <h3 class="plan-name">Website Full Design (Frontend)</h3>
+              <div class="plan-price">$750</div>
+              <div class="plan-interval">One-Time Purchase</div>
+              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Tarmd5dqO1i8gb86Z84Tilo">Select This Plan</button>
+            </div>
+            <div class="plan-card">
+              <h3 class="plan-name">Website Full Design (Full-Stack)</h3>
+              <div class="plan-price">$1500</div>
+              <div class="plan-interval">One-Time Purchase</div>
+              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Te8P25dqO1i8gb8Ko46gihm">Select This Plan</button>
+            </div>
+            <div class="plan-card">
+              <h3 class="plan-name">Website Full Design (Frontend + One Year Hosting)</h3>
+              <div class="plan-price">$800</div>
+              <div class="plan-interval">One-Time Purchase</div>
+              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Tas1R5dqO1i8gb8vEQL0CKS">Select This Plan</button>
+            </div>
+            <div class="plan-card">
+              <h3 class="plan-name">Website Full Design (Full-Stack + One Year Hosting)</h3>
+              <div class="plan-price">$1750</div>
+              <div class="plan-interval">One-Time Purchase</div>
+              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Te8RT5dqO1i8gb875YtaV11">Select This Plan</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -199,21 +237,15 @@
     });
 
     // ---- Plan selection → Stripe Checkout. ----
-    // Map each plan button (by its existing data-plan label) to its Stripe
-    // price ID. The browser only ever sends this PUBLIC price ID; the secret
-    // key lives in the /api/checkout serverless function.
-    const PRICE_IDS = {
-      "Frontend Only Monthly": "price_1Tas6t5dqO1i8gb893TyaGKs",
-      "Frontend Only Annual":  "price_1Tas4F5dqO1i8gb84xFztzu6",
-      "Full Stack Monthly":    "price_1Te82R5dqO1i8gb8tug1dYUD",
-      "Full Stack Annual":     "price_1Te8595dqO1i8gb8nB40CyYe",
-    };
-
+    // Each plan button carries its Stripe price ID in data-price-id. The
+    // browser only ever sends this PUBLIC price ID; the secret key lives in
+    // the /api/checkout serverless function, which also picks subscription
+    // vs. one-time mode from the price.
     document.querySelectorAll(".plan-select").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        const priceId = PRICE_IDS[btn.dataset.plan];
+        const priceId = btn.dataset.priceId;
         if (!priceId) {
-          console.error("No Stripe price ID for plan:", btn.dataset.plan);
+          console.error("No Stripe price ID on plan button:", btn);
           alert("Sorry, this plan isn't available right now. Please contact support.");
           return;
         }
