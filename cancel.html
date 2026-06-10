@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="Tab-Logo.png" type="image/png" />
+  <title>Payment Cancelled — Eldridge Web Design</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{ --navy:#0e1b2a; --teal:#2dd4bf; --t:#eaf2f7; --tm:#9fb3c2; }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      padding:1.5rem; background:var(--navy); color:var(--t);
+      font-family:'Space Grotesk',system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.6;
+    }
+    .card{
+      max-width:440px; width:100%; text-align:center; padding:3rem 2.2rem;
+      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.12);
+      border-radius:24px; box-shadow:0 24px 70px rgba(0,0,0,.5);
+    }
+    .icon{
+      width:72px; height:72px; margin:0 auto 1.6rem; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(159,179,194,.1); border:1px solid rgba(159,179,194,.35);
+      color:var(--tm); font-size:2rem; line-height:1;
+    }
+    h1{font-family:'Abril Fatface',serif; font-weight:400; font-size:1.9rem; margin:0 0 .8rem; color:var(--t)}
+    p{color:var(--tm); font-size:1rem; margin:0 auto 1.8rem; max-width:36ch}
+    .actions{display:flex; gap:.8rem; justify-content:center; flex-wrap:wrap}
+    .btn{
+      padding:.85rem 1.8rem; border-radius:50px; font-size:.9rem; font-weight:600;
+      text-decoration:none; display:inline-block; border:1px solid transparent; font-family:inherit;
+      transition:transform .25s ease, background .25s, border-color .25s;
+    }
+    .btn-p{background:var(--teal); color:var(--navy)}
+    .btn-p:hover{transform:translateY(-2px); background:#3ee0cb}
+    .btn-s{background:rgba(255,255,255,.04); color:var(--t); border-color:rgba(255,255,255,.18)}
+    .btn-s:hover{transform:translateY(-2px); border-color:rgba(45,212,191,.5); color:var(--teal)}
+    .support{margin-top:1.6rem; font-size:.85rem; color:var(--tm)}
+    .support a{color:var(--teal); text-decoration:none}
+    .support a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="icon" aria-hidden="true">&times;</div>
+    <h1>Payment cancelled</h1>
+    <p>No charge was made. You can try again or contact support at <strong>775-250-6891</strong>.</p>
+    <div class="actions">
+      <a href="dashboard.html" class="btn btn-p">Try again</a>
+      <a href="tel:+17752506891" class="btn btn-s">Call support</a>
+    </div>
+    <div class="support">Support: <a href="tel:+17752506891">775-250-6891</a></div>
+  </main>
+</body>
+</html>

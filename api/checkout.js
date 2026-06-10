@@ -43,12 +43,18 @@ module.exports = async (req, res) => {
     const host = req.headers.host;
     const baseUrl = `${proto}://${host}`;
 
-    // ---- Create the Checkout Session. ----
-    // mode: "subscription" because every plan in the portal is recurring
-    // (monthly / annual hosting). The session_id placeholder lets the
-    // success page verify the payment server-side later if needed.
+    // ---- Look up the price to decide the checkout mode. ----
+    // Recurring prices (monthly / annual hosting) must use "subscription";
+    // one-time prices must use "payment". price.recurring is null for
+    // one-time prices.
+    const price = await stripe.prices.retrieve(priceId);
+    const mode = price.recurring ? "subscription" : "payment";
+
+    // ---- Create the Checkout Session with the right mode. ----
+    // The session_id placeholder lets the success page verify the payment
+    // server-side later if needed.
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+      mode,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cancel.html`,

@@ -198,10 +198,53 @@
       window.location.replace("login.html");
     });
 
-    // ---- Plan selection (placeholder) - log which plan the user picked. ----
+    // ---- Plan selection → Stripe Checkout. ----
+    // Map each plan button (by its existing data-plan label) to its Stripe
+    // price ID. The browser only ever sends this PUBLIC price ID; the secret
+    // key lives in the /api/checkout serverless function.
+    const PRICE_IDS = {
+      "Frontend Only Monthly": "price_1Tas6t5dqO1i8gb893TyaGKs",
+      "Frontend Only Annual":  "price_1Tas4F5dqO1i8gb84xFztzu6",
+      "Full Stack Monthly":    "price_1Te82R5dqO1i8gb8tug1dYUD",
+      "Full Stack Annual":     "price_1Te8595dqO1i8gb8nB40CyYe",
+    };
+
     document.querySelectorAll(".plan-select").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        console.log(btn.dataset.plan);
+      btn.addEventListener("click", async () => {
+        const priceId = PRICE_IDS[btn.dataset.plan];
+        if (!priceId) {
+          console.error("No Stripe price ID for plan:", btn.dataset.plan);
+          alert("Sorry, this plan isn't available right now. Please contact support.");
+          return;
+        }
+
+        // Loading state — also guards against double-clicks mid-request.
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Redirecting…";
+
+        try {
+          // 1. Ask our serverless function to create a Checkout Session.
+          const res = await fetch("/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ priceId }),
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok || !data.url) {
+            throw new Error(data.error || "Could not start checkout.");
+          }
+
+          // 2. Redirect the browser to Stripe's hosted checkout page.
+          window.location.href = data.url;
+        } catch (err) {
+          // 3. Surface the failure and restore the button so they can retry.
+          console.error("Checkout failed:", err);
+          alert(err.message || "Something went wrong starting checkout. Please try again.");
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
       });
     });
 
