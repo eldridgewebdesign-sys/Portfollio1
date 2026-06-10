@@ -13,6 +13,11 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 module.exports = async (req, res) => {
+  // ---- CORS headers (set before any response is returned). ----
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST");
+  res.setHeader("Content-Type", "application/json");
+
   // ---- Only POST is allowed. ----
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
