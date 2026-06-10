@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="Tab-Logo.png" type="image/png" />
+  <title>Client Login — Eldridge Web Design</title>
+
+  <!-- Same fonts as the portfolio site -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Shared deep-space background + shared portal UI components -->
+  <link rel="stylesheet" href="space-bg.css" />
+  <link rel="stylesheet" href="portal.css" />
+
+  <style>
+    /* ---------- Login-page layout (sits on the shared atmosphere) ---------- */
+    .login-shell{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:7rem 1.5rem 3rem;
+      position:relative;
+      z-index:2; /* above the stars (0) and Earth (1) */
+    }
+    .login-card{
+      width:100%;
+      max-width:430px;
+      padding:2.6rem 2.4rem;
+    }
+
+    .eyebrow{margin-bottom:1rem}
+    .login-title{font-size:2.1rem;margin-bottom:.5rem}
+    .login-sub{color:var(--tm);font-size:.92rem;margin-bottom:2rem}
+
+    .field{margin-bottom:1.2rem}
+
+    /* Stack the action buttons full width */
+    .actions{display:flex;flex-direction:column;gap:.85rem;margin-top:1.6rem}
+    .actions .btn{width:100%}
+
+    /* "or" divider between Sign In and Start a Project */
+    .divider{display:flex;align-items:center;gap:.75rem;margin:.4rem 0;color:var(--tm);font-size:.74rem;letter-spacing:.18em;text-transform:uppercase}
+    .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--gb)}
+    .new-here{color:var(--tm);font-size:.85rem;text-align:center;margin-top:-.1rem}
+
+    #message{min-height:1.2rem;margin-top:1.1rem}
+
+    /* Logged-in view */
+    .signed-email{color:var(--s);font-weight:600;word-break:break-all}
+    .signed-row{margin:.4rem 0 1.6rem}
+
+    .hidden{display:none}
+
+    @media(max-width:480px){
+      .login-card{padding:2.1rem 1.5rem}
+      .portal-nav{padding:.4rem 1rem}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Shared background layers (identical to the portfolio) -->
+  <div id="grain"></div>
+  <canvas id="stars-canvas"></canvas>
+  <canvas id="planets-canvas"></canvas>
+  <div id="earth-wrap"><canvas id="earth-canvas" width="380" height="380"></canvas></div>
+
+  <!-- Brand bar: the exact portfolio logo, linking home -->
+  <nav class="portal-nav">
+    <a href="portfolio.html" class="portal-logo" aria-label="Eldridge Web Design — home">
+      <img src="Main-Logo.png" alt="Eldridge Web Design" />
+    </a>
+    <a href="portfolio.html" class="nav-back">← Back to site</a>
+  </nav>
+
+  <main class="login-shell">
+    <div class="glass-card login-card">
+
+      <!-- =============================================== -->
+      <!-- VIEW 1: Logged-OUT view (Sign In only)          -->
+      <!-- =============================================== -->
+      <div id="logged-out-view">
+        <div class="sec-lbl eyebrow">Client Portal</div>
+        <h1 class="disp login-title">Welcome <span class="grad">back</span></h1>
+        <p class="login-sub">Sign in to manage your project and account.</p>
+
+        <div class="field">
+          <label class="lbl" for="email">Email</label>
+          <input id="email" class="fi" type="email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="password">Password</label>
+          <input id="password" class="fi" type="password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+
+        <div class="actions">
+          <!-- Sign IN with an existing account -->
+          <button id="signin-btn" class="btn btn-p">Sign In</button>
+
+          <div class="divider">or</div>
+
+          <!-- New clients begin with the onboarding/project intake form. -->
+          <p class="new-here">New to Eldridge Web Design?</p>
+          <a href="onboarding.html" class="btn btn-s">Start a Project</a>
+        </div>
+
+        <p id="message" class="msg"></p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- Libraries + shared scripts:                                       -->
+  <!--  1. Three.js (for the Earth globe in space-bg.js)                 -->
+  <!--  2. space-bg.js — nebula/stars + Earth                           -->
+  <!--  3. Supabase v2 + shared config (creates the global `db`)        -->
+  <!-- ================================================================= -->
+  <script>window.SPACE_STATIC=true;</script> <!-- authenticated area → frozen planets/Earth -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="space-bg.js"></script>
+  <script src="planets.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+
+  <script>
+    // =================================================================
+    // AUTHENTICATION LOGIC (login page only).
+    //
+    // Sign-in only. Account creation lives on the onboarding page.
+    // The shared Supabase client `db` comes from supabase-config.js.
+    // =================================================================
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const signinBtn = document.getElementById("signin-btn");
+    const messageEl = document.getElementById("message");
+
+    // ---- Helper: show a small message under the form. ----
+    function showMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = "msg" + (text ? " show " + (type || "") : "");
+    }
+
+    // ---- After login, the logged-in area lives on the dashboard. ----
+    // replace() keeps the login page out of the browser's back history.
+    function goToDashboard() {
+      window.location.replace("dashboard.html");
+    }
+
+    // ---- SIGN IN — log in with an existing email + password. ----
+    signinBtn.addEventListener("click", async () => {
+      signinBtn.disabled = true;
+      showMessage("Signing in…", "");
+
+      const { error } = await db.auth.signInWithPassword({
+        email: emailInput.value,
+        password: passwordInput.value,
+      });
+
+      signinBtn.disabled = false;
+      if (error) showMessage(error.message, "error");
+      // On success, onAuthStateChange fires below and redirects to the dashboard.
+    });
+
+    // ---- ON PAGE LOAD — if already signed in, skip the form. ----
+    (async () => {
+      const { data } = await db.auth.getSession();
+      if (data.session) goToDashboard();
+    })();
+
+    // ---- LISTEN for auth changes — redirect as soon as a session exists. ----
+    db.auth.onAuthStateChange((event, session) => {
+      if (session) goToDashboard();
+    });
+  </script>
+</body>
+</html>
