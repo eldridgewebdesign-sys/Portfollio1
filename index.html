@@ -53,8 +53,8 @@ body.submerged #snow{opacity:1}
 .fish>i{display:block;animation:bob ease-in-out infinite}
 .fish svg{display:block;width:100%;height:auto;fill:currentColor}
 .fish.rev svg{transform:scaleX(-1)}
-@keyframes swimR{from{transform:translateX(-20vw)}to{transform:translateX(122vw)}}
-@keyframes swimL{from{transform:translateX(122vw)}to{transform:translateX(-20vw)}}
+@keyframes swimR{from{transform:translateX(-26vw)}to{transform:translateX(126vw)}}
+@keyframes swimL{from{transform:translateX(126vw)}to{transform:translateX(-26vw)}}
 @keyframes bob{0%,100%{transform:translateY(-5px)}50%{transform:translateY(6px)}}
 
 /* school of small fish — a loose curved formation drifting gently down the right
@@ -64,11 +64,6 @@ body.submerged .school{opacity:1}
 .school .sf{position:absolute;color:rgba(4,18,26,.42);animation:bob ease-in-out infinite}
 .school .sf svg{display:block;width:100%;height:auto;fill:currentColor;transform:scaleX(-1)}
 @keyframes schoolDrift{0%{transform:translate(0,0)}25%{transform:translate(-34px,26px)}50%{transform:translate(-6px,58px)}75%{transform:translate(-40px,30px)}100%{transform:translate(0,0)}}
-
-/* a single shark cruising the deep — endless, seamless, off-screen at both ends */
-#swimlane{position:absolute;left:0;right:0;top:0;bottom:0;z-index:-2;pointer-events:none;overflow:hidden}
-.swim-shark{position:absolute;top:168vh;left:0;width:clamp(160px,19vw,270px);height:auto;opacity:.48;will-change:transform;animation:sharkSwim 42s linear infinite}
-@keyframes sharkSwim{from{transform:translateX(118vw)}to{transform:translateX(-46vw)}}
 
 /* ── NAV ─────────────────────────────────────────────────────────────────────
    Dark over the sand, then turns to light glass once you submerge. ─────────── */
@@ -102,7 +97,7 @@ nav.scrolled .signin{color:var(--foam)}
 
 /* ── HERO (BEACH / SURFACE) — approved, unchanged ────────────────────────── */
 #hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(6.5rem,17vh,9.5rem) 2rem 0;position:relative;z-index:1;color:var(--ink)}
-.hero-eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:.004em;font-size:clamp(1.35rem,3vw,2.15rem);color:var(--ink-soft);max-width:40ch;line-height:1.32;text-wrap:balance;margin:0 auto clamp(1.5rem,3.4vw,2.5rem);text-shadow:0 1px 0 rgba(255,250,240,.3),0 4px 16px rgba(16,37,54,.08)}
+.hero-eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:.004em;font-size:clamp(1.35rem,3vw,2.15rem);color:var(--ink-soft);max-width:52ch;line-height:1.32;text-wrap:balance;margin:0 auto clamp(1.5rem,3.4vw,2.5rem);text-shadow:0 1px 0 rgba(255,250,240,.3),0 4px 16px rgba(16,37,54,.08)}
 .hero-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);font-size:clamp(3.6rem,12vw,8.8rem);line-height:.92;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,251,242,.42),0 10px 30px rgba(16,37,54,.13)}
 .hero-title em{font-style:italic;font-weight:500}
 .hero-cta{margin-top:clamp(2rem,4.5vh,3.2rem)}
@@ -123,15 +118,7 @@ body.ready #hero .anim{opacity:1;transform:none}
 .how-close{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;color:var(--foam);font-size:clamp(1.5rem,2.8vw,2.1rem);line-height:1.4;margin-top:1.8rem;text-shadow:0 2px 22px rgba(2,10,18,.45)}
 
 /* ── WHY CHOOSE US — three plain text columns (as in the reference) ────────── */
-#why{position:relative;overflow:hidden}
-#why .wrap{position:relative;z-index:1}
-/* the two L's in "hell" are shark photos, cropped to a tall letter-stroke so the
-   word still reads at a glance — swap src for the real shark photo(s) */
-.shark-l{display:inline-block;width:.34em;height:.96em;object-fit:cover;object-position:18% 50%;vertical-align:-.13em;margin:0 .02em;border-radius:1px}
-/* brand shark gliding through the deep behind the copy — silhouette, never clipart */
-.why-shark{position:absolute;z-index:0;right:-5%;bottom:7%;width:min(660px,56vw);aspect-ratio:16/9;opacity:.12;pointer-events:none;
-  background:#5e8a99;transform:rotate(-5deg);
-  -webkit-mask:url(heading.png) center/contain no-repeat;mask:url(heading.png) center/contain no-repeat}
+.why-sharks{font-style:normal}
 .why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(2.2rem,5vw,4.5rem);max-width:1000px;margin:clamp(3rem,6vw,4.5rem) auto 0}
 .why-col h3{font-family:'Cormorant Garamond',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
 .why-col p{font-family:'Mulish',sans-serif;font-weight:300;color:var(--mist);font-size:.95rem;line-height:1.85}
@@ -148,6 +135,7 @@ body.ready #hero .anim{opacity:1;transform:none}
 .sc-label{font-family:'Mulish',sans-serif;font-weight:400;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--mist);margin-top:.4rem}
 /* deepest section — ends the page on the content, not on empty water */
 #styles{min-height:auto;padding-top:clamp(5.5rem,11vh,8.5rem);padding-bottom:clamp(4rem,7vh,5.5rem)}
+#site-footer{position:relative;z-index:1;text-align:center;padding:1.6rem 1.5rem 2.2rem;font-family:'Mulish',sans-serif;font-weight:400;font-size:.74rem;letter-spacing:.08em;color:var(--mist);opacity:.65}
 
 /* ── PRELOADER ───────────────────────────────────────────────────────────── */
 body.lock{overflow:hidden;height:100vh}
@@ -157,7 +145,7 @@ body.lock{overflow:hidden;height:100vh}
 
 /* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
 @media(prefers-reduced-motion:reduce){
-  .fish,.fish>i,.mote,.cue-line::after,.school,.school .sf,.swim-shark{animation:none!important}
+  .fish,.fish>i,.mote,.cue-line::after,.school,.school .sf{animation:none!important}
   #snow{display:none}
   html{scroll-behavior:auto}
 }
@@ -185,7 +173,6 @@ body.lock{overflow:hidden;height:100vh}
 <!-- background image + ocean fx (all behind content) -->
 <img id="bg" src="Site_bkg.png" alt="" fetchpriority="high" decoding="async">
 <div id="snow"></div>
-<div id="swimlane"><img class="swim-shark" src="heading.png" alt="" aria-hidden="true" decoding="async"></div>
 <div id="fish"></div>
 
 <!-- reusable silhouettes -->
@@ -226,9 +213,8 @@ body.lock{overflow:hidden;height:100vh}
 
 <!-- ── WHY CHOOSE US ──────────────────────────────────────────────────────── -->
 <section id="why" class="sx">
-  <div class="why-shark" aria-hidden="true"></div>
   <div class="wrap">
-    <h2 class="sec-title rv">Why the he<img class="shark-l" src="heading.png" alt="l"><img class="shark-l" src="heading.png" alt="l"> would I choose you over a million-dollar agency?</h2>
+    <h2 class="sec-title rv">Why the he<span class="why-sharks">🦈🦈</span> would I choose you over a million-dollar agency?</h2>
     <div class="why-cols">
       <div class="why-col rv d1">
         <h3>Simplicity</h3>
@@ -260,6 +246,8 @@ body.lock{overflow:hidden;height:100vh}
     </div>
   </div>
 </section>
+
+<footer id="site-footer">© 2026 WebSharke. All rights reserved.</footer>
 
 <script>
 // ── PRELOADER ──────────────────────────────────────────────────────────────
@@ -368,7 +356,7 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
 // content height (object-fit:cover crops the unused deep-water bottom).
 (function(){
   const bg=document.getElementById('bg');
-  const last=document.getElementById('styles');
+  const last=document.getElementById('site-footer')||document.getElementById('styles');
   if(!bg||!last)return;
   function fit(){ bg.style.height=(last.offsetTop+last.offsetHeight)+'px'; }
   fit();
