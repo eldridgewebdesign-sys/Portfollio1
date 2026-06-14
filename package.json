@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/eldridgewebdesign-sys/Portfollio1#readme",
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
     "stripe": "^22.2.0"
   }
 }
