@@ -256,11 +256,19 @@
         btn.textContent = "Redirecting…";
 
         try {
+          // 0. Identify the logged-in user so checkout can be tied to them.
+          const {
+            data: { user },
+          } = await db.auth.getUser();
+          if (!user) {
+            throw new Error("You must be signed in to choose a plan.");
+          }
+
           // 1. Ask our serverless function to create a Checkout Session.
           const res = await fetch("/api/checkout", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ priceId }),
+            body: JSON.stringify({ priceId, userId: user.id, email: user.email }),
           });
           const data = await res.json().catch(() => ({}));
 

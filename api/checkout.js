@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     // handle both rather than assuming req.body is already JSON.
     const body =
       typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-    const { priceId } = body;
+    const { priceId, userId, email } = body;
 
     if (!priceId || typeof priceId !== "string") {
       return res.status(400).json({ error: "A valid priceId is required." });
@@ -63,6 +63,14 @@ module.exports = async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cancel.html`,
+      client_reference_id: userId,
+      customer_email: email,
+      metadata: { supabase_user_id: userId },
+      // For subscriptions, also stamp the ID on the subscription object so
+      // future renewal events carry it.
+      ...(mode === "subscription"
+        ? { subscription_data: { metadata: { supabase_user_id: userId } } }
+        : {}),
     });
 
     // ---- Hand the hosted-checkout URL back to the browser. ----
