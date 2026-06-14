@@ -39,21 +39,9 @@ body{font-family:'Mulish',system-ui,sans-serif;background:var(--deep);color:var(
 #bg{position:absolute;top:0;left:0;width:100%;height:auto;z-index:-3;display:block;pointer-events:none;-webkit-user-select:none;user-select:none}
 
 /* ── OCEAN FX (lightweight, CSS-driven) ─────────────────────────────────────── */
-#fish,#rays{position:absolute;left:0;right:0;z-index:-2;pointer-events:none;overflow:hidden}
-#fish{top:0;bottom:0}
+#fish{position:absolute;left:0;right:0;top:0;bottom:0;z-index:-2;pointer-events:none;overflow:hidden}
 #snow{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1s ease}
 body.submerged #snow{opacity:1}
-
-/* soft underwater light rays — live just under the surface, fade out with depth */
-#rays{top:88vh;height:150vh;mix-blend-mode:screen;
-  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 16%,#000 58%,transparent);
-          mask-image:linear-gradient(to bottom,transparent,#000 16%,#000 58%,transparent)}
-.ray{position:absolute;top:-10%;height:130%;background:linear-gradient(to bottom,rgba(190,232,238,.18),rgba(120,200,215,.05) 55%,transparent);filter:blur(17px);animation:rayGlow 9s ease-in-out infinite}
-.ray:nth-child(1){left:14%;width:clamp(70px,9vw,150px);transform:rotate(7deg);animation-delay:-1s}
-.ray:nth-child(2){left:37%;width:clamp(48px,6vw,104px);transform:rotate(-5deg);animation-delay:-4s;opacity:.85}
-.ray:nth-child(3){left:61%;width:clamp(64px,8vw,134px);transform:rotate(8deg);animation-delay:-2.4s}
-.ray:nth-child(4){left:83%;width:clamp(40px,5vw,88px);transform:rotate(-7deg);animation-delay:-6s;opacity:.7}
-@keyframes rayGlow{0%,100%{opacity:.26}50%{opacity:.62}}
 
 /* marine snow — extremely faint sinking motes, only while submerged */
 .mote{position:absolute;top:0;border-radius:50%;background:rgba(220,238,240,.85);filter:blur(.4px);opacity:0;animation:sink linear infinite}
@@ -109,7 +97,7 @@ nav.scrolled .signin{color:var(--foam)}
 
 /* ── HERO (BEACH / SURFACE) — approved, unchanged ────────────────────────── */
 #hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(6.5rem,17vh,9.5rem) 2rem 0;position:relative;z-index:1;color:var(--ink)}
-.hero-eyebrow{font-family:'Mulish',sans-serif;font-weight:600;letter-spacing:.005em;font-size:clamp(1.15rem,2.6vw,1.7rem);color:var(--ink-soft);max-width:24ch;line-height:1.34;margin-bottom:clamp(1.3rem,3vw,2.1rem);text-shadow:0 1px 0 rgba(255,250,240,.3),0 4px 16px rgba(16,37,54,.08)}
+.hero-eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:.004em;font-size:clamp(1.35rem,3vw,2.15rem);color:var(--ink-soft);max-width:20ch;line-height:1.3;margin:0 auto clamp(1.5rem,3.4vw,2.5rem);text-shadow:0 1px 0 rgba(255,250,240,.3),0 4px 16px rgba(16,37,54,.08)}
 .hero-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);font-size:clamp(3.6rem,12vw,8.8rem);line-height:.92;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,251,242,.42),0 10px 30px rgba(16,37,54,.13)}
 .hero-title em{font-style:italic;font-weight:500}
 .hero-cta{margin-top:clamp(2rem,4.5vh,3.2rem)}
@@ -130,7 +118,13 @@ body.ready #hero .anim{opacity:1;transform:none}
 .how-close{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;color:var(--foam);font-size:clamp(1.5rem,2.8vw,2.1rem);line-height:1.4;margin-top:1.8rem;text-shadow:0 2px 22px rgba(2,10,18,.45)}
 
 /* ── WHY CHOOSE US — three plain text columns (as in the reference) ────────── */
-#why .sec-title img{height:.78em;width:auto;vertical-align:baseline;display:inline-block;border-radius:2px;opacity:.92}
+#why{position:relative;overflow:hidden}
+#why .wrap{position:relative;z-index:1}
+.why-sharks{font-size:.82em;letter-spacing:.04em;white-space:nowrap;vertical-align:.02em}
+/* brand shark gliding through the deep behind the copy — silhouette, never clipart */
+.why-shark{position:absolute;z-index:0;right:-5%;bottom:7%;width:min(660px,56vw);aspect-ratio:16/9;opacity:.12;pointer-events:none;
+  background:#5e8a99;transform:rotate(-5deg);
+  -webkit-mask:url(heading.png) center/contain no-repeat;mask:url(heading.png) center/contain no-repeat}
 .why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(2.2rem,5vw,4.5rem);max-width:1000px;margin:clamp(3rem,6vw,4.5rem) auto 0}
 .why-col h3{font-family:'Cormorant Garamond',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
 .why-col p{font-family:'Mulish',sans-serif;font-weight:300;color:var(--mist);font-size:.95rem;line-height:1.85}
@@ -156,7 +150,7 @@ body.lock{overflow:hidden;height:100vh}
 
 /* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
 @media(prefers-reduced-motion:reduce){
-  .fish,.fish>i,.mote,.cue-line::after,.ray,.school,.school .sf{animation:none!important}
+  .fish,.fish>i,.mote,.cue-line::after,.school,.school .sf{animation:none!important}
   #snow{display:none}
   html{scroll-behavior:auto}
 }
@@ -183,7 +177,6 @@ body.lock{overflow:hidden;height:100vh}
 
 <!-- background image + ocean fx (all behind content) -->
 <img id="bg" src="Site_bkg.png" alt="" fetchpriority="high" decoding="async">
-<div id="rays"><span class="ray"></span><span class="ray"></span><span class="ray"></span><span class="ray"></span></div>
 <div id="snow"></div>
 <div id="fish"></div>
 
@@ -225,8 +218,9 @@ body.lock{overflow:hidden;height:100vh}
 
 <!-- ── WHY CHOOSE US ──────────────────────────────────────────────────────── -->
 <section id="why" class="sx">
+  <div class="why-shark" aria-hidden="true"></div>
   <div class="wrap">
-    <h2 class="sec-title rv">Why the he<img src="images/Hockey.jpg" alt=""><img src="images/Hockey.jpg" alt=""> would I choose you over a million-dollar agency?</h2>
+    <h2 class="sec-title rv">Why the he<span class="why-sharks">🦈 🦈</span> would I choose you over a million-dollar agency?</h2>
     <div class="why-cols">
       <div class="why-col rv d1">
         <h3>Simplicity</h3>
@@ -343,7 +337,6 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
 (function(){
   const nav=document.getElementById('navbar');
   const fish=document.getElementById('fish');
-  const rays=document.getElementById('rays');
   let ticking=false;
   function update(){
     ticking=false;
@@ -353,9 +346,8 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
     const past=y>waterline-70;
     nav.classList.toggle('scrolled',past);
     document.body.classList.toggle('submerged',y>waterline*0.55);
-    // foreground (fish) drift slightly faster than the page; rays lag slightly
+    // foreground (fish) drift slightly faster than the page
     if(fish) fish.style.transform='translateY('+(-y*0.05)+'px)';
-    if(rays) rays.style.transform='translateY('+(y*0.03)+'px)';
   }
   window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(update);}},{passive:true});
   window.addEventListener('resize',update,{passive:true});
