@@ -80,9 +80,28 @@ module.exports = async (req, res) => {
     let subscription = null;
 
     try {
+      console.log("Starting subscription checkout path:", {
+        priceId,
+        userId,
+        email,
+        hasRecurringPrice: !!price.recurring,
+        priceCurrency: price.currency,
+        priceUnitAmount: price.unit_amount,
+      });
+
+      console.log("Looking up existing Stripe customer by email:", {
+        email,
+      });
+
       const existingCustomers = await stripe.customers.list({
         email,
         limit: 1,
+      });
+
+      console.log("Existing Stripe customer lookup result:", {
+        count: existingCustomers.data.length,
+        customerIds: existingCustomers.data.map((existingCustomer) => existingCustomer.id),
+        customerEmails: existingCustomers.data.map((existingCustomer) => existingCustomer.email),
       });
 
       customer = existingCustomers.data[0];
@@ -94,7 +113,29 @@ module.exports = async (req, res) => {
             supabase_user_id: userId,
           },
         });
+        console.log("Stripe customer decision:", {
+          customerId: customer.id,
+          customerEmail: customer.email,
+          reused: false,
+          newlyCreated: true,
+        });
+      } else {
+        console.log("Stripe customer decision:", {
+          customerId: customer.id,
+          customerEmail: customer.email,
+          reused: true,
+          newlyCreated: false,
+        });
       }
+
+      console.log("Creating Stripe subscription:", {
+        customerId: customer.id,
+        priceId,
+        metadata: {
+          supabase_user_id: userId,
+          price_id: priceId,
+        },
+      });
 
       subscription = await stripe.subscriptions.create({
         customer: customer.id,
@@ -109,8 +150,16 @@ module.exports = async (req, res) => {
         },
         expand: ["latest_invoice.payment_intent"],
       });
+
+      console.log("Stripe subscription created:", {
+        subscriptionId: subscription.id,
+        subscriptionStatus: subscription.status,
+        subscriptionCustomer: subscription.customer,
+        latestInvoice: subscription.latest_invoice,
+        items: subscription.items,
+      });
     } catch (error) {
-      console.error("Stripe subscription creation failed:", {
+      console.error("Stripe subscription checkout failed:", {
         message: error.message,
         type: error.type,
         code: error.code,
@@ -128,7 +177,22 @@ module.exports = async (req, res) => {
       throw error;
     }
 
+    console.log("Stripe subscription latest_invoice inspection:", {
+      latestInvoice: subscription.latest_invoice,
+      latestInvoiceType: typeof subscription.latest_invoice,
+      hasPaymentIntent: !!subscription.latest_invoice?.payment_intent,
+      hasConfirmationSecret: !!subscription.latest_invoice?.confirmation_secret,
+    });
+
     const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
+
+    console.log("Subscription checkout secret extraction:", {
+      hasPaymentIntentClientSecret: Boolean(subscription?.latest_invoice?.payment_intent?.client_secret),
+      paymentIntentClientSecret: subscription?.latest_invoice?.payment_intent?.client_secret,
+      hasConfirmationSecret: Boolean(subscription?.latest_invoice?.confirmation_secret),
+      confirmationSecret: subscription?.latest_invoice?.confirmation_secret,
+      returning: "payment_intent.client_secret",
+    });
 
     if (!clientSecret) {
       console.error("Stripe subscription payment intent client secret missing:", {
