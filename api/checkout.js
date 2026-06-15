@@ -76,30 +76,60 @@ module.exports = async (req, res) => {
       return res.status(200).json({ clientSecret: intent.client_secret });
     }
 
-    const customer = await stripe.customers.create({
-      email,
-      metadata: {
-        supabase_user_id: userId,
-      },
-    });
+    let customer = null;
+    let subscription = null;
 
-    const subscription = await stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ price: priceId }],
-      payment_behavior: "default_incomplete",
-      payment_settings: {
-        save_default_payment_method: "on_subscription",
-      },
-      metadata: {
-        supabase_user_id: userId,
-        price_id: priceId,
-      },
-      expand: ["latest_invoice.payment_intent"],
-    });
+    try {
+      customer = await stripe.customers.create({
+        email,
+        metadata: {
+          supabase_user_id: userId,
+        },
+      });
+
+      subscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: priceId }],
+        payment_behavior: "default_incomplete",
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
+        },
+        metadata: {
+          supabase_user_id: userId,
+          price_id: priceId,
+        },
+        expand: ["latest_invoice.payment_intent"],
+      });
+    } catch (error) {
+      console.error("Stripe subscription creation failed:", {
+        message: error.message,
+        type: error.type,
+        code: error.code,
+        decline_code: error.decline_code,
+        param: error.param,
+        raw: error.raw,
+        stack: error.stack,
+        priceId,
+        userId,
+        email,
+        hasRecurringPrice: !!price.recurring,
+        customerId: customer?.id,
+        subscriptionId: subscription?.id,
+      });
+      throw error;
+    }
 
     const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
 
     if (!clientSecret) {
+      console.error("Stripe subscription payment intent client secret missing:", {
+        priceId,
+        userId,
+        email,
+        hasRecurringPrice: !!price.recurring,
+        customerId: customer?.id,
+        subscriptionId: subscription?.id,
+      });
       return res.status(500).json({ error: "Could not start subscription payment. Please try again." });
     }
 
