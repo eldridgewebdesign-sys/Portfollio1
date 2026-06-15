@@ -227,9 +227,20 @@
       <!-- 2 ── Business info -->
       <div class="tab" id="tab-business" role="tabpanel">
         <h2 class="tab-title">Business info</h2>
-        <p class="field"><span class="f-label">Business name:</span> <span class="f-value" id="biz-name">…</span></p>
-        <p class="field"><span class="f-label">Overview:</span> <span class="f-value block" id="biz-overview">…</span></p>
-        <p class="field"><span class="f-label">Products / Services:</span> <span class="f-value block" id="biz-products">…</span></p>
+        <p class="bill-error hidden" id="biz-error" role="alert">We couldn’t load your business information right now. Please refresh the page or try again later.</p>
+        <p class="field hidden" id="biz-empty">No business information on file yet.</p>
+        <div id="biz-fields" class="hidden">
+          <p class="field"><span class="f-label">Business name:</span> <span class="f-value" id="biz-business-name">…</span></p>
+          <p class="field"><span class="f-label">Business description:</span> <span class="f-value block" id="biz-business-description">…</span></p>
+          <p class="field"><span class="f-label">Products / Services:</span> <span class="f-value block" id="biz-products-services">…</span></p>
+          <p class="field"><span class="f-label">Website goals:</span> <span class="f-value block" id="biz-website-goals">…</span></p>
+          <p class="field"><span class="f-label">Visitor actions:</span> <span class="f-value block" id="biz-visitor-actions">…</span></p>
+          <p class="field"><span class="f-label">Websites liked:</span> <span class="f-value block" id="biz-websites-liked">…</span></p>
+          <p class="field"><span class="f-label">Preferred styles:</span> <span class="f-value block" id="biz-preferred-styles">…</span></p>
+          <p class="field"><span class="f-label">Color preferences:</span> <span class="f-value block" id="biz-color-preferences">…</span></p>
+          <p class="field"><span class="f-label">Design notes:</span> <span class="f-value block" id="biz-design-notes">…</span></p>
+          <p class="field"><span class="f-label">Additional info:</span> <span class="f-value block" id="biz-additional-info">…</span></p>
+        </div>
       </div>
 
       <!-- 2b ── Project / intake details (from project_inquiries) -->
@@ -460,11 +471,6 @@
       $("acc-email").textContent = show(user.email);
       $("acc-phone").textContent = show(inquiry.cell_phone || user.phone || meta.phone);
 
-      // 2) Business -----------------------------------------------------
-      $("biz-name").textContent     = show(inquiry.business_name);
-      $("biz-overview").textContent = show(inquiry.business_description, NA);
-      $("biz-products").textContent = show(inquiry.products_services, NA);
-
       // 3) Billing ------------------------------------------------------
       stripeCustomerId = sub.stripe_customer_id || null;
 
@@ -518,6 +524,45 @@
       $("priv-warning").classList.toggle("hidden", upToDate);
     }
 
+    // ---- Render the Business info section from project_inquiries --------
+    function businessValue(val) {
+      if (val === null || val === undefined) return "—";
+      if (Array.isArray(val)) {
+        const items = val.map(businessValue).filter((item) => item !== "—");
+        return items.length ? items.join(", ") : "—";
+      }
+      if (typeof val === "object") {
+        const items = Object.values(val).map(businessValue).filter((item) => item !== "—");
+        return items.length ? items.join(", ") : "—";
+      }
+      const s = String(val).trim();
+      return s === "" ? "—" : s;
+    }
+    function renderBusiness(inquiry, inquiryError) {
+      const errEl = $("biz-error");
+      const emptyEl = $("biz-empty");
+      const fieldsEl = $("biz-fields");
+
+      errEl.classList.add("hidden");
+      emptyEl.classList.add("hidden");
+      fieldsEl.classList.add("hidden");
+
+      if (inquiryError) { errEl.classList.remove("hidden"); return; }
+      if (!inquiry) { emptyEl.classList.remove("hidden"); return; }
+
+      fieldsEl.classList.remove("hidden");
+      $("biz-business-name").textContent = businessValue(inquiry.business_name);
+      $("biz-business-description").textContent = businessValue(inquiry.business_description);
+      $("biz-products-services").textContent = businessValue(inquiry.products_services);
+      $("biz-website-goals").textContent = businessValue(inquiry.website_goals);
+      $("biz-visitor-actions").textContent = businessValue(inquiry.visitor_actions);
+      $("biz-websites-liked").textContent = businessValue(inquiry.websites_liked);
+      $("biz-preferred-styles").textContent = businessValue(inquiry.preferred_styles);
+      $("biz-color-preferences").textContent = businessValue(inquiry.color_preferences);
+      $("biz-design-notes").textContent = businessValue(inquiry.design_notes);
+      $("biz-additional-info").textContent = businessValue(inquiry.additional_info);
+    }
+
     // ---- Render the Project details section from the intake record ------
     // `inquiryError` true → couldn't load; `inquiry` null → none on file.
     function renderProject(inquiry, inquiryError) {
@@ -567,7 +612,7 @@
         window.location.replace("login.html");
         return;
       }
-      const user = data.session.user;
+      const user = authData.user;
       document.getElementById("dash").classList.remove("hidden");
 
       // Most-recent intake row for this user (business + contact details).
@@ -620,6 +665,7 @@
       }
 
       render(user, inquiry, sub);
+      renderBusiness(inquiry, inquiryError);
       renderProject(project, projectError);
     })();
   </script>
