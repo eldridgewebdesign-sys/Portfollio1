@@ -645,14 +645,14 @@
         sub = rows && rows[0] ? rows[0] : null;
       } catch (e) { console.error("Could not load subscription:", e.message); }
 
-      // Project details intake row from `projects_inquiries` for the signed-in
+      // Project details intake row from `project_inquiries` for the signed-in
       // user. Most recent row wins when several exist. A load failure is kept
       // separate so the section shows a clean error instead of "none on file".
       let project = null;
       let projectError = false;
       try {
         const { data: rows, error } = await db
-          .from("projects_inquiries")
+          .from("project_inquiries")
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })

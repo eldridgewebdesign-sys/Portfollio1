@@ -17,10 +17,10 @@
       --ink:#11364c;            /* deep navy — primary text */
       --ink-soft:#2c5468;       /* muted coastal blue — secondary text */
       --turq:#10b6cc;           /* turquoise accent */
-      --card:rgba(208,238,241,.34);
-      --card-bd:rgba(255,255,255,.5);
-      --inner:rgba(255,255,255,.3);
-      --inner-bd:rgba(255,255,255,.5);
+      --card:rgba(224,241,243,.82);
+      --card-bd:rgba(255,255,255,.6);
+      --inner:rgba(255,255,255,.52);
+      --inner-bd:rgba(255,255,255,.6);
     }
     html{scroll-behavior:smooth}
     body{
@@ -33,11 +33,13 @@
     /* ── Layered turquoise ocean waves (fixed, behind everything) ───────────── */
     .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
     .ocean svg{width:100%;height:100%;display:block}
+    /* Soft wash that calms the waves so the form stays the focus */
+    .ocean::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(18,58,73,.16),rgba(18,58,73,.24))}
 
     /* ── WebSharke logo, top-left (Main-Logo.png masked to navy) ────────────── */
     .ws-logo{
-      position:fixed;top:18px;left:26px;z-index:20;display:block;
-      width:136px;height:76px;background:var(--ink);
+      position:fixed;top:20px;left:26px;z-index:20;display:block;
+      width:170px;height:95px;background:var(--ink);
       -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
               mask:url(Main-Logo.png) left center/contain no-repeat;
       filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
@@ -45,14 +47,18 @@
     }
     .ws-logo:hover{transform:translateY(-1px)}
 
-    /* Small "already a client" link, top-right */
+    /* "already a client" link, aligned with the logo in the top header row */
     .ob-signin{
-      position:fixed;top:30px;right:26px;z-index:20;
+      position:fixed;top:38px;right:26px;z-index:20;display:inline-flex;align-items:center;
       font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.1rem;
-      color:var(--ink);text-decoration:none;border-bottom:1px solid transparent;
-      transition:border-color .25s,color .25s;
+      color:#0e2f44;text-decoration:none;
+      padding:.42rem .95rem;border-radius:9px;
+      background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7);
+      box-shadow:0 6px 16px rgba(0,40,55,.14);
+      transition:background .2s,color .2s,box-shadow .2s;
     }
-    .ob-signin:hover{color:#0c2c40;border-bottom-color:var(--ink)}
+    .ob-signin:hover{background:rgba(255,255,255,.78);color:#0c2c40;box-shadow:0 8px 20px rgba(0,40,55,.2)}
+    .ob-signin:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
 
     /* ── Page shell ────────────────────────────────────────────────────────── */
     .ob-shell{
@@ -62,11 +68,11 @@
 
     /* ── Translucent light-aqua card holding the whole form ────────────────── */
     .ob-card{
-      width:100%;max-width:820px;
-      background:var(--card);border:1px solid var(--card-bd);border-radius:18px;
+      width:100%;max-width:740px;
+      background:var(--card);border:1px solid var(--card-bd);border-radius:16px;
       padding:clamp(1.8rem,3.4vw,2.8rem) clamp(1.5rem,3.4vw,2.8rem) clamp(2rem,3.4vw,2.8rem);
-      backdrop-filter:blur(11px) saturate(1.18);-webkit-backdrop-filter:blur(11px) saturate(1.18);
-      box-shadow:0 20px 54px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.45);
+      backdrop-filter:blur(5px) saturate(1.05);-webkit-backdrop-filter:blur(5px) saturate(1.05);
+      box-shadow:0 16px 38px rgba(0,40,55,.22);
     }
 
     /* ── Header ────────────────────────────────────────────────────────────── */
@@ -83,7 +89,7 @@
 
     /* Intro callout */
     .intro{
-      margin:1.6rem 0 2.2rem;padding:1.1rem 1.3rem;line-height:1.7;
+      margin:1.4rem 0 1.7rem;padding:1.1rem 1.3rem;line-height:1.7;
       color:var(--ink-soft);font-size:.98rem;
       background:var(--inner);border:1px solid var(--inner-bd);
       border-left:3px solid var(--turq);border-radius:12px;
@@ -91,9 +97,9 @@
     .intro strong{display:block;color:#0e2f44;font-size:1.02rem;margin-bottom:.45rem;font-weight:700}
 
     /* ── Sections ──────────────────────────────────────────────────────────── */
-    .section{padding:1.6rem 0;border-top:1px solid rgba(255,255,255,.4)}
-    .section:first-of-type{border-top:none;padding-top:.4rem}
-    .section-head{display:flex;align-items:baseline;gap:.7rem;margin-bottom:1.3rem}
+    .section{padding:1.25rem 0;border-top:1px solid rgba(17,54,76,.18)}
+    .section:first-of-type{border-top:none;padding-top:.3rem}
+    .section-head{display:flex;align-items:baseline;gap:.7rem;margin-bottom:1rem}
     .section-num{
       font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.5rem;
       color:var(--turq);line-height:1;
@@ -101,22 +107,22 @@
     .section-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.45rem;color:#0e2f44;letter-spacing:.01em}
 
     /* ── Fields ────────────────────────────────────────────────────────────── */
-    .field{margin-bottom:1.3rem}
+    .field{margin-bottom:1.05rem}
     .field:last-child{margin-bottom:0}
-    .lbl{display:block;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.15rem;color:var(--ink);margin-bottom:.35rem}
+    .lbl{display:block;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.15rem;color:#0e2f44;margin-bottom:.35rem}
     .req{color:#c2506a}
     .hint{display:block;font-size:.82rem;color:var(--ink-soft);margin:-.15rem 0 .55rem;line-height:1.5}
 
     /* Inputs + textareas — translucent boxes, navy text */
     .fi{
-      width:100%;background:rgba(255,255,255,.34);
-      border:1px solid rgba(255,255,255,.6);border-radius:10px;
+      width:100%;background:rgba(255,255,255,.72);
+      border:1px solid rgba(17,54,76,.22);border-radius:9px;
       color:var(--ink);font-family:'Mulish',sans-serif;font-size:1rem;
       padding:.7rem .85rem;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;
     }
     textarea.fi{min-height:100px;resize:vertical;line-height:1.6}
     .fi::placeholder{color:rgba(17,54,76,.5)}
-    .fi:focus{border-color:var(--turq);background:rgba(255,255,255,.46);box-shadow:0 0 0 3px rgba(16,182,204,.18)}
+    .fi:focus{border-color:var(--turq);background:rgba(255,255,255,.9);box-shadow:0 0 0 2px rgba(16,182,204,.3)}
     .fi.invalid{border-color:#c2506a;background:rgba(255,235,238,.5)}
 
     /* Two-column layout for short fields on desktop */
@@ -124,27 +130,28 @@
     .grid-2 .field{margin-bottom:0}
 
     /* Preferred-style checkboxes */
-    .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem}
+    .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:.5rem}
     .check{
       display:flex;align-items:center;gap:.55rem;cursor:pointer;font-size:.92rem;color:var(--ink);
-      background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.55);border-radius:9px;
-      padding:.6rem .8rem;transition:border-color .2s,background .2s;
+      background:rgba(255,255,255,.6);border:1px solid rgba(17,54,76,.18);border-radius:8px;
+      padding:.55rem .75rem;transition:border-color .2s,background .2s,color .2s;
     }
-    .check:hover{border-color:var(--turq)}
-    .check input{accent-color:var(--turq);width:1.05rem;height:1.05rem;flex-shrink:0}
-    .check:has(input:checked){border-color:var(--turq);background:rgba(16,182,204,.16)}
+    .check:hover{border-color:var(--turq);background:rgba(255,255,255,.75)}
+    .check input{accent-color:#15707f;width:1.05rem;height:1.05rem;flex-shrink:0}
+    .check:has(input:checked){border-color:#15707f;background:rgba(16,182,204,.2);color:#0e2f44}
+    .check:has(input:focus-visible){outline:2px solid var(--turq);outline-offset:2px}
 
     /* ── Submit + status ───────────────────────────────────────────────────── */
-    .submit-row{margin-top:1.8rem}
+    .submit-row{margin-top:1.4rem}
     .btn{
       display:block;width:100%;cursor:pointer;border:none;
       font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.2rem;
-      color:#eaf2ff;padding:.85rem 1.5rem;border-radius:11px;
-      background:linear-gradient(160deg,#2d57b4,#1d3f8f);
-      box-shadow:0 8px 20px rgba(18,40,90,.32),inset 0 1px 0 rgba(255,255,255,.18);
+      color:#eaf6f8;padding:.85rem 1.5rem;border-radius:10px;
+      background:#15707f;
+      box-shadow:0 6px 16px rgba(8,70,84,.28);
       transition:transform .25s,filter .25s,box-shadow .25s;text-decoration:none;text-align:center;
     }
-    .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 12px 26px rgba(18,40,90,.4)}
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 10px 22px rgba(8,70,84,.34)}
     .btn:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
     .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none;filter:none}
 
@@ -160,8 +167,8 @@
     .thanks .btn{max-width:260px;margin:0 auto}
 
     @media(max-width:600px){
-      .ws-logo{width:114px;height:64px;top:14px;left:16px}
-      .ob-signin{top:22px;right:16px;font-size:1rem}
+      .ws-logo{width:120px;height:67px;top:14px;left:16px}
+      .ob-signin{top:20px;right:16px;font-size:.95rem;padding:.36rem .8rem}
       .ob-shell{padding:6rem 1.1rem 2.5rem}
       .ob-card{padding:1.5rem 1.25rem 1.8rem}
       .grid-2{grid-template-columns:1fr;gap:0}
