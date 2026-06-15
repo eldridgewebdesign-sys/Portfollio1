@@ -49,7 +49,8 @@
       background:var(--ink);
       -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
               mask:url(Main-Logo.png) left center/contain no-repeat;
-      filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
+      filter:blur(.3px) drop-shadow(0 1px 2px rgba(4,30,40,.16));
+      opacity:.82;
       transition:transform .3s ease;
     }
     .ws-logo:hover{transform:translateY(-1px)}
@@ -468,14 +469,6 @@
             <button class="finder-option" type="button" data-filter-key="stack" data-filter-value="fullstack">Full-stack</button>
           </div>
         </div>
-        <div class="finder-question">
-          <h3>How do you want to pay?</h3>
-          <div class="finder-options">
-            <button class="finder-option" type="button" data-filter-key="pay" data-filter-value="monthly">Monthly</button>
-            <button class="finder-option" type="button" data-filter-key="pay" data-filter-value="annual">Annually</button>
-            <button class="finder-option" type="button" data-filter-key="pay" data-filter-value="one-time">One-time design</button>
-          </div>
-        </div>
       </div>
       <div class="finder-actions">
         <button class="show-all hidden" id="show-all-plans" type="button">Show all plans</button>
@@ -637,7 +630,6 @@
     const finderState = {
       website: null,
       stack: null,
-      pay: null,
     };
 
     function setPageMsg(text, type) {
@@ -718,12 +710,11 @@
     function planMatchesFinder(card) {
       if (finderState.website && card.dataset.need !== finderState.website) return false;
       if (finderState.stack && card.dataset.stack !== finderState.stack) return false;
-      if (finderState.pay && card.dataset.pay !== finderState.pay) return false;
       return true;
     }
 
     function applyFinder() {
-      const hasFilter = !!(finderState.website || finderState.stack || finderState.pay);
+      const hasFilter = !!(finderState.website || finderState.stack);
       const cards = Array.from(document.querySelectorAll(".plan-card"));
       const matches = hasFilter ? cards.filter(planMatchesFinder) : cards;
       const hasMatches = matches.length > 0;
@@ -759,7 +750,6 @@
     showAllPlans.addEventListener("click", () => {
       finderState.website = null;
       finderState.stack = null;
-      finderState.pay = null;
       document.querySelectorAll(".finder-option").forEach((btn) => btn.classList.remove("active"));
       applyFinder();
     });
