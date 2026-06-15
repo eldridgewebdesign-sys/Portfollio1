@@ -245,18 +245,14 @@
         <!-- The intake fields (hidden until a record is present). -->
         <div id="proj-fields" class="hidden">
           <p class="field"><span class="f-label">Business name:</span> <span class="f-value" id="pd-business-name">…</span></p>
-          <p class="field"><span class="f-label">Business overview:</span> <span class="f-value block" id="pd-business-desc">…</span></p>
-          <p class="field"><span class="f-label">Products / Services:</span> <span class="f-value block" id="pd-products">…</span></p>
+          <p class="field"><span class="f-label">Business description:</span> <span class="f-value block" id="pd-business-desc">…</span></p>
+          <p class="field"><span class="f-label">Products / Service:</span> <span class="f-value block" id="pd-products">…</span></p>
           <p class="field"><span class="f-label">Website goals:</span> <span class="f-value block" id="pd-goals">…</span></p>
-          <p class="field"><span class="f-label">Desired visitor actions:</span> <span class="f-value block" id="pd-actions">…</span></p>
+          <p class="field"><span class="f-label">Visitor actions:</span> <span class="f-value block" id="pd-actions">…</span></p>
           <p class="field"><span class="f-label">Preferred styles:</span> <span class="f-value" id="pd-styles">…</span></p>
           <p class="field"><span class="f-label">Color preferences:</span> <span class="f-value" id="pd-colors">…</span></p>
-          <p class="field"><span class="f-label">Websites liked:</span> <span class="f-value block" id="pd-liked">…</span></p>
           <p class="field"><span class="f-label">Design notes:</span> <span class="f-value block" id="pd-design-notes">…</span></p>
-          <p class="field"><span class="f-label">Business address:</span> <span class="f-value" id="pd-address">…</span></p>
           <p class="field"><span class="f-label">Additional info:</span> <span class="f-value block" id="pd-additional">…</span></p>
-          <p class="field"><span class="f-label">Status:</span> <span class="f-value" id="pd-status">…</span></p>
-          <p class="field"><span class="f-label">Submitted:</span> <span class="f-value" id="pd-submitted">…</span></p>
         </div>
       </div>
 
@@ -538,23 +534,21 @@
       if (!inquiry) { emptyEl.classList.remove("hidden"); return; }
 
       fieldsEl.classList.remove("hidden");
-      $("pd-business-name").textContent = show(inquiry.business_name);
-      $("pd-business-desc").textContent = show(inquiry.business_description);
-      $("pd-products").textContent      = show(inquiry.products_services);
-      $("pd-goals").textContent         = show(inquiry.website_goals);
-      $("pd-actions").textContent       = show(inquiry.visitor_actions);
-      // preferred_styles is stored as an array; present it as a readable list.
+      // Empty / null / missing individual fields display as an em dash.
+      const EM = "—";
+      $("pd-business-name").textContent = show(inquiry.business_name, EM);
+      $("pd-business-desc").textContent = show(inquiry.business_description, EM);
+      $("pd-products").textContent      = show(inquiry.products_service, EM);
+      $("pd-goals").textContent         = show(inquiry.website_goals, EM);
+      $("pd-actions").textContent       = show(inquiry.visitor_actions, EM);
+      // preferred_styles may be stored as an array; present it as a readable list.
       const styles = Array.isArray(inquiry.preferred_styles)
         ? inquiry.preferred_styles.filter(Boolean).join(", ")
         : inquiry.preferred_styles;
-      $("pd-styles").textContent        = show(styles);
-      $("pd-colors").textContent        = show(inquiry.color_preferences);
-      $("pd-liked").textContent         = show(inquiry.websites_liked);
-      $("pd-design-notes").textContent  = show(inquiry.design_notes);
-      $("pd-address").textContent       = show(inquiry.business_address);
-      $("pd-additional").textContent    = show(inquiry.additional_info);
-      $("pd-status").textContent        = show(inquiry.status);
-      $("pd-submitted").textContent     = fmtDate(inquiry.created_at) || NA;
+      $("pd-styles").textContent        = show(styles, EM);
+      $("pd-colors").textContent        = show(inquiry.color_preferences, EM);
+      $("pd-design-notes").textContent  = show(inquiry.design_notes, EM);
+      $("pd-additional").textContent    = show(inquiry.additional_info, EM);
     }
 
     // ---- Page load: gate on a session, then load + render ---------------
@@ -606,8 +600,27 @@
         sub = rows && rows[0] ? rows[0] : null;
       } catch (e) { console.error("Could not load subscription:", e.message); }
 
+      // Project details intake row from `projects_inquiries` for the signed-in
+      // user. Most recent row wins when several exist. A load failure is kept
+      // separate so the section shows a clean error instead of "none on file".
+      let project = null;
+      let projectError = false;
+      try {
+        const { data: rows, error } = await db
+          .from("projects_inquiries")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (error) throw error;
+        project = rows && rows[0] ? rows[0] : null;
+      } catch (e) {
+        console.error("Could not load project details:", e.message);
+        projectError = true;
+      }
+
       render(user, inquiry, sub);
-      renderProject(inquiry, inquiryError);
+      renderProject(project, projectError);
     })();
   </script>
 </body>
