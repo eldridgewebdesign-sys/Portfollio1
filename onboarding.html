@@ -4,305 +4,392 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="Tab-Logo.png" type="image/png" />
-  <title>Start Your Project — Eldridge Web Design</title>
+  <title>Start Your Project — WebSharke</title>
 
-  <!-- Same fonts as the portfolio site -->
+  <!-- Same brand fonts as login.html / dashboard.html (beach theme) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Shared deep-space background + shared portal UI components -->
-  <link rel="stylesheet" href="space-bg.css" />
-  <link rel="stylesheet" href="portal.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
-    /* ---------- Onboarding layout (sits on the shared atmosphere) ---------- */
-    .ob-wrap{
-      position:relative;
-      z-index:2; /* above stars (0) + Earth (1) */
-      max-width:780px;
-      margin:0 auto;
-      padding:8rem 1.5rem 5rem;
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --ink:#11364c;            /* deep navy — primary text */
+      --ink-soft:#2c5468;       /* muted coastal blue — secondary text */
+      --turq:#10b6cc;           /* turquoise accent */
+      --card:rgba(208,238,241,.34);
+      --card-bd:rgba(255,255,255,.5);
+      --inner:rgba(255,255,255,.3);
+      --inner-bd:rgba(255,255,255,.5);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Mulish',system-ui,sans-serif;color:var(--ink);
+      min-height:100vh;position:relative;overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+      background:#36a1b3;
     }
 
-    /* ---- Header ---- */
-    .ob-head{margin-bottom:2.4rem}
-    .ob-title{font-size:clamp(2.2rem,6vw,3.6rem);margin:.7rem 0 0}
+    /* ── Layered turquoise ocean waves (fixed, behind everything) ───────────── */
+    .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .ocean svg{width:100%;height:100%;display:block}
 
-    /* The "the more detail you provide" intro callout. */
+    /* ── WebSharke logo, top-left (Main-Logo.png masked to navy) ────────────── */
+    .ws-logo{
+      position:fixed;top:18px;left:26px;z-index:20;display:block;
+      width:136px;height:76px;background:var(--ink);
+      -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
+              mask:url(Main-Logo.png) left center/contain no-repeat;
+      filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
+      transition:transform .3s ease;
+    }
+    .ws-logo:hover{transform:translateY(-1px)}
+
+    /* Small "already a client" link, top-right */
+    .ob-signin{
+      position:fixed;top:30px;right:26px;z-index:20;
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.1rem;
+      color:var(--ink);text-decoration:none;border-bottom:1px solid transparent;
+      transition:border-color .25s,color .25s;
+    }
+    .ob-signin:hover{color:#0c2c40;border-bottom-color:var(--ink)}
+
+    /* ── Page shell ────────────────────────────────────────────────────────── */
+    .ob-shell{
+      min-height:100vh;display:flex;justify-content:center;
+      padding:clamp(7rem,13vh,8.5rem) clamp(1.1rem,4vw,3rem) 3.5rem;
+    }
+
+    /* ── Translucent light-aqua card holding the whole form ────────────────── */
+    .ob-card{
+      width:100%;max-width:820px;
+      background:var(--card);border:1px solid var(--card-bd);border-radius:18px;
+      padding:clamp(1.8rem,3.4vw,2.8rem) clamp(1.5rem,3.4vw,2.8rem) clamp(2rem,3.4vw,2.8rem);
+      backdrop-filter:blur(11px) saturate(1.18);-webkit-backdrop-filter:blur(11px) saturate(1.18);
+      box-shadow:0 20px 54px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.45);
+    }
+
+    /* ── Header ────────────────────────────────────────────────────────────── */
+    .eyebrow{
+      font-family:'Mulish',sans-serif;font-weight:600;font-size:.74rem;
+      letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);
+    }
+    .ob-title{
+      font-family:'Cormorant Garamond',serif;font-weight:600;
+      font-size:clamp(2.1rem,5vw,3.1rem);color:#0e2f44;line-height:1.08;
+      letter-spacing:.01em;margin:.45rem 0 0;
+    }
+    .ob-title em{font-style:italic;font-weight:600;color:#155a6e}
+
+    /* Intro callout */
     .intro{
-      padding:1.5rem 1.7rem;
-      margin-bottom:2.6rem;
-      color:var(--tm);
-      line-height:1.75;
-      border-left:2px solid transparent;
-      border-image:linear-gradient(var(--p),var(--s)) 1;
+      margin:1.6rem 0 2.2rem;padding:1.1rem 1.3rem;line-height:1.7;
+      color:var(--ink-soft);font-size:.98rem;
+      background:var(--inner);border:1px solid var(--inner-bd);
+      border-left:3px solid var(--turq);border-radius:12px;
     }
-    .intro strong{display:block;color:var(--t);font-size:1.05rem;margin-bottom:.6rem;font-weight:600}
+    .intro strong{display:block;color:#0e2f44;font-size:1.02rem;margin-bottom:.45rem;font-weight:700}
 
-    /* ---- Sections ---- */
-    .section{padding:2rem 1.9rem;margin-bottom:1.6rem}
-    .section-head{display:flex;align-items:baseline;gap:.7rem;margin-bottom:1.6rem}
-    .section-num{font-family:'Abril Fatface',serif;font-size:1.5rem;background:linear-gradient(135deg,rgba(108,99,255,.55),rgba(0,212,255,.4));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
-    .section-title{font-size:1.15rem;font-weight:700;letter-spacing:-.2px}
+    /* ── Sections ──────────────────────────────────────────────────────────── */
+    .section{padding:1.6rem 0;border-top:1px solid rgba(255,255,255,.4)}
+    .section:first-of-type{border-top:none;padding-top:.4rem}
+    .section-head{display:flex;align-items:baseline;gap:.7rem;margin-bottom:1.3rem}
+    .section-num{
+      font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.5rem;
+      color:var(--turq);line-height:1;
+    }
+    .section-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.45rem;color:#0e2f44;letter-spacing:.01em}
 
-    /* ---- Fields ---- */
-    .field{margin-bottom:1.4rem}
+    /* ── Fields ────────────────────────────────────────────────────────────── */
+    .field{margin-bottom:1.3rem}
     .field:last-child{margin-bottom:0}
-    .hint{display:block;font-size:.82rem;font-weight:400;letter-spacing:0;text-transform:none;color:var(--tm);margin:-.25rem 0 .6rem}
+    .lbl{display:block;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.15rem;color:var(--ink);margin-bottom:.35rem}
+    .req{color:#c2506a}
+    .hint{display:block;font-size:.82rem;color:var(--ink-soft);margin:-.15rem 0 .55rem;line-height:1.5}
 
-    /* Two-column layout for short fields on desktop. */
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem}
+    /* Inputs + textareas — translucent boxes, navy text */
+    .fi{
+      width:100%;background:rgba(255,255,255,.34);
+      border:1px solid rgba(255,255,255,.6);border-radius:10px;
+      color:var(--ink);font-family:'Mulish',sans-serif;font-size:1rem;
+      padding:.7rem .85rem;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;
+    }
+    textarea.fi{min-height:100px;resize:vertical;line-height:1.6}
+    .fi::placeholder{color:rgba(17,54,76,.5)}
+    .fi:focus{border-color:var(--turq);background:rgba(255,255,255,.46);box-shadow:0 0 0 3px rgba(16,182,204,.18)}
+    .fi.invalid{border-color:#c2506a;background:rgba(255,235,238,.5)}
+
+    /* Two-column layout for short fields on desktop */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem}
     .grid-2 .field{margin-bottom:0}
 
-    /* ---- Preferred-style checkboxes ---- */
+    /* Preferred-style checkboxes */
     .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem}
-    .check{display:flex;align-items:center;gap:.55rem;background:rgba(108,99,255,.06);border:1px solid var(--gb);border-radius:8px;padding:.65rem .85rem;cursor:pointer;font-size:.9rem;color:var(--t);transition:border-color .2s,background .2s}
-    .check:hover{border-color:rgba(108,99,255,.4)}
-    .check input{accent-color:var(--p);width:1.05rem;height:1.05rem;flex-shrink:0}
-    .check:has(input:checked){border-color:rgba(140,120,255,.6);background:rgba(108,99,255,.14)}
+    .check{
+      display:flex;align-items:center;gap:.55rem;cursor:pointer;font-size:.92rem;color:var(--ink);
+      background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.55);border-radius:9px;
+      padding:.6rem .8rem;transition:border-color .2s,background .2s;
+    }
+    .check:hover{border-color:var(--turq)}
+    .check input{accent-color:var(--turq);width:1.05rem;height:1.05rem;flex-shrink:0}
+    .check:has(input:checked){border-color:var(--turq);background:rgba(16,182,204,.16)}
 
-    /* ---- Submit + status ---- */
-    .submit-row{margin-top:.4rem}
-    .submit-row .btn{width:100%;padding:1.15rem}
-    #message{margin-top:1.2rem}
+    /* ── Submit + status ───────────────────────────────────────────────────── */
+    .submit-row{margin-top:1.8rem}
+    .btn{
+      display:block;width:100%;cursor:pointer;border:none;
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.2rem;
+      color:#eaf2ff;padding:.85rem 1.5rem;border-radius:11px;
+      background:linear-gradient(160deg,#2d57b4,#1d3f8f);
+      box-shadow:0 8px 20px rgba(18,40,90,.32),inset 0 1px 0 rgba(255,255,255,.18);
+      transition:transform .25s,filter .25s,box-shadow .25s;text-decoration:none;text-align:center;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 12px 26px rgba(18,40,90,.4)}
+    .btn:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none;filter:none}
 
-    /* ---- Success screen ---- */
-    .thanks{padding:3.2rem 2rem;text-align:center}
-    .thanks h2{font-size:1.9rem;margin-bottom:.8rem}
-    .thanks p{color:var(--tm);max-width:440px;margin:0 auto 1.8rem;line-height:1.75}
+    .msg{min-height:1.2rem;margin-top:1.1rem;font-size:.95rem;line-height:1.5;color:var(--ink)}
+    .msg.error{color:#7c1d29;background:rgba(255,255,255,.44);
+      border:1px solid rgba(150,40,52,.4);border-radius:9px;padding:.6rem .85rem}
+    .msg.show{display:block}
 
-    @media(max-width:560px){
+    /* ── Success screen ────────────────────────────────────────────────────── */
+    .thanks{text-align:center;padding:1rem .5rem}
+    .thanks h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:2rem;color:#0e2f44;margin-bottom:.8rem}
+    .thanks p{color:var(--ink-soft);max-width:460px;margin:0 auto 1.8rem;line-height:1.7}
+    .thanks .btn{max-width:260px;margin:0 auto}
+
+    @media(max-width:600px){
+      .ws-logo{width:114px;height:64px;top:14px;left:16px}
+      .ob-signin{top:22px;right:16px;font-size:1rem}
+      .ob-shell{padding:6rem 1.1rem 2.5rem}
+      .ob-card{padding:1.5rem 1.25rem 1.8rem}
       .grid-2{grid-template-columns:1fr;gap:0}
-      .grid-2 .field{margin-bottom:1.4rem}
-      .ob-wrap{padding-top:6.5rem}
-      .portal-nav{padding:.4rem 1rem}
-      .section{padding:1.6rem 1.3rem}
+      .grid-2 .field{margin-bottom:1.3rem}
     }
   </style>
 </head>
 <body>
 
-  <!-- Shared background layers (identical to the portfolio) -->
-  <div id="grain"></div>
-  <canvas id="stars-canvas"></canvas>
-  <canvas id="planets-canvas"></canvas>
-  <div id="earth-wrap"><canvas id="earth-canvas" width="380" height="380"></canvas></div>
-
-  <!-- Brand bar: the exact portfolio logo -->
-  <nav class="portal-nav">
-    <a href="portfolio.html" class="portal-logo" aria-label="Eldridge Web Design — home">
-      <img src="Main-Logo.png" alt="Eldridge Web Design" />
-    </a>
-    <a href="login.html" class="nav-back">Already a client? Sign in →</a>
-  </nav>
-
-  <div class="ob-wrap">
-
-    <!-- ---------- Header ---------- -->
-    <div class="ob-head">
-      <div class="sec-lbl">Start Your Project</div>
-      <h1 class="disp ob-title">Let's build <span class="grad">your website</span></h1>
-    </div>
-
-    <!-- ---------- Intro callout (verbatim copy) ---------- -->
-    <div class="intro">
-      <strong>The more detail you provide, the better.</strong>
-      The more I know about your business, goals, and preferences, the less
-      guesswork is involved. Detailed answers help me create a website that
-      accurately represents your business and saves time during the planning
-      process.
-    </div>
-
-    <!-- =============================================================
-         THE INTAKE FORM (also creates the client's account)
-         `novalidate` turns off the browser's built-in bubbles so we can
-         show our own consistent, branded validation messages.
-         ============================================================= -->
-    <form id="onboarding-form" novalidate>
-
-      <!-- ============ SECTION 1 — ACCOUNT INFORMATION ============ -->
-      <!-- These create the client's login. The password is used only to
-           create the Supabase Auth user — it is never stored in our table. -->
-      <section class="section glass-card">
-        <div class="section-head">
-          <span class="section-num">01</span>
-          <h2 class="section-title">Account Information</h2>
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="email">Email Address <span class="req">*</span></label>
-          <input id="email" class="fi" type="email" autocomplete="email" />
-        </div>
-
-        <div class="grid-2">
-          <div class="field">
-            <label class="lbl" for="password">Password <span class="req">*</span></label>
-            <span class="hint">At least 6 characters.</span>
-            <input id="password" class="fi" type="password" autocomplete="new-password" />
-          </div>
-          <div class="field">
-            <label class="lbl" for="confirm_password">Confirm Password <span class="req">*</span></label>
-            <span class="hint">Re-enter your password.</span>
-            <input id="confirm_password" class="fi" type="password" autocomplete="new-password" />
-          </div>
-        </div>
-      </section>
-
-      <!-- ============ SECTION 2 — CONTACT INFORMATION ============ -->
-      <section class="section glass-card">
-        <div class="section-head">
-          <span class="section-num">02</span>
-          <h2 class="section-title">Contact Information</h2>
-        </div>
-
-        <div class="grid-2">
-          <div class="field">
-            <label class="lbl" for="full_name">Full Name <span class="req">*</span></label>
-            <input id="full_name" class="fi" type="text" autocomplete="name" />
-          </div>
-          <div class="field">
-            <label class="lbl" for="business_name">Business Name <span class="req">*</span></label>
-            <input id="business_name" class="fi" type="text" autocomplete="organization" />
-          </div>
-        </div>
-
-        <div class="grid-2" style="margin-top:1.4rem">
-          <div class="field">
-            <label class="lbl" for="cell_phone">Cell Phone Number <span class="req">*</span></label>
-            <input id="cell_phone" class="fi" type="tel" autocomplete="tel" />
-          </div>
-          <div class="field">
-            <label class="lbl" for="business_address">Business Address</label>
-            <input id="business_address" class="fi" type="text" autocomplete="street-address" />
-          </div>
-        </div>
-      </section>
-
-      <!-- ============ SECTION 3 — BUSINESS INFORMATION ============ -->
-      <section class="section glass-card">
-        <div class="section-head">
-          <span class="section-num">03</span>
-          <h2 class="section-title">Business Information</h2>
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="business_description">Tell me about your business</label>
-          <span class="hint">What do you do? Who are your customers? What makes your business different?</span>
-          <textarea id="business_description" class="fi"></textarea>
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="products_services">Products and Services</label>
-          <span class="hint">What products or services do you offer?</span>
-          <textarea id="products_services" class="fi"></textarea>
-        </div>
-      </section>
-
-      <!-- ============ SECTION 4 — WEBSITE GOALS ============ -->
-      <section class="section glass-card">
-        <div class="section-head">
-          <span class="section-num">04</span>
-          <h2 class="section-title">Website Goals</h2>
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="website_goals">What do you want your website to accomplish?</label>
-          <span class="hint">For example: generate leads, accept bookings, sell products, showcase past work, provide business information, collect contact requests.</span>
-          <textarea id="website_goals" class="fi"></textarea>
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="visitor_actions">What actions do you want visitors to take?</label>
-          <span class="hint">For example: call you, submit a form, request a quote, book an appointment, purchase a product.</span>
-          <textarea id="visitor_actions" class="fi"></textarea>
-        </div>
-      </section>
-
-      <!-- ============ SECTION 5 — DESIGN PREFERENCES ============ -->
-      <section class="section glass-card">
-        <div class="section-head">
-          <span class="section-num">05</span>
-          <h2 class="section-title">Design Preferences</h2>
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="websites_liked">Websites you like</label>
-          <span class="hint">Include links and explain what you like about them.</span>
-          <textarea id="websites_liked" class="fi"></textarea>
-        </div>
-
-        <div class="field">
-          <label class="lbl">Preferred Style</label>
-          <span class="hint">Select all that apply.</span>
-          <!-- Multi-select checkboxes. JS gathers the checked values into
-               an array stored in the `preferred_styles` column. -->
-          <div class="checks" id="preferred_styles">
-            <label class="check"><input type="checkbox" value="Modern" /> Modern</label>
-            <label class="check"><input type="checkbox" value="Luxury" /> Luxury</label>
-            <label class="check"><input type="checkbox" value="Minimalist" /> Minimalist</label>
-            <label class="check"><input type="checkbox" value="Professional" /> Professional</label>
-            <label class="check"><input type="checkbox" value="Bold" /> Bold</label>
-            <label class="check"><input type="checkbox" value="Creative" /> Creative</label>
-            <label class="check"><input type="checkbox" value="Industrial" /> Industrial</label>
-            <label class="check"><input type="checkbox" value="Corporate" /> Corporate</label>
-            <label class="check"><input type="checkbox" value="High-End" /> High-End</label>
-            <label class="check"><input type="checkbox" value="Friendly" /> Friendly</label>
-            <label class="check"><input type="checkbox" value="Other" /> Other</label>
-          </div>
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="color_preferences">Color Preferences</label>
-          <input id="color_preferences" class="fi" type="text" placeholder="e.g. navy & gold, earthy tones, bright and colorful" />
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="design_notes">Additional Design Notes</label>
-          <textarea id="design_notes" class="fi"></textarea>
-        </div>
-      </section>
-
-      <!-- ============ SECTION 6 — ADDITIONAL INFORMATION ============ -->
-      <section class="section glass-card">
-        <div class="section-head">
-          <span class="section-num">06</span>
-          <h2 class="section-title">Additional Information</h2>
-        </div>
-
-        <div class="field">
-          <label class="lbl" for="additional_info">Anything else I should know?</label>
-          <span class="hint">Goals, deadlines, branding, logos, special features, or any other project information.</span>
-          <textarea id="additional_info" class="fi"></textarea>
-        </div>
-      </section>
-
-      <!-- ---------- Submit + status message ---------- -->
-      <div class="submit-row">
-        <button type="submit" id="submit-btn" class="btn btn-p">Create Account &amp; Submit</button>
-        <p id="message" class="msg"></p>
-      </div>
-    </form>
-
-    <!-- ---------- Success screen (hidden until a successful submit) ---------- -->
-    <div id="thanks" class="thanks glass-card" style="display:none">
-      <h2 class="disp" id="thanks-h">Welcome aboard. <span class="grad">✦</span></h2>
-      <p id="thanks-p">Your account is set and your project details are saved. Taking you to your dashboard…</p>
-      <a id="thanks-link" href="dashboard.html" class="btn btn-p">Go to dashboard</a>
-    </div>
-
+  <!-- ── Layered turquoise ocean waves ──────────────────────────────────────── -->
+  <div class="ocean" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="900" fill="#39a4b6"/>
+      <path d="M0 96 C240 58 480 134 720 96 C960 58 1200 134 1440 96 L1440 900 L0 900 Z" fill="#5ec3d1"/>
+      <path d="M0 222 C240 184 480 260 720 222 C960 184 1200 260 1440 222 L1440 900 L0 900 Z" fill="#2f9aac"/>
+      <path d="M0 348 C240 388 480 312 720 348 C960 388 1200 312 1440 348 L1440 900 L0 900 Z" fill="#6fcdd9"/>
+      <path d="M0 474 C240 436 480 512 720 474 C960 436 1200 512 1440 474 L1440 900 L0 900 Z" fill="#37a2b4"/>
+      <path d="M0 600 C240 640 480 564 720 600 C960 640 1200 564 1440 600 L1440 900 L0 900 Z" fill="#63c5d3"/>
+      <path d="M0 726 C240 688 480 764 720 726 C960 688 1200 764 1440 726 L1440 900 L0 900 Z" fill="#2c92a4"/>
+      <path d="M0 822 C240 856 480 792 720 822 C960 856 1200 792 1440 822 L1440 900 L0 900 Z" fill="#57bccb"/>
+    </svg>
   </div>
 
+  <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
+  <a class="ws-logo" href="index.html" aria-label="WebSharke — home"></a>
+  <a class="ob-signin" href="login.html">Already a client? Sign in →</a>
+
+  <main class="ob-shell">
+    <div class="ob-card">
+
+      <!-- ---------- Header ---------- -->
+      <div class="ob-head">
+        <div class="eyebrow">Start Your Project</div>
+        <h1 class="ob-title">Let's build <em>your website</em></h1>
+      </div>
+
+      <!-- ---------- Intro callout (verbatim copy) ---------- -->
+      <div class="intro">
+        <strong>The more detail you provide, the better.</strong>
+        The more I know about your business, goals, and preferences, the less
+        guesswork is involved. Detailed answers help me create a website that
+        accurately represents your business and saves time during the planning
+        process.
+      </div>
+
+      <!-- =============================================================
+           THE INTAKE FORM (also creates the client's account)
+           `novalidate` turns off the browser's built-in bubbles so we can
+           show our own consistent, branded validation messages.
+           ============================================================= -->
+      <form id="onboarding-form" novalidate>
+
+        <!-- ============ SECTION 1 — ACCOUNT INFORMATION ============ -->
+        <!-- These create the client's login. The password is used only to
+             create the Supabase Auth user — it is never stored in our table. -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-num">01</span>
+            <h2 class="section-title">Account Information</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="email">Email Address <span class="req">*</span></label>
+            <input id="email" class="fi" type="email" autocomplete="email" />
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label class="lbl" for="password">Password <span class="req">*</span></label>
+              <span class="hint">At least 6 characters.</span>
+              <input id="password" class="fi" type="password" autocomplete="new-password" />
+            </div>
+            <div class="field">
+              <label class="lbl" for="confirm_password">Confirm Password <span class="req">*</span></label>
+              <span class="hint">Re-enter your password.</span>
+              <input id="confirm_password" class="fi" type="password" autocomplete="new-password" />
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 2 — CONTACT INFORMATION ============ -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-num">02</span>
+            <h2 class="section-title">Contact Information</h2>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label class="lbl" for="full_name">Full Name <span class="req">*</span></label>
+              <input id="full_name" class="fi" type="text" autocomplete="name" />
+            </div>
+            <div class="field">
+              <label class="lbl" for="business_name">Business Name <span class="req">*</span></label>
+              <input id="business_name" class="fi" type="text" autocomplete="organization" />
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:1.3rem">
+            <div class="field">
+              <label class="lbl" for="cell_phone">Cell Phone Number <span class="req">*</span></label>
+              <input id="cell_phone" class="fi" type="tel" autocomplete="tel" />
+            </div>
+            <div class="field">
+              <label class="lbl" for="business_address">Business Address</label>
+              <input id="business_address" class="fi" type="text" autocomplete="street-address" />
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 3 — BUSINESS INFORMATION ============ -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-num">03</span>
+            <h2 class="section-title">Business Information</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="business_description">Tell me about your business</label>
+            <span class="hint">What do you do? Who are your customers? What makes your business different?</span>
+            <textarea id="business_description" class="fi"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="products_services">Products and Services</label>
+            <span class="hint">What products or services do you offer?</span>
+            <textarea id="products_services" class="fi"></textarea>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 4 — WEBSITE GOALS ============ -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-num">04</span>
+            <h2 class="section-title">Website Goals</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="website_goals">What do you want your website to accomplish?</label>
+            <span class="hint">For example: generate leads, accept bookings, sell products, showcase past work, provide business information, collect contact requests.</span>
+            <textarea id="website_goals" class="fi"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="visitor_actions">What actions do you want visitors to take?</label>
+            <span class="hint">For example: call you, submit a form, request a quote, book an appointment, purchase a product.</span>
+            <textarea id="visitor_actions" class="fi"></textarea>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 5 — DESIGN PREFERENCES ============ -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-num">05</span>
+            <h2 class="section-title">Design Preferences</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="websites_liked">Websites you like</label>
+            <span class="hint">Include links and explain what you like about them.</span>
+            <textarea id="websites_liked" class="fi"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="lbl">Preferred Style</label>
+            <span class="hint">Select all that apply.</span>
+            <!-- Multi-select checkboxes. JS gathers the checked values into
+                 an array stored in the `preferred_styles` column. -->
+            <div class="checks" id="preferred_styles">
+              <label class="check"><input type="checkbox" value="Modern" /> Modern</label>
+              <label class="check"><input type="checkbox" value="Luxury" /> Luxury</label>
+              <label class="check"><input type="checkbox" value="Minimalist" /> Minimalist</label>
+              <label class="check"><input type="checkbox" value="Professional" /> Professional</label>
+              <label class="check"><input type="checkbox" value="Bold" /> Bold</label>
+              <label class="check"><input type="checkbox" value="Creative" /> Creative</label>
+              <label class="check"><input type="checkbox" value="Industrial" /> Industrial</label>
+              <label class="check"><input type="checkbox" value="Corporate" /> Corporate</label>
+              <label class="check"><input type="checkbox" value="High-End" /> High-End</label>
+              <label class="check"><input type="checkbox" value="Friendly" /> Friendly</label>
+              <label class="check"><input type="checkbox" value="Other" /> Other</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="color_preferences">Color Preferences</label>
+            <input id="color_preferences" class="fi" type="text" placeholder="e.g. navy & gold, earthy tones, bright and colorful" />
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="design_notes">Additional Design Notes</label>
+            <textarea id="design_notes" class="fi"></textarea>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 6 — ADDITIONAL INFORMATION ============ -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-num">06</span>
+            <h2 class="section-title">Additional Information</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="additional_info">Anything else I should know?</label>
+            <span class="hint">Goals, deadlines, branding, logos, special features, or any other project information.</span>
+            <textarea id="additional_info" class="fi"></textarea>
+          </div>
+        </section>
+
+        <!-- ---------- Submit + status message ---------- -->
+        <div class="submit-row">
+          <button type="submit" id="submit-btn" class="btn">Create Account &amp; Submit</button>
+          <p id="message" class="msg"></p>
+        </div>
+      </form>
+
+      <!-- ---------- Success screen (hidden until a successful submit) ---------- -->
+      <div id="thanks" class="thanks" style="display:none">
+        <h2 id="thanks-h">Welcome aboard.</h2>
+        <p id="thanks-p">Your account is set and your project details are saved. Taking you to your dashboard…</p>
+        <a id="thanks-link" href="dashboard.html" class="btn">Go to dashboard</a>
+      </div>
+
+    </div>
+  </main>
+
   <!-- ================================================================= -->
-  <!-- Libraries + shared scripts:                                       -->
-  <!--  1. Three.js (Earth globe in space-bg.js)                         -->
-  <!--  2. space-bg.js — nebula/stars + Earth                            -->
-  <!--  3. Supabase v2 + shared config (creates the global `db`)         -->
+  <!-- Supabase v2 + shared config (creates the global `db`)             -->
   <!-- ================================================================= -->
-  <script>window.SPACE_STATIC=true;</script> <!-- authenticated area → frozen planets/Earth -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="space-bg.js"></script>
-  <script src="planets.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
 
