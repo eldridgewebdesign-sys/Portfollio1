@@ -495,6 +495,15 @@
 
     // ---- Page load: gate on a session, then load + render ---------------
     (async () => {
+      // First, verify a real logged-in user before any dashboard data is
+      // loaded or shown. If the check errors or there's no user, bounce to
+      // the login page. (#dash stays hidden until the gate passes below.)
+      const { data: authData, error: authError } = await db.auth.getUser();
+      if (authError || !authData || !authData.user) {
+        window.location.replace("login.html");
+        return;
+      }
+
       const { data } = await db.auth.getSession();
       if (!data.session) {
         window.location.replace("login.html");
