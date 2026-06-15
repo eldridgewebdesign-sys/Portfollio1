@@ -68,7 +68,7 @@ body.submerged .school{opacity:1}
 /* ── NAV ─────────────────────────────────────────────────────────────────────
    Dark over the sand, then turns to light glass once you submerge. ─────────── */
 nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:1rem 2.6rem;transition:background .55s,backdrop-filter .55s,box-shadow .55s,padding .45s}
-nav.scrolled{background:rgba(5,22,30,.5);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);box-shadow:0 1px 0 rgba(236,244,243,.07) inset,0 10px 34px rgba(0,0,0,.32);padding-top:.7rem;padding-bottom:.7rem}
+nav.scrolled{background:linear-gradient(to bottom,rgba(6,24,33,.66) 0%,rgba(6,24,33,.3) 58%,transparent 100%);box-shadow:none;padding-top:.7rem;padding-bottom:.7rem}
 .logo{display:block;width:210px;height:118px;background:var(--ink);
   -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
           mask:url(Main-Logo.png) left center/contain no-repeat;
@@ -91,9 +91,9 @@ nav.scrolled .signin{color:var(--foam)}
 .d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}.d5{transition-delay:.4s}
 
 /* ── SHARED SECTION SCAFFOLD ─────────────────────────────────────────────── */
-.sx{min-height:auto;display:flex;align-items:center;padding:clamp(5rem,10vh,8rem) clamp(1.5rem,5vw,3rem);position:relative;z-index:1}
+.sx{min-height:auto;display:flex;align-items:center;padding:clamp(5rem,10vh,8rem) clamp(1.5rem,5vw,3rem);position:relative;z-index:1;scroll-margin-top:120px}
 .wrap{max-width:1100px;margin:0 auto;width:100%;text-align:center}
-.sec-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--foam);font-size:clamp(2.3rem,5vw,4rem);line-height:1.08;letter-spacing:.01em;text-shadow:0 2px 26px rgba(2,10,18,.5)}
+.sec-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--foam);font-size:clamp(2.3rem,5vw,4rem);line-height:1.12;letter-spacing:.01em;text-shadow:0 2px 26px rgba(2,10,18,.5);text-wrap:balance;max-width:22ch;margin-left:auto;margin-right:auto}
 
 /* ── HERO (BEACH / SURFACE) — approved, unchanged ────────────────────────── */
 #hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(6.5rem,17vh,9.5rem) 2rem 0;position:relative;z-index:1;color:var(--ink)}
@@ -112,35 +112,33 @@ body.ready #hero .anim{opacity:1;transform:none}
 @keyframes dive{0%{top:-60%}100%{top:100%}}
 
 /* ── HOW IT WORKS (exact reference copy, new presentation — no parchment) ──── */
-#how .wrap{max-width:660px}
+#how .wrap{max-width:680px}
 .how-body{margin-top:clamp(2rem,4vw,3rem);text-align:left}
-.how-body p{font-family:'Mulish',sans-serif;font-weight:300;color:var(--mist);font-size:clamp(1rem,1.4vw,1.16rem);line-height:1.95;margin-bottom:1.4rem}
+.how-body p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:clamp(1rem,1.4vw,1.16rem);line-height:1.9;margin-bottom:1.4rem}
 .how-close{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;color:var(--foam);font-size:clamp(1.5rem,2.8vw,2.1rem);line-height:1.4;margin-top:1.8rem;text-shadow:0 2px 22px rgba(2,10,18,.45)}
 
 /* ── WHY CHOOSE US — three plain text columns (as in the reference) ────────── */
-.why-sharks{font-style:normal}
-.why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(2.2rem,5vw,4.5rem);max-width:1000px;margin:clamp(3rem,6vw,4.5rem) auto 0}
+.why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(2.2rem,5vw,4.5rem);max-width:1080px;margin:clamp(2rem,4vw,3rem) auto 0}
 .why-col h3{font-family:'Cormorant Garamond',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
-.why-col p{font-family:'Mulish',sans-serif;font-weight:300;color:var(--mist);font-size:.95rem;line-height:1.85}
+.why-col p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:.95rem;line-height:1.8}
 
 /* ── STYLES — placeholder windows (future examples go here) ────────────────── */
-.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-top:clamp(3rem,6vw,4.5rem);text-align:left}
-.style-card{position:relative;border-radius:16px;background:rgba(174,195,201,.055);border:1px solid rgba(174,195,201,.15);backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);box-shadow:inset 0 1px 0 rgba(236,244,243,.1),0 18px 46px rgba(0,0,0,.34);overflow:hidden;display:flex;flex-direction:column;aspect-ratio:16/11;transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .45s,box-shadow .45s}
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-top:clamp(2.4rem,4.5vw,3.4rem);text-align:left}
+.style-card{position:relative;border-radius:16px;background:rgba(174,195,201,.055);border:1px solid rgba(174,195,201,.15);backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);box-shadow:inset 0 1px 0 rgba(236,244,243,.1),0 18px 46px rgba(0,0,0,.34);overflow:hidden;display:flex;flex-direction:column;min-height:212px;transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .45s,box-shadow .45s}
 .style-card:hover{transform:translateY(-4px);border-color:rgba(98,182,198,.24);box-shadow:0 22px 50px rgba(0,0,0,.4)}
 .sc-bar{display:flex;gap:.5rem;padding:.95rem 1.15rem;border-bottom:1px solid rgba(174,195,201,.12);flex-shrink:0}
 .sc-dot{width:10px;height:10px;border-radius:50%;background:rgba(174,195,201,.34)}
-.sc-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.9rem;text-align:center;padding:1.5rem}
-.sc-skel{width:54%;height:6px;border-radius:3px;background:rgba(174,195,201,.14)}
-.sc-skel.s2{width:38%}
-.sc-label{font-family:'Mulish',sans-serif;font-weight:400;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--mist);margin-top:.4rem}
+.sc-body{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:.6rem;text-align:left;padding:1.4rem 1.5rem 1.65rem}
+.sc-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.42rem;line-height:1.1;color:var(--foam);letter-spacing:.01em}
+.sc-desc{font-family:'Mulish',sans-serif;font-weight:300;font-size:.9rem;line-height:1.62;color:rgba(240,248,250,.76)}
 /* deepest section — ends the page on the content, not on empty water */
 #styles{min-height:auto;padding-top:clamp(5.5rem,11vh,8.5rem);padding-bottom:clamp(4rem,7vh,5.5rem)}
-#site-footer{position:relative;z-index:1;text-align:center;padding:1.6rem 1.5rem 2.2rem;font-family:'Mulish',sans-serif;font-weight:400;font-size:.74rem;letter-spacing:.08em;color:var(--mist);opacity:.65}
+#site-footer{position:relative;z-index:1;text-align:center;padding:1.6rem 1.5rem 2.2rem;font-family:'Mulish',sans-serif;font-weight:400;font-size:.76rem;letter-spacing:.08em;color:rgba(236,244,243,.68)}
 
 /* ── PRELOADER ───────────────────────────────────────────────────────────── */
 body.lock{overflow:hidden;height:100vh}
-#loader{position:fixed;inset:0;z-index:10000;background:radial-gradient(ellipse 60% 50% at 50% 42%,rgba(98,182,198,.1),transparent 64%),var(--deep);display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .9s cubic-bezier(.4,0,.2,1)}
-#loader.done{opacity:0;visibility:hidden;transition:opacity .9s cubic-bezier(.4,0,.2,1),visibility 0s .9s}
+#loader{position:fixed;inset:0;z-index:10000;background:radial-gradient(ellipse 60% 50% at 50% 42%,rgba(98,182,198,.1),transparent 64%),var(--deep);display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .55s ease}
+#loader.done{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .55s ease,visibility 0s .55s}
 .load-logo{display:block;width:min(420px,62vw);height:auto;-webkit-user-select:none;user-select:none;pointer-events:none}
 
 /* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
@@ -206,7 +204,7 @@ body.lock{overflow:hidden;height:100vh}
     <div class="how-body">
       <p class="rv d1">At WebSharke, we build your whole site and keep it running. Frontend, backend, security, all of it, all in one place. No agency price tag, no DIY headache.</p>
       <p class="rv d2">Right now small businesses get two bad options. Option one: pay an agency two grand for a pretty site, then get stuck with a clunky backend and bills from some other company you've never met. Option two: wrestle with Wix or GoDaddy yourself, which always looks easy until you're deep in it and nothing lines up.</p>
-      <p class="how-close rv d3">We made it stupid simple. Fill out a form. Pay. You're done.</p>
+      <p class="how-close rv d3">Fill out the form. Pick the plan. I take it from there.</p>
     </div>
   </div>
 </section>
@@ -214,19 +212,19 @@ body.lock{overflow:hidden;height:100vh}
 <!-- ── WHY CHOOSE US ──────────────────────────────────────────────────────── -->
 <section id="why" class="sx">
   <div class="wrap">
-    <h2 class="sec-title rv">Why the he<span class="why-sharks">🦈🦈</span> would I choose you over a million-dollar agency?</h2>
+    <h2 class="sec-title rv">Why choose WebSharke over a big agency?</h2>
     <div class="why-cols">
       <div class="why-col rv d1">
-        <h3>Simplicity</h3>
-        <p>Whether you're a software engineer or still use a flip phone, I handle the technical details so you can focus on your business.</p>
+        <h3>Simple</h3>
+        <p>You do not need to understand code, hosting, or dashboards. You tell me what the site needs to do, and I turn that into a working website.</p>
       </div>
       <div class="why-col rv d2">
-        <h3>We Don't Leave</h3>
-        <p>Need and update, want to change out something weekly Ill handle it. Plus a dashboard right here to manage almost everything without talking to a soul.</p>
+        <h3>Handled</h3>
+        <p>Updates, hosting, backend setup, forms, payments, and dashboard features stay in one place instead of being spread across five tools.</p>
       </div>
       <div class="why-col rv d3">
-        <h3>Honesty</h3>
-        <p>Don't expect a sales pitch. I'll be straight with you about what you need and what you're getting. I'm not going to upsale you into something you don't need.</p>
+        <h3>Honest</h3>
+        <p>No bloated sales pitch. No fake urgency. I tell you what your site actually needs and what is not worth paying for.</p>
       </div>
     </div>
   </div>
@@ -237,12 +235,12 @@ body.lock{overflow:hidden;height:100vh}
   <div class="wrap">
     <h2 class="sec-title rv">Styles</h2>
     <div class="style-grid">
-      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
+      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Clean Local</h3><p class="sc-desc">Simple sites for service businesses that need trust, speed, and clear contact options.</p></div></div>
+      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Bold Landing Page</h3><p class="sc-desc">A focused one-page site built to explain the offer and push visitors toward action.</p></div></div>
+      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Premium Dark</h3><p class="sc-desc">A sharper look for brands that want depth, contrast, and a more polished feel.</p></div></div>
+      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Soft Coastal</h3><p class="sc-desc">Light, calm layouts with warm spacing, clean sections, and a relaxed visual style.</p></div></div>
+      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Modern Portfolio</h3><p class="sc-desc">A visual-first layout for showing work, projects, photos, or case studies.</p></div></div>
+      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Full Client Portal</h3><p class="sc-desc">A site with login, dashboard access, payments, forms, and backend features.</p></div></div>
     </div>
   </div>
 </section>
@@ -260,9 +258,9 @@ body.lock{overflow:hidden;height:100vh}
     document.body.classList.remove('lock');
     document.body.classList.add('ready');      // triggers the hero intro
   }
-  if(document.readyState==='complete') setTimeout(finish,600);
-  else window.addEventListener('load',()=>setTimeout(finish,600));
-  setTimeout(finish,3500);
+  if(document.readyState==='complete') setTimeout(finish,200);
+  else window.addEventListener('load',()=>setTimeout(finish,200));
+  setTimeout(finish,1600);
 })();
 
 // ── SCROLL REVEAL ────────────────────────────────────────────────────────────
