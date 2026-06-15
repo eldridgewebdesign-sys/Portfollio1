@@ -201,6 +201,7 @@
       <nav class="side-nav" role="tablist" aria-label="Dashboard sections">
         <button class="nav-item active" role="tab" aria-selected="true"  data-tab="account">Account info</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="business">Business info</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="project">Project details</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="billing">Billing</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="domain">Domain</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="privacy">Privacy</button>
@@ -229,6 +230,34 @@
         <p class="field"><span class="f-label">Business name:</span> <span class="f-value" id="biz-name">…</span></p>
         <p class="field"><span class="f-label">Overview:</span> <span class="f-value block" id="biz-overview">…</span></p>
         <p class="field"><span class="f-label">Products / Services:</span> <span class="f-value block" id="biz-products">…</span></p>
+      </div>
+
+      <!-- 2b ── Project / intake details (from project_inquiries) -->
+      <div class="tab" id="tab-project" role="tabpanel">
+        <h2 class="tab-title">Project details</h2>
+
+        <!-- Shown only if the intake row fails to load. -->
+        <p class="bill-error hidden" id="proj-error" role="alert">We couldn’t load your project details right now. Please refresh the page or try again later.</p>
+
+        <!-- Shown when the user has no intake record on file. -->
+        <p class="field hidden" id="proj-empty">No project details on file yet.</p>
+
+        <!-- The intake fields (hidden until a record is present). -->
+        <div id="proj-fields" class="hidden">
+          <p class="field"><span class="f-label">Business name:</span> <span class="f-value" id="pd-business-name">…</span></p>
+          <p class="field"><span class="f-label">Business overview:</span> <span class="f-value block" id="pd-business-desc">…</span></p>
+          <p class="field"><span class="f-label">Products / Services:</span> <span class="f-value block" id="pd-products">…</span></p>
+          <p class="field"><span class="f-label">Website goals:</span> <span class="f-value block" id="pd-goals">…</span></p>
+          <p class="field"><span class="f-label">Desired visitor actions:</span> <span class="f-value block" id="pd-actions">…</span></p>
+          <p class="field"><span class="f-label">Preferred styles:</span> <span class="f-value" id="pd-styles">…</span></p>
+          <p class="field"><span class="f-label">Color preferences:</span> <span class="f-value" id="pd-colors">…</span></p>
+          <p class="field"><span class="f-label">Websites liked:</span> <span class="f-value block" id="pd-liked">…</span></p>
+          <p class="field"><span class="f-label">Design notes:</span> <span class="f-value block" id="pd-design-notes">…</span></p>
+          <p class="field"><span class="f-label">Business address:</span> <span class="f-value" id="pd-address">…</span></p>
+          <p class="field"><span class="f-label">Additional info:</span> <span class="f-value block" id="pd-additional">…</span></p>
+          <p class="field"><span class="f-label">Status:</span> <span class="f-value" id="pd-status">…</span></p>
+          <p class="field"><span class="f-label">Submitted:</span> <span class="f-value" id="pd-submitted">…</span></p>
+        </div>
       </div>
 
       <!-- 3 ── Billing -->
@@ -493,6 +522,41 @@
       $("priv-warning").classList.toggle("hidden", upToDate);
     }
 
+    // ---- Render the Project details section from the intake record ------
+    // `inquiryError` true → couldn't load; `inquiry` null → none on file.
+    function renderProject(inquiry, inquiryError) {
+      const errEl = $("proj-error");
+      const emptyEl = $("proj-empty");
+      const fieldsEl = $("proj-fields");
+
+      // Reset to a known state each render.
+      errEl.classList.add("hidden");
+      emptyEl.classList.add("hidden");
+      fieldsEl.classList.add("hidden");
+
+      if (inquiryError) { errEl.classList.remove("hidden"); return; }
+      if (!inquiry) { emptyEl.classList.remove("hidden"); return; }
+
+      fieldsEl.classList.remove("hidden");
+      $("pd-business-name").textContent = show(inquiry.business_name);
+      $("pd-business-desc").textContent = show(inquiry.business_description);
+      $("pd-products").textContent      = show(inquiry.products_services);
+      $("pd-goals").textContent         = show(inquiry.website_goals);
+      $("pd-actions").textContent       = show(inquiry.visitor_actions);
+      // preferred_styles is stored as an array; present it as a readable list.
+      const styles = Array.isArray(inquiry.preferred_styles)
+        ? inquiry.preferred_styles.filter(Boolean).join(", ")
+        : inquiry.preferred_styles;
+      $("pd-styles").textContent        = show(styles);
+      $("pd-colors").textContent        = show(inquiry.color_preferences);
+      $("pd-liked").textContent         = show(inquiry.websites_liked);
+      $("pd-design-notes").textContent  = show(inquiry.design_notes);
+      $("pd-address").textContent       = show(inquiry.business_address);
+      $("pd-additional").textContent    = show(inquiry.additional_info);
+      $("pd-status").textContent        = show(inquiry.status);
+      $("pd-submitted").textContent     = fmtDate(inquiry.created_at) || NA;
+    }
+
     // ---- Page load: gate on a session, then load + render ---------------
     (async () => {
       // First, verify a real logged-in user before any dashboard data is
@@ -513,16 +577,23 @@
       document.getElementById("dash").classList.remove("hidden");
 
       // Most-recent intake row for this user (business + contact details).
+      // Track a load failure separately so the Project details section can
+      // show a clean error instead of an empty "none on file" state.
       let inquiry = null;
+      let inquiryError = false;
       try {
-        const { data: rows } = await db
+        const { data: rows, error } = await db
           .from("project_inquiries")
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(1);
+        if (error) throw error;
         inquiry = rows && rows[0] ? rows[0] : null;
-      } catch (e) { console.error("Could not load profile:", e.message); }
+      } catch (e) {
+        console.error("Could not load profile:", e.message);
+        inquiryError = true;
+      }
 
       // Subscription / billing row (status + Stripe customer id).
       let sub = null;
@@ -536,6 +607,7 @@
       } catch (e) { console.error("Could not load subscription:", e.message); }
 
       render(user, inquiry, sub);
+      renderProject(inquiry, inquiryError);
     })();
   </script>
 </body>
