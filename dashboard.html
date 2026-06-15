@@ -153,6 +153,53 @@
     .dp-name{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.5rem;color:#11364c;word-break:break-word}
     .dp-hint{display:block;margin-top:.5rem;font-size:.85rem;letter-spacing:.04em;color:#5a7e8c}
 
+    /* ── Plan buttons (Billing) ────────────────────────────────────────────── */
+    .plan-row{display:flex;flex-wrap:wrap;gap:.7rem;margin:.6rem 0 .4rem}
+    .plan-row .ws-btn{margin-top:0}
+
+    /* ── Stripe Payment Element modal (navy/teal beach theme) ──────────────── */
+    .pay-overlay{
+      position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+      padding:1.2rem;background:rgba(7,30,40,.55);
+      backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    }
+    .pay-card{
+      width:100%;max-width:460px;max-height:92vh;overflow-y:auto;
+      background:rgba(234,247,249,.97);border:1px solid var(--panel-bd);border-radius:18px;
+      padding:clamp(1.5rem,3vw,2.1rem);
+      box-shadow:0 26px 64px rgba(0,30,45,.45),inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .pay-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.1rem}
+    .pay-title{
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.55rem;
+      color:#0e2f44;letter-spacing:.01em;line-height:1.15;
+    }
+    .pay-close{
+      appearance:none;-webkit-appearance:none;background:none;border:none;cursor:pointer;
+      font-size:1.6rem;line-height:1;color:var(--ink-soft);padding:.1rem .35rem;border-radius:8px;
+      transition:color .2s,background .2s;
+    }
+    .pay-close:hover{color:#0c2c40;background:rgba(255,255,255,.5)}
+    .pay-close:focus-visible{outline:2px solid var(--turq);outline-offset:2px}
+    #payment-element{margin:.3rem 0 1.1rem;min-height:44px}
+    .pay-actions{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+    .pay-actions .ws-btn{margin-top:0}
+    .pay-cancel{
+      cursor:pointer;border:1px solid rgba(17,54,76,.3);background:rgba(255,255,255,.5);
+      font-family:'Mulish',sans-serif;font-weight:600;font-size:.82rem;letter-spacing:.06em;color:var(--ink);
+      padding:.7rem 1.4rem;border-radius:9px;transition:background .2s,border-color .2s;
+    }
+    .pay-cancel:hover{background:rgba(255,255,255,.78);border-color:var(--turq)}
+    .pay-cancel:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+    .pay-cancel[disabled]{opacity:.55;cursor:not-allowed}
+    .pay-msg{display:none;margin-top:1rem;padding:.7rem .95rem;border-radius:10px;font-size:.92rem;line-height:1.5}
+    .pay-msg.show{display:block}
+    .pay-msg.error{color:#7c1d29;background:rgba(255,255,255,.6);border:1px solid rgba(150,40,52,.4)}
+    .pay-msg.success{color:#0c5a40;background:rgba(255,255,255,.6);border:1px solid rgba(30,140,90,.4)}
+    @media(max-width:420px){
+      .pay-actions .ws-btn,.pay-cancel{width:100%;text-align:center}
+    }
+
     .hidden{display:none !important}
 
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
@@ -273,6 +320,16 @@
         <p class="field"><span class="f-label">Current payment method:</span> <span class="f-value" id="bill-method">…</span></p>
         <p class="field"><span class="f-label">Hosting status:</span> <span class="f-value" id="bill-hosting">…</span>
           <span class="f-sub" id="bill-plan"></span></p>
+
+        <!-- Plan selection → opens the Stripe Payment Element modal. Replace the
+             data-price-id values with your real Stripe Price IDs. Any element
+             with a data-price-id attribute is wired to the checkout flow. -->
+        <p class="field"><span class="f-label">Choose a plan:</span></p>
+        <div class="plan-row" id="plan-row">
+          <button class="ws-btn plan-btn" type="button" data-price-id="REPLACE_WITH_MONTHLY_PRICE_ID">Monthly Hosting</button>
+          <button class="ws-btn plan-btn" type="button" data-price-id="REPLACE_WITH_ANNUAL_PRICE_ID">Annual Hosting</button>
+        </div>
+
         <button class="ws-btn" id="manage-sub">Manage My Subscription</button>
         <p class="field"><span class="f-label">Next payment due:</span> <span class="f-value" id="bill-due">…</span></p>
         <button class="ws-btn" id="cancel-hosting">Cancel Hosting Services</button>
@@ -303,9 +360,27 @@
     </section>
   </main>
 
+  <!-- ── Stripe Payment Element modal (hidden until a plan is chosen) ────────── -->
+  <div class="pay-overlay hidden" id="pay-overlay" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+    <div class="pay-card">
+      <div class="pay-head">
+        <h2 class="pay-title" id="pay-title">Complete your payment</h2>
+        <button class="pay-close" id="pay-close" type="button" aria-label="Close payment dialog">&times;</button>
+      </div>
+      <div id="payment-element"><!-- Stripe Payment Element mounts here --></div>
+      <div class="pay-actions">
+        <button class="ws-btn" id="pay-submit" type="button">Pay</button>
+        <button class="pay-cancel" id="pay-cancel" type="button">Cancel</button>
+      </div>
+      <p class="pay-msg" id="pay-msg" role="alert"></p>
+    </div>
+  </div>
+
   <!-- ── Supabase (shared client `db`) — same config every page uses ────────── -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
+  <!-- Stripe.js (official CDN) — used for the Payment Element modal below. -->
+  <script src="https://js.stripe.com/v3/"></script>
 
   <script>
     // =================================================================
@@ -444,6 +519,174 @@
         manageBtn.disabled = false;
         manageBtn.textContent = original;
       }
+    });
+
+    // ====================================================================
+    // STRIPE PAYMENT ELEMENT — plan button → /api/checkout → modal.
+    //
+    // The publishable key is PUBLIC and safe in frontend code (just like the
+    // Supabase anon key in supabase-config.js). The SECRET key is NEVER used
+    // here — it lives only in the serverless /api functions. Set the key below
+    // (or expose it as window.STRIPE_PUBLISHABLE_KEY from your config).
+    // ====================================================================
+    const STRIPE_PUBLISHABLE_KEY =
+      (typeof window !== "undefined" && window.STRIPE_PUBLISHABLE_KEY) ||
+      "pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY";
+
+    // Initialise Stripe once (only if the library loaded and a key is set).
+    const stripe =
+      (window.Stripe && /^pk_/.test(STRIPE_PUBLISHABLE_KEY))
+        ? window.Stripe(STRIPE_PUBLISHABLE_KEY)
+        : null;
+
+    // Reuse the existing success page (success.html) as the return URL.
+    const PAYMENT_RETURN_URL = new URL("success.html", window.location.href).href;
+
+    const payOverlay = $("pay-overlay");
+    const payMsg = $("pay-msg");
+    const paySubmit = $("pay-submit");
+    const payCancel = $("pay-cancel");
+    const payClose = $("pay-close");
+
+    let payElements = null;        // current Stripe Elements instance
+    let payPaymentElement = null;  // current mounted Payment Element
+    let payBusy = false;           // true while a payment is being submitted
+
+    function setPayMsg(text, type) {
+      payMsg.textContent = text || "";
+      payMsg.className = "pay-msg" + (text ? " show " + (type || "error") : "");
+    }
+    function openPayModal() {
+      setPayMsg("");
+      payOverlay.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+    function closePayModal() {
+      if (payBusy) return; // never close mid-submit
+      payOverlay.classList.add("hidden");
+      document.body.style.overflow = "";
+      // Tear down the mounted Payment Element so re-opening never duplicates it.
+      if (payPaymentElement) { try { payPaymentElement.destroy(); } catch (e) {} }
+      payPaymentElement = null;
+      payElements = null;
+      $("payment-element").innerHTML = "";
+      setPayMsg("");
+    }
+
+    // Build a fresh Elements + Payment Element from a clientSecret and open it.
+    function mountPayment(clientSecret) {
+      // Clean up any previous mount first (covers opening the modal twice).
+      if (payPaymentElement) { try { payPaymentElement.destroy(); } catch (e) {} }
+      payPaymentElement = null;
+      $("payment-element").innerHTML = "";
+
+      payElements = stripe.elements({
+        clientSecret,
+        appearance: {
+          theme: "stripe",
+          variables: {
+            colorPrimary: "#15707f",
+            colorText: "#11364c",
+            fontFamily: "Mulish, system-ui, sans-serif",
+            borderRadius: "9px",
+          },
+        },
+      });
+      payPaymentElement = payElements.create("payment");
+      payPaymentElement.mount("#payment-element");
+      openPayModal();
+    }
+
+    // Plan button click: verify user, call /api/checkout, then open the modal.
+    async function handlePlanClick(btn) {
+      billError.classList.add("hidden");
+      const priceId = btn.getAttribute("data-price-id");
+
+      if (!stripe) {
+        showBillError("Payments aren’t available right now. Please try again later.");
+        return;
+      }
+      if (!priceId) {
+        showBillError("This plan isn’t available right now. Please contact " + SUPPORT_EMAIL + ".");
+        return;
+      }
+
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Starting…";
+      try {
+        // Who is logged in? (reuse the existing `db` Supabase client)
+        const { data: userData, error: userErr } = await db.auth.getUser();
+        const user = userData && userData.user;
+        if (userErr) throw new Error("Could not verify your session. Please sign in again.");
+        if (!user) { showBillError("You must be signed in to choose a plan."); return; }
+
+        // Ask the server for a Payment Element client secret.
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ priceId: priceId, userId: user.id, email: user.email }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Could not start checkout. Please try again.");
+        if (!data.clientSecret) throw new Error("Could not start checkout. Please try again.");
+
+        mountPayment(data.clientSecret);
+      } catch (err) {
+        showBillError(err.message || "Could not start checkout. Please try again.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    // Wire every plan button (any element carrying a data-price-id).
+    document.querySelectorAll("[data-price-id]").forEach((btn) => {
+      btn.addEventListener("click", () => handlePlanClick(btn));
+    });
+
+    // Submit the payment from inside the modal.
+    paySubmit.addEventListener("click", async () => {
+      if (!payElements || payBusy) return;
+      payBusy = true;
+      setPayMsg("");
+      const orig = paySubmit.textContent;
+      paySubmit.disabled = true;
+      payCancel.disabled = true;
+      paySubmit.textContent = "Processing…";
+      try {
+        const { error } = await stripe.confirmPayment({
+          elements: payElements,
+          confirmParams: { return_url: PAYMENT_RETURN_URL },
+          redirect: "if_required",
+        });
+        if (error) {
+          // Failed → show a clean message and re-enable the Pay button.
+          setPayMsg(error.message || "Payment could not be completed. Please try again.", "error");
+          paySubmit.disabled = false;
+          payCancel.disabled = false;
+          paySubmit.textContent = orig;
+          payBusy = false;
+          return;
+        }
+        // Succeeded without a redirect → show success, then go to success page.
+        setPayMsg("Payment successful! Redirecting…", "success");
+        window.location.href = PAYMENT_RETURN_URL;
+      } catch (err) {
+        setPayMsg(err.message || "Payment could not be completed. Please try again.", "error");
+        paySubmit.disabled = false;
+        payCancel.disabled = false;
+        paySubmit.textContent = orig;
+        payBusy = false;
+      }
+    });
+
+    // Close / cancel (disabled while a payment is in flight).
+    payClose.addEventListener("click", closePayModal);
+    payCancel.addEventListener("click", closePayModal);
+    payOverlay.addEventListener("click", (e) => { if (e.target === payOverlay) closePayModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !payOverlay.classList.contains("hidden")) closePayModal();
     });
 
     // ---- Helpers --------------------------------------------------------
