@@ -67,7 +67,7 @@ body.submerged .school{opacity:1}
 
 /* ── NAV ─────────────────────────────────────────────────────────────────────
    Dark over the sand, then turns to light glass once you submerge. ─────────── */
-nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:1rem 2.6rem;transition:background .55s,backdrop-filter .55s,box-shadow .55s,padding .45s}
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:1rem 2.6rem 1rem 1.6rem;transition:background .55s,backdrop-filter .55s,box-shadow .55s,padding .45s}
 nav.scrolled{background:linear-gradient(to bottom,rgba(6,24,33,.66) 0%,rgba(6,24,33,.3) 58%,transparent 100%);box-shadow:none;padding-top:.7rem;padding-bottom:.7rem}
 .logo{display:block;width:210px;height:118px;background:var(--ink);
   -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
@@ -106,10 +106,6 @@ nav.scrolled .signin{color:var(--foam)}
 body.ready #hero .anim{opacity:1;transform:none}
 #hero .a2{transition-delay:.18s}
 #hero .a3{transition-delay:.36s}
-.scroll-cue{position:absolute;bottom:2.2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.8rem;text-decoration:none;color:var(--ink-soft);font-family:'Mulish',sans-serif;font-size:.6rem;letter-spacing:.32em;text-transform:uppercase}
-.cue-line{width:1px;height:50px;background:linear-gradient(var(--ink-soft),transparent);position:relative;overflow:hidden}
-.cue-line::after{content:'';position:absolute;left:0;top:-60%;width:100%;height:60%;background:linear-gradient(var(--ink),transparent);animation:dive 2.3s cubic-bezier(.6,0,.4,1) infinite}
-@keyframes dive{0%{top:-60%}100%{top:100%}}
 
 /* ── HOW IT WORKS (exact reference copy, new presentation — no parchment) ──── */
 #how .wrap{max-width:680px}
@@ -143,7 +139,7 @@ body.lock{overflow:hidden;height:100vh}
 
 /* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
 @media(prefers-reduced-motion:reduce){
-  .fish,.fish>i,.mote,.cue-line::after,.school,.school .sf{animation:none!important}
+  .fish,.fish>i,.mote,.school,.school .sf{animation:none!important}
   #snow{display:none}
   html{scroll-behavior:auto}
 }
@@ -191,10 +187,6 @@ body.lock{overflow:hidden;height:100vh}
   <div class="hero-cta anim a3">
     <a href="onboarding.html" class="btn btn-sand">Start a Project</a>
   </div>
-  <a href="#how" class="scroll-cue" aria-label="Scroll to dive in">
-    <span>Dive in</span>
-    <span class="cue-line"></span>
-  </a>
 </section>
 
 <!-- ── HOW IT WORKS ───────────────────────────────────────────────────────── -->

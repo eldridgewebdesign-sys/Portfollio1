@@ -80,12 +80,21 @@ module.exports = async (req, res) => {
     let subscription = null;
 
     try {
-      customer = await stripe.customers.create({
+      const existingCustomers = await stripe.customers.list({
         email,
-        metadata: {
-          supabase_user_id: userId,
-        },
+        limit: 1,
       });
+
+      customer = existingCustomers.data[0];
+
+      if (!customer) {
+        customer = await stripe.customers.create({
+          email,
+          metadata: {
+            supabase_user_id: userId,
+          },
+        });
+      }
 
       subscription = await stripe.subscriptions.create({
         customer: customer.id,
