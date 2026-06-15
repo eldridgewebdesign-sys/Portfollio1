@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="Tab-Logo.png" type="image/png" />
+  <title>Payment - WebSharke</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0e1b2a;
+      --navy-soft:#17283b;
+      --teal:#2dd4bf;
+      --teal-dark:#14b8a6;
+      --ink:#e8f4f8;
+      --muted:#adc1cb;
+      --panel:rgba(23,40,59,.78);
+      --panel-bd:rgba(45,212,191,.34);
+      --danger:#fecdd3;
+      --danger-bg:rgba(127,29,29,.38);
+      --success:#bbf7d0;
+      --success-bg:rgba(20,83,45,.34);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      min-height:100vh;
+      font-family:"Mulish",system-ui,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top right, rgba(45,212,191,.14), transparent 34rem),
+        linear-gradient(180deg, #0e1b2a 0%, #101d2c 54%, #0a1420 100%);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    a{color:inherit}
+    .hidden{display:none !important}
+    .ws-logo{
+      position:fixed;
+      top:18px;
+      left:26px;
+      z-index:20;
+      display:block;
+      width:136px;
+      height:76px;
+      background:var(--teal);
+      -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
+              mask:url(Main-Logo.png) left center/contain no-repeat;
+      filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
+      transition:transform .25s ease;
+    }
+    .ws-logo:hover{transform:translateY(-1px)}
+    .page{
+      width:min(1180px,100%);
+      margin:0 auto;
+      padding:clamp(6.5rem,13vh,7.5rem) clamp(1.1rem,4vw,3rem) 3rem;
+    }
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:1rem;
+      margin-bottom:1.4rem;
+    }
+    .eyebrow{
+      color:var(--teal);
+      font-size:.75rem;
+      font-weight:800;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      margin-bottom:.55rem;
+    }
+    h1{
+      font-family:"Cormorant Garamond",serif;
+      font-size:clamp(2.25rem,5vw,4rem);
+      line-height:1;
+      font-weight:700;
+      letter-spacing:0;
+      color:#f8fdff;
+    }
+    .subhead{
+      margin-top:.75rem;
+      max-width:44rem;
+      color:var(--muted);
+      font-size:1.02rem;
+      line-height:1.65;
+    }
+    .back-link{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:42px;
+      padding:.68rem 1rem;
+      border:1px solid var(--panel-bd);
+      border-radius:8px;
+      color:var(--ink);
+      background:rgba(255,255,255,.04);
+      font-weight:800;
+      font-size:.8rem;
+      letter-spacing:.08em;
+      text-decoration:none;
+      text-transform:uppercase;
+      transition:background .2s,border-color .2s,color .2s;
+    }
+    .back-link:hover{background:rgba(45,212,191,.12);border-color:var(--teal);color:#fff}
+    .back-link:focus-visible,.ws-btn:focus-visible,.pay-close:focus-visible,.pay-cancel:focus-visible{
+      outline:2px solid var(--teal);
+      outline-offset:3px;
+    }
+    .shell{
+      background:rgba(14,27,42,.72);
+      border:1px solid var(--panel-bd);
+      border-radius:18px;
+      padding:clamp(1.1rem,2.6vw,1.7rem);
+      box-shadow:0 24px 70px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .plans{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:1rem;
+    }
+    .plan-card{
+      min-height:238px;
+      display:flex;
+      flex-direction:column;
+      gap:.85rem;
+      padding:1.25rem;
+      border:1px solid rgba(45,212,191,.23);
+      border-radius:8px;
+      background:linear-gradient(180deg, rgba(23,40,59,.92), rgba(12,25,39,.92));
+      box-shadow:0 14px 34px rgba(0,0,0,.18);
+    }
+    .plan-name{
+      min-height:3.1rem;
+      font-family:"Cormorant Garamond",serif;
+      font-size:1.5rem;
+      font-weight:700;
+      line-height:1.05;
+      color:#fff;
+    }
+    .plan-price{
+      font-size:2rem;
+      line-height:1;
+      font-weight:800;
+      color:var(--teal);
+    }
+    .plan-type{
+      color:var(--muted);
+      line-height:1.45;
+      min-height:2.6rem;
+    }
+    .ws-btn{
+      margin-top:auto;
+      width:100%;
+      min-height:44px;
+      cursor:pointer;
+      border:none;
+      border-radius:8px;
+      padding:.72rem 1rem;
+      background:linear-gradient(160deg,var(--teal),var(--teal-dark));
+      color:#06201d;
+      font-family:"Mulish",system-ui,sans-serif;
+      font-size:.82rem;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      transition:filter .2s,transform .2s,box-shadow .2s;
+      box-shadow:0 10px 24px rgba(20,184,166,.24);
+    }
+    .ws-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
+    .ws-btn[disabled]{
+      cursor:not-allowed;
+      opacity:.58;
+      transform:none;
+      filter:none;
+      box-shadow:none;
+    }
+    .page-msg{
+      display:none;
+      margin:0 0 1rem;
+      padding:.78rem .95rem;
+      border-radius:8px;
+      font-size:.94rem;
+      line-height:1.5;
+    }
+    .page-msg.show{display:block}
+    .page-msg.error{color:var(--danger);background:var(--danger-bg);border:1px solid rgba(248,113,113,.45)}
+    .page-msg.success{color:var(--success);background:var(--success-bg);border:1px solid rgba(74,222,128,.42)}
+    .session-note{
+      margin-top:1rem;
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.5;
+    }
+    .pay-overlay{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:1.2rem;
+      background:rgba(4,12,20,.72);
+      backdrop-filter:blur(5px);
+      -webkit-backdrop-filter:blur(5px);
+    }
+    .pay-card{
+      width:100%;
+      max-width:470px;
+      max-height:92vh;
+      overflow-y:auto;
+      background:linear-gradient(180deg, #132438, #0e1b2a);
+      border:1px solid var(--panel-bd);
+      border-radius:18px;
+      padding:clamp(1.35rem,3vw,2rem);
+      box-shadow:0 28px 72px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .pay-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:1rem;
+      margin-bottom:1.1rem;
+    }
+    .pay-title{
+      font-family:"Cormorant Garamond",serif;
+      font-size:1.7rem;
+      font-weight:700;
+      line-height:1.1;
+      color:#fff;
+    }
+    .pay-plan{
+      margin-top:.32rem;
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.4;
+    }
+    .pay-close{
+      appearance:none;
+      -webkit-appearance:none;
+      cursor:pointer;
+      border:none;
+      border-radius:8px;
+      background:rgba(255,255,255,.06);
+      color:var(--ink);
+      font-size:1.55rem;
+      line-height:1;
+      padding:.16rem .48rem .25rem;
+      transition:background .2s,color .2s;
+    }
+    .pay-close:hover{background:rgba(45,212,191,.14);color:#fff}
+    #payment-element{
+      min-height:44px;
+      margin:.35rem 0 1.1rem;
+    }
+    .pay-actions{
+      display:flex;
+      gap:.7rem;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pay-actions .ws-btn{
+      width:auto;
+      min-width:132px;
+      margin-top:0;
+    }
+    .pay-cancel{
+      min-height:44px;
+      cursor:pointer;
+      border:1px solid rgba(45,212,191,.3);
+      border-radius:8px;
+      background:rgba(255,255,255,.05);
+      color:var(--ink);
+      font-family:"Mulish",system-ui,sans-serif;
+      font-size:.82rem;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      padding:.72rem 1rem;
+      transition:background .2s,border-color .2s;
+    }
+    .pay-cancel:hover{background:rgba(45,212,191,.12);border-color:var(--teal)}
+    .pay-cancel[disabled]{opacity:.55;cursor:not-allowed}
+    .pay-msg{
+      display:none;
+      margin-top:1rem;
+      padding:.78rem .95rem;
+      border-radius:8px;
+      font-size:.94rem;
+      line-height:1.5;
+    }
+    .pay-msg.show{display:block}
+    .pay-msg.error{color:var(--danger);background:var(--danger-bg);border:1px solid rgba(248,113,113,.45)}
+    .pay-msg.success{color:var(--success);background:var(--success-bg);border:1px solid rgba(74,222,128,.42)}
+    @media(max-width:720px){
+      .ws-logo{width:114px;height:64px;top:14px;left:16px}
+      .page{padding-top:5.6rem}
+      .topbar{display:block}
+      .back-link{margin-top:1rem}
+      .plans{grid-template-columns:1fr}
+      .plan-name{min-height:auto}
+      .plan-type{min-height:auto}
+      .pay-actions .ws-btn,.pay-cancel{width:100%}
+    }
+  </style>
+</head>
+<body>
+  <a class="ws-logo" href="index.html" aria-label="WebSharke home"></a>
+
+  <main class="page hidden" id="payment-page">
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">WebSharke Payments</p>
+        <h1>Choose Your WebSharke Plan</h1>
+        <p class="subhead">Select a plan and complete payment securely.</p>
+      </div>
+      <a class="back-link" href="dashboard.html">Back to Dashboard</a>
+    </div>
+
+    <section class="shell" aria-label="WebSharke plans">
+      <p class="page-msg" id="page-msg" role="alert"></p>
+      <div class="plans" id="plans"></div>
+      <p class="session-note" id="session-note"></p>
+    </section>
+  </main>
+
+  <div class="pay-overlay hidden" id="pay-overlay" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+    <div class="pay-card">
+      <div class="pay-head">
+        <div>
+          <h2 class="pay-title" id="pay-title">Complete your payment</h2>
+          <p class="pay-plan" id="pay-plan"></p>
+        </div>
+        <button class="pay-close" id="pay-close" type="button" aria-label="Close payment dialog">&times;</button>
+      </div>
+      <div id="payment-element"></div>
+      <div class="pay-actions">
+        <button class="ws-btn" id="pay-submit" type="button">Pay Now</button>
+        <button class="pay-cancel" id="pay-cancel" type="button">Cancel</button>
+      </div>
+      <p class="pay-msg" id="pay-msg" role="alert"></p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <script>
+    const plans = [
+      {
+        name: "Frontend Monthly",
+        price: "$25/mo",
+        type: "Hosting",
+        priceId: "price_1Tas6t5dqO1i8gb893TyaGKs",
+      },
+      {
+        name: "Frontend Annual",
+        price: "$250/yr",
+        type: "Hosting",
+        priceId: "price_1Tas4F5dqO1i8gb84xFztzu6",
+      },
+      {
+        name: "Full Stack Monthly",
+        price: "$49.99/mo",
+        type: "Hosting",
+        priceId: "price_1Te82R5dqO1i8gb8tug1dYUD",
+      },
+      {
+        name: "Full Stack Annual",
+        price: "$500/yr",
+        type: "Hosting",
+        priceId: "price_1Te8595dqO1i8gb8nB40CyYe",
+      },
+      {
+        name: "Website Full Design Frontend",
+        price: "$750",
+        type: "One-time design",
+        priceId: "price_1Tarmd5dqO1i8gb86Z84Tilo",
+      },
+      {
+        name: "Website Full Design Full-Stack",
+        price: "$1500",
+        type: "One-time design",
+        priceId: "price_1Te8P25dqO1i8gb8Ko46gihm",
+      },
+      {
+        name: "Website Full Design Frontend + One Year Hosting",
+        price: "$800",
+        type: "One-time design + hosting",
+        priceId: "price_1Tas1R5dqO1i8gb8vEQL0CKS",
+      },
+      {
+        name: "Website Full Design Full-Stack + One Year Hosting",
+        price: "$1750",
+        type: "One-time design + hosting",
+        priceId: "price_1Te8RT5dqO1i8gb875YtaV11",
+      },
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const page = $("payment-page");
+    const pageMsg = $("page-msg");
+    const plansEl = $("plans");
+    const sessionNote = $("session-note");
+    const payOverlay = $("pay-overlay");
+    const payMsg = $("pay-msg");
+    const paySubmit = $("pay-submit");
+    const payCancel = $("pay-cancel");
+    const payClose = $("pay-close");
+    const payPlan = $("pay-plan");
+
+    const stripePublishableKey =
+      (typeof STRIPE_PUBLISHABLE_KEY !== "undefined" && STRIPE_PUBLISHABLE_KEY) ||
+      (typeof NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY !== "undefined" && NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) ||
+      "";
+
+    const stripe =
+      (window.Stripe && /^pk_/.test(stripePublishableKey))
+        ? window.Stripe(stripePublishableKey)
+        : null;
+
+    const PAYMENT_RETURN_URL = new URL("success.html", window.location.href).href;
+
+    let currentUserId = null;
+    let currentEmail = null;
+    let payElements = null;
+    let payPaymentElement = null;
+    let payBusy = false;
+
+    function setPageMsg(text, type) {
+      pageMsg.textContent = text || "";
+      pageMsg.className = "page-msg" + (text ? " show " + (type || "error") : "");
+    }
+
+    function setPayMsg(text, type) {
+      payMsg.textContent = text || "";
+      payMsg.className = "pay-msg" + (text ? " show " + (type || "error") : "");
+    }
+
+    function renderPlans() {
+      plansEl.innerHTML = "";
+      plans.forEach((plan) => {
+        const card = document.createElement("article");
+        card.className = "plan-card";
+
+        const title = document.createElement("h2");
+        title.className = "plan-name";
+        title.textContent = plan.name;
+
+        const price = document.createElement("p");
+        price.className = "plan-price";
+        price.textContent = plan.price;
+
+        const type = document.createElement("p");
+        type.className = "plan-type";
+        type.textContent = plan.type;
+
+        const button = document.createElement("button");
+        button.className = "ws-btn plan-btn";
+        button.type = "button";
+        button.textContent = plan.priceId ? "Select Plan" : "Price ID needed";
+        button.disabled = !plan.priceId;
+        if (plan.priceId) {
+          button.dataset.priceId = plan.priceId;
+          button.addEventListener("click", () => handlePlanClick(button, plan));
+        }
+
+        card.append(title, price, type, button);
+        plansEl.appendChild(card);
+      });
+    }
+
+    function openPayModal(plan) {
+      setPayMsg("");
+      payPlan.textContent = plan ? plan.name + " - " + plan.price : "";
+      payOverlay.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closePayModal() {
+      if (payBusy) return;
+      payOverlay.classList.add("hidden");
+      document.body.style.overflow = "";
+      if (payPaymentElement) {
+        try { payPaymentElement.destroy(); } catch (e) {}
+      }
+      payPaymentElement = null;
+      payElements = null;
+      $("payment-element").innerHTML = "";
+      payPlan.textContent = "";
+      setPayMsg("");
+    }
+
+    function mountPayment(clientSecret, plan) {
+      if (payPaymentElement) {
+        try { payPaymentElement.destroy(); } catch (e) {}
+      }
+      payPaymentElement = null;
+      $("payment-element").innerHTML = "";
+
+      payElements = stripe.elements({
+        clientSecret,
+        appearance: {
+          theme: "night",
+          variables: {
+            colorPrimary: "#2dd4bf",
+            colorBackground: "#0e1b2a",
+            colorText: "#e8f4f8",
+            colorDanger: "#fecdd3",
+            fontFamily: "Mulish, system-ui, sans-serif",
+            borderRadius: "8px",
+          },
+        },
+      });
+      payPaymentElement = payElements.create("payment");
+      payPaymentElement.mount("#payment-element");
+      openPayModal(plan);
+    }
+
+    async function handlePlanClick(button, plan) {
+      setPageMsg("");
+
+      if (!stripe) {
+        setPageMsg("Payments are not available right now. Please try again later.", "error");
+        return;
+      }
+      if (!plan.priceId) {
+        setPageMsg("Price ID needed before this plan can be selected.", "error");
+        return;
+      }
+      if (!currentUserId || !currentEmail) {
+        window.location.replace("login.html");
+        return;
+      }
+
+      const original = button.textContent;
+      button.disabled = true;
+      button.textContent = "Starting...";
+
+      try {
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            priceId: plan.priceId,
+            userId: currentUserId,
+            email: currentEmail,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Could not start checkout. Please try again.");
+        if (!data.clientSecret) throw new Error("Could not start checkout. Please try again.");
+
+        mountPayment(data.clientSecret, plan);
+      } catch (err) {
+        setPageMsg(err.message || "Could not start checkout. Please try again.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = original;
+      }
+    }
+
+    paySubmit.addEventListener("click", async () => {
+      if (!payElements || payBusy) return;
+      payBusy = true;
+      setPayMsg("");
+
+      const original = paySubmit.textContent;
+      paySubmit.disabled = true;
+      payCancel.disabled = true;
+      paySubmit.textContent = "Processing...";
+
+      try {
+        const { error } = await stripe.confirmPayment({
+          elements: payElements,
+          confirmParams: { return_url: PAYMENT_RETURN_URL },
+          redirect: "if_required",
+        });
+
+        if (error) {
+          setPayMsg(error.message || "Payment could not be completed. Please try again.", "error");
+          paySubmit.disabled = false;
+          payCancel.disabled = false;
+          paySubmit.textContent = original;
+          payBusy = false;
+          return;
+        }
+
+        setPayMsg("Payment successful. Redirecting...", "success");
+        window.location.href = PAYMENT_RETURN_URL;
+      } catch (err) {
+        setPayMsg(err.message || "Payment could not be completed. Please try again.", "error");
+        paySubmit.disabled = false;
+        payCancel.disabled = false;
+        paySubmit.textContent = original;
+        payBusy = false;
+      }
+    });
+
+    payClose.addEventListener("click", closePayModal);
+    payCancel.addEventListener("click", closePayModal);
+    payOverlay.addEventListener("click", (event) => {
+      if (event.target === payOverlay) closePayModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !payOverlay.classList.contains("hidden")) closePayModal();
+    });
+
+    (async () => {
+      const { data: authData, error: authError } = await db.auth.getUser();
+      if (authError || !authData || !authData.user) {
+        window.location.replace("login.html");
+        return;
+      }
+
+      const { data } = await db.auth.getSession();
+      if (!data.session) {
+        window.location.replace("login.html");
+        return;
+      }
+
+      currentUserId = authData.user.id;
+      currentEmail = authData.user.email;
+      if (!currentEmail) {
+        setPageMsg("Your account is missing an email address. Please contact support before selecting a plan.", "error");
+      }
+
+      renderPlans();
+      sessionNote.textContent = currentEmail ? "Signed in as " + currentEmail + "." : "";
+      page.classList.remove("hidden");
+    })();
+  </script>
+</body>
+</html>
