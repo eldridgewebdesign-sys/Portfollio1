@@ -526,17 +526,15 @@
     //
     // The publishable key is PUBLIC and safe in frontend code (just like the
     // Supabase anon key in supabase-config.js). The SECRET key is NEVER used
-    // here — it lives only in the serverless /api functions. Set the key below
-    // (or expose it as window.STRIPE_PUBLISHABLE_KEY from your config).
+    // here — it lives only in the serverless /api functions.
     // ====================================================================
-    const STRIPE_PUBLISHABLE_KEY =
-      (typeof window !== "undefined" && window.STRIPE_PUBLISHABLE_KEY) ||
-      "pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY";
+    const stripePublishableKey =
+      (typeof STRIPE_PUBLISHABLE_KEY !== "undefined" && STRIPE_PUBLISHABLE_KEY) || "";
 
     // Initialise Stripe once (only if the library loaded and a key is set).
     const stripe =
-      (window.Stripe && /^pk_/.test(STRIPE_PUBLISHABLE_KEY))
-        ? window.Stripe(STRIPE_PUBLISHABLE_KEY)
+      (window.Stripe && /^pk_/.test(stripePublishableKey))
+        ? window.Stripe(stripePublishableKey)
         : null;
 
     // Reuse the existing success page (success.html) as the return URL.
