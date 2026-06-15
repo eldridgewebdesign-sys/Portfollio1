@@ -12,6 +12,7 @@
 // =====================================================================
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { createClient } = require("@supabase/supabase-js");
 
 module.exports = async (req, res) => {
   // ---- CORS headers (set before any response is returned). ----
@@ -38,10 +39,37 @@ module.exports = async (req, res) => {
     // back to a query-string parameter if no body is present.
     const body =
       typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-    const customerId = body.customerId || (req.query && req.query.customerId);
+    let customerId = body.customerId || (req.query && req.query.customerId);
+    const userId = body.userId || (req.query && req.query.userId);
+
+    // If the browser sent a Supabase user id instead of a Stripe customer id
+    // (e.g. the dashboard "Manage My Subscription" button), resolve the
+    // customer from that user's subscription row using the service-role key.
+    if ((!customerId || typeof customerId !== "string") && userId) {
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        console.error("Supabase env vars are not set for customer lookup.");
+        return res.status(500).json({ error: "Server is not configured to look up billing." });
+      }
+      const supabaseAdmin = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
+      const { data: row, error: lookupErr } = await supabaseAdmin
+        .from("subscriptions")
+        .select("stripe_customer_id")
+        .eq("user_id", userId)
+        .not("stripe_customer_id", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (lookupErr) {
+        console.error("Customer lookup failed:", lookupErr.message);
+        return res.status(500).json({ error: "Could not look up your billing account." });
+      }
+      customerId = row && row.stripe_customer_id;
+    }
 
     if (!customerId || typeof customerId !== "string") {
-      return res.status(400).json({ error: "A valid customerId is required." });
+      return res.status(400).json({ error: "No billing account was found for this user." });
     }
 
     // ---- Build an absolute return URL from the incoming request. ----
