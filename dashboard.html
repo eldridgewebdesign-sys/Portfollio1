@@ -314,25 +314,52 @@
         </div>
       </div>
 
-      <!-- 3 ── Billing -->
+      <!-- 3 ── Billing / Hosting.
+           One of three states is shown, driven entirely by Supabase data:
+             • STATE 1 (#bill-none)   — no project AND no hosting
+             • STATE 2 (#bill-offer)  — has a project but no hosting → offer + picker
+             • STATE 3 (#bill-active) — active hosting → subscription details
+           See renderBilling() for the logic. -->
       <div class="tab" id="tab-billing" role="tabpanel">
         <h2 class="tab-title">Billing</h2>
-        <p class="field"><span class="f-label">Current payment method:</span> <span class="f-value" id="bill-method">…</span></p>
-        <p class="field"><span class="f-label">Hosting status:</span> <span class="f-value" id="bill-hosting">…</span>
-          <span class="f-sub" id="bill-plan"></span></p>
 
-        <!-- Plan selection → opens the Stripe Payment Element modal. Replace the
-             data-price-id values with your real Stripe Price IDs. Any element
-             with a data-price-id attribute is wired to the checkout flow. -->
-        <p class="field"><span class="f-label">Choose a plan:</span></p>
-        <div class="plan-row" id="plan-row">
-          <button class="ws-btn plan-btn" type="button" data-price-id="REPLACE_WITH_MONTHLY_PRICE_ID">Monthly Hosting</button>
-          <button class="ws-btn plan-btn" type="button" data-price-id="REPLACE_WITH_ANNUAL_PRICE_ID">Annual Hosting</button>
+        <!-- Shown only if the billing/project data fails to load. -->
+        <p class="bill-error hidden" id="bill-load-error" role="alert">We couldn’t load your billing information right now. Please refresh the page or try again later.</p>
+
+        <!-- STATE 1 — nothing purchased yet. -->
+        <p class="field hidden" id="bill-none">You have not purchased any WebSharke services yet.</p>
+
+        <!-- STATE 2 — project started, no hosting: offer to host. -->
+        <div class="hidden" id="bill-offer">
+          <p class="field">Your project is started. Would you like WebSharke to host and maintain your site?</p>
+          <button class="ws-btn" id="get-hosting" type="button">Get Started with Hosting</button>
         </div>
 
-        <button class="ws-btn" id="manage-sub">Manage My Subscription</button>
-        <p class="field"><span class="f-label">Next payment due:</span> <span class="f-value" id="bill-due">…</span></p>
-        <button class="ws-btn" id="cancel-hosting">Cancel Hosting Services</button>
+        <!-- STATE 3 — active hosting: current subscription details + management. -->
+        <div class="hidden" id="bill-active">
+          <p class="field"><span class="f-label">Current payment method:</span> <span class="f-value" id="bill-method">…</span></p>
+          <p class="field"><span class="f-label">Hosting status:</span> <span class="f-value" id="bill-hosting">…</span>
+            <span class="f-sub" id="bill-plan"></span></p>
+          <p class="field"><span class="f-label">Current plan:</span> <span class="f-value" id="bill-plan-name">…</span></p>
+          <p class="field"><span class="f-label">Next payment due:</span> <span class="f-value" id="bill-due">…</span></p>
+          <button class="ws-btn" id="manage-sub">Manage My Subscription</button>
+          <button class="ws-btn" id="cancel-hosting">Cancel Hosting Services</button>
+        </div>
+
+        <!-- Hosting plan picker (recurring hosting plans only — no one-time
+             design fees). Shown for STATE 2. Replace the data-price-id values
+             with your real Stripe Price IDs. Any element with a data-price-id
+             attribute is wired to the existing /api/checkout + modal flow. -->
+        <div class="hidden" id="hosting-plans">
+          <p class="field"><span class="f-label">Choose a hosting plan:</span></p>
+          <div class="plan-row" id="plan-row">
+            <button class="ws-btn plan-btn" type="button" data-price-id="REPLACE_WITH_MONTHLY_PRICE_ID">Monthly Hosting</button>
+            <button class="ws-btn plan-btn" type="button" data-price-id="REPLACE_WITH_ANNUAL_PRICE_ID">Annual Hosting</button>
+          </div>
+        </div>
+
+        <!-- Shared, always-in-DOM error line for billing actions (visible in
+             whichever state is active). -->
         <p class="bill-error hidden" id="bill-error" role="alert"></p>
       </div>
 
@@ -519,6 +546,16 @@
         manageBtn.disabled = false;
         manageBtn.textContent = original;
       }
+    });
+
+    // ---- "Get Started with Hosting" → jump to the on-page plan picker ----
+    // Stays on dashboard.html (no new file); just reveals + scrolls to it.
+    $("get-hosting").addEventListener("click", () => {
+      const plans = $("hosting-plans");
+      plans.classList.remove("hidden");
+      plans.scrollIntoView({ behavior: "smooth", block: "start" });
+      const firstPlan = plans.querySelector("[data-price-id]");
+      if (firstPlan) firstPlan.focus({ preventScroll: true });
     });
 
     // ====================================================================
@@ -712,32 +749,9 @@
       $("acc-email").textContent = show(user.email);
       $("acc-phone").textContent = show(inquiry.cell_phone || user.phone || meta.phone);
 
-      // 3) Billing ------------------------------------------------------
-      stripeCustomerId = sub.stripe_customer_id || null;
-
-      // Card details aren't synced into our DB, so fall back cleanly.
-      let method = NA;
-      if (sub.card_brand && sub.card_last4) {
-        const brand = sub.card_brand.charAt(0).toUpperCase() + sub.card_brand.slice(1);
-        method = brand + " ending in " + sub.card_last4;
-      } else if (sub.payment_method) {
-        method = sub.payment_method;
-      }
-      $("bill-method").textContent = method;
-
-      const hosting = sub.status === "active";
-      $("bill-hosting").textContent = hosting
-        ? "Currently hosting with WebSharke"
-        : "Not currently hosting with WebSharke";
-
-      // Optional plan detail line (interval / type) when available.
-      const planBits = [];
-      if (sub.plan_interval) planBits.push(/year|annual/i.test(sub.plan_interval) ? "Annually" : "Monthly");
-      if (sub.plan_type) planBits.push(sub.plan_type.charAt(0).toUpperCase() + sub.plan_type.slice(1));
-      $("bill-plan").textContent = hosting && planBits.length ? "(" + planBits.join(" · ") + ")" : "";
-
-      $("bill-due").textContent = fmtDate(sub.current_period_end || sub.next_payment_due) || NA;
-      if (!stripeCustomerId) $("cancel-hosting").disabled = true;
+      // 3) Billing / Hosting — handled separately in renderBilling() so the
+      //    three account states (no services / project-only / active hosting)
+      //    render from real Supabase booleans instead of inline guesses.
 
       // 4) Domain -------------------------------------------------------
       const domain = inquiry.domain || meta.domain || null;
@@ -837,6 +851,80 @@
       $("pd-additional").textContent    = show(inquiry.additional_info, EM);
     }
 
+    // ---- Render the Billing / Hosting section from real Supabase data ----
+    //   hasProject → a project_inquiries row exists for this user.
+    //   hasHosting → a subscriptions row with status 'active' or 'trialing'.
+    // Exactly one of the three states is shown; the rest stay fully hidden so
+    // no empty cards or placeholder subscription fields are ever displayed.
+    function renderBilling(sub, hasProject, hasHosting, billingError) {
+      sub = sub || {};
+      const loadErr  = $("bill-load-error");
+      const noneEl   = $("bill-none");
+      const offerEl  = $("bill-offer");
+      const activeEl = $("bill-active");
+      const plansEl  = $("hosting-plans");
+
+      // Reset to a clean, empty state every render.
+      loadErr.classList.add("hidden");
+      noneEl.classList.add("hidden");
+      offerEl.classList.add("hidden");
+      activeEl.classList.add("hidden");
+      plansEl.classList.add("hidden");
+      $("bill-error").classList.add("hidden");
+
+      // Keep the Stripe customer id current for the manage/cancel handlers.
+      stripeCustomerId = sub.stripe_customer_id || null;
+
+      // If we couldn't reliably load the data, show a clean error only.
+      if (billingError) { loadErr.classList.remove("hidden"); return; }
+
+      // STATE 3 — active hosting: show subscription details + management.
+      if (hasHosting) {
+        activeEl.classList.remove("hidden");
+
+        // Payment method (card details aren't always synced; fall back cleanly).
+        let method = NA;
+        if (sub.card_brand && sub.card_last4) {
+          const brand = sub.card_brand.charAt(0).toUpperCase() + sub.card_brand.slice(1);
+          method = brand + " ending in " + sub.card_last4;
+        } else if (sub.payment_method) {
+          method = sub.payment_method;
+        }
+        $("bill-method").textContent = method;
+
+        $("bill-hosting").textContent = "Currently hosting with WebSharke";
+
+        // Optional plan detail line (interval / type) when available.
+        const planBits = [];
+        if (sub.plan_interval) planBits.push(/year|annual/i.test(sub.plan_interval) ? "Annually" : "Monthly");
+        if (sub.plan_type) planBits.push(sub.plan_type.charAt(0).toUpperCase() + sub.plan_type.slice(1));
+        $("bill-plan").textContent = planBits.length ? "(" + planBits.join(" · ") + ")" : "";
+
+        // Current plan name — derive from whatever fields exist, else Not available.
+        const planName =
+          sub.plan_name || sub.plan_nickname ||
+          (sub.plan_interval ? (/year|annual/i.test(sub.plan_interval) ? "Annual Hosting" : "Monthly Hosting") : null);
+        $("bill-plan-name").textContent = show(planName, NA);
+
+        // Next payment due — Not available if missing.
+        $("bill-due").textContent = fmtDate(sub.current_period_end || sub.next_payment_due) || NA;
+
+        // No clear upgrade/change-plan flow exists, so the picker stays hidden.
+        $("cancel-hosting").disabled = !stripeCustomerId;
+        return;
+      }
+
+      // STATE 2 — has a project but no hosting: offer + hosting plan picker.
+      if (hasProject) {
+        offerEl.classList.remove("hidden");
+        plansEl.classList.remove("hidden");
+        return;
+      }
+
+      // STATE 1 — no project and no hosting.
+      noneEl.classList.remove("hidden");
+    }
+
     // ---- Page load: gate on a session, then load + render ---------------
     (async () => {
       // First, verify a real logged-in user before any dashboard data is
@@ -875,16 +963,19 @@
         inquiryError = true;
       }
 
-      // Subscription / billing row (status + Stripe customer id).
+      // Subscription / billing row (status + Stripe customer id). Track a load
+      // failure so Billing can show a clean error rather than a wrong state.
       let sub = null;
+      let subError = false;
       try {
-        const { data: rows } = await db
+        const { data: rows, error } = await db
           .from("subscriptions")
           .select("*")
           .eq("user_id", user.id)
           .limit(1);
+        if (error) throw error;
         sub = rows && rows[0] ? rows[0] : null;
-      } catch (e) { console.error("Could not load subscription:", e.message); }
+      } catch (e) { console.error("Could not load subscription:", e.message); subError = true; }
 
       // Project details intake row from `project_inquiries` for the signed-in
       // user. Most recent row wins when several exist. A load failure is kept
@@ -905,9 +996,18 @@
         projectError = true;
       }
 
+      // ---- WebSharke data rules → the two booleans Billing renders from. --
+      // hasProject: a project_inquiries row exists for this user.
+      // hasHosting: a subscriptions row with status 'active' or 'trialing'.
+      const hasProject = !!inquiry;
+      const hasHosting = !!(sub && (sub.status === "active" || sub.status === "trialing"));
+      // Can't trust the state if either query failed → show a clean error.
+      const billingError = subError || inquiryError;
+
       render(user, inquiry, sub);
       renderBusiness(inquiry, inquiryError);
       renderProject(project, projectError);
+      renderBilling(sub, hasProject, hasHosting, billingError);
     })();
   </script>
 </body>
