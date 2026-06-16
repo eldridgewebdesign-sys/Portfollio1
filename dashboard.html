@@ -4,339 +4,990 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="Tab-Logo.png" type="image/png" />
-  <title>Dashboard — Eldridge Web Design</title>
+  <title>Dashboard — WebSharke</title>
 
-  <!-- Same fonts as the portfolio + the rest of the portal -->
+  <!-- Same brand fonts as the rest of the WebSharke site (no more space theme) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Shared deep-space background + shared portal UI components -->
-  <link rel="stylesheet" href="space-bg.css" />
-  <link rel="stylesheet" href="portal.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
-    /* ---------- Dashboard layout (sits on the shared atmosphere) ---------- */
-    .dash-wrap{
-      position:relative;
-      z-index:2;             /* above stars (0) + Earth (1) */
-      max-width:640px;
-      margin:0 auto;
-      padding:8rem 1.5rem 5rem;
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --ink:#11364c;            /* deep navy — primary text */
+      --ink-soft:#2c5468;       /* muted coastal blue — secondary text */
+      --turq:#10b6cc;           /* turquoise — active underline / accents */
+      --panel:rgba(208,238,241,.34);
+      --panel-bd:rgba(255,255,255,.5);
+      --side:rgba(198,233,237,.46);
+      --side-bd:rgba(255,255,255,.5);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Mulish',system-ui,sans-serif;color:var(--ink);
+      min-height:100vh;position:relative;overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+      background:#36a1b3;
     }
 
-    /* ---- Header / greeting ---- */
-    .dash-head{margin-bottom:2.2rem}
-    .dash-title{font-size:clamp(2rem,5.5vw,3rem);margin:.6rem 0 .6rem}
-    .dash-email{color:var(--tm);font-size:.92rem}
-    .dash-email span{color:var(--s);font-weight:600;word-break:break-all}
+    /* ── Layered ocean wave background (fixed, behind everything) ───────────── */
+    .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .ocean svg{width:100%;height:100%;display:block}
 
-    /* ---- Cards (one per portal feature) ---- */
-    .dash-card{padding:2rem 1.9rem;margin-bottom:1.6rem}
-    .card-h{font-size:1.3rem;font-weight:700;letter-spacing:-.3px;margin:.5rem 0 .7rem}
-    .card-p{color:var(--tm);font-size:.92rem;line-height:1.7}
+    /* ── WebSharke logo, top-left (Main-Logo.png masked to navy so it reads on
+         the turquoise water) ───────────────────────────────────────────────── */
+    .ws-logo{
+      position:fixed;top:18px;left:26px;z-index:20;display:block;
+      width:136px;height:76px;background:var(--ink);
+      -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
+              mask:url(Main-Logo.png) left center/contain no-repeat;
+      filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
+      transition:transform .3s ease;
+    }
+    .ws-logo:hover{transform:translateY(-1px)}
 
-    /* ---- Active-plan pill ---- */
-    .plan-pill{display:inline-flex;align-items:center;gap:.55rem;margin-top:.4rem;padding:.5rem 1.1rem;border-radius:6px;background:rgba(45,212,191,.1);border:1px solid rgba(0,212,255,.3);font-size:.85rem;font-weight:600;letter-spacing:.04em;color:var(--t);text-transform:capitalize}
-    .plan-dot{width:8px;height:8px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px #00ff88;animation:pulse 2s infinite}
-    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+    /* ── Portal shell: sidebar + main panel ────────────────────────────────── */
+    .portal{
+      max-width:1180px;margin:0 auto;min-height:100vh;display:flex;
+      gap:clamp(1.1rem,2.6vw,2.2rem);
+      padding:clamp(6rem,13vh,7.5rem) clamp(1.1rem,4vw,3rem) 3rem;
+    }
 
-    /* ---- Hosting plans grid ---- */
-    .plan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.1rem;margin-top:1.4rem}
-    .plan-card{display:flex;flex-direction:column;padding:1.5rem 1.4rem;border-radius:10px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(12px) saturate(1.4);-webkit-backdrop-filter:blur(12px) saturate(1.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 22px rgba(0,0,0,.25)}
-    .plan-name{font-size:1.05rem;font-weight:700;letter-spacing:-.2px;color:var(--t);margin:0 0 .7rem}
-    .plan-price{font-size:2rem;font-weight:700;color:var(--s);line-height:1}
-    .plan-price span{font-size:.95rem;font-weight:500;color:var(--tm)}
-    .plan-interval{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--tm);margin:.5rem 0 1.3rem}
-    .plan-select{margin-top:auto;width:100%}
-    .plan-save{display:inline-block;align-self:flex-start;margin:-.6rem 0 1.2rem;padding:.3rem .7rem;border-radius:5px;font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#00ff88;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.28)}
+    /* ── Left sidebar ──────────────────────────────────────────────────────── */
+    .sidebar{
+      flex:0 0 clamp(186px,20vw,232px);align-self:flex-start;
+      position:sticky;top:clamp(6rem,13vh,7.5rem);
+      display:flex;flex-direction:column;gap:1.1rem;
+    }
+    .side-nav{
+      background:var(--side);border:1px solid var(--side-bd);border-radius:15px;
+      padding:1.3rem 1.25rem;display:flex;flex-direction:column;
+      backdrop-filter:blur(9px) saturate(1.25);-webkit-backdrop-filter:blur(9px) saturate(1.25);
+      box-shadow:0 14px 36px rgba(0,42,58,.16),inset 0 1px 0 rgba(255,255,255,.4);
+    }
+    .nav-item{
+      appearance:none;-webkit-appearance:none;background:none;border:none;
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;
+      color:var(--ink);text-align:left;cursor:pointer;width:100%;
+      padding:.5rem .15rem;border-bottom:2px solid transparent;line-height:1.2;
+      transition:color .25s,border-color .25s;
+    }
+    .nav-item:hover{color:#0c2c40}
+    .nav-item.active{border-bottom-color:var(--turq);color:#0c2c40}
+    .nav-item:focus-visible{outline:2px solid var(--turq);outline-offset:3px;border-radius:3px}
 
-    /* ---- Plan groups (hosting vs. design) stacked within the card ---- */
-    .plan-group + .plan-group{margin-top:2.2rem}
+    .signout{
+      align-self:flex-start;cursor:pointer;border:none;
+      font-family:'Mulish',sans-serif;font-weight:700;font-size:.72rem;
+      letter-spacing:.16em;text-transform:uppercase;color:#eaf2ff;
+      padding:.62rem 1.7rem;border-radius:9px;
+      background:linear-gradient(160deg,#2d57b4,#1d3f8f);
+      box-shadow:0 8px 20px rgba(18,40,90,.32),inset 0 1px 0 rgba(255,255,255,.18);
+      transition:transform .25s,box-shadow .25s,filter .25s;
+    }
+    .signout:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 12px 26px rgba(18,40,90,.4)}
 
-    /* ---- Disabled "Message us" textarea ---- */
-    textarea:disabled{opacity:.55;cursor:not-allowed;resize:none}
-    .soon-tag{display:inline-block;margin-left:.5rem;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--p);border:1px solid rgba(108,99,255,.35);border-radius:5px;padding:.18rem .6rem;vertical-align:middle}
+    /* ── Main translucent content panel ────────────────────────────────────── */
+    .panel{
+      flex:1;min-width:0;align-self:flex-start;
+      background:var(--panel);border:1px solid var(--panel-bd);border-radius:18px;
+      padding:clamp(1.7rem,3vw,2.6rem) clamp(1.6rem,3vw,2.7rem);
+      backdrop-filter:blur(11px) saturate(1.18);-webkit-backdrop-filter:blur(11px) saturate(1.18);
+      box-shadow:0 20px 54px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.45);
+      min-height:clamp(360px,62vh,520px);
+    }
 
-    /* ---- Log out button (compact, lives in the top bar) ---- */
-    .logout-btn{padding:.55rem 1.4rem;font-size:.85rem}
+    .tab{display:none;animation:fade .4s ease}
+    .tab.active{display:block}
+    @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-    .hidden{display:none}
+    .tab-title{
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.7rem;
+      color:#0e2f44;margin-bottom:1.4rem;letter-spacing:.01em;
+    }
 
-    @media(max-width:560px){
-      .dash-wrap{padding-top:6.5rem}
-      .portal-nav{padding:.4rem 1rem}
-      .dash-card{padding:1.6rem 1.3rem}
-      .plan-grid{grid-template-columns:1fr}
+    /* field rows */
+    .field{font-size:1.04rem;line-height:1.6;margin-bottom:1.15rem;color:var(--ink)}
+    .f-label{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.18rem;color:#0e2f44}
+    .f-value{color:var(--ink-soft);font-weight:400}
+    .f-value.block{display:block;margin-top:.25rem}
+    .f-sub{display:block;margin-top:.35rem;font-size:.92rem;color:var(--ink-soft)}
+    .f-link{
+      display:inline-block;margin-top:.3rem;font-size:.85rem;font-weight:600;
+      color:#0f6f86;text-decoration:none;border-bottom:1px solid rgba(15,111,134,.5);cursor:pointer;
+    }
+    .f-link:hover{color:#0a566a;border-bottom-color:#0a566a}
+
+    /* action buttons inside the panel */
+    .ws-btn{
+      display:inline-block;cursor:pointer;border:none;margin-top:1.6rem;
+      font-family:'Mulish',sans-serif;font-weight:600;font-size:.82rem;
+      letter-spacing:.06em;color:#eaf6f8;
+      padding:.7rem 1.5rem;border-radius:9px;
+      background:linear-gradient(160deg,#1f93a8,#15707f);
+      box-shadow:0 8px 20px rgba(8,70,84,.3),inset 0 1px 0 rgba(255,255,255,.22);
+      transition:transform .25s,filter .25s,box-shadow .25s;text-decoration:none;
+    }
+    .ws-btn:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 12px 26px rgba(8,70,84,.38)}
+    .ws-btn:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+    .ws-btn[disabled]{opacity:.55;cursor:not-allowed;transform:none;filter:none}
+    #manage-sub{margin-top:1.3rem}
+    .bill-error{display:block;margin-top:1.1rem;padding:.7rem .95rem;border-radius:10px;font-size:.92rem;line-height:1.5;color:#7c1d29;background:rgba(255,255,255,.44);border:1px solid rgba(150,40,52,.4)}
+
+    /* privacy warning */
+    .warn{
+      margin-top:1rem;padding:1rem 1.1rem;border-radius:11px;font-size:.96rem;line-height:1.6;
+      color:#0e2f44;background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.55);
+    }
+
+    /* domain preview card */
+    .domain-preview{
+      display:flex;align-items:center;justify-content:center;text-align:center;
+      margin-top:1.2rem;min-height:clamp(180px,34vh,300px);padding:2rem;
+      background:#fff;border-radius:16px;text-decoration:none;color:#1d4257;
+      box-shadow:0 16px 40px rgba(0,40,55,.22);transition:transform .3s,box-shadow .3s;
+    }
+    a.domain-preview{cursor:pointer}
+    a.domain-preview:hover{transform:translateY(-3px);box-shadow:0 24px 52px rgba(0,40,55,.3)}
+    .dp-inner{max-width:34ch}
+    .dp-name{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.5rem;color:#11364c;word-break:break-word}
+    .dp-hint{display:block;margin-top:.5rem;font-size:.85rem;letter-spacing:.04em;color:#5a7e8c}
+
+    /* ── Plan buttons (Billing) ────────────────────────────────────────────── */
+    .plan-row{display:flex;flex-wrap:wrap;gap:.7rem;margin:.6rem 0 .4rem}
+    .plan-row .ws-btn{margin-top:0}
+
+    /* ── Stripe Payment Element modal (navy/teal beach theme) ──────────────── */
+    .pay-overlay{
+      position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+      padding:1.2rem;background:rgba(7,30,40,.55);
+      backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    }
+    .pay-card{
+      width:100%;max-width:460px;max-height:92vh;overflow-y:auto;
+      background:rgba(234,247,249,.97);border:1px solid var(--panel-bd);border-radius:18px;
+      padding:clamp(1.5rem,3vw,2.1rem);
+      box-shadow:0 26px 64px rgba(0,30,45,.45),inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .pay-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.1rem}
+    .pay-title{
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.55rem;
+      color:#0e2f44;letter-spacing:.01em;line-height:1.15;
+    }
+    .pay-close{
+      appearance:none;-webkit-appearance:none;background:none;border:none;cursor:pointer;
+      font-size:1.6rem;line-height:1;color:var(--ink-soft);padding:.1rem .35rem;border-radius:8px;
+      transition:color .2s,background .2s;
+    }
+    .pay-close:hover{color:#0c2c40;background:rgba(255,255,255,.5)}
+    .pay-close:focus-visible{outline:2px solid var(--turq);outline-offset:2px}
+    #payment-element{margin:.3rem 0 1.1rem;min-height:44px}
+    .pay-actions{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+    .pay-actions .ws-btn{margin-top:0}
+    .pay-cancel{
+      cursor:pointer;border:1px solid rgba(17,54,76,.3);background:rgba(255,255,255,.5);
+      font-family:'Mulish',sans-serif;font-weight:600;font-size:.82rem;letter-spacing:.06em;color:var(--ink);
+      padding:.7rem 1.4rem;border-radius:9px;transition:background .2s,border-color .2s;
+    }
+    .pay-cancel:hover{background:rgba(255,255,255,.78);border-color:var(--turq)}
+    .pay-cancel:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+    .pay-cancel[disabled]{opacity:.55;cursor:not-allowed}
+    .pay-msg{display:none;margin-top:1rem;padding:.7rem .95rem;border-radius:10px;font-size:.92rem;line-height:1.5}
+    .pay-msg.show{display:block}
+    .pay-msg.error{color:#7c1d29;background:rgba(255,255,255,.6);border:1px solid rgba(150,40,52,.4)}
+    .pay-msg.success{color:#0c5a40;background:rgba(255,255,255,.6);border:1px solid rgba(30,140,90,.4)}
+    @media(max-width:420px){
+      .pay-actions .ws-btn,.pay-cancel{width:100%;text-align:center}
+    }
+
+    .hidden{display:none !important}
+
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+    /* ── Responsive: stack the nav above the content on small screens ───────── */
+    @media(max-width:780px){
+      .ws-logo{width:114px;height:64px;top:14px;left:16px}
+      .portal{flex-direction:column;padding:5rem 1.1rem 3rem;gap:1rem}
+      .sidebar{position:static;flex:none;width:100%;flex-direction:column;gap:.9rem}
+      .side-nav{flex-direction:row;flex-wrap:wrap;gap:.25rem 1.1rem;padding:1rem 1.1rem}
+      .nav-item{width:auto;font-size:1.08rem}
+      .panel{padding:1.5rem 1.4rem;min-height:auto}
+    }
+    @media(max-width:420px){
+      .nav-item{font-size:1rem}
+      .field,.warn{font-size:.96rem}
     }
   </style>
 </head>
 <body>
 
-  <!-- Shared background layers (identical to the portfolio) -->
-  <div id="grain"></div>
-  <canvas id="stars-canvas"></canvas>
-  <canvas id="planets-canvas"></canvas>
-  <div id="earth-wrap"><canvas id="earth-canvas" width="380" height="380"></canvas></div>
+  <!-- ── Layered turquoise ocean waves ──────────────────────────────────────── -->
+  <div class="ocean" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="900" fill="#39a4b6"/>
+      <path d="M0 96 C240 58 480 134 720 96 C960 58 1200 134 1440 96 L1440 900 L0 900 Z" fill="#5ec3d1"/>
+      <path d="M0 222 C240 184 480 260 720 222 C960 184 1200 260 1440 222 L1440 900 L0 900 Z" fill="#2f9aac"/>
+      <path d="M0 348 C240 388 480 312 720 348 C960 388 1200 312 1440 348 L1440 900 L0 900 Z" fill="#6fcdd9"/>
+      <path d="M0 474 C240 436 480 512 720 474 C960 436 1200 512 1440 474 L1440 900 L0 900 Z" fill="#37a2b4"/>
+      <path d="M0 600 C240 640 480 564 720 600 C960 640 1200 564 1440 600 L1440 900 L0 900 Z" fill="#63c5d3"/>
+      <path d="M0 726 C240 688 480 764 720 726 C960 688 1200 764 1440 726 L1440 900 L0 900 Z" fill="#2c92a4"/>
+      <path d="M0 822 C240 856 480 792 720 822 C960 856 1200 792 1440 822 L1440 900 L0 900 Z" fill="#57bccb"/>
+    </svg>
+  </div>
 
-  <!-- Brand bar: same logo as the rest of the portal + the Log out button -->
-  <nav class="portal-nav">
-    <a href="portfolio.html" class="portal-logo" aria-label="Eldridge Web Design — home">
-      <img src="Main-Logo.png" alt="Eldridge Web Design" />
-    </a>
-    <button id="logout-btn" class="btn btn-s logout-btn">Log out</button>
-  </nav>
+  <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
+  <a class="ws-logo" href="index.html" aria-label="WebSharke — home"></a>
 
-  <!-- Main content stays hidden until we confirm a logged-in session, so
-       logged-out visitors never see a flash of the dashboard before the
-       redirect to login.html runs. -->
-  <main class="dash-wrap hidden" id="dash">
+  <!-- Stays hidden until a logged-in session is confirmed (no flash of the
+       dashboard before the redirect to login.html runs). -->
+  <main class="portal hidden" id="dash">
+    <h1 class="sr-only">WebSharke account dashboard</h1>
 
-    <!-- ---------- Header ---------- -->
-    <div class="dash-head">
-      <div class="sec-lbl">Client Portal</div>
-      <h1 class="disp dash-title">Welcome <span class="grad">back</span></h1>
-      <p class="dash-email">Signed in as <span id="user-email">…</span></p>
-    </div>
+    <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+    <aside class="sidebar">
+      <nav class="side-nav" role="tablist" aria-label="Dashboard sections">
+        <button class="nav-item active" role="tab" aria-selected="true"  data-tab="account">Account info</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="business">Business info</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="project">Project details</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="billing">Billing</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="domain">Domain</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="privacy">Privacy</button>
+      </nav>
+      <button class="signout" id="signout">Sign Out</button>
+    </aside>
 
-    <!-- ---------- Plan / subscription card ---------- -->
-    <section class="dash-card glass-card">
-      <div class="sec-lbl">Your Plan</div>
+    <!-- ── Main content panel ───────────────────────────────────────────────── -->
+    <section class="panel">
 
-      <!-- Shown when the subscription row exists AND status === 'active' -->
-      <div id="plan-active" class="hidden">
-        <h2 class="card-h">Hosting &amp; Maintenance</h2>
-        <span class="plan-pill"><span class="plan-dot"></span><span id="plan-status">active</span></span>
-        <p class="card-p" style="margin-top:1rem">Your plan is active. Thanks for being a client.</p>
+      <!-- 1 ── Account info -->
+      <div class="tab active" id="tab-account" role="tabpanel">
+        <h2 class="tab-title">Account info</h2>
+        <p class="field"><span class="f-label">Name:</span> <span class="f-value" id="acc-name">…</span></p>
+        <p class="field"><span class="f-label">Email:</span> <span class="f-value" id="acc-email">…</span></p>
+        <p class="field">
+          <span class="f-label">Password:</span> <span class="f-value">Hidden for security</span>
+          <a class="f-link" id="verify-session" role="button" tabindex="0">Verify session</a>
+          <a class="f-link" id="reset-pw" role="button" tabindex="0">Reset Password</a>
+          <span class="f-sub hidden" id="pw-verify-status"></span>
+        </p>
+        <p class="field"><span class="f-label">Phone Number:</span> <span class="f-value" id="acc-phone">…</span></p>
       </div>
 
-      <!-- Shown when there is NO row, or status is anything other than 'active' -->
-      <div id="plan-none" class="hidden">
-
-        <!-- ---- Group 1: recurring hosting plans ---- -->
-        <div class="plan-group">
-          <div class="sec-lbl">Hosting Plans</div>
-          <div class="plan-grid">
-            <div class="plan-card">
-              <h3 class="plan-name">Frontend Monthly</h3>
-              <div class="plan-price">$25<span> /mo</span></div>
-              <div class="plan-interval">Monthly</div>
-              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Tas6t5dqO1i8gb893TyaGKs">Select This Plan</button>
-            </div>
-            <div class="plan-card">
-              <h3 class="plan-name">Frontend Annual</h3>
-              <div class="plan-price">$250<span> /yr</span></div>
-              <div class="plan-interval">Annual</div>
-              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Tas4F5dqO1i8gb84xFztzu6">Select This Plan</button>
-            </div>
-            <div class="plan-card">
-              <h3 class="plan-name">Full Stack Monthly</h3>
-              <div class="plan-price">$49.99<span> /mo</span></div>
-              <div class="plan-interval">Monthly</div>
-              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Te82R5dqO1i8gb8tug1dYUD">Select This Plan</button>
-            </div>
-            <div class="plan-card">
-              <h3 class="plan-name">Full Stack Annual</h3>
-              <div class="plan-price">$500<span> /yr</span></div>
-              <div class="plan-interval">Annual</div>
-              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Te8595dqO1i8gb8nB40CyYe">Select This Plan</button>
-            </div>
-          </div>
+      <!-- 2 ── Business info -->
+      <div class="tab" id="tab-business" role="tabpanel">
+        <h2 class="tab-title">Business info</h2>
+        <p class="bill-error hidden" id="biz-error" role="alert">We couldn’t load your business information right now. Please refresh the page or try again later.</p>
+        <p class="field hidden" id="biz-empty">No business information on file yet.</p>
+        <div id="biz-fields" class="hidden">
+          <p class="field"><span class="f-label">Business name:</span> <span class="f-value" id="biz-business-name">…</span></p>
+          <p class="field"><span class="f-label">Business description:</span> <span class="f-value block" id="biz-business-description">…</span></p>
+          <p class="field"><span class="f-label">Products / Services:</span> <span class="f-value block" id="biz-products-services">…</span></p>
+          <p class="field"><span class="f-label">Website goals:</span> <span class="f-value block" id="biz-website-goals">…</span></p>
+          <p class="field"><span class="f-label">Visitor actions:</span> <span class="f-value block" id="biz-visitor-actions">…</span></p>
+          <p class="field"><span class="f-label">Websites liked:</span> <span class="f-value block" id="biz-websites-liked">…</span></p>
+          <p class="field"><span class="f-label">Preferred styles:</span> <span class="f-value block" id="biz-preferred-styles">…</span></p>
+          <p class="field"><span class="f-label">Color preferences:</span> <span class="f-value block" id="biz-color-preferences">…</span></p>
+          <p class="field"><span class="f-label">Design notes:</span> <span class="f-value block" id="biz-design-notes">…</span></p>
+          <p class="field"><span class="f-label">Additional info:</span> <span class="f-value block" id="biz-additional-info">…</span></p>
         </div>
-
-        <!-- ---- Group 2: one-time website design packages ---- -->
-        <div class="plan-group">
-          <div class="sec-lbl">Website Design Packages</div>
-          <div class="plan-grid">
-            <div class="plan-card">
-              <h3 class="plan-name">Website Full Design (Frontend)</h3>
-              <div class="plan-price">$750</div>
-              <div class="plan-interval">One-Time Purchase</div>
-              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Tarmd5dqO1i8gb86Z84Tilo">Select This Plan</button>
-            </div>
-            <div class="plan-card">
-              <h3 class="plan-name">Website Full Design (Full-Stack)</h3>
-              <div class="plan-price">$1500</div>
-              <div class="plan-interval">One-Time Purchase</div>
-              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Te8P25dqO1i8gb8Ko46gihm">Select This Plan</button>
-            </div>
-            <div class="plan-card">
-              <h3 class="plan-name">Website Full Design (Frontend + One Year Hosting)</h3>
-              <div class="plan-price">$800</div>
-              <div class="plan-interval">One-Time Purchase</div>
-              <button type="button" class="btn btn-p plan-select" data-price-id="price_1TeImg5dqO1i8gb8vrYhckyi">Select This Plan</button>
-            </div>
-            <div class="plan-card">
-              <h3 class="plan-name">Website Full Design (Full-Stack + One Year Hosting)</h3>
-              <div class="plan-price">$1750</div>
-              <div class="plan-interval">One-Time Purchase</div>
-              <button type="button" class="btn btn-p plan-select" data-price-id="price_1Te8RT5dqO1i8gb875YtaV11">Select This Plan</button>
-            </div>
-          </div>
-        </div>
-
       </div>
-    </section>
 
-    <!-- ---------- Message us card (placeholder, not wired up) ---------- -->
-    <section class="dash-card glass-card">
-      <div class="sec-lbl">Message Us</div>
-      <h2 class="card-h">Questions or changes?<span class="soon-tag">Coming soon</span></h2>
-      <p class="card-p" style="margin-bottom:1rem">Messaging will be enabled here soon. For now, this is just a preview.</p>
-      <!-- Disabled on purpose — the messaging backend is a later step. -->
-      <textarea class="fi" disabled placeholder="Messaging will be enabled soon…"></textarea>
-    </section>
+      <!-- 2b ── Project / intake details (from project_inquiries) -->
+      <div class="tab" id="tab-project" role="tabpanel">
+        <h2 class="tab-title">Project details</h2>
 
+        <!-- Shown only if the intake row fails to load. -->
+        <p class="bill-error hidden" id="proj-error" role="alert">We couldn’t load your project details right now. Please refresh the page or try again later.</p>
+
+        <!-- Shown when the user has no intake record on file. -->
+        <p class="field hidden" id="proj-empty">No project details on file yet.</p>
+
+        <!-- The intake fields (hidden until a record is present). -->
+        <div id="proj-fields" class="hidden">
+          <p class="field"><span class="f-label">Business name:</span> <span class="f-value" id="pd-business-name">…</span></p>
+          <p class="field"><span class="f-label">Business description:</span> <span class="f-value block" id="pd-business-desc">…</span></p>
+          <p class="field"><span class="f-label">Products / Service:</span> <span class="f-value block" id="pd-products">…</span></p>
+          <p class="field"><span class="f-label">Website goals:</span> <span class="f-value block" id="pd-goals">…</span></p>
+          <p class="field"><span class="f-label">Visitor actions:</span> <span class="f-value block" id="pd-actions">…</span></p>
+          <p class="field"><span class="f-label">Preferred styles:</span> <span class="f-value" id="pd-styles">…</span></p>
+          <p class="field"><span class="f-label">Color preferences:</span> <span class="f-value" id="pd-colors">…</span></p>
+          <p class="field"><span class="f-label">Design notes:</span> <span class="f-value block" id="pd-design-notes">…</span></p>
+          <p class="field"><span class="f-label">Additional info:</span> <span class="f-value block" id="pd-additional">…</span></p>
+        </div>
+      </div>
+
+      <!-- 3 ── Billing / Hosting.
+           Two states, driven entirely by Supabase subscription data:
+             • EMPTY  (#bill-none)   — no website/hosting/subscription →
+                                       one message + "View Plans" (→ payment.html)
+             • ACTIVE (#bill-active) — has hosting/subscription → full details
+           See renderBilling() for the logic. -->
+      <div class="tab" id="tab-billing" role="tabpanel">
+        <h2 class="tab-title">Billing</h2>
+
+        <!-- Shown only if the billing data fails to load. -->
+        <p class="bill-error hidden" id="bill-load-error" role="alert">We couldn’t load your billing information right now. Please refresh the page or try again later.</p>
+
+        <!-- EMPTY STATE — no website/hosting/subscription with WebSharke. -->
+        <div class="hidden" id="bill-none">
+          <p class="field">You do not have a website with WebSharke yet.</p>
+          <a class="ws-btn" id="view-plans" href="payment.html">View Plans</a>
+        </div>
+
+        <!-- ACTIVE STATE — current subscription details + management. -->
+        <div class="hidden" id="bill-active">
+          <p class="field"><span class="f-label">Current payment method:</span> <span class="f-value" id="bill-method">…</span></p>
+          <p class="field"><span class="f-label">Hosting status:</span> <span class="f-value" id="bill-hosting">…</span>
+            <span class="f-sub" id="bill-plan"></span></p>
+          <p class="field"><span class="f-label">Current plan:</span> <span class="f-value" id="bill-plan-name">…</span></p>
+          <p class="field"><span class="f-label">Next payment due:</span> <span class="f-value" id="bill-due">…</span></p>
+          <button class="ws-btn" id="manage-sub">Manage My Subscription</button>
+          <button class="ws-btn" id="cancel-hosting">Cancel Hosting Services</button>
+        </div>
+
+        <!-- Shared, always-in-DOM error line for billing actions. -->
+        <p class="bill-error hidden" id="bill-error" role="alert"></p>
+      </div>
+
+      <!-- 4 ── Domain -->
+      <div class="tab" id="tab-domain" role="tabpanel">
+        <h2 class="tab-title">Domain</h2>
+        <p class="field"><span class="f-label">Current domain:</span> <span class="f-value" id="dom-name">…</span></p>
+        <a class="domain-preview" id="dom-preview" target="_blank" rel="noopener">
+          <span class="dp-inner">
+            <span class="dp-name" id="dom-preview-name">…</span>
+            <span class="dp-hint" id="dom-preview-hint"></span>
+          </span>
+        </a>
+        <button class="ws-btn" id="change-domain">Change Domain</button>
+      </div>
+
+      <!-- 5 ── Privacy -->
+      <div class="tab" id="tab-privacy" role="tabpanel">
+        <h2 class="tab-title">Privacy</h2>
+        <p class="field" id="priv-status">…</p>
+        <p class="warn hidden" id="priv-warning">If terms of service are not agreed upon, WebSharke reserves the right to take down any and every product regardless of payment.</p>
+        <a class="ws-btn" id="tos-btn" role="button">terms of service</a>
+      </div>
+
+    </section>
   </main>
 
-  <!-- ================================================================= -->
-  <!-- Libraries + shared scripts:                                       -->
-  <!--  1. Three.js (Earth globe in space-bg.js)                         -->
-  <!--  2. space-bg.js — nebula/stars + Earth                            -->
-  <!--  3. Supabase v2 + shared config (creates the global `db`)         -->
-  <!-- ================================================================= -->
-  <script>window.SPACE_STATIC=true;</script> <!-- authenticated area → frozen planets/Earth -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="space-bg.js"></script>
-  <script src="planets.js"></script>
+  <!-- ── Stripe Payment Element modal (hidden until a plan is chosen) ────────── -->
+  <div class="pay-overlay hidden" id="pay-overlay" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+    <div class="pay-card">
+      <div class="pay-head">
+        <h2 class="pay-title" id="pay-title">Complete your payment</h2>
+        <button class="pay-close" id="pay-close" type="button" aria-label="Close payment dialog">&times;</button>
+      </div>
+      <div id="payment-element"><!-- Stripe Payment Element mounts here --></div>
+      <div class="pay-actions">
+        <button class="ws-btn" id="pay-submit" type="button">Pay</button>
+        <button class="pay-cancel" id="pay-cancel" type="button">Cancel</button>
+      </div>
+      <p class="pay-msg" id="pay-msg" role="alert"></p>
+    </div>
+  </div>
+
+  <!-- ── Supabase (shared client `db`) — same config every page uses ────────── -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-
-  <!-- Stripe.js (official CDN) + the PUBLIC publishable key. The publishable
-       key is safe in client code by design; the SECRET key never appears here
-       and must only ever be used by trusted server-side code. -->
+  <!-- Stripe.js (official CDN) — used for the Payment Element modal below. -->
   <script src="https://js.stripe.com/v3/"></script>
-  <script>
-    window.STRIPE_PUBLISHABLE_KEY = "pk_live_51TaqBE5dqO1i8gb8zAUkVeCeQu1OOMeKnnrKEHDUcxpeJXF8rwXBm2B2EMtIaqm87YNr5U1QZG8V2YiWhe1t8R6600LsZqnsXr";
-    // `Stripe` is the global from Stripe.js above; init lazily so the rest of
-    // the page is unaffected if/when checkout code needs it.
-    window.stripe = window.Stripe ? Stripe(window.STRIPE_PUBLISHABLE_KEY) : null;
-  </script>
 
   <script>
     // =================================================================
-    // DASHBOARD LOGIC (logged-in clients only).
-    //
-    // The shared Supabase client `db` comes from supabase-config.js,
-    // which holds the same SUPABASE_URL + SUPABASE_ANON_KEY that
-    // login.html uses. (The service_role secret key is NEVER here.)
+    // WebSharke dashboard logic. Auth + data come from the shared
+    // Supabase client `db` (supabase-config.js). The Stripe SECRET key
+    // is never here — billing management opens the hosted Stripe
+    // customer portal via the existing /api/customer-portal function.
     // =================================================================
 
-    // ---- Grab the elements we'll update. ----
-    const dash = document.getElementById("dash");
-    const userEmailSpan = document.getElementById("user-email");
-    const planActive = document.getElementById("plan-active");
-    const planNone = document.getElementById("plan-none");
-    const planStatus = document.getElementById("plan-status");
-    const logoutBtn = document.getElementById("logout-btn");
+    // WebSharke support contact (used for actions that have no self-serve
+    // flow yet, e.g. domain changes / requesting the terms of service).
+    const SUPPORT_EMAIL = "weeldridge09@gmail.com";
 
-    // ---- LOG OUT — end the session, then go back to the login page. ----
-    logoutBtn.addEventListener("click", async () => {
-      await db.auth.signOut();
-      window.location.replace("login.html");
-    });
+    const FALLBACK = "Not provided";
+    const NA = "Not available";
 
-    // ---- Plan selection → Stripe Checkout. ----
-    // Each plan button carries its Stripe price ID in data-price-id. The
-    // browser only ever sends this PUBLIC price ID; the secret key lives in
-    // the /api/checkout serverless function, which also picks subscription
-    // vs. one-time mode from the price.
-    document.querySelectorAll(".plan-select").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const priceId = btn.dataset.priceId;
-        if (!priceId) {
-          console.error("No Stripe price ID on plan button:", btn);
-          alert("Sorry, this plan isn't available right now. Please contact support.");
-          return;
-        }
+    // Return `val` when it's a usable value, otherwise the fallback text.
+    function show(val, fallback) {
+      if (val === null || val === undefined) return fallback || FALLBACK;
+      const s = String(val).trim();
+      return s === "" ? (fallback || FALLBACK) : s;
+    }
+    const $ = (id) => document.getElementById(id);
 
-        // Loading state — also guards against double-clicks mid-request.
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = "Redirecting…";
-
-        try {
-          // 0. Identify the logged-in user so checkout can be tied to them.
-          const {
-            data: { user },
-          } = await db.auth.getUser();
-          if (!user) {
-            throw new Error("You must be signed in to choose a plan.");
-          }
-
-          // 1. Ask our serverless function to create a Checkout Session.
-          const res = await fetch("/api/checkout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ priceId, userId: user.id, email: user.email }),
-          });
-          const data = await res.json().catch(() => ({}));
-
-          if (!res.ok || !data.url) {
-            throw new Error(data.error || "Could not start checkout.");
-          }
-
-          // 2. Redirect the browser to Stripe's hosted checkout page.
-          window.location.href = data.url;
-        } catch (err) {
-          // 3. Surface the failure and restore the button so they can retry.
-          console.error("Checkout failed:", err);
-          alert(err.message || "Something went wrong starting checkout. Please try again.");
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
+    // ---- Tab switching --------------------------------------------------
+    const navItems = document.querySelectorAll(".nav-item");
+    navItems.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.dataset.tab;
+        navItems.forEach((b) => {
+          const on = b === btn;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        document.querySelectorAll(".tab").forEach((t) => {
+          t.classList.toggle("active", t.id === "tab-" + tab);
+        });
       });
     });
 
-    // ---- Decide which plan view to show. ----
-    // sub is the user's subscriptions row, or null if they don't have one.
-    function renderPlan(sub) {
-      if (sub && sub.status === "active") {
-        // They have an active plan — show its status.
-        planStatus.textContent = sub.status;
-        planActive.classList.remove("hidden");
-        planNone.classList.add("hidden");
-      } else {
-        // No row at all, or status isn't "active" — show the placeholder.
-        planNone.classList.remove("hidden");
-        planActive.classList.add("hidden");
+    // ---- Sign out -------------------------------------------------------
+    $("signout").addEventListener("click", async () => {
+      try { await db.auth.signOut(); } catch (e) { /* ignore */ }
+      window.location.replace("login.html");
+    });
+
+    // ---- Verify session (re-validates the Supabase session with the server;
+    //      never fetches, stores, or reveals the real password) -------------
+    $("verify-session").addEventListener("click", () => doVerifySession());
+    $("verify-session").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doVerifySession(); } });
+    async function doVerifySession() {
+      const statusEl = $("pw-verify-status");
+      try {
+        // getUser() validates the current session/JWT against Supabase.
+        const { data, error } = await db.auth.getUser();
+        if (error || !data || !data.user) throw new Error("session");
+        statusEl.textContent = "Email verified this session. You can reset your password securely.";
+      } catch (_) {
+        statusEl.textContent = "Could not verify your session. Please sign in again.";
+      }
+      statusEl.classList.remove("hidden");
+    }
+
+    // ---- Reset password (real Supabase auth, never reveals a password) --
+    $("reset-pw").addEventListener("click", () => doReset());
+    $("reset-pw").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doReset(); } });
+    let resetEmail = null;
+    async function doReset() {
+      if (!resetEmail) return;
+      try {
+        const { error } = await db.auth.resetPasswordForEmail(resetEmail, {
+          redirectTo: window.location.origin + "/login.html",
+        });
+        if (error) throw error;
+        alert("Password reset link sent to " + resetEmail + ". Check your inbox.");
+      } catch (err) {
+        alert(err.message || "Could not send a reset link right now. Please try again.");
       }
     }
 
-    // ---- PAGE LOAD — gate the page on a logged-in session. ----
-    (async () => {
-      // 1. Is anyone logged in?
-      const { data } = await db.auth.getSession();
+    // ---- Change domain / terms of service: contact support (no self-serve
+    //      flow exists yet, so these open a pre-addressed email). ----------
+    $("change-domain").addEventListener("click", () => {
+      window.location.href =
+        "mailto:" + SUPPORT_EMAIL + "?subject=" + encodeURIComponent("WebSharke — domain change request");
+    });
+    $("tos-btn").addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href =
+        "mailto:" + SUPPORT_EMAIL + "?subject=" + encodeURIComponent("WebSharke — terms of service request");
+    });
 
-      // 2. No session → this page is private, so send them to login.
-      if (!data.session) {
+    // ---- Cancel hosting → Stripe customer portal ------------------------
+    let stripeCustomerId = null;
+    $("cancel-hosting").addEventListener("click", async () => {
+      const btn = $("cancel-hosting");
+      if (!stripeCustomerId) {
+        alert("No active billing account was found. If you believe this is a mistake, contact " + SUPPORT_EMAIL + ".");
+        return;
+      }
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Opening billing…";
+      try {
+        const res = await fetch("/api/customer-portal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customerId: stripeCustomerId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.url) throw new Error(data.error || "Could not open the billing portal.");
+        window.location.href = data.url; // Stripe-hosted portal (manage/cancel)
+      } catch (err) {
+        alert(err.message || "Could not open billing right now. Please try again.");
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
+
+    // ---- Manage My Subscription → Stripe customer portal (by user id) ----
+    const manageBtn = $("manage-sub");
+    const billError = $("bill-error");
+    function showBillError(msg) {
+      billError.textContent = msg;
+      billError.classList.remove("hidden");
+    }
+    manageBtn.addEventListener("click", async () => {
+      billError.classList.add("hidden");
+      const original = manageBtn.textContent;
+      manageBtn.disabled = true;
+      manageBtn.textContent = "Opening…";
+      try {
+        // 1. Who is logged in? (reuse the existing `db` Supabase client)
+        const { data: userData, error: userErr } = await db.auth.getUser();
+        const user = userData && userData.user;
+        if (userErr) throw new Error("Could not verify your session. Please sign in again.");
+        if (!user) { showBillError("You must be signed in to manage your subscription."); return; }
+
+        // 2-4. Ask the server for a billing-portal URL for this user.
+        const res = await fetch("/api/customer-portal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        // 5-6. Redirect on success, otherwise surface a visible error.
+        if (!res.ok || !data.url) throw new Error(data.error || "Could not open the subscription portal.");
+        window.location = data.url;
+      } catch (err) {
+        showBillError(err.message || "Something went wrong opening your subscription. Please try again.");
+      } finally {
+        manageBtn.disabled = false;
+        manageBtn.textContent = original;
+      }
+    });
+
+    // ====================================================================
+    // STRIPE PAYMENT ELEMENT — plan button → /api/checkout → modal.
+    //
+    // The publishable key is PUBLIC and safe in frontend code (just like the
+    // Supabase anon key in supabase-config.js). The SECRET key is NEVER used
+    // here — it lives only in the serverless /api functions.
+    // ====================================================================
+    const stripePublishableKey =
+      (typeof STRIPE_PUBLISHABLE_KEY !== "undefined" && STRIPE_PUBLISHABLE_KEY) || "";
+
+    // Initialise Stripe once (only if the library loaded and a key is set).
+    const stripe =
+      (window.Stripe && /^pk_/.test(stripePublishableKey))
+        ? window.Stripe(stripePublishableKey)
+        : null;
+
+    // Reuse the existing success page (success.html) as the return URL.
+    const PAYMENT_RETURN_URL = new URL("success.html", window.location.href).href;
+
+    const payOverlay = $("pay-overlay");
+    const payMsg = $("pay-msg");
+    const paySubmit = $("pay-submit");
+    const payCancel = $("pay-cancel");
+    const payClose = $("pay-close");
+
+    let payElements = null;        // current Stripe Elements instance
+    let payPaymentElement = null;  // current mounted Payment Element
+    let payBusy = false;           // true while a payment is being submitted
+
+    function setPayMsg(text, type) {
+      payMsg.textContent = text || "";
+      payMsg.className = "pay-msg" + (text ? " show " + (type || "error") : "");
+    }
+    function openPayModal() {
+      setPayMsg("");
+      payOverlay.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+    function closePayModal() {
+      if (payBusy) return; // never close mid-submit
+      payOverlay.classList.add("hidden");
+      document.body.style.overflow = "";
+      // Tear down the mounted Payment Element so re-opening never duplicates it.
+      if (payPaymentElement) { try { payPaymentElement.destroy(); } catch (e) {} }
+      payPaymentElement = null;
+      payElements = null;
+      $("payment-element").innerHTML = "";
+      setPayMsg("");
+    }
+
+    // Build a fresh Elements + Payment Element from a clientSecret and open it.
+    function mountPayment(clientSecret) {
+      // Clean up any previous mount first (covers opening the modal twice).
+      if (payPaymentElement) { try { payPaymentElement.destroy(); } catch (e) {} }
+      payPaymentElement = null;
+      $("payment-element").innerHTML = "";
+
+      payElements = stripe.elements({
+        clientSecret,
+        appearance: {
+          theme: "stripe",
+          variables: {
+            colorPrimary: "#15707f",
+            colorText: "#11364c",
+            fontFamily: "Mulish, system-ui, sans-serif",
+            borderRadius: "9px",
+          },
+        },
+      });
+      payPaymentElement = payElements.create("payment");
+      payPaymentElement.mount("#payment-element");
+      openPayModal();
+    }
+
+    // Plan button click: verify user, call /api/checkout, then open the modal.
+    async function handlePlanClick(btn) {
+      billError.classList.add("hidden");
+      const priceId = btn.getAttribute("data-price-id");
+
+      if (!stripe) {
+        showBillError("Payments aren’t available right now. Please try again later.");
+        return;
+      }
+      if (!priceId) {
+        showBillError("This plan isn’t available right now. Please contact " + SUPPORT_EMAIL + ".");
+        return;
+      }
+
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Starting…";
+      try {
+        // Who is logged in? (reuse the existing `db` Supabase client)
+        const { data: userData, error: userErr } = await db.auth.getUser();
+        const user = userData && userData.user;
+        if (userErr) throw new Error("Could not verify your session. Please sign in again.");
+        if (!user) { showBillError("You must be signed in to choose a plan."); return; }
+
+        // Ask the server for a Payment Element client secret.
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ priceId: priceId, userId: user.id, email: user.email }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Could not start checkout. Please try again.");
+        if (!data.clientSecret) throw new Error("Could not start checkout. Please try again.");
+
+        mountPayment(data.clientSecret);
+      } catch (err) {
+        showBillError(err.message || "Could not start checkout. Please try again.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    // Wire every plan button (any element carrying a data-price-id).
+    document.querySelectorAll("[data-price-id]").forEach((btn) => {
+      btn.addEventListener("click", () => handlePlanClick(btn));
+    });
+
+    // Submit the payment from inside the modal.
+    paySubmit.addEventListener("click", async () => {
+      if (!payElements || payBusy) return;
+      payBusy = true;
+      setPayMsg("");
+      const orig = paySubmit.textContent;
+      paySubmit.disabled = true;
+      payCancel.disabled = true;
+      paySubmit.textContent = "Processing…";
+      try {
+        const { error } = await stripe.confirmPayment({
+          elements: payElements,
+          confirmParams: { return_url: PAYMENT_RETURN_URL },
+          redirect: "if_required",
+        });
+        if (error) {
+          // Failed → show a clean message and re-enable the Pay button.
+          setPayMsg(error.message || "Payment could not be completed. Please try again.", "error");
+          paySubmit.disabled = false;
+          payCancel.disabled = false;
+          paySubmit.textContent = orig;
+          payBusy = false;
+          return;
+        }
+        // Succeeded without a redirect → show success, then go to success page.
+        setPayMsg("Payment successful! Redirecting…", "success");
+        window.location.href = PAYMENT_RETURN_URL;
+      } catch (err) {
+        setPayMsg(err.message || "Payment could not be completed. Please try again.", "error");
+        paySubmit.disabled = false;
+        payCancel.disabled = false;
+        paySubmit.textContent = orig;
+        payBusy = false;
+      }
+    });
+
+    // Close / cancel (disabled while a payment is in flight).
+    payClose.addEventListener("click", closePayModal);
+    payCancel.addEventListener("click", closePayModal);
+    payOverlay.addEventListener("click", (e) => { if (e.target === payOverlay) closePayModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !payOverlay.classList.contains("hidden")) closePayModal();
+    });
+
+    // ---- Helpers --------------------------------------------------------
+    function normalizeUrl(d) {
+      if (!d) return null;
+      return /^https?:\/\//i.test(d) ? d : "https://" + d;
+    }
+    function fmtDate(value) {
+      if (!value) return null;
+      // Accept unix seconds (Stripe) or ISO strings.
+      const d = typeof value === "number" ? new Date(value * 1000) : new Date(value);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    }
+
+    // ---- Render the five sections from the user's data ------------------
+    function render(user, inquiry, sub) {
+      inquiry = inquiry || {};
+      sub = sub || {};
+      const meta = user.user_metadata || {};
+
+      // 1) Account ------------------------------------------------------
+      resetEmail = user.email || null;
+      $("acc-name").textContent  = show(inquiry.full_name || meta.full_name);
+      $("acc-email").textContent = show(user.email);
+      $("acc-phone").textContent = show(inquiry.cell_phone || user.phone || meta.phone);
+
+      // 3) Billing / Hosting — handled separately in renderBilling() so the
+      //    three account states (no services / project-only / active hosting)
+      //    render from real Supabase booleans instead of inline guesses.
+
+      // 4) Domain -------------------------------------------------------
+      const domain = inquiry.domain || meta.domain || null;
+      const url = normalizeUrl(domain);
+      $("dom-name").textContent = show(domain);
+      const preview = $("dom-preview");
+      if (url) {
+        preview.setAttribute("href", url);
+        $("dom-preview-name").textContent = domain;
+        $("dom-preview-hint").textContent = "Click to open your live site ↗";
+      } else {
+        preview.removeAttribute("href");
+        preview.style.cursor = "default";
+        $("dom-preview-name").textContent = "No domain on file yet";
+        $("dom-preview-hint").textContent = "Use “Change Domain” below to add one.";
+      }
+
+      // 5) Privacy ------------------------------------------------------
+      // No terms column exists yet; default optimistic (they agreed at
+      // onboarding). Reads inquiry.terms_agreed if/when that column exists.
+      const upToDate = inquiry.terms_agreed === undefined ? true : !!inquiry.terms_agreed;
+      $("priv-status").textContent = upToDate
+        ? "You are currently up to date on the terms of service."
+        : "You are currently not up to date on the terms of service.";
+      $("priv-warning").classList.toggle("hidden", upToDate);
+    }
+
+    // ---- Render the Business info section from project_inquiries --------
+    function businessValue(val) {
+      if (val === null || val === undefined) return "—";
+      if (Array.isArray(val)) {
+        const items = val.map(businessValue).filter((item) => item !== "—");
+        return items.length ? items.join(", ") : "—";
+      }
+      if (typeof val === "object") {
+        const items = Object.values(val).map(businessValue).filter((item) => item !== "—");
+        return items.length ? items.join(", ") : "—";
+      }
+      const s = String(val).trim();
+      return s === "" ? "—" : s;
+    }
+    function renderBusiness(inquiry, inquiryError) {
+      const errEl = $("biz-error");
+      const emptyEl = $("biz-empty");
+      const fieldsEl = $("biz-fields");
+
+      errEl.classList.add("hidden");
+      emptyEl.classList.add("hidden");
+      fieldsEl.classList.add("hidden");
+
+      if (inquiryError) { errEl.classList.remove("hidden"); return; }
+      if (!inquiry) { emptyEl.classList.remove("hidden"); return; }
+
+      fieldsEl.classList.remove("hidden");
+      $("biz-business-name").textContent = businessValue(inquiry.business_name);
+      $("biz-business-description").textContent = businessValue(inquiry.business_description);
+      $("biz-products-services").textContent = businessValue(inquiry.products_services);
+      $("biz-website-goals").textContent = businessValue(inquiry.website_goals);
+      $("biz-visitor-actions").textContent = businessValue(inquiry.visitor_actions);
+      $("biz-websites-liked").textContent = businessValue(inquiry.websites_liked);
+      $("biz-preferred-styles").textContent = businessValue(inquiry.preferred_styles);
+      $("biz-color-preferences").textContent = businessValue(inquiry.color_preferences);
+      $("biz-design-notes").textContent = businessValue(inquiry.design_notes);
+      $("biz-additional-info").textContent = businessValue(inquiry.additional_info);
+    }
+
+    // ---- Render the Project details section from the intake record ------
+    // `inquiryError` true → couldn't load; `inquiry` null → none on file.
+    function renderProject(inquiry, inquiryError) {
+      const errEl = $("proj-error");
+      const emptyEl = $("proj-empty");
+      const fieldsEl = $("proj-fields");
+
+      // Reset to a known state each render.
+      errEl.classList.add("hidden");
+      emptyEl.classList.add("hidden");
+      fieldsEl.classList.add("hidden");
+
+      if (inquiryError) { errEl.classList.remove("hidden"); return; }
+      if (!inquiry) { emptyEl.classList.remove("hidden"); return; }
+
+      fieldsEl.classList.remove("hidden");
+      // Empty / null / missing individual fields display as an em dash.
+      const EM = "—";
+      $("pd-business-name").textContent = show(inquiry.business_name, EM);
+      $("pd-business-desc").textContent = show(inquiry.business_description, EM);
+      $("pd-products").textContent      = show(inquiry.products_service, EM);
+      $("pd-goals").textContent         = show(inquiry.website_goals, EM);
+      $("pd-actions").textContent       = show(inquiry.visitor_actions, EM);
+      // preferred_styles may be stored as an array; present it as a readable list.
+      const styles = Array.isArray(inquiry.preferred_styles)
+        ? inquiry.preferred_styles.filter(Boolean).join(", ")
+        : inquiry.preferred_styles;
+      $("pd-styles").textContent        = show(styles, EM);
+      $("pd-colors").textContent        = show(inquiry.color_preferences, EM);
+      $("pd-design-notes").textContent  = show(inquiry.design_notes, EM);
+      $("pd-additional").textContent    = show(inquiry.additional_info, EM);
+    }
+
+    // ---- Render the Billing / Hosting section from real Supabase data ----
+    //   hasService → a subscriptions row with status 'active' or 'trialing'
+    //                (i.e. the user has a website/hosting/subscription).
+    // Exactly one state shows; the other stays fully hidden so no empty cards
+    // or placeholder subscription fields are ever displayed.
+    function renderBilling(sub, hasService, billingError) {
+      sub = sub || {};
+      const loadErr  = $("bill-load-error");
+      const noneEl   = $("bill-none");
+      const activeEl = $("bill-active");
+
+      // Reset to a clean, empty state every render.
+      loadErr.classList.add("hidden");
+      noneEl.classList.add("hidden");
+      activeEl.classList.add("hidden");
+      $("bill-error").classList.add("hidden");
+
+      // Keep the Stripe customer id current for the manage/cancel handlers.
+      stripeCustomerId = sub.stripe_customer_id || null;
+
+      // If we couldn't reliably load the data, show a clean error only.
+      if (billingError) { loadErr.classList.remove("hidden"); return; }
+
+      // ACTIVE — user has a website/hosting/subscription: show full details.
+      if (hasService) {
+        activeEl.classList.remove("hidden");
+
+        // Payment method (card details aren't always synced; fall back cleanly).
+        let method = NA;
+        if (sub.card_brand && sub.card_last4) {
+          const brand = sub.card_brand.charAt(0).toUpperCase() + sub.card_brand.slice(1);
+          method = brand + " ending in " + sub.card_last4;
+        } else if (sub.payment_method) {
+          method = sub.payment_method;
+        }
+        $("bill-method").textContent = method;
+
+        $("bill-hosting").textContent = "Currently hosting with WebSharke";
+
+        // Optional plan detail line (interval / type) when available.
+        const planBits = [];
+        if (sub.plan_interval) planBits.push(/year|annual/i.test(sub.plan_interval) ? "Annually" : "Monthly");
+        if (sub.plan_type) planBits.push(sub.plan_type.charAt(0).toUpperCase() + sub.plan_type.slice(1));
+        $("bill-plan").textContent = planBits.length ? "(" + planBits.join(" · ") + ")" : "";
+
+        // Current plan name — derive from whatever fields exist, else Not available.
+        const planName =
+          sub.plan_name || sub.plan_nickname ||
+          (sub.plan_interval ? (/year|annual/i.test(sub.plan_interval) ? "Annual Hosting" : "Monthly Hosting") : null);
+        $("bill-plan-name").textContent = show(planName, NA);
+
+        // Next payment due — Not available if missing.
+        $("bill-due").textContent = fmtDate(sub.current_period_end || sub.next_payment_due) || NA;
+
+        $("cancel-hosting").disabled = !stripeCustomerId;
+        return;
+      }
+
+      // EMPTY — no website/hosting/subscription: one message + "View Plans".
+      noneEl.classList.remove("hidden");
+    }
+
+    // ---- Page load: gate on a session, then load + render ---------------
+    (async () => {
+      // First, verify a real logged-in user before any dashboard data is
+      // loaded or shown. If the check errors or there's no user, bounce to
+      // the login page. (#dash stays hidden until the gate passes below.)
+      const { data: authData, error: authError } = await db.auth.getUser();
+      if (authError || !authData || !authData.user) {
         window.location.replace("login.html");
         return;
       }
 
-      // 3. Logged in — reveal the dashboard and show the user's email.
-      const user = data.session.user;
-      userEmailSpan.textContent = user.email;
-      dash.classList.remove("hidden");
-
-      // 4. Look up THIS user's subscription row. Row Level Security means
-      //    they can only ever read their own row; we also filter by
-      //    user_id to be explicit. maybeSingle() returns null (no error)
-      //    when there is no matching row yet.
-      const { data: sub, error } = await db
-        .from("subscriptions")
-        .select("status")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        // If the lookup fails for any reason, fail safe to "no plan".
-        console.error("Could not load subscription:", error.message);
-        renderPlan(null);
+      const { data } = await db.auth.getSession();
+      if (!data.session) {
+        window.location.replace("login.html");
         return;
       }
+      const user = authData.user;
+      document.getElementById("dash").classList.remove("hidden");
 
-      renderPlan(sub);
+      // Most-recent intake row for this user (business + contact details).
+      // Track a load failure separately so the Project details section can
+      // show a clean error instead of an empty "none on file" state.
+      let inquiry = null;
+      let inquiryError = false;
+      try {
+        const { data: rows, error } = await db
+          .from("project_inquiries")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (error) throw error;
+        inquiry = rows && rows[0] ? rows[0] : null;
+      } catch (e) {
+        console.error("Could not load profile:", e.message);
+        inquiryError = true;
+      }
+
+      // Subscription / billing row (status + Stripe customer id). Track a load
+      // failure so Billing can show a clean error rather than a wrong state.
+      let sub = null;
+      let subError = false;
+      try {
+        const { data: rows, error } = await db
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .limit(1);
+        if (error) throw error;
+        sub = rows && rows[0] ? rows[0] : null;
+      } catch (e) { console.error("Could not load subscription:", e.message); subError = true; }
+
+      // Project details intake row from `project_inquiries` for the signed-in
+      // user. Most recent row wins when several exist. A load failure is kept
+      // separate so the section shows a clean error instead of "none on file".
+      let project = null;
+      let projectError = false;
+      try {
+        const { data: rows, error } = await db
+          .from("project_inquiries")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (error) throw error;
+        project = rows && rows[0] ? rows[0] : null;
+      } catch (e) {
+        console.error("Could not load project details:", e.message);
+        projectError = true;
+      }
+
+      // ---- WebSharke data rule → does the user have a website / hosting /
+      // subscription with WebSharke? Billing shows full details only then;
+      // otherwise it shows the "no website yet" message + View Plans link.
+      const hasService = !!(sub && (sub.status === "active" || sub.status === "trialing"));
+      // Can't trust the billing state if the subscription query failed.
+      const billingError = subError;
+
+      render(user, inquiry, sub);
+      renderBusiness(inquiry, inquiryError);
+      renderProject(project, projectError);
+      renderBilling(sub, hasService, billingError);
     })();
   </script>
 </body>

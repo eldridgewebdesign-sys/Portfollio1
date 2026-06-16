@@ -13,7 +13,7 @@ window.addEventListener('pageshow',function(){window.scrollTo(0,0)});
 <link rel="preload" as="image" href="Site_bkg.png" fetchpriority="high">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -30,30 +30,18 @@ window.addEventListener('pageshow',function(){window.scrollTo(0,0)});
   --warm:#e4cfa6;          /* warm sand accent */
 }
 html{scroll-behavior:smooth}
-body{font-family:'Jost',system-ui,sans-serif;background:var(--deep);color:var(--foam);overflow-x:hidden;position:relative;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{font-family:'Mulish',system-ui,sans-serif;background:var(--deep);color:var(--foam);overflow-x:hidden;position:relative;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
 /* ── BACKGROUND IMAGE — pixel-for-pixel, never cropped / recoloured / overlaid.
    Rendered at natural aspect, full width, anchored to the top; the page scrolls
    through it as one continuous beach → deep-ocean descent. Below the image the
    page base colour (--deep) matches the image's deepest pixels exactly. ─────── */
-#bg{position:absolute;top:0;left:0;width:100%;height:auto;z-index:-3;display:block;pointer-events:none;-webkit-user-select:none;user-select:none}
+#bg{position:absolute;top:0;left:0;width:100%;height:auto;object-fit:cover;object-position:50% 0;z-index:-3;display:block;pointer-events:none;-webkit-user-select:none;user-select:none}
 
 /* ── OCEAN FX (lightweight, CSS-driven) ─────────────────────────────────────── */
-#fish,#rays{position:absolute;left:0;right:0;z-index:-2;pointer-events:none;overflow:hidden}
-#fish{top:0;bottom:0}
+#fish{position:absolute;left:0;right:0;top:0;bottom:0;z-index:-2;pointer-events:none;overflow:hidden}
 #snow{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1s ease}
 body.submerged #snow{opacity:1}
-
-/* soft underwater light rays — live just under the surface, fade out with depth */
-#rays{top:88vh;height:150vh;mix-blend-mode:screen;
-  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 16%,#000 58%,transparent);
-          mask-image:linear-gradient(to bottom,transparent,#000 16%,#000 58%,transparent)}
-.ray{position:absolute;top:-10%;height:130%;background:linear-gradient(to bottom,rgba(190,232,238,.18),rgba(120,200,215,.05) 55%,transparent);filter:blur(17px);animation:rayGlow 9s ease-in-out infinite}
-.ray:nth-child(1){left:14%;width:clamp(70px,9vw,150px);transform:rotate(7deg);animation-delay:-1s}
-.ray:nth-child(2){left:37%;width:clamp(48px,6vw,104px);transform:rotate(-5deg);animation-delay:-4s;opacity:.85}
-.ray:nth-child(3){left:61%;width:clamp(64px,8vw,134px);transform:rotate(8deg);animation-delay:-2.4s}
-.ray:nth-child(4){left:83%;width:clamp(40px,5vw,88px);transform:rotate(-7deg);animation-delay:-6s;opacity:.7}
-@keyframes rayGlow{0%,100%{opacity:.38}50%{opacity:.95}}
 
 /* marine snow — extremely faint sinking motes, only while submerged */
 .mote{position:absolute;top:0;border-radius:50%;background:rgba(220,238,240,.85);filter:blur(.4px);opacity:0;animation:sink linear infinite}
@@ -65,27 +53,35 @@ body.submerged #snow{opacity:1}
 .fish>i{display:block;animation:bob ease-in-out infinite}
 .fish svg{display:block;width:100%;height:auto;fill:currentColor}
 .fish.rev svg{transform:scaleX(-1)}
-@keyframes swimR{from{transform:translateX(-20vw)}to{transform:translateX(122vw)}}
-@keyframes swimL{from{transform:translateX(122vw)}to{transform:translateX(-20vw)}}
+@keyframes swimR{from{transform:translateX(-26vw)}to{transform:translateX(126vw)}}
+@keyframes swimL{from{transform:translateX(126vw)}to{transform:translateX(-26vw)}}
 @keyframes bob{0%,100%{transform:translateY(-5px)}50%{transform:translateY(6px)}}
+
+/* school of small fish — a loose curved formation drifting gently down the right
+   side, only once submerged; part of the environment, never a focal point */
+.school{position:absolute;right:6%;top:158vh;width:190px;height:150px;opacity:0;transition:opacity 1.4s ease;will-change:transform;animation:schoolDrift 30s ease-in-out infinite}
+body.submerged .school{opacity:1}
+.school .sf{position:absolute;color:rgba(4,18,26,.42);animation:bob ease-in-out infinite}
+.school .sf svg{display:block;width:100%;height:auto;fill:currentColor;transform:scaleX(-1)}
+@keyframes schoolDrift{0%{transform:translate(0,0)}25%{transform:translate(-34px,26px)}50%{transform:translate(-6px,58px)}75%{transform:translate(-40px,30px)}100%{transform:translate(0,0)}}
 
 /* ── NAV ─────────────────────────────────────────────────────────────────────
    Dark over the sand, then turns to light glass once you submerge. ─────────── */
-nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:1rem 2.6rem;transition:background .55s,backdrop-filter .55s,box-shadow .55s,padding .45s}
-nav.scrolled{background:rgba(5,22,30,.5);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);box-shadow:0 1px 0 rgba(236,244,243,.07) inset,0 10px 34px rgba(0,0,0,.32);padding-top:.7rem;padding-bottom:.7rem}
-.logo{display:block;width:150px;height:84px;background:var(--ink);
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:1rem 2.6rem 1rem 1.6rem;transition:background .55s,backdrop-filter .55s,box-shadow .55s,padding .45s}
+nav.scrolled{background:linear-gradient(to bottom,rgba(6,24,33,.66) 0%,rgba(6,24,33,.3) 58%,transparent 100%);box-shadow:none;padding-top:.7rem;padding-bottom:.7rem}
+.logo{display:block;width:210px;height:118px;background:var(--ink);
   -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
           mask:url(Main-Logo.png) left center/contain no-repeat;
   transition:background .55s,filter .35s,transform .35s}
 .logo:hover{transform:translateY(-1px)}
 nav.scrolled .logo{background:var(--foam)}
-.signin{font-family:'Jost',sans-serif;font-size:.76rem;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);text-decoration:none;position:relative;padding:.45rem .2rem;transition:color .55s}
+.signin{font-family:'Mulish',sans-serif;font-size:.76rem;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);text-decoration:none;position:relative;padding:.45rem .2rem;transition:color .55s}
 .signin::after{content:'';position:absolute;left:0;bottom:0;width:0;height:1.5px;background:currentColor;transition:width .4s cubic-bezier(.4,0,.2,1)}
 .signin:hover::after{width:100%}
 nav.scrolled .signin{color:var(--foam)}
 
 /* ── BUTTON (hero CTA) ───────────────────────────────────────────────────── */
-.btn{font-family:'Jost',sans-serif;font-weight:500;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;border-radius:100px;cursor:pointer;border:none;transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s,background .4s}
+.btn{font-family:'Mulish',sans-serif;font-weight:500;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;border-radius:100px;cursor:pointer;border:none;transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s,background .4s}
 .btn-sand{padding:1.05rem 2.9rem;color:var(--ink);background:linear-gradient(135deg,#f8ecd3,#e4cfa6);box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 12px 32px rgba(16,37,54,.2),0 2px 6px rgba(16,37,54,.12)}
 .btn-sand:hover{transform:translateY(-3px);box-shadow:0 1px 0 rgba(255,255,255,.75) inset,0 20px 46px rgba(16,37,54,.28)}
 
@@ -95,62 +91,55 @@ nav.scrolled .signin{color:var(--foam)}
 .d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}.d5{transition-delay:.4s}
 
 /* ── SHARED SECTION SCAFFOLD ─────────────────────────────────────────────── */
-.sx{min-height:100vh;display:flex;align-items:center;padding:clamp(6rem,12vh,10rem) clamp(1.5rem,5vw,3rem);position:relative;z-index:1}
+.sx{min-height:auto;display:flex;align-items:center;padding:clamp(5rem,10vh,8rem) clamp(1.5rem,5vw,3rem);position:relative;z-index:1;scroll-margin-top:120px}
 .wrap{max-width:1100px;margin:0 auto;width:100%;text-align:center}
-.sec-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--foam);font-size:clamp(2.3rem,5vw,4rem);line-height:1.08;letter-spacing:.01em}
+.sec-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--foam);font-size:clamp(2.3rem,5vw,4rem);line-height:1.12;letter-spacing:.01em;text-shadow:0 2px 26px rgba(2,10,18,.5);text-wrap:balance;max-width:22ch;margin-left:auto;margin-right:auto}
 
 /* ── HERO (BEACH / SURFACE) — approved, unchanged ────────────────────────── */
-#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(8rem,22vh,13rem) 2rem 0;position:relative;z-index:1;color:var(--ink)}
-.hero-eyebrow{font-family:'Jost',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.32em;font-size:clamp(.62rem,1.15vw,.84rem);color:var(--ink-soft);max-width:42ch;line-height:2.1;margin-bottom:clamp(1.4rem,3vw,2.4rem)}
-.hero-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);font-size:clamp(3.6rem,12vw,8.8rem);line-height:.92;letter-spacing:-.01em}
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(6.5rem,17vh,9.5rem) 2rem 0;position:relative;z-index:1;color:var(--ink)}
+.hero-eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:.004em;font-size:clamp(1.35rem,3vw,2.15rem);color:var(--ink-soft);max-width:52ch;line-height:1.32;text-wrap:balance;margin:0 auto clamp(1.5rem,3.4vw,2.5rem);text-shadow:0 1px 0 rgba(255,250,240,.3),0 4px 16px rgba(16,37,54,.08)}
+.hero-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);font-size:clamp(3.6rem,12vw,8.8rem);line-height:.92;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,251,242,.42),0 10px 30px rgba(16,37,54,.13)}
 .hero-title em{font-style:italic;font-weight:500}
-.hero-cta{margin-top:clamp(2.6rem,12vh,8rem)}
+.hero-cta{margin-top:clamp(2rem,4.5vh,3.2rem)}
 /* hero intro plays after the loader hands off (body.ready) */
 #hero .anim{opacity:0;transform:translateY(28px);transition:opacity 1.1s cubic-bezier(.16,1,.3,1),transform 1.1s cubic-bezier(.16,1,.3,1)}
 body.ready #hero .anim{opacity:1;transform:none}
 #hero .a2{transition-delay:.18s}
 #hero .a3{transition-delay:.36s}
-.scroll-cue{position:absolute;bottom:2.2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.8rem;text-decoration:none;color:var(--ink-soft);font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.32em;text-transform:uppercase}
-.cue-line{width:1px;height:50px;background:linear-gradient(var(--ink-soft),transparent);position:relative;overflow:hidden}
-.cue-line::after{content:'';position:absolute;left:0;top:-60%;width:100%;height:60%;background:linear-gradient(var(--ink),transparent);animation:dive 2.3s cubic-bezier(.6,0,.4,1) infinite}
-@keyframes dive{0%{top:-60%}100%{top:100%}}
 
 /* ── HOW IT WORKS (exact reference copy, new presentation — no parchment) ──── */
-#how .wrap{max-width:660px}
-.how-body{margin-top:clamp(2rem,4vw,3rem)}
-.how-body p{font-family:'Jost',sans-serif;font-weight:300;color:var(--mist);font-size:clamp(1rem,1.4vw,1.16rem);line-height:1.95;margin-bottom:1.4rem}
-.how-close{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;color:var(--foam);font-size:clamp(1.5rem,2.8vw,2.1rem);line-height:1.4;margin-top:1.8rem}
+#how .wrap{max-width:680px}
+.how-body{margin-top:clamp(2rem,4vw,3rem);text-align:left}
+.how-body p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:clamp(1rem,1.4vw,1.16rem);line-height:1.9;margin-bottom:1.4rem}
+.how-close{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;color:var(--foam);font-size:clamp(1.5rem,2.8vw,2.1rem);line-height:1.4;margin-top:1.8rem;text-shadow:0 2px 22px rgba(2,10,18,.45)}
 
 /* ── WHY CHOOSE US — three plain text columns (as in the reference) ────────── */
-#why .sec-title img{height:.78em;width:auto;vertical-align:baseline;display:inline-block;border-radius:2px;opacity:.92}
-.why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(2.2rem,5vw,4.5rem);max-width:1000px;margin:clamp(3rem,6vw,4.5rem) auto 0}
+.why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(2.2rem,5vw,4.5rem);max-width:1080px;margin:clamp(2rem,4vw,3rem) auto 0}
 .why-col h3{font-family:'Cormorant Garamond',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
-.why-col p{font-family:'Jost',sans-serif;font-weight:300;color:var(--mist);font-size:.95rem;line-height:1.85}
+.why-col p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:.95rem;line-height:1.8}
 
 /* ── STYLES — placeholder windows (future examples go here) ────────────────── */
-.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-top:clamp(3rem,6vw,4.5rem);text-align:left}
-.style-card{position:relative;border-radius:16px;background:rgba(174,195,201,.055);border:1px solid rgba(174,195,201,.15);backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);box-shadow:inset 0 1px 0 rgba(236,244,243,.1),0 18px 46px rgba(0,0,0,.34);overflow:hidden;display:flex;flex-direction:column;aspect-ratio:16/11;transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .45s,box-shadow .45s}
-.style-card:hover{transform:translateY(-8px);border-color:rgba(98,182,198,.38);box-shadow:0 28px 62px rgba(0,0,0,.46),0 0 44px rgba(98,182,198,.12)}
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-top:clamp(2.4rem,4.5vw,3.4rem);text-align:left}
+.style-card{position:relative;border-radius:16px;background:rgba(174,195,201,.055);border:1px solid rgba(174,195,201,.15);backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);box-shadow:inset 0 1px 0 rgba(236,244,243,.1),0 18px 46px rgba(0,0,0,.34);overflow:hidden;display:flex;flex-direction:column;min-height:212px;transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .45s,box-shadow .45s}
+.style-card:hover{transform:translateY(-4px);border-color:rgba(98,182,198,.24);box-shadow:0 22px 50px rgba(0,0,0,.4)}
 .sc-bar{display:flex;gap:.5rem;padding:.95rem 1.15rem;border-bottom:1px solid rgba(174,195,201,.12);flex-shrink:0}
 .sc-dot{width:10px;height:10px;border-radius:50%;background:rgba(174,195,201,.34)}
-.sc-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.9rem;text-align:center;padding:1.5rem}
-.sc-skel{width:54%;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(174,195,201,.08),rgba(98,182,198,.22),rgba(174,195,201,.08));background-size:200% 100%;animation:shimmer 3.2s linear infinite}
-.sc-skel.s2{width:38%;animation-delay:-1.1s}
-@keyframes shimmer{0%{background-position:120% 0}100%{background-position:-120% 0}}
-.sc-label{font-family:'Jost',sans-serif;font-weight:400;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--mist);margin-top:.4rem}
+.sc-body{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:.6rem;text-align:left;padding:1.4rem 1.5rem 1.65rem}
+.sc-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.42rem;line-height:1.1;color:var(--foam);letter-spacing:.01em}
+.sc-desc{font-family:'Mulish',sans-serif;font-weight:300;font-size:.9rem;line-height:1.62;color:rgba(240,248,250,.76)}
+/* deepest section — ends the page on the content, not on empty water */
+#styles{min-height:auto;padding-top:clamp(5.5rem,11vh,8.5rem);padding-bottom:clamp(4rem,7vh,5.5rem)}
+#site-footer{position:relative;z-index:1;text-align:center;padding:1.6rem 1.5rem 2.2rem;font-family:'Mulish',sans-serif;font-weight:400;font-size:.76rem;letter-spacing:.08em;color:rgba(236,244,243,.68)}
 
 /* ── PRELOADER ───────────────────────────────────────────────────────────── */
 body.lock{overflow:hidden;height:100vh}
-#loader{position:fixed;inset:0;z-index:10000;background:radial-gradient(ellipse 60% 50% at 50% 42%,rgba(98,182,198,.1),transparent 64%),var(--deep);display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .9s cubic-bezier(.4,0,.2,1)}
-#loader.done{opacity:0;visibility:hidden;transition:opacity .9s cubic-bezier(.4,0,.2,1),visibility 0s .9s}
-.load-mark{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(2.2rem,6vw,4rem);letter-spacing:.01em;color:var(--foam);opacity:0;transform:translateY(14px);animation:lup 1.1s .2s cubic-bezier(.16,1,.3,1) forwards}
-.load-mark .l-fade{color:var(--aqua)}
-@keyframes lup{to{opacity:1;transform:none}}
-#loader.done .load-mark{opacity:0;transform:translateY(-6px) scale(.99);filter:blur(2px);transition:opacity .55s ease,transform .55s cubic-bezier(.4,0,.2,1),filter .55s ease}
+#loader{position:fixed;inset:0;z-index:10000;background:radial-gradient(ellipse 60% 50% at 50% 42%,rgba(98,182,198,.1),transparent 64%),var(--deep);display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .55s ease}
+#loader.done{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .55s ease,visibility 0s .55s}
+.load-logo{display:block;width:min(420px,62vw);height:auto;-webkit-user-select:none;user-select:none;pointer-events:none}
 
 /* ── REDUCED MOTION ──────────────────────────────────────────────────────── */
 @media(prefers-reduced-motion:reduce){
-  .fish,.fish>i,.mote,.cue-line::after,.ray,.sc-skel{animation:none!important}
+  .fish,.fish>i,.mote,.school,.school .sf{animation:none!important}
   #snow{display:none}
   html{scroll-behavior:auto}
 }
@@ -162,7 +151,7 @@ body.lock{overflow:hidden;height:100vh}
 }
 @media(max-width:680px){
   nav{padding:.8rem 1.4rem}
-  .logo{width:118px;height:66px}
+  .logo{width:160px;height:90px}
   .style-grid{grid-template-columns:1fr}
   .sx{min-height:auto;padding:clamp(5rem,14vh,7rem) 1.4rem}
   #hero{padding-top:30vh}
@@ -172,12 +161,11 @@ body.lock{overflow:hidden;height:100vh}
 <body class="lock">
 
 <div id="loader">
-  <div class="load-mark">Web<span class="l-fade">sharke</span></div>
+  <img class="load-logo" src="Main-Logo.png" alt="WebSharke">
 </div>
 
 <!-- background image + ocean fx (all behind content) -->
 <img id="bg" src="Site_bkg.png" alt="" fetchpriority="high" decoding="async">
-<div id="rays"><span class="ray"></span><span class="ray"></span><span class="ray"></span><span class="ray"></span></div>
 <div id="snow"></div>
 <div id="fish"></div>
 
@@ -199,10 +187,6 @@ body.lock{overflow:hidden;height:100vh}
   <div class="hero-cta anim a3">
     <a href="onboarding.html" class="btn btn-sand">Start a Project</a>
   </div>
-  <a href="#how" class="scroll-cue" aria-label="Scroll to dive in">
-    <span>Dive in</span>
-    <span class="cue-line"></span>
-  </a>
 </section>
 
 <!-- ── HOW IT WORKS ───────────────────────────────────────────────────────── -->
@@ -212,7 +196,7 @@ body.lock{overflow:hidden;height:100vh}
     <div class="how-body">
       <p class="rv d1">At WebSharke, we build your whole site and keep it running. Frontend, backend, security, all of it, all in one place. No agency price tag, no DIY headache.</p>
       <p class="rv d2">Right now small businesses get two bad options. Option one: pay an agency two grand for a pretty site, then get stuck with a clunky backend and bills from some other company you've never met. Option two: wrestle with Wix or GoDaddy yourself, which always looks easy until you're deep in it and nothing lines up.</p>
-      <p class="how-close rv d3">We made it stupid simple. Fill out a form. Pay. You're done.</p>
+      <p class="how-close rv d3">Fill out the form. Pick the plan. I take it from there.</p>
     </div>
   </div>
 </section>
@@ -220,19 +204,19 @@ body.lock{overflow:hidden;height:100vh}
 <!-- ── WHY CHOOSE US ──────────────────────────────────────────────────────── -->
 <section id="why" class="sx">
   <div class="wrap">
-    <h2 class="sec-title rv">Why the he<img src="images/Hockey.jpg" alt=""><img src="images/Hockey.jpg" alt=""> would I choose you over a million-dollar agency?</h2>
+    <h2 class="sec-title rv">Why choose WebSharke over a big agency?</h2>
     <div class="why-cols">
       <div class="why-col rv d1">
-        <h3>Simplicity</h3>
-        <p>Whether you're a software engineer or still use a flip phone, I handle the technical details so you can focus on your business.</p>
+        <h3>Simple</h3>
+        <p>You do not need to understand code, hosting, or dashboards. You tell me what the site needs to do, and I turn that into a working website.</p>
       </div>
       <div class="why-col rv d2">
-        <h3>We Don't Leave</h3>
-        <p>Need and update, want to change out something weekly Ill handle it. Plus a dashboard right here to manage almost everything without talking to a soul.</p>
+        <h3>Handled</h3>
+        <p>Updates, hosting, backend setup, forms, payments, and dashboard features stay in one place instead of being spread across five tools.</p>
       </div>
       <div class="why-col rv d3">
-        <h3>Honesty</h3>
-        <p>Don't expect a sales pitch. I'll be straight with you about what you need and what you're getting. I'm not going to upsale you into something you don't need.</p>
+        <h3>Honest</h3>
+        <p>No bloated sales pitch. No fake urgency. I tell you what your site actually needs and what is not worth paying for.</p>
       </div>
     </div>
   </div>
@@ -243,15 +227,17 @@ body.lock{overflow:hidden;height:100vh}
   <div class="wrap">
     <h2 class="sec-title rv">Styles</h2>
     <div class="style-grid">
-      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
-      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><span class="sc-skel"></span><span class="sc-skel s2"></span><span class="sc-label">Coming soon</span></div></div>
+      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Clean Local</h3><p class="sc-desc">Simple sites for service businesses that need trust, speed, and clear contact options.</p></div></div>
+      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Bold Landing Page</h3><p class="sc-desc">A focused one-page site built to explain the offer and push visitors toward action.</p></div></div>
+      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Premium Dark</h3><p class="sc-desc">A sharper look for brands that want depth, contrast, and a more polished feel.</p></div></div>
+      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Soft Coastal</h3><p class="sc-desc">Light, calm layouts with warm spacing, clean sections, and a relaxed visual style.</p></div></div>
+      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Modern Portfolio</h3><p class="sc-desc">A visual-first layout for showing work, projects, photos, or case studies.</p></div></div>
+      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Full Client Portal</h3><p class="sc-desc">A site with login, dashboard access, payments, forms, and backend features.</p></div></div>
     </div>
   </div>
 </section>
+
+<footer id="site-footer">© 2026 WebSharke. All rights reserved.</footer>
 
 <script>
 // ── PRELOADER ──────────────────────────────────────────────────────────────
@@ -264,9 +250,9 @@ body.lock{overflow:hidden;height:100vh}
     document.body.classList.remove('lock');
     document.body.classList.add('ready');      // triggers the hero intro
   }
-  if(document.readyState==='complete') setTimeout(finish,600);
-  else window.addEventListener('load',()=>setTimeout(finish,600));
-  setTimeout(finish,3500);
+  if(document.readyState==='complete') setTimeout(finish,200);
+  else window.addEventListener('load',()=>setTimeout(finish,200));
+  setTimeout(finish,1600);
 })();
 
 // ── SCROLL REVEAL ────────────────────────────────────────────────────────────
@@ -317,11 +303,26 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
   layer.innerHTML=html;
 })();
 
+// ── SCHOOL (small fish, loose curved formation drifting down the right) ──────
+(function(){
+  const layer=document.getElementById('fish');
+  if(!layer)return;
+  // [left%, top%, width(px)] — arranged along a gentle downward-left arc
+  const pos=[[62,8,20],[44,20,22],[26,33,22],[12,49,20],[54,38,18],[36,52,19],[68,28,16],[22,66,18]];
+  let html='<div class="school">';
+  pos.forEach(p=>{
+    const h=Math.round(p[2]*54/100);
+    html+='<i class="sf" style="left:'+p[0]+'%;top:'+p[1]+'%;width:'+p[2]+'px;height:'+h+'px;animation-duration:'+(4+Math.random()*3).toFixed(1)+'s;animation-delay:'+(-Math.random()*4).toFixed(1)+'s">'
+        + '<svg viewBox="0 0 100 54"><use href="#fishShape"/></svg></i>';
+  });
+  html+='</div>';
+  layer.insertAdjacentHTML('beforeend',html);
+})();
+
 // ── SCROLL: nav state + submerged class + very subtle parallax ───────────────
 (function(){
   const nav=document.getElementById('navbar');
   const fish=document.getElementById('fish');
-  const rays=document.getElementById('rays');
   let ticking=false;
   function update(){
     ticking=false;
@@ -331,13 +332,27 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
     const past=y>waterline-70;
     nav.classList.toggle('scrolled',past);
     document.body.classList.toggle('submerged',y>waterline*0.55);
-    // foreground (fish) drift slightly faster than the page; rays lag slightly
+    // foreground (fish) drift slightly faster than the page
     if(fish) fish.style.transform='translateY('+(-y*0.05)+'px)';
-    if(rays) rays.style.transform='translateY('+(y*0.03)+'px)';
   }
   window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(update);}},{passive:true});
   window.addEventListener('resize',update,{passive:true});
   update();
+})();
+
+// ── FIT BACKGROUND TO CONTENT ────────────────────────────────────────────────
+// The background image is taller than the content; left unbounded it extends the
+// scrollable area into a black void below the last section. Clip it to the real
+// content height (object-fit:cover crops the unused deep-water bottom).
+(function(){
+  const bg=document.getElementById('bg');
+  const last=document.getElementById('site-footer')||document.getElementById('styles');
+  if(!bg||!last)return;
+  function fit(){ bg.style.height=(last.offsetTop+last.offsetHeight)+'px'; }
+  fit();
+  window.addEventListener('load',fit);
+  window.addEventListener('resize',fit,{passive:true});
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fit);
 })();
 
 // ── FAVICON GLOW (ocean-tinted) ──────────────────────────────────────────────
