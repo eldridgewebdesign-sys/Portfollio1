@@ -78,6 +78,11 @@ module.exports = async (req, res) => {
   } catch (err) {
     // Log the real error server-side; return a safe message to the client.
     console.error("Stripe checkout error:", err);
-    return res.status(500).json({ error: "Could not start checkout. Please try again." });
+    return res.status(500).json({
+      error: "Could not start checkout. Please try again.",
+      detail: err.message,
+      code: err.code,
+      type: err.type
+    });
   }
 };
