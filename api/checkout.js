@@ -119,8 +119,6 @@ module.exports = async (req, res) => {
         code: error.code,
         decline_code: error.decline_code,
         param: error.param,
-        raw: error.raw,
-        stack: error.stack,
         priceId,
         userId,
         email,
@@ -156,7 +154,11 @@ module.exports = async (req, res) => {
     });
   } catch (err) {
     // Log the real error server-side; return a safe message to the client.
-    console.error("Stripe checkout error:", err);
+    console.error("Checkout error:", {
+      message: err?.message,
+      code: err?.code,
+      type: err?.type,
+    });
     return res.status(500).json({
       error: "Could not start checkout. Please try again.",
     });

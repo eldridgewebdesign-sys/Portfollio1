@@ -184,6 +184,8 @@
       text-transform:uppercase;
       padding:.55rem .9rem;
     }
+    .finder-tabs{display:flex;gap:.75rem;flex-wrap:wrap}
+    .finder-tabs .finder-option{flex:1 1 0;min-width:140px;text-align:center;font-size:1rem;padding:.85rem 1rem}
     .shell{
       background:var(--panel);
       border:1px solid var(--panel-bd);
@@ -269,6 +271,21 @@
       border-radius:9px;
       padding:.62rem .7rem;
     }
+    .plan-addon{
+      display:flex;
+      align-items:flex-start;
+      gap:.55rem;
+      cursor:pointer;
+      font-size:.9rem;
+      line-height:1.4;
+      color:var(--ink);
+      background:rgba(255,255,255,.42);
+      border:1px solid rgba(255,255,255,.55);
+      border-radius:9px;
+      padding:.62rem .7rem;
+    }
+    .plan-addon input{flex:0 0 auto;width:16px;height:16px;margin-top:.12rem;accent-color:#15707f;cursor:pointer}
+    .plan-addon strong{color:#0f6f86;font-weight:700}
     .ws-btn{
       margin-top:auto;
       width:100%;
@@ -453,26 +470,11 @@
       <a class="back-link" href="dashboard.html">Back to Dashboard</a>
     </div>
 
-    <section class="finder" aria-label="Find the right plan">
-      <h2 class="finder-title">Find the right plan</h2>
-      <div class="finder-grid">
-        <div class="finder-question">
-          <h3>Do you already have a website?</h3>
-          <div class="finder-options">
-            <button class="finder-option" type="button" data-filter-key="website" data-filter-value="hosting">Yes, I just need hosting</button>
-            <button class="finder-option" type="button" data-filter-key="website" data-filter-value="design">No, I need a website built</button>
-          </div>
-        </div>
-        <div class="finder-question">
-          <h3>Do you need frontend only or full-stack?</h3>
-          <div class="finder-options">
-            <button class="finder-option" type="button" data-filter-key="stack" data-filter-value="frontend">Frontend</button>
-            <button class="finder-option" type="button" data-filter-key="stack" data-filter-value="fullstack">Full-stack</button>
-          </div>
-        </div>
-      </div>
-      <div class="finder-actions">
-        <button class="show-all hidden" id="show-all-plans" type="button">Show all plans</button>
+    <section class="finder" aria-label="Choose what you need">
+      <h2 class="finder-title">Choose what you need</h2>
+      <div class="finder-tabs" role="tablist">
+        <button class="finder-option active" type="button" role="tab" data-category="hosting" aria-selected="true">Hosting</button>
+        <button class="finder-option" type="button" role="tab" data-category="design" aria-selected="false">Design</button>
       </div>
     </section>
 
@@ -514,90 +516,57 @@
         price: "$25/mo",
         type: "Hosting",
         priceId: "price_1Tas6t5dqO1i8gb893TyaGKs",
-        group: "Hosting Plans",
-        stack: "frontend",
-        pay: "monthly",
-        need: "hosting",
+        category: "hosting",
       },
       {
         name: "Frontend Annual",
         price: "$250/yr",
         type: "Hosting",
         priceId: "price_1Tas4F5dqO1i8gb84xFztzu6",
-        group: "Hosting Plans",
-        stack: "frontend",
-        pay: "annual",
-        need: "hosting",
+        category: "hosting",
       },
       {
         name: "Full Stack Monthly",
         price: "$49.99/mo",
         type: "Hosting",
         priceId: "price_1Te82R5dqO1i8gb8tug1dYUD",
-        group: "Hosting Plans",
-        stack: "fullstack",
-        pay: "monthly",
-        need: "hosting",
+        category: "hosting",
       },
       {
         name: "Full Stack Annual",
         price: "$500/yr",
         type: "Hosting",
         priceId: "price_1Te8595dqO1i8gb8nB40CyYe",
-        group: "Hosting Plans",
-        stack: "fullstack",
-        pay: "annual",
-        need: "hosting",
+        category: "hosting",
       },
       {
         name: "Website Full Design Frontend",
         price: "$750",
         type: "One-time design",
         priceId: "price_1Tarmd5dqO1i8gb86Z84Tilo",
-        group: "Website Design",
-        stack: "frontend",
-        pay: "one-time",
-        need: "design",
+        category: "design",
+        baseValue: 750,
+        hostingAddon: {
+          priceId: "price_1Tas1R5dqO1i8gb8vEQL0CKS",
+          bundlePrice: "$800",
+          bundleValue: 800,
+        },
       },
       {
         name: "Website Full Design Full-Stack",
         price: "$1500",
         type: "One-time design",
         priceId: "price_1Te8P25dqO1i8gb8Ko46gihm",
-        group: "Website Design",
-        stack: "fullstack",
-        pay: "one-time",
-        need: "design",
-      },
-      {
-        name: "Website Full Design Frontend + One Year Hosting",
-        price: "$800",
-        type: "One-time design + hosting",
-        priceId: "price_1Tas1R5dqO1i8gb8vEQL0CKS",
-        group: "Website Design + One Year Hosting",
-        stack: "frontend",
-        pay: "one-time",
-        need: "design",
-        oneYearHosting: true,
-      },
-      {
-        name: "Website Full Design Full-Stack + One Year Hosting",
-        price: "$1750",
-        type: "One-time design + hosting",
-        priceId: "price_1Te8RT5dqO1i8gb875YtaV11",
-        group: "Website Design + One Year Hosting",
-        stack: "fullstack",
-        pay: "one-time",
-        need: "design",
-        oneYearHosting: true,
+        category: "design",
+        baseValue: 1500,
+        hostingAddon: {
+          priceId: "price_1Te8RT5dqO1i8gb875YtaV11",
+          bundlePrice: "$1750",
+          bundleValue: 1750,
+        },
       },
     ];
 
-    const planGroups = [
-      "Hosting Plans",
-      "Website Design",
-      "Website Design + One Year Hosting",
-    ];
     const hostingDisclaimer = "This is a one-time purchase that includes one year of hosting. After the first year, you will need to manually renew hosting at the normal hosting price to keep hosting with WebSharke.";
 
     const $ = (id) => document.getElementById(id);
@@ -605,7 +574,6 @@
     const pageMsg = $("page-msg");
     const plansEl = $("plans");
     const sessionNote = $("session-note");
-    const showAllPlans = $("show-all-plans");
     const payOverlay = $("pay-overlay");
     const payMsg = $("pay-msg");
     const paySubmit = $("pay-submit");
@@ -630,10 +598,7 @@
     let payElements = null;
     let payPaymentElement = null;
     let payBusy = false;
-    const finderState = {
-      website: null,
-      stack: null,
-    };
+    let activeCategory = "hosting";
 
     function setPageMsg(text, type) {
       pageMsg.textContent = text || "";
@@ -645,116 +610,109 @@
       payMsg.className = "pay-msg" + (text ? " show " + (type || "error") : "");
     }
 
-    function renderPlans() {
+    function renderPlans(category) {
       plansEl.innerHTML = "";
-      planGroups.forEach((groupName) => {
-        const section = document.createElement("section");
-        section.className = "plan-section";
-        section.dataset.group = groupName;
 
-        const sectionHead = document.createElement("div");
-        sectionHead.className = "plan-section-head";
+      const section = document.createElement("section");
+      section.className = "plan-section";
 
-        const heading = document.createElement("h2");
-        heading.className = "plan-section-title";
-        heading.textContent = groupName;
-        sectionHead.appendChild(heading);
+      const sectionHead = document.createElement("div");
+      sectionHead.className = "plan-section-head";
 
-        const grid = document.createElement("div");
-        grid.className = "plans";
+      const heading = document.createElement("h2");
+      heading.className = "plan-section-title";
+      heading.textContent = category === "hosting" ? "Hosting Plans" : "Website Design";
+      sectionHead.appendChild(heading);
 
-        plans
-          .filter((plan) => plan.group === groupName)
-          .forEach((plan) => {
-            const card = document.createElement("article");
-            card.className = "plan-card";
-            card.dataset.need = plan.need;
-            card.dataset.stack = plan.stack;
-            card.dataset.pay = plan.pay;
+      const grid = document.createElement("div");
+      grid.className = "plans";
 
-            const title = document.createElement("h3");
-            title.className = "plan-name";
-            title.textContent = plan.name;
+      plans
+        .filter((plan) => plan.category === category)
+        .forEach((plan) => {
+          const card = document.createElement("article");
+          card.className = "plan-card";
 
-            const price = document.createElement("p");
-            price.className = "plan-price";
-            price.textContent = plan.price;
+          const title = document.createElement("h3");
+          title.className = "plan-name";
+          title.textContent = plan.name;
 
-            const type = document.createElement("p");
-            type.className = "plan-type";
-            type.textContent = plan.type;
+          const price = document.createElement("p");
+          price.className = "plan-price";
+          price.textContent = plan.price;
 
-            const button = document.createElement("button");
-            button.className = "ws-btn plan-btn";
-            button.type = "button";
-            button.textContent = plan.priceId ? "Select Plan" : "Price ID needed";
-            button.disabled = !plan.priceId;
-            if (plan.priceId) {
-              button.dataset.priceId = plan.priceId;
-              button.addEventListener("click", () => handlePlanClick(button, plan));
-            }
+          const type = document.createElement("p");
+          type.className = "plan-type";
+          type.textContent = plan.type;
 
-            card.append(title, price, type);
-            if (plan.oneYearHosting) {
-              const disclaimer = document.createElement("p");
-              disclaimer.className = "plan-disclaimer";
-              disclaimer.textContent = hostingDisclaimer;
-              card.appendChild(disclaimer);
-            }
-            card.appendChild(button);
-            grid.appendChild(card);
-          });
+          card.append(title, price, type);
 
-        section.append(sectionHead, grid);
-        plansEl.appendChild(section);
-      });
-    }
+          let addonCheckbox = null;
+          if (plan.hostingAddon) {
+            const addCost = plan.hostingAddon.bundleValue - plan.baseValue;
 
-    function planMatchesFinder(card) {
-      if (finderState.website && card.dataset.need !== finderState.website) return false;
-      if (finderState.stack && card.dataset.stack !== finderState.stack) return false;
-      return true;
-    }
+            const addon = document.createElement("label");
+            addon.className = "plan-addon";
 
-    function applyFinder() {
-      const hasFilter = !!(finderState.website || finderState.stack);
-      const cards = Array.from(document.querySelectorAll(".plan-card"));
-      const matches = hasFilter ? cards.filter(planMatchesFinder) : cards;
-      const hasMatches = matches.length > 0;
+            addonCheckbox = document.createElement("input");
+            addonCheckbox.type = "checkbox";
+            addonCheckbox.className = "addon-check";
 
-      cards.forEach((card) => {
-        const recommended = hasFilter && hasMatches && planMatchesFinder(card);
-        card.classList.toggle("recommended", recommended);
-        card.classList.toggle("filtered-out", hasFilter && hasMatches && !recommended);
-        card.classList.toggle("muted", hasFilter && !hasMatches);
-      });
+            const addonText = document.createElement("span");
+            addonText.innerHTML = "Add one year of hosting? <strong>+$" + addCost + "</strong>";
 
-      document.querySelectorAll(".plan-section").forEach((section) => {
-        const visibleCards = section.querySelectorAll(".plan-card:not(.filtered-out)");
-        section.classList.toggle("hidden", hasFilter && hasMatches && visibleCards.length === 0);
-      });
+            addon.append(addonCheckbox, addonText);
 
-      showAllPlans.classList.toggle("hidden", !hasFilter);
-    }
+            const disclaimer = document.createElement("p");
+            disclaimer.className = "plan-disclaimer";
+            disclaimer.textContent = hostingDisclaimer;
 
-    document.querySelectorAll(".finder-option").forEach((option) => {
-      option.addEventListener("click", () => {
-        const key = option.dataset.filterKey;
-        const value = option.dataset.filterValue;
-        finderState[key] = finderState[key] === value ? null : value;
+            addonCheckbox.addEventListener("change", () => {
+              price.textContent = addonCheckbox.checked ? plan.hostingAddon.bundlePrice : plan.price;
+            });
 
-        document.querySelectorAll('.finder-option[data-filter-key="' + key + '"]').forEach((btn) => {
-          btn.classList.toggle("active", finderState[key] === btn.dataset.filterValue);
+            card.append(addon, disclaimer);
+          }
+
+          const button = document.createElement("button");
+          button.className = "ws-btn plan-btn";
+          button.type = "button";
+          button.textContent = plan.priceId ? "Select Plan" : "Price ID needed";
+          button.disabled = !plan.priceId;
+          if (plan.priceId) {
+            button.dataset.priceId = plan.priceId;
+            button.addEventListener("click", () => {
+              let selection = { name: plan.name, price: plan.price, priceId: plan.priceId };
+              if (plan.hostingAddon && addonCheckbox && addonCheckbox.checked) {
+                selection = {
+                  name: plan.name + " + One Year Hosting",
+                  price: plan.hostingAddon.bundlePrice,
+                  priceId: plan.hostingAddon.priceId,
+                };
+              }
+              handlePlanClick(button, selection);
+            });
+          }
+
+          card.appendChild(button);
+          grid.appendChild(card);
         });
-        applyFinder();
-      });
-    });
 
-    showAllPlans.addEventListener("click", () => {
-      finderState.website = null;
-      finderState.stack = null;
-      document.querySelectorAll(".finder-option").forEach((btn) => btn.classList.remove("active"));
-      applyFinder();
+      section.append(sectionHead, grid);
+      plansEl.appendChild(section);
+    }
+
+    const categoryTabs = Array.from(document.querySelectorAll(".finder-option[data-category]"));
+    categoryTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        activeCategory = tab.dataset.category;
+        categoryTabs.forEach((t) => {
+          const on = t === tab;
+          t.classList.toggle("active", on);
+          t.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        renderPlans(activeCategory);
+      });
     });
 
     function openPayModal(plan) {
@@ -910,7 +868,7 @@
         setPageMsg("Your account is missing an email address. Please contact support before selecting a plan.", "error");
       }
 
-      renderPlans();
+      renderPlans(activeCategory);
       sessionNote.textContent = currentEmail ? "Signed in as " + currentEmail + "." : "";
       page.classList.remove("hidden");
     })();
