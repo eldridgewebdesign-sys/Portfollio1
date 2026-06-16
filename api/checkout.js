@@ -52,7 +52,8 @@ module.exports = async (req, res) => {
 
     // ---- Look up the price to decide the Payment Element flow. ----
     // Recurring prices create an incomplete subscription and use the first
-    // invoice PaymentIntent. One-time prices create a PaymentIntent directly.
+    // invoice's confirmation secret. One-time prices create a PaymentIntent
+    // directly.
     const price = await stripe.prices.retrieve(priceId);
 
     if (!price.recurring) {
@@ -80,28 +81,9 @@ module.exports = async (req, res) => {
     let subscription = null;
 
     try {
-      console.log("Starting subscription checkout path:", {
-        priceId,
-        userId,
-        email,
-        hasRecurringPrice: !!price.recurring,
-        priceCurrency: price.currency,
-        priceUnitAmount: price.unit_amount,
-      });
-
-      console.log("Looking up existing Stripe customer by email:", {
-        email,
-      });
-
       const existingCustomers = await stripe.customers.list({
         email,
         limit: 1,
-      });
-
-      console.log("Existing Stripe customer lookup result:", {
-        count: existingCustomers.data.length,
-        customerIds: existingCustomers.data.map((existingCustomer) => existingCustomer.id),
-        customerEmails: existingCustomers.data.map((existingCustomer) => existingCustomer.email),
       });
 
       customer = existingCustomers.data[0];
@@ -113,29 +95,7 @@ module.exports = async (req, res) => {
             supabase_user_id: userId,
           },
         });
-        console.log("Stripe customer decision:", {
-          customerId: customer.id,
-          customerEmail: customer.email,
-          reused: false,
-          newlyCreated: true,
-        });
-      } else {
-        console.log("Stripe customer decision:", {
-          customerId: customer.id,
-          customerEmail: customer.email,
-          reused: true,
-          newlyCreated: false,
-        });
       }
-
-      console.log("Creating Stripe subscription:", {
-        customerId: customer.id,
-        priceId,
-        metadata: {
-          supabase_user_id: userId,
-          price_id: priceId,
-        },
-      });
 
       subscription = await stripe.subscriptions.create({
         customer: customer.id,
@@ -147,16 +107,10 @@ module.exports = async (req, res) => {
         metadata: {
           supabase_user_id: userId,
           price_id: priceId,
+          userId,
+          email,
         },
-        expand: ["latest_invoice.payment_intent"],
-      });
-
-      console.log("Stripe subscription created:", {
-        subscriptionId: subscription.id,
-        subscriptionStatus: subscription.status,
-        subscriptionCustomer: subscription.customer,
-        latestInvoice: subscription.latest_invoice,
-        items: subscription.items,
+        expand: ["latest_invoice.confirmation_secret"],
       });
     } catch (error) {
       console.error("Stripe subscription checkout failed:", {
@@ -174,28 +128,15 @@ module.exports = async (req, res) => {
         customerId: customer?.id,
         subscriptionId: subscription?.id,
       });
-      throw error;
+      return res.status(500).json({
+        error: "Could not start subscription payment",
+      });
     }
 
-    console.log("Stripe subscription latest_invoice inspection:", {
-      latestInvoice: subscription.latest_invoice,
-      latestInvoiceType: typeof subscription.latest_invoice,
-      hasPaymentIntent: !!subscription.latest_invoice?.payment_intent,
-      hasConfirmationSecret: !!subscription.latest_invoice?.confirmation_secret,
-    });
-
-    const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
-
-    console.log("Subscription checkout secret extraction:", {
-      hasPaymentIntentClientSecret: Boolean(subscription?.latest_invoice?.payment_intent?.client_secret),
-      paymentIntentClientSecret: subscription?.latest_invoice?.payment_intent?.client_secret,
-      hasConfirmationSecret: Boolean(subscription?.latest_invoice?.confirmation_secret),
-      confirmationSecret: subscription?.latest_invoice?.confirmation_secret,
-      returning: "payment_intent.client_secret",
-    });
+    const clientSecret = subscription.latest_invoice?.confirmation_secret?.client_secret;
 
     if (!clientSecret) {
-      console.error("Stripe subscription payment intent client secret missing:", {
+      console.error("Stripe subscription confirmation secret missing:", {
         priceId,
         userId,
         email,
@@ -203,18 +144,21 @@ module.exports = async (req, res) => {
         customerId: customer?.id,
         subscriptionId: subscription?.id,
       });
-      return res.status(500).json({ error: "Could not start subscription payment. Please try again." });
+      throw new Error(
+        "No subscription confirmation secret was returned from Stripe (subscription.latest_invoice.confirmation_secret.client_secret was empty)."
+      );
     }
 
-    return res.status(200).json({ clientSecret });
+    return res.status(200).json({
+      clientSecret,
+      subscriptionId: subscription.id,
+      mode: "subscription",
+    });
   } catch (err) {
     // Log the real error server-side; return a safe message to the client.
     console.error("Stripe checkout error:", err);
     return res.status(500).json({
       error: "Could not start checkout. Please try again.",
-      detail: err.message,
-      code: err.code,
-      type: err.type
     });
   }
 };
