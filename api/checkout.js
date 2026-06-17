@@ -52,7 +52,8 @@ module.exports = async (req, res) => {
 
     // ---- Look up the price to decide the Payment Element flow. ----
     // Recurring prices create an incomplete subscription and use the first
-    // invoice PaymentIntent. One-time prices create a PaymentIntent directly.
+    // invoice's confirmation secret. One-time prices create a PaymentIntent
+    // directly.
     const price = await stripe.prices.retrieve(priceId);
 
     if (!price.recurring) {
@@ -80,6 +81,7 @@ module.exports = async (req, res) => {
     const existingCustomers = await stripe.customers.list({ email, limit: 1 });
     let customer = existingCustomers.data[0];
 
+<<<<<<< HEAD
     if (!customer) {
       customer = await stripe.customers.create({
         email,
@@ -108,12 +110,89 @@ module.exports = async (req, res) => {
     if (!clientSecret) {
       console.error("Stripe subscription payment intent client secret missing.");
       return res.status(500).json({ error: "Could not start subscription payment. Please try again." });
+=======
+    try {
+      const existingCustomers = await stripe.customers.list({
+        email,
+        limit: 1,
+      });
+
+      customer = existingCustomers.data[0];
+
+      if (!customer) {
+        customer = await stripe.customers.create({
+          email,
+          metadata: {
+            supabase_user_id: userId,
+          },
+        });
+      }
+
+      subscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: priceId }],
+        payment_behavior: "default_incomplete",
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
+        },
+        metadata: {
+          supabase_user_id: userId,
+          price_id: priceId,
+          userId,
+          email,
+        },
+        expand: ["latest_invoice.confirmation_secret"],
+      });
+    } catch (error) {
+      console.error("Stripe subscription checkout failed:", {
+        message: error.message,
+        type: error.type,
+        code: error.code,
+        decline_code: error.decline_code,
+        param: error.param,
+        priceId,
+        userId,
+        email,
+        hasRecurringPrice: !!price.recurring,
+        customerId: customer?.id,
+        subscriptionId: subscription?.id,
+      });
+      return res.status(500).json({
+        error: "Could not start subscription payment",
+      });
     }
 
-    return res.status(200).json({ clientSecret });
+    const clientSecret = subscription.latest_invoice?.confirmation_secret?.client_secret;
+
+    if (!clientSecret) {
+      console.error("Stripe subscription confirmation secret missing:", {
+        priceId,
+        userId,
+        email,
+        hasRecurringPrice: !!price.recurring,
+        customerId: customer?.id,
+        subscriptionId: subscription?.id,
+      });
+      throw new Error(
+        "No subscription confirmation secret was returned from Stripe (subscription.latest_invoice.confirmation_secret.client_secret was empty)."
+      );
+>>>>>>> 2211d6b1d5298be0418194ab34032e225cff7857
+    }
+
+    return res.status(200).json({
+      clientSecret,
+      subscriptionId: subscription.id,
+      mode: "subscription",
+    });
   } catch (err) {
     // Log the real error server-side; return a safe message to the client.
-    console.error("Stripe checkout error:", err);
-    return res.status(500).json({ error: "Could not start checkout. Please try again." });
+    console.error("Checkout error:", {
+      message: err?.message,
+      code: err?.code,
+      type: err?.type,
+    });
+    return res.status(500).json({
+      error: "Could not start checkout. Please try again.",
+    });
   }
 };
