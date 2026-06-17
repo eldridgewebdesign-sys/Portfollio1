@@ -81,36 +81,6 @@ module.exports = async (req, res) => {
     const existingCustomers = await stripe.customers.list({ email, limit: 1 });
     let customer = existingCustomers.data[0];
 
-<<<<<<< HEAD
-    if (!customer) {
-      customer = await stripe.customers.create({
-        email,
-        metadata: {
-          supabase_user_id: userId,
-        },
-      });
-    }
-
-    const subscription = await stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ price: priceId }],
-      payment_behavior: "default_incomplete",
-      payment_settings: {
-        save_default_payment_method: "on_subscription",
-      },
-      metadata: {
-        supabase_user_id: userId,
-        price_id: priceId,
-      },
-      expand: ["latest_invoice.payment_intent"],
-    });
-
-    const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
-
-    if (!clientSecret) {
-      console.error("Stripe subscription payment intent client secret missing.");
-      return res.status(500).json({ error: "Could not start subscription payment. Please try again." });
-=======
     try {
       const existingCustomers = await stripe.customers.list({
         email,
@@ -176,7 +146,6 @@ module.exports = async (req, res) => {
       throw new Error(
         "No subscription confirmation secret was returned from Stripe (subscription.latest_invoice.confirmation_secret.client_secret was empty)."
       );
->>>>>>> 2211d6b1d5298be0418194ab34032e225cff7857
     }
 
     return res.status(200).json({
