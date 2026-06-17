@@ -132,7 +132,7 @@
   </div>
 
   <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
-  <a class="ws-logo" href="index.html" aria-label="WebSharke — home"></a>
+  <a class="ws-logo" href="/" aria-label="WebSharke — home"></a>
 
   <main class="login-shell">
     <div class="login-card">
@@ -151,7 +151,7 @@
       <button id="signin-btn" class="btn-signin">Sign In</button>
 
       <p class="new-here">No account? Create a project here</p>
-      <a href="onboarding.html" class="btn-new">New Project</a>
+      <a href="/onboarding" class="btn-new">New Project</a>
 
       <p id="message" class="msg"></p>
     </div>
@@ -183,7 +183,7 @@
     // ---- After login, the logged-in area lives on the dashboard. ----
     // replace() keeps the login page out of the browser's back history.
     function goToDashboard() {
-      window.location.replace("dashboard.html");
+      window.location.replace("/dashboard");
     }
 
     // ---- SIGN IN — log in with an existing email + password. ----

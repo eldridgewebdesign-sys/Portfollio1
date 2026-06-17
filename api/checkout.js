@@ -76,133 +76,37 @@ module.exports = async (req, res) => {
       return res.status(200).json({ clientSecret: intent.client_secret });
     }
 
-    let customer = null;
-    let subscription = null;
+    // Reuse the customer for this email if one already exists, otherwise create one.
+    const existingCustomers = await stripe.customers.list({ email, limit: 1 });
+    let customer = existingCustomers.data[0];
 
-    try {
-      console.log("Starting subscription checkout path:", {
-        priceId,
-        userId,
+    if (!customer) {
+      customer = await stripe.customers.create({
         email,
-        hasRecurringPrice: !!price.recurring,
-        priceCurrency: price.currency,
-        priceUnitAmount: price.unit_amount,
-      });
-
-      console.log("Looking up existing Stripe customer by email:", {
-        email,
-      });
-
-      const existingCustomers = await stripe.customers.list({
-        email,
-        limit: 1,
-      });
-
-      console.log("Existing Stripe customer lookup result:", {
-        count: existingCustomers.data.length,
-        customerIds: existingCustomers.data.map((existingCustomer) => existingCustomer.id),
-        customerEmails: existingCustomers.data.map((existingCustomer) => existingCustomer.email),
-      });
-
-      customer = existingCustomers.data[0];
-
-      if (!customer) {
-        customer = await stripe.customers.create({
-          email,
-          metadata: {
-            supabase_user_id: userId,
-          },
-        });
-        console.log("Stripe customer decision:", {
-          customerId: customer.id,
-          customerEmail: customer.email,
-          reused: false,
-          newlyCreated: true,
-        });
-      } else {
-        console.log("Stripe customer decision:", {
-          customerId: customer.id,
-          customerEmail: customer.email,
-          reused: true,
-          newlyCreated: false,
-        });
-      }
-
-      console.log("Creating Stripe subscription:", {
-        customerId: customer.id,
-        priceId,
         metadata: {
           supabase_user_id: userId,
-          price_id: priceId,
         },
       });
-
-      subscription = await stripe.subscriptions.create({
-        customer: customer.id,
-        items: [{ price: priceId }],
-        payment_behavior: "default_incomplete",
-        payment_settings: {
-          save_default_payment_method: "on_subscription",
-        },
-        metadata: {
-          supabase_user_id: userId,
-          price_id: priceId,
-        },
-        expand: ["latest_invoice.payment_intent"],
-      });
-
-      console.log("Stripe subscription created:", {
-        subscriptionId: subscription.id,
-        subscriptionStatus: subscription.status,
-        subscriptionCustomer: subscription.customer,
-        latestInvoice: subscription.latest_invoice,
-        items: subscription.items,
-      });
-    } catch (error) {
-      console.error("Stripe subscription checkout failed:", {
-        message: error.message,
-        type: error.type,
-        code: error.code,
-        decline_code: error.decline_code,
-        param: error.param,
-        raw: error.raw,
-        stack: error.stack,
-        priceId,
-        userId,
-        email,
-        hasRecurringPrice: !!price.recurring,
-        customerId: customer?.id,
-        subscriptionId: subscription?.id,
-      });
-      throw error;
     }
 
-    console.log("Stripe subscription latest_invoice inspection:", {
-      latestInvoice: subscription.latest_invoice,
-      latestInvoiceType: typeof subscription.latest_invoice,
-      hasPaymentIntent: !!subscription.latest_invoice?.payment_intent,
-      hasConfirmationSecret: !!subscription.latest_invoice?.confirmation_secret,
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ price: priceId }],
+      payment_behavior: "default_incomplete",
+      payment_settings: {
+        save_default_payment_method: "on_subscription",
+      },
+      metadata: {
+        supabase_user_id: userId,
+        price_id: priceId,
+      },
+      expand: ["latest_invoice.payment_intent"],
     });
 
     const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
 
-    console.log("Subscription checkout secret extraction:", {
-      hasPaymentIntentClientSecret: Boolean(subscription?.latest_invoice?.payment_intent?.client_secret),
-      paymentIntentClientSecret: subscription?.latest_invoice?.payment_intent?.client_secret,
-      hasConfirmationSecret: Boolean(subscription?.latest_invoice?.confirmation_secret),
-      confirmationSecret: subscription?.latest_invoice?.confirmation_secret,
-      returning: "payment_intent.client_secret",
-    });
-
     if (!clientSecret) {
-      console.error("Stripe subscription payment intent client secret missing:", {
-        priceId,
-        userId,
-        email,
-        hasRecurringPrice: !!price.recurring,
-        customerId: customer?.id,
-        subscriptionId: subscription?.id,
-      });
+      console.error("Stripe subscription payment intent client secret missing.");
       return res.status(500).json({ error: "Could not start subscription payment. Please try again." });
     }
 

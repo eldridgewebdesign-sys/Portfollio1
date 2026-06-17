@@ -443,14 +443,14 @@
     </svg>
   </div>
 
-  <a class="ws-logo" href="index.html" aria-label="WebSharke home"></a>
+  <a class="ws-logo" href="/" aria-label="WebSharke home"></a>
 
   <main class="page hidden" id="payment-page">
     <div class="topbar">
       <div>
         <h1>Choose Your WebSharke Plan</h1>
       </div>
-      <a class="back-link" href="dashboard.html">Back to Dashboard</a>
+      <a class="back-link" href="/dashboard">Back to Dashboard</a>
     </div>
 
     <section class="finder" aria-label="Find the right plan">
@@ -623,7 +623,7 @@
         ? window.Stripe(stripePublishableKey)
         : null;
 
-    const PAYMENT_RETURN_URL = new URL("success.html", window.location.href).href;
+    const PAYMENT_RETURN_URL = new URL("/success", window.location.href).href;
 
     let currentUserId = null;
     let currentEmail = null;
@@ -814,7 +814,7 @@
         return;
       }
       if (!currentUserId || !currentEmail) {
-        window.location.replace("login.html");
+        window.location.replace("/login");
         return;
       }
 
@@ -894,13 +894,13 @@
     (async () => {
       const { data: authData, error: authError } = await db.auth.getUser();
       if (authError || !authData || !authData.user) {
-        window.location.replace("login.html");
+        window.location.replace("/login");
         return;
       }
 
       const { data } = await db.auth.getSession();
       if (!data.session) {
-        window.location.replace("login.html");
+        window.location.replace("/login");
         return;
       }
 
