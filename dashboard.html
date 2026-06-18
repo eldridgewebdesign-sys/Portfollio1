@@ -516,11 +516,60 @@
       .adm-brand-icon{display:block !important}
       .adm-collapse-btn{display:none}
       .adm-admin-chip{display:none}
+      /* Icon-only rail: center each glyph and give it a comfortable tap target. */
+      .adm-nav button{justify-content:center;gap:0;padding:.7rem 0;min-height:44px}
+      .adm-nav button.active::before{height:26px}
+      .adm-signout{justify-content:center;gap:0;padding:.7rem 0;min-height:44px}
     }
     @media(max-width:640px){
       .adm-drawer{width:100vw}
       .adm-views{padding:1rem .9rem 3rem}
       .adm-toasts{left:.8rem;right:.8rem;max-width:none}
+
+      /* Top bar + headings */
+      .adm-top{padding:.7rem .9rem;gap:.55rem}
+      .adm-view-head{flex-direction:column;align-items:flex-start;gap:.7rem}
+      .adm-h1{font-size:1.55rem}
+      .adm-view-head .adm-toolbar,.adm-view-head>div{width:100%}
+
+      /* Stat cards 2-up; panels and charts full width */
+      .adm-cards{grid-template-columns:repeat(2,1fr);gap:.6rem}
+      .adm-card{padding:.85rem .9rem}
+      .adm-card .val{font-size:1.5rem}
+      .adm-grid-2{grid-template-columns:1fr}
+
+      /* Toolbar: full-width search, filters share the row */
+      .adm-toolbar{gap:.5rem}
+      .adm-toolbar input.adm-tsearch{min-width:0;max-width:none;width:100%;flex:1 1 100%}
+      .adm-toolbar select{flex:1 1 auto}
+
+      /* ── Data tables → stacked cards (no horizontal scroll on phones) ───── */
+      .adm-table-wrap{max-height:none;overflow:visible;border:none;background:none;
+        box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+      table.adm-table{display:block;width:100%;font-size:.86rem}
+      /* Visually hide the header row but keep it for assistive tech. */
+      table.adm-table thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+        overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+      table.adm-table tbody{display:block}
+      table.adm-table tbody tr{display:block;background:var(--adm-panel);border:1px solid var(--adm-bd);
+        border-radius:12px;padding:.35rem .9rem;margin-bottom:.7rem;
+        box-shadow:0 10px 26px rgba(0,40,55,.12)}
+      table.adm-table tbody tr:hover{background:var(--adm-panel)}
+      table.adm-table tbody td{display:flex;justify-content:space-between;align-items:center;gap:1rem;
+        max-width:none;padding:.5rem 0;border-bottom:1px solid var(--adm-bd);text-align:right}
+      table.adm-table tbody td:last-child{border-bottom:none}
+      table.adm-table tbody td::before{content:attr(data-label);flex:0 0 38%;text-align:left;
+        font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+        color:var(--adm-muted)}
+      /* Actions cell (empty label) → buttons span the full card width. */
+      table.adm-table tbody td[data-label=""]{justify-content:flex-end;border-bottom:none;padding-top:.6rem}
+      table.adm-table tbody td[data-label=""]::before{display:none}
+      /* Empty / error states keep their centered block layout. */
+      table.adm-table tbody td[colspan]{display:block;text-align:center}
+      table.adm-table tbody td[colspan]::before{display:none}
+      .adm-trunc{max-width:60vw;white-space:normal;text-align:right}
+      .adm-row-actions{flex-wrap:wrap;justify-content:flex-end}
+      .adm-mini{padding:.45rem .7rem;font-size:.78rem}
     }
   </style>
 </head>
@@ -1883,6 +1932,8 @@
       const tr = ce("tr");
       cfg.columns.forEach((c) => {
         const td = ce("td");
+        // data-label drives the stacked "card" table layout on phones (CSS ::before).
+        td.setAttribute("data-label", c.label || "");
         td.innerHTML = c.render ? c.render(r) : esc(r[c.key] != null ? r[c.key] : "—");
         tr.appendChild(td);
       });
