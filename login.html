@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="Tab-Logo.png" type="image/png" />
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Client Login — WebSharke</title>
 
   <!-- Same brand fonts as the WebSharke dashboard (beach theme) -->
@@ -32,12 +32,12 @@
     .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
     .ocean svg{width:100%;height:100%;display:block}
 
-    /* ── WebSharke logo, top-left (Main-Logo.png masked to navy) ────────────── */
+    /* ── WebSharke logo, top-left (images/Main-Logo.png masked to navy) ────────────── */
     .ws-logo{
       position:fixed;top:18px;left:26px;z-index:20;display:block;
       width:136px;height:76px;background:var(--ink);
-      -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
-              mask:url(Main-Logo.png) left center/contain no-repeat;
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
       filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
       transition:transform .3s ease;
     }
@@ -159,7 +159,7 @@
 
   <!-- ── Supabase (shared client `db`) — same config every page uses ────────── -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
+  <script src="js/supabase-config.js"></script>
 
   <script>
     // =================================================================

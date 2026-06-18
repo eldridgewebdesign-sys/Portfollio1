@@ -6,7 +6,7 @@
 // supabase-js CDN script, e.g.:
 //
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-//   <script src="supabase-config.js"></script>
+//   <script src="js/supabase-config.js"></script>
 //
 // It exposes one global, `db`, which is the Supabase client every page
 // uses for auth and database calls.
