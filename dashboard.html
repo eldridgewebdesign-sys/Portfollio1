@@ -267,8 +267,12 @@
       border-right:1px solid var(--adm-bd);transition:flex-basis .22s ease;overflow:hidden}
     .adm.collapsed .adm-side{flex-basis:68px}
     .adm-brand{display:flex;align-items:center;justify-content:flex-start;gap:.6rem;
-      padding:.6rem 1.05rem;border-bottom:1px solid var(--adm-bd);min-height:64px;overflow:hidden;
-      cursor:pointer;transition:background .15s}
+      padding:.6rem 1.05rem;min-height:64px;overflow:hidden;
+      cursor:pointer;transition:background .15s;
+      /* native <button> reset so it still reads as the sidebar header */
+      appearance:none;-webkit-appearance:none;background:none;
+      border:none;border-bottom:1px solid var(--adm-bd);
+      width:100%;text-align:left;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent}
     .adm-brand:hover{background:rgba(16,182,204,.08)}
     .adm-brand:hover .adm-brand-logo,.adm-brand:hover .adm-brand-icon{background:var(--adm-turq-deep)}
     .adm-brand:focus-visible{outline:2px solid var(--adm-turq);outline-offset:-2px}
@@ -743,12 +747,12 @@
 
     <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
     <aside class="adm-side" id="admSide">
-      <div class="adm-brand" id="admBrand" role="button" tabindex="0"
+      <button class="adm-brand" id="admBrand" type="button"
            aria-label="WebSharke — go to Overview, or to the main site when already on Overview"
            title="Overview (again to open the main site)">
         <span class="adm-brand-logo" aria-hidden="true"></span>
         <span class="adm-brand-icon" aria-hidden="true"></span>
-      </div>
+      </button>
       <nav class="adm-nav" id="admNav" aria-label="Admin sections">
         <button class="active" data-view="overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="adm-nav-label">Overview</span></button>
         <button data-view="users"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg><span class="adm-nav-label">Users</span></button>
@@ -2467,9 +2471,6 @@
         else switchView("overview");
       };
       admBrand.addEventListener("click", brandActivate);
-      admBrand.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); brandActivate(); }
-      });
       aq("admCollapse").addEventListener("click", () => aq("admin").classList.toggle("collapsed"));
       aq("admDrawerClose").addEventListener("click", closeDrawer);
       aq("admDrawerOv").addEventListener("click", closeDrawer);
