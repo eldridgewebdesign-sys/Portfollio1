@@ -127,6 +127,17 @@ body.ready #hero .anim{opacity:1;transform:none}
 .sc-body{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:.6rem;text-align:left;padding:1.4rem 1.5rem 1.65rem}
 .sc-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.42rem;line-height:1.1;color:var(--foam);letter-spacing:.01em}
 .sc-desc{font-family:'Mulish',sans-serif;font-weight:300;font-size:.9rem;line-height:1.62;color:rgba(240,248,250,.76)}
+/* first style card → live mini-preview that links to the dashboard sample */
+.sc-thumb{padding:0;text-decoration:none;color:inherit}
+.mini-dash{position:relative;flex:1;overflow:hidden;
+  background:
+    radial-gradient(135% 95% at 10% 6%,rgba(48,92,182,.5),transparent 52%),
+    radial-gradient(130% 120% at 94% 102%,rgba(92,56,156,.55),transparent 55%),
+    linear-gradient(140deg,#0a1230,#0c1538 36%,#13163f 66%,#211a4c)}
+.md-chart{position:absolute;inset:0;width:100%;height:100%}
+.md-graph{filter:drop-shadow(0 0 2px rgba(140,180,255,.6))}
+.md-cap{position:absolute;left:0;right:0;bottom:0;font-family:'Mulish',sans-serif;font-weight:600;font-size:.74rem;letter-spacing:.15em;text-transform:uppercase;color:#eaf0fb;text-align:left;padding:1.6rem .95rem .72rem;background:linear-gradient(to top,rgba(6,12,28,.85),rgba(6,12,28,.4) 55%,transparent)}
+.md-cap::after{content:'\2197';margin-left:.42rem;opacity:.85}
 /* deepest section — ends the page on the content, not on empty water */
 #styles{min-height:auto;padding-top:clamp(5.5rem,11vh,8.5rem);padding-bottom:clamp(4rem,7vh,5.5rem)}
 #site-footer{position:relative;z-index:1;text-align:center;padding:1.6rem 1.5rem 2.2rem;font-family:'Mulish',sans-serif;font-weight:400;font-size:.76rem;letter-spacing:.08em;color:rgba(236,244,243,.68)}
@@ -227,7 +238,29 @@ body.lock{overflow:hidden;height:100vh}
   <div class="wrap">
     <h2 class="sec-title rv">Styles</h2>
     <div class="style-grid">
-      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Clean Local</h3><p class="sc-desc">Simple sites for service businesses that need trust, speed, and clear contact options.</p></div></div>
+      <a class="style-card sc-thumb rv d1" href="/dashboard-style" aria-label="Sales Dashboard style — open preview">
+        <div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div>
+        <div class="mini-dash">
+          <svg class="md-chart" viewBox="0 0 220 150" preserveAspectRatio="none" aria-hidden="true">
+            <defs><pattern id="mdDots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#acc4ff" fill-opacity=".22"/></pattern></defs>
+            <rect x="0" y="0" width="40" height="150" fill="#16224a" fill-opacity=".45"/>
+            <rect x="0" y="0" width="40" height="150" fill="url(#mdDots)"/>
+            <line x1=".5" y1="0" x2=".5" y2="150" stroke="#96b4ff" stroke-opacity=".16"/>
+            <text x="20" y="20" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="12" font-weight="600" fill="#eef3fd">DB</text>
+            <line x1="11" y1="25" x2="29" y2="25" stroke="#e0e9fd" stroke-opacity=".8"/>
+            <g fill="#e4ebfc" fill-opacity=".62"><rect x="13" y="45" width="14" height="9" rx="2"/><rect x="13" y="67" width="14" height="9" rx="2"/><rect x="13" y="89" width="14" height="9" rx="2"/></g>
+            <g stroke="#fff" stroke-linecap="round"><line x1="124" y1="16" x2="124" y2="134" stroke-width="1.5"/><line x1="52" y1="75" x2="210" y2="75" stroke-width="1.5"/></g>
+            <g class="md-graph" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M60,60 C70,54 76,44 84,33 C89,41 94,31 98,47 C108,39 116,30 122,26"/>
+              <path d="M134,52 C142,46 147,37 153,29 C158,37 163,41 168,43 C174,33 179,26 184,23 C189,33 194,43 199,47"/>
+              <path d="M60,120 C70,114 76,105 82,97 C86,103 90,107 94,107 C105,98 114,90 121,85"/>
+              <path d="M134,84 C140,88 144,92 150,94 C158,94 164,98 169,102 C176,104 182,110 187,114"/>
+            </g>
+            <g fill="#9398a8"><path d="M46,75 L58,68 L58,82 Z"/><path d="M214,75 L202,68 L202,82 Z"/></g>
+          </svg>
+          <span class="md-cap">Sales Dashboard</span>
+        </div>
+      </a>
       <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Bold Landing Page</h3><p class="sc-desc">A focused one-page site built to explain the offer and push visitors toward action.</p></div></div>
       <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Premium Dark</h3><p class="sc-desc">A sharper look for brands that want depth, contrast, and a more polished feel.</p></div></div>
       <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Soft Coastal</h3><p class="sc-desc">Light, calm layouts with warm spacing, clean sections, and a relaxed visual style.</p></div></div>
