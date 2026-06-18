@@ -25,6 +25,35 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// ---- Build the subscription columns we sync from a Stripe subscription. ----
+// Optional fields (plan, amount, interval, dates) are added when present so
+// the admin Payments tab shows real data. Wrapped by callers in try/catch so
+// a missing/changed Stripe shape can never break the core status sync.
+function subscriptionRecord(subscription) {
+  const rec = {
+    user_id: subscription.metadata && subscription.metadata.supabase_user_id,
+    stripe_customer_id: subscription.customer,
+    stripe_subscription_id: subscription.id,
+    status: subscription.status, // active | past_due | unpaid | canceled | trialing | ...
+  };
+  try {
+    const item = subscription.items && subscription.items.data && subscription.items.data[0];
+    const price = item && item.price;
+    if (price) {
+      if (price.unit_amount != null) rec.amount = price.unit_amount / 100;
+      if (price.recurring && price.recurring.interval) rec.plan_interval = price.recurring.interval;
+      if (price.nickname) rec.plan_name = price.nickname;
+      if (/full.?stack/i.test(price.nickname || "")) rec.website_type = "full_stack";
+      else if (/front.?end/i.test(price.nickname || "")) rec.website_type = "frontend";
+    }
+    if (subscription.current_period_end)
+      rec.current_period_end = new Date(subscription.current_period_end * 1000).toISOString();
+  } catch (e) {
+    console.error("subscriptionRecord enrichment skipped:", e && e.message);
+  }
+  return rec;
+}
+
 // ---- Read the raw request body as a single Buffer. ----
 function readRawBody(req) {
   return new Promise((resolve, reject) => {
@@ -74,15 +103,23 @@ const handler = async (req, res) => {
 
         if (session.mode === "subscription") {
           // New subscription — record it so the dashboard reflects access.
-          await supabaseAdmin.from("subscriptions").upsert(
-            {
-              user_id: userId,
-              stripe_customer_id: session.customer,
-              stripe_subscription_id: session.subscription,
-              status: "active",
-            },
-            { onConflict: "stripe_subscription_id" }
-          );
+          // Retrieve the full subscription so we can also store plan/amount/
+          // dates for the admin Payments view (best-effort).
+          let record = {
+            user_id: userId,
+            stripe_customer_id: session.customer,
+            stripe_subscription_id: session.subscription,
+            status: "active",
+          };
+          try {
+            const full = await stripe.subscriptions.retrieve(session.subscription);
+            if (full.metadata && !full.metadata.supabase_user_id) full.metadata.supabase_user_id = userId;
+            record = { ...subscriptionRecord(full), user_id: userId };
+            record.last_payment_date = new Date().toISOString();
+          } catch (e) {
+            console.error("Could not retrieve subscription for enrichment:", e && e.message);
+          }
+          await supabaseAdmin.from("subscriptions").upsert(record, { onConflict: "stripe_subscription_id" });
         } else if (session.mode === "payment") {
           // One-time payment — nothing to sync into subscriptions yet.
           console.log(
@@ -95,20 +132,12 @@ const handler = async (req, res) => {
         break;
       }
 
-      case "customer.subscription.updated": {
+      case "customer.subscription.updated":
+      case "customer.subscription.created": {
         const subscription = event.data.object;
-        const userId =
-          subscription.metadata && subscription.metadata.supabase_user_id;
-
-        await supabaseAdmin.from("subscriptions").upsert(
-          {
-            user_id: userId,
-            stripe_customer_id: subscription.customer,
-            stripe_subscription_id: subscription.id,
-            status: subscription.status,
-          },
-          { onConflict: "stripe_subscription_id" }
-        );
+        await supabaseAdmin
+          .from("subscriptions")
+          .upsert(subscriptionRecord(subscription), { onConflict: "stripe_subscription_id" });
         break;
       }
 
@@ -118,6 +147,29 @@ const handler = async (req, res) => {
           .from("subscriptions")
           .update({ status: "canceled" })
           .eq("stripe_subscription_id", subscription.id);
+        break;
+      }
+
+      case "invoice.paid": {
+        // Mark the subscription active and stamp the last payment date.
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({ status: "active", last_payment_date: new Date().toISOString() })
+            .eq("stripe_subscription_id", invoice.subscription);
+        }
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({ status: "past_due" })
+            .eq("stripe_subscription_id", invoice.subscription);
+        }
         break;
       }
 
