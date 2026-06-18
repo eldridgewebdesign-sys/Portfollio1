@@ -78,16 +78,16 @@
     .fi::placeholder{color:rgba(17,54,76,.45)}
     .fi:focus{border-bottom-color:var(--turq)}
 
-    /* ── Navy Sign In button ───────────────────────────────────────────────── */
+    /* ── Primary button — canonical WebSharke teal (shared across pages) ───── */
     .btn-signin{
-      display:block;width:100%;cursor:pointer;border:none;margin-top:.4rem;
-      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.15rem;
-      color:#eaf2ff;padding:.6rem 1.5rem;border-radius:9px;
-      background:linear-gradient(160deg,#2d57b4,#1d3f8f);
-      box-shadow:0 8px 20px rgba(18,40,90,.32),inset 0 1px 0 rgba(255,255,255,.18);
+      display:block;width:100%;cursor:pointer;border:none;margin-top:.6rem;
+      font-family:'Mulish',sans-serif;font-weight:700;font-size:.84rem;letter-spacing:.08em;text-transform:uppercase;
+      color:#eaf6f8;padding:.82rem 1.5rem;border-radius:10px;
+      background:linear-gradient(160deg,#1f93a8,#15707f);
+      box-shadow:0 8px 18px rgba(8,70,84,.28),inset 0 1px 0 rgba(255,255,255,.18);
       transition:transform .25s,filter .25s,box-shadow .25s;
     }
-    .btn-signin:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 12px 26px rgba(18,40,90,.4)}
+    .btn-signin:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 12px 24px rgba(8,70,84,.36)}
     .btn-signin:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
     .btn-signin[disabled]{opacity:.6;cursor:not-allowed;transform:none;filter:none}
 
@@ -95,8 +95,8 @@
     .new-here{margin-top:1.5rem;font-size:.95rem;color:var(--ink)}
     .btn-new{
       display:inline-block;margin-top:.55rem;cursor:pointer;text-decoration:none;
-      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.05rem;
-      color:var(--ink);padding:.35rem 1rem;border-radius:8px;
+      font-family:'Mulish',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--ink);padding:.6rem 1.1rem;border-radius:10px;
       background:rgba(255,255,255,.22);border:1.5px solid var(--ink);
       transition:background .25s,transform .25s;
     }
