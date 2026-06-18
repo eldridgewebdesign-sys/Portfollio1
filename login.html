@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Client Login — WebSharke</title>
+  <meta name="description" content="Sign in to your WebSharke client dashboard to manage your website, hosting, billing, and project details." />
 
   <!-- Same brand fonts as the WebSharke dashboard (beach theme) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -153,7 +154,7 @@
       <p class="new-here">No account? Create a project here</p>
       <a href="/onboarding" class="btn-new">New Project</a>
 
-      <p id="message" class="msg"></p>
+      <p id="message" class="msg" role="status" aria-live="polite"></p>
     </div>
   </main>
 
@@ -199,6 +200,16 @@
       signinBtn.disabled = false;
       if (error) showMessage(error.message, "error");
       // On success, onAuthStateChange fires below and redirects to the dashboard.
+    });
+
+    // ---- Submit on Enter from either field (no <form>, so wire it manually). ----
+    [emailInput, passwordInput].forEach((el) => {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (!signinBtn.disabled) signinBtn.click();
+        }
+      });
     });
 
     // ---- ON PAGE LOAD — if already signed in, skip the form. ----

@@ -4,7 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="images/Tab-Logo.png" type="image/png">
-<title>WEBSHARKE</title>
+<title>WebSharke — Websites for Small Businesses, Fully Handled</title>
+<meta name="description" content="WebSharke builds and runs your whole small-business website — design, hosting, backend, forms, and payments — in one place. No agency price tag, no DIY headache." />
+<link rel="canonical" href="https://websharke.com/" />
+<meta name="theme-color" content="#102536" />
+
+<!-- Social link previews. TODO: swap og:image for a dedicated 1200×630 image when available. -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="WebSharke" />
+<meta property="og:url" content="https://websharke.com/" />
+<meta property="og:title" content="WebSharke — Websites for Small Businesses, Fully Handled" />
+<meta property="og:description" content="Your whole site built and kept running in one place — design, hosting, backend, and payments. No agency price tag, no DIY headache." />
+<meta property="og:image" content="https://websharke.com/images/Main-Logo.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="WebSharke — Websites for Small Businesses, Fully Handled" />
+<meta name="twitter:description" content="Your whole site built and kept running in one place — design, hosting, backend, and payments." />
+<meta name="twitter:image" content="https://websharke.com/images/Main-Logo.png" />
 <script>
 if('scrollRestoration' in history)history.scrollRestoration='manual';
 window.addEventListener('load',function(){window.scrollTo(0,0)});
@@ -85,6 +100,14 @@ nav.scrolled .signin{color:var(--foam)}
 .btn-sand{padding:1.05rem 2.9rem;color:var(--ink);background:linear-gradient(135deg,#f8ecd3,#e4cfa6);box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 12px 32px rgba(16,37,54,.2),0 2px 6px rgba(16,37,54,.12)}
 .btn-sand:hover{transform:translateY(-3px);box-shadow:0 1px 0 rgba(255,255,255,.75) inset,0 20px 46px rgba(16,37,54,.28)}
 
+/* ── FOCUS STATES (keyboard accessibility) ───────────────────────────────── */
+.logo:focus-visible{outline:2px solid var(--aqua);outline-offset:5px;border-radius:8px}
+.signin:focus-visible{outline:2px solid currentColor;outline-offset:5px;border-radius:3px}
+.signin:focus-visible::after{width:100%}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.style-card:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}
+*:focus-visible{outline-color:var(--aqua)}
+
 /* ── REVEAL ──────────────────────────────────────────────────────────────── */
 .rv{opacity:0;transform:translateY(34px);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1)}
 .rv.on{opacity:1;transform:none}
@@ -153,6 +176,8 @@ body.lock{overflow:hidden;height:100vh}
   .fish,.fish>i,.mote,.school,.school .sf{animation:none!important}
   #snow{display:none}
   html{scroll-behavior:auto}
+  /* Show all reveal/intro content immediately — no slide-in for reduced-motion users */
+  .rv,.rl,.rr,#hero .anim{opacity:1!important;transform:none!important;transition:none!important}
 }
 
 /* ── RESPONSIVE (desktop-first) ──────────────────────────────────────────── */
@@ -168,6 +193,14 @@ body.lock{overflow:hidden;height:100vh}
   #hero{padding-top:30vh}
 }
 </style>
+
+<!-- JavaScript disabled / failed: hide the preloader, unlock scroll, and reveal
+     all content so the page is still fully readable and usable. -->
+<noscript><style>
+  #loader{display:none!important}
+  body.lock{overflow:auto!important;height:auto!important}
+  .rv,.rl,.rr,#hero .anim{opacity:1!important;transform:none!important}
+</style></noscript>
 </head>
 <body class="lock">
 

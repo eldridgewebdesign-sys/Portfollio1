@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Start Your Project — WebSharke</title>
+  <meta name="description" content="Tell WebSharke about your business and we build and run your website end to end — design, hosting, backend, forms, and payments. No agency price tag, no DIY headache." />
 
   <!-- Same brand fonts as login.html / dashboard.html (beach theme) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -369,7 +370,7 @@
         <!-- ---------- Submit + status message ---------- -->
         <div class="submit-row">
           <button type="submit" id="submit-btn" class="btn">Create Account &amp; Submit</button>
-          <p id="message" class="msg"></p>
+          <p id="message" class="msg" role="alert" aria-live="assertive"></p>
         </div>
       </form>
 
@@ -468,6 +469,14 @@
         document.getElementById("confirm_password").classList.add("invalid");
         if (!firstInvalid) { firstInvalid = "confirm_password"; message = "Passwords do not match."; }
       }
+
+      // Keep aria-invalid in sync with the visual state so screen readers
+      // announce exactly which fields need fixing.
+      ["email", "full_name", "business_name", "cell_phone", "password", "confirm_password"]
+        .forEach((id) => {
+          const el = document.getElementById(id);
+          el.setAttribute("aria-invalid", el.classList.contains("invalid") ? "true" : "false");
+        });
 
       if (firstInvalid) {
         document.getElementById(firstInvalid).focus();

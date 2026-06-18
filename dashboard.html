@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Dashboard — WebSharke</title>
+  <meta name="robots" content="noindex" />
 
   <!-- Same brand fonts as the rest of the WebSharke site (no more space theme) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -265,14 +266,22 @@
       -webkit-backdrop-filter:blur(9px) saturate(1.25);box-shadow:inset -1px 0 0 rgba(255,255,255,.35);
       border-right:1px solid var(--adm-bd);transition:flex-basis .22s ease;overflow:hidden}
     .adm.collapsed .adm-side{flex-basis:68px}
-    .adm-brand{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.05rem;
-      border-bottom:1px solid var(--adm-bd);min-height:64px}
-    .adm-brand-mark{width:30px;height:30px;border-radius:8px;flex:0 0 auto;
-      background:linear-gradient(150deg,var(--adm-turq),var(--adm-turq-deep));
-      display:grid;place-items:center;color:#06141b;font-weight:800;font-size:1rem}
-    .adm-brand-name{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.35rem;
-      letter-spacing:.01em;white-space:nowrap}
-    .adm.collapsed .adm-brand-name{display:none}
+    .adm-brand{display:flex;align-items:center;justify-content:flex-start;gap:.6rem;
+      padding:.6rem 1.05rem;border-bottom:1px solid var(--adm-bd);min-height:64px;overflow:hidden}
+    /* Full WebSharke logo (shark fin + wordmark). The source PNG is a wide canvas
+       with the art floating in the middle, so it's tightly cropped via mask-size/
+       position and tinted navy to read on the light frosted sidebar — same masking
+       approach as the client dashboard's .ws-logo. */
+    .adm-brand-logo{display:block;flex:0 0 auto;width:138px;height:46px;background:var(--adm-text);
+      -webkit-mask:url(images/Main-Logo.png) center 32% / 186% no-repeat;
+              mask:url(images/Main-Logo.png) center 32% / 186% no-repeat}
+    /* Shark-fin only — shown when the sidebar collapses to its icon rail. */
+    .adm-brand-icon{display:none;flex:0 0 auto;width:36px;height:30px;background:var(--adm-text);
+      -webkit-mask:url(images/Tab-Logo.png) center/contain no-repeat;
+              mask:url(images/Tab-Logo.png) center/contain no-repeat}
+    .adm.collapsed .adm-brand{justify-content:center;padding-left:0;padding-right:0}
+    .adm.collapsed .adm-brand-logo{display:none}
+    .adm.collapsed .adm-brand-icon{display:block}
     .adm-nav{display:flex;flex-direction:column;gap:.15rem;padding:.7rem .55rem;flex:1;overflow-y:auto}
     .adm-nav button{display:flex;align-items:center;gap:.75rem;width:100%;cursor:pointer;
       background:none;border:none;color:var(--adm-muted);text-align:left;
@@ -501,7 +510,10 @@
     /* ── Responsive: mini icon-only sidebar (NOT a hamburger) ─────────────── */
     @media(max-width:900px){
       .adm-side{flex-basis:64px !important}
-      .adm-brand-name,.adm-nav-label,.adm-nav-badge,.adm-signout span{display:none !important}
+      .adm-nav-label,.adm-nav-badge,.adm-signout span{display:none !important}
+      .adm-brand{justify-content:center;padding-left:0;padding-right:0}
+      .adm-brand-logo{display:none !important}
+      .adm-brand-icon{display:block !important}
       .adm-collapse-btn{display:none}
       .adm-admin-chip{display:none}
     }
@@ -679,8 +691,8 @@
     <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
     <aside class="adm-side" id="admSide">
       <div class="adm-brand">
-        <span class="adm-brand-mark">W</span>
-        <span class="adm-brand-name">WebSharke</span>
+        <span class="adm-brand-logo" role="img" aria-label="WebSharke"></span>
+        <span class="adm-brand-icon" aria-hidden="true"></span>
       </div>
       <nav class="adm-nav" id="admNav" aria-label="Admin sections">
         <button class="active" data-view="overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="adm-nav-label">Overview</span></button>
