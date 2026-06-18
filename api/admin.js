@@ -242,10 +242,16 @@ async function getOverview(supa) {
 // Generic helper: apply search + sort + range to a query builder.
 function applyListOpts(q, { search, searchCols, sortBy, sortDir, limit, offset }) {
   if (search && searchCols && searchCols.length) {
-    const or = searchCols.map((c) => `${c}.ilike.%${search.replace(/[%,]/g, "")}%`).join(",");
+    // Strip PostgREST filter metacharacters so the search term can never
+    // break out of the ilike value (defence in depth — caller is admin-only).
+    const term = String(search).replace(/[%,()*\\]/g, "");
+    const or = searchCols.map((c) => `${c}.ilike.%${term}%`).join(",");
     q = q.or(or);
   }
-  if (sortBy) q = q.order(sortBy, { ascending: (sortDir || "desc") !== "desc", nullsFirst: false });
+  // Only allow a safe column-name shape for ordering (no injection into the
+  // order query param).
+  const safeSort = sortBy ? String(sortBy).replace(/[^a-zA-Z0-9_]/g, "") : "";
+  if (safeSort) q = q.order(safeSort, { ascending: (sortDir || "desc") !== "desc", nullsFirst: false });
   else q = q.order("created_at", { ascending: false });
   const lim = Math.min(Number(limit) || 50, 100000);
   const off = Number(offset) || 0;
@@ -513,7 +519,7 @@ async function listActivity(supa, p) {
 async function globalSearch(supa, p) {
   const term = (p.search || "").trim();
   if (!term) return { results: [] };
-  const like = "%" + term.replace(/[%,]/g, "") + "%";
+  const like = "%" + term.replace(/[%,()*\\]/g, "") + "%";
   const results = [];
 
   const [{ data: users }, { data: sites }, { data: subs }] = await Promise.all([
