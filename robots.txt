@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Private / app pages — no SEO value, keep them out of the index.
+Disallow: /dashboard
+Disallow: /dashboard.html
+Disallow: /dashboard-style
+Disallow: /dashboard-style.html
+Disallow: /payment
+Disallow: /payment.html
+Disallow: /success
+Disallow: /success.html
+Disallow: /cancel
+Disallow: /cancel.html
+Disallow: /login
+Disallow: /api/
+
+Sitemap: https://websharke.com/sitemap.xml

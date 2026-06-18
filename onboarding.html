@@ -555,6 +555,18 @@
         return;
       }
 
+      // 2b. NOTIFY THE ADMIN (best-effort, never blocks the client). ----
+      // The endpoint re-reads the lead server-side and emails a summary; it
+      // quietly no-ops if email isn't configured yet.
+      if (user && user.id) {
+        fetch("/api/notify-lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+          keepalive: true,
+        }).catch(() => {});
+      }
+
       // 3. SUCCESS — show the thank-you screen and route the client. -
       form.style.display = "none";
       thanksEl.style.display = "block";

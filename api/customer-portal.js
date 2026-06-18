@@ -13,12 +13,11 @@
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require("@supabase/supabase-js");
+const { applyCors } = require("./_cors");
 
 module.exports = async (req, res) => {
   // ---- CORS headers (set before any response is returned). ----
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST");
-  res.setHeader("Content-Type", "application/json");
+  if (applyCors(req, res)) return; // answered an OPTIONS preflight
 
   // ---- Only POST is allowed. ----
   if (req.method !== "POST") {

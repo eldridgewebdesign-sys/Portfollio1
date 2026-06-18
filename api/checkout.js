@@ -11,12 +11,11 @@
 // =====================================================================
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { applyCors } = require("./_cors");
 
 module.exports = async (req, res) => {
   // ---- CORS headers (set before any response is returned). ----
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST");
-  res.setHeader("Content-Type", "application/json");
+  if (applyCors(req, res)) return; // answered an OPTIONS preflight
 
   // ---- Only POST is allowed. ----
   if (req.method !== "POST") {
@@ -78,8 +77,8 @@ module.exports = async (req, res) => {
     }
 
     // Reuse the customer for this email if one already exists, otherwise create one.
-    const existingCustomers = await stripe.customers.list({ email, limit: 1 });
-    let customer = existingCustomers.data[0];
+    let customer;
+    let subscription;
 
     try {
       const existingCustomers = await stripe.customers.list({
