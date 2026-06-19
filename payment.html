@@ -138,28 +138,7 @@
       letter-spacing:.01em;
       margin-bottom:1rem;
     }
-    .finder-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:1rem;
-      width:100%;
-    }
-    .finder-question{
-      background:var(--inner);
-      border:1px solid var(--inner-bd);
-      border-radius:12px;
-      padding:1rem;
-    }
-    .finder-question h3{
-      font-family:"Cormorant Garamond",serif;
-      font-size:1.2rem;
-      font-weight:600;
-      color:#0e2f44;
-      margin-bottom:.7rem;
-      line-height:1.2;
-    }
-    .finder-options{display:flex;flex-direction:column;gap:.5rem}
-    .finder-option,.show-all{
+    .finder-option{
       cursor:pointer;
       border:1px solid rgba(17,54,76,.22);
       border-radius:8px;
@@ -173,18 +152,8 @@
       text-align:left;
       transition:background .2s,border-color .2s,color .2s,transform .2s;
     }
-    .finder-option:hover,.show-all:hover{background:rgba(255,255,255,.78);border-color:var(--turq);transform:translateY(-1px)}
+    .finder-option:hover{background:rgba(255,255,255,.78);border-color:var(--turq);transform:translateY(-1px)}
     .finder-option.active{background:rgba(16,182,204,.2);border-color:#15707f;color:#0e2f44}
-    .finder-actions{display:flex;align-items:center;gap:.75rem;margin-top:1rem}
-    .show-all{
-      display:inline-flex;
-      align-items:center;
-      text-align:center;
-      font-size:.82rem;
-      letter-spacing:.05em;
-      text-transform:uppercase;
-      padding:.55rem .9rem;
-    }
     .finder-tabs{display:flex;gap:.75rem;flex-wrap:wrap}
     .finder-tabs .finder-option{flex:1 1 0;min-width:140px;text-align:center;font-size:1rem;padding:.85rem 1rem}
     .shell{
@@ -431,7 +400,6 @@
     .pay-msg.error{color:#7c1d29;background:rgba(255,255,255,.6);border:1px solid rgba(150,40,52,.4)}
     .pay-msg.success{color:#0c5a40;background:rgba(255,255,255,.6);border:1px solid rgba(30,140,90,.4)}
     @media(max-width:860px){
-      .finder-grid{grid-template-columns:1fr}
       .topbar{align-items:flex-start}
     }
     @media(max-width:720px){
@@ -504,7 +472,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/vendor/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
 
@@ -584,7 +552,6 @@
 
     const stripePublishableKey =
       (typeof STRIPE_PUBLISHABLE_KEY !== "undefined" && STRIPE_PUBLISHABLE_KEY) ||
-      (typeof NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY !== "undefined" && NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) ||
       "";
 
     const stripe =

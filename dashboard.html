@@ -521,6 +521,8 @@
       .adm-drawer{width:100vw}
       .adm-views{padding:1rem .9rem 3rem}
       .adm-toasts{left:.8rem;right:.8rem;max-width:none}
+      /* The 320px min column overflows the narrow main area beside the icon rail */
+      .adm-grid-2{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -820,7 +822,7 @@
   </div>
 
   <!-- ── Supabase (shared client `db`) — same config every page uses ────────── -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/vendor/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
   <!-- Stripe.js (official CDN) — used for the Payment Element modal below. -->
   <script src="https://js.stripe.com/v3/"></script>
@@ -1401,24 +1403,12 @@
         sub = rows && rows[0] ? rows[0] : null;
       } catch (e) { console.error("Could not load subscription:", e.message); subError = true; }
 
-      // Project details intake row from `project_inquiries` for the signed-in
-      // user. Most recent row wins when several exist. A load failure is kept
-      // separate so the section shows a clean error instead of "none on file".
-      let project = null;
-      let projectError = false;
-      try {
-        const { data: rows, error } = await db
-          .from("project_inquiries")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        if (error) throw error;
-        project = rows && rows[0] ? rows[0] : null;
-      } catch (e) {
-        console.error("Could not load project details:", e.message);
-        projectError = true;
-      }
+      // Project details read from the SAME `project_inquiries` row loaded above
+      // (identical query — most-recent intake for this user). Reusing it avoids a
+      // second, redundant round-trip on every dashboard load; the Project and
+      // Business sections render from this one fetch and share its load state.
+      const project = inquiry;
+      const projectError = inquiryError;
 
       // ---- WebSharke data rule → does the user have a website / hosting /
       // subscription with WebSharke? Billing shows full details only then;

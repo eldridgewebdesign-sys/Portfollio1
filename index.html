@@ -141,26 +141,39 @@ body.ready #hero .anim{opacity:1;transform:none}
 .why-col h3{font-family:'Cormorant Garamond',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
 .why-col p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:.95rem;line-height:1.8}
 
-/* ── STYLES — placeholder windows (future examples go here) ────────────────── */
-.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-top:clamp(2.4rem,4.5vw,3.4rem);text-align:left}
-.style-card{position:relative;border-radius:16px;background:rgba(174,195,201,.055);border:1px solid rgba(174,195,201,.15);backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);box-shadow:inset 0 1px 0 rgba(236,244,243,.1),0 18px 46px rgba(0,0,0,.34);overflow:hidden;display:flex;flex-direction:column;min-height:212px;transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .45s,box-shadow .45s}
-.style-card:hover{transform:translateY(-4px);border-color:rgba(98,182,198,.24);box-shadow:0 22px 50px rgba(0,0,0,.4)}
-.sc-bar{display:flex;gap:.5rem;padding:.95rem 1.15rem;border-bottom:1px solid rgba(174,195,201,.12);flex-shrink:0}
-.sc-dot{width:10px;height:10px;border-radius:50%;background:rgba(174,195,201,.34)}
-.sc-body{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:.6rem;text-align:left;padding:1.4rem 1.5rem 1.65rem}
-.sc-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.42rem;line-height:1.1;color:var(--foam);letter-spacing:.01em}
-.sc-desc{font-family:'Mulish',sans-serif;font-weight:300;font-size:.9rem;line-height:1.62;color:rgba(240,248,250,.76)}
-/* first style card → live mini-preview that links to the dashboard sample */
-.sc-thumb{padding:0;text-decoration:none;color:inherit}
-.mini-dash{position:relative;flex:1;overflow:hidden;
-  background:
-    radial-gradient(135% 95% at 10% 6%,rgba(48,92,182,.5),transparent 52%),
-    radial-gradient(130% 120% at 94% 102%,rgba(92,56,156,.55),transparent 55%),
-    linear-gradient(140deg,#0a1230,#0c1538 36%,#13163f 66%,#211a4c)}
-.md-chart{position:absolute;inset:0;width:100%;height:100%}
-.md-graph{filter:drop-shadow(0 0 2px rgba(140,180,255,.6))}
-.md-cap{position:absolute;left:0;right:0;bottom:0;font-family:'Mulish',sans-serif;font-weight:600;font-size:.74rem;letter-spacing:.15em;text-transform:uppercase;color:#eaf0fb;text-align:left;padding:1.6rem .95rem .72rem;background:linear-gradient(to top,rgba(6,12,28,.85),rgba(6,12,28,.4) 55%,transparent)}
-.md-cap::after{content:'\2197';margin-left:.42rem;opacity:.85}
+/* ── STYLES — a curated gallery of the kinds of sites WebSharke builds ─────────
+   Editorial cards: one consistent family, quiet index numerals, an aqua hairline
+   that draws in on hover. The single live sample is intentionally set apart — no
+   fake browser chrome, no off-brand dashboard art, no neon glow. ─────────────── */
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1rem,1.6vw,1.4rem);margin-top:clamp(2.4rem,4.5vw,3.4rem);text-align:left}
+.style-card{position:relative;display:flex;flex-direction:column;min-height:202px;padding:1.7rem 1.6rem 1.45rem;border-radius:16px;
+  background:rgba(174,195,201,.05);border:1px solid rgba(174,195,201,.14);
+  backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);
+  box-shadow:inset 0 1px 0 rgba(236,244,243,.07),0 16px 40px rgba(0,0,0,.3);
+  overflow:hidden;text-decoration:none;color:inherit;
+  transition:transform .5s cubic-bezier(.16,1,.3,1),border-color .5s,box-shadow .5s,background .5s}
+/* aqua accent that draws across the top edge on hover */
+.style-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--aqua),rgba(98,182,198,0));
+  transform:scaleX(0);transform-origin:left;transition:transform .55s cubic-bezier(.16,1,.3,1)}
+.style-card:hover{transform:translateY(-5px);border-color:rgba(98,182,198,.32);
+  background:rgba(174,195,201,.07);box-shadow:0 24px 52px rgba(0,0,0,.4)}
+.style-card:hover::before{transform:scaleX(1)}
+/* quiet editorial index numeral, top-right */
+.sc-index{position:absolute;top:.5rem;right:1.05rem;font-family:'Cormorant Garamond',serif;font-weight:600;
+  font-size:2.5rem;line-height:1;color:rgba(98,182,198,.16);pointer-events:none;transition:color .5s}
+.style-card:hover .sc-index{color:rgba(98,182,198,.3)}
+.sc-kicker{font-family:'Mulish',sans-serif;font-weight:600;font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--aqua);opacity:.85;margin-bottom:.85rem}
+.sc-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.5rem;line-height:1.12;letter-spacing:.01em;color:var(--foam)}
+.sc-desc{font-family:'Mulish',sans-serif;font-weight:400;font-size:.9rem;line-height:1.66;color:rgba(240,248,250,.78);margin-top:.6rem}
+.sc-foot{margin-top:auto;padding-top:1.05rem;border-top:1px solid rgba(174,195,201,.12)}
+.sc-go{display:inline-flex;align-items:center;gap:.45rem;font-family:'Mulish',sans-serif;font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua)}
+.sc-go svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s cubic-bezier(.16,1,.3,1)}
+.style-card:hover .sc-go svg{transform:translate(3px,-3px)}
+.sc-soon{font-family:'Mulish',sans-serif;font-weight:600;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mist);opacity:.8}
+/* the one live sample — a quietly featured, clickable card */
+.style-card.feat{background:linear-gradient(165deg,rgba(98,182,198,.1),rgba(174,195,201,.045) 62%);border-color:rgba(98,182,198,.26)}
+.style-card.feat:hover{background:linear-gradient(165deg,rgba(98,182,198,.14),rgba(174,195,201,.06) 62%)}
 /* deepest section — ends the page on the content, not on empty water */
 #styles{min-height:auto;padding-top:clamp(5.5rem,11vh,8.5rem);padding-bottom:clamp(4rem,7vh,5.5rem)}
 #site-footer{position:relative;z-index:1;text-align:center;padding:1.6rem 1.5rem 2.2rem;font-family:'Mulish',sans-serif;font-weight:400;font-size:.76rem;letter-spacing:.08em;color:rgba(236,244,243,.68)}
@@ -177,7 +190,7 @@ body.lock{overflow:hidden;height:100vh}
   #snow{display:none}
   html{scroll-behavior:auto}
   /* Show all reveal/intro content immediately — no slide-in for reduced-motion users */
-  .rv,.rl,.rr,#hero .anim{opacity:1!important;transform:none!important;transition:none!important}
+  .rv,#hero .anim{opacity:1!important;transform:none!important;transition:none!important}
 }
 
 /* ── RESPONSIVE (desktop-first) ──────────────────────────────────────────── */
@@ -187,9 +200,10 @@ body.lock{overflow:hidden;height:100vh}
 }
 @media(max-width:680px){
   nav{padding:.8rem 1.4rem}
-  .logo{width:160px;height:90px}
+  .logo{width:140px;height:79px}
+  .signin{letter-spacing:.16em}
   .style-grid{grid-template-columns:1fr}
-  .sx{min-height:auto;padding:clamp(5rem,14vh,7rem) 1.4rem}
+  .sx{min-height:auto;padding:clamp(3.5rem,9vh,5rem) 1.4rem}
   #hero{padding-top:30vh}
 }
 </style>
@@ -199,7 +213,7 @@ body.lock{overflow:hidden;height:100vh}
 <noscript><style>
   #loader{display:none!important}
   body.lock{overflow:auto!important;height:auto!important}
-  .rv,.rl,.rr,#hero .anim{opacity:1!important;transform:none!important}
+  .rv,#hero .anim{opacity:1!important;transform:none!important}
 </style></noscript>
 </head>
 <body class="lock">
@@ -271,34 +285,41 @@ body.lock{overflow:hidden;height:100vh}
   <div class="wrap">
     <h2 class="sec-title rv">Styles</h2>
     <div class="style-grid">
-      <a class="style-card sc-thumb rv d1" href="/dashboard-style" aria-label="Sales Dashboard style — open preview">
-        <div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div>
-        <div class="mini-dash">
-          <svg class="md-chart" viewBox="0 0 220 150" preserveAspectRatio="none" aria-hidden="true">
-            <defs><pattern id="mdDots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#acc4ff" fill-opacity=".22"/></pattern></defs>
-            <rect x="0" y="0" width="40" height="150" fill="#16224a" fill-opacity=".45"/>
-            <rect x="0" y="0" width="40" height="150" fill="url(#mdDots)"/>
-            <line x1=".5" y1="0" x2=".5" y2="150" stroke="#96b4ff" stroke-opacity=".16"/>
-            <text x="20" y="20" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="12" font-weight="600" fill="#eef3fd">DB</text>
-            <line x1="11" y1="25" x2="29" y2="25" stroke="#e0e9fd" stroke-opacity=".8"/>
-            <g fill="#e4ebfc" fill-opacity=".62"><rect x="13" y="45" width="14" height="9" rx="2"/><rect x="13" y="67" width="14" height="9" rx="2"/><rect x="13" y="89" width="14" height="9" rx="2"/></g>
-            <g stroke="#fff" stroke-linecap="round"><line x1="124" y1="16" x2="124" y2="134" stroke-width="1.5"/><line x1="52" y1="75" x2="210" y2="75" stroke-width="1.5"/></g>
-            <g class="md-graph" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M60,60 C70,54 76,44 84,33 C89,41 94,31 98,47 C108,39 116,30 122,26"/>
-              <path d="M134,52 C142,46 147,37 153,29 C158,37 163,41 168,43 C174,33 179,26 184,23 C189,33 194,43 199,47"/>
-              <path d="M60,120 C70,114 76,105 82,97 C86,103 90,107 94,107 C105,98 114,90 121,85"/>
-              <path d="M134,84 C140,88 144,92 150,94 C158,94 164,98 169,102 C176,104 182,110 187,114"/>
-            </g>
-            <g fill="#9398a8"><path d="M46,75 L58,68 L58,82 Z"/><path d="M214,75 L202,68 L202,82 Z"/></g>
-          </svg>
-          <span class="md-cap">Sales Dashboard</span>
-        </div>
+      <a class="style-card feat rv d1" href="/Animations/laptop-teardown" aria-label="3D Laptop Teardown — open interactive demo">
+        <span class="sc-index" aria-hidden="true">01</span>
+        <div class="sc-kicker">Interactive · 3D</div>
+        <h3 class="sc-title">3D Laptop Teardown</h3>
+        <p class="sc-desc">A scroll-driven teardown that lifts a laptop apart layer by layer — screen, board, battery, silicon. Engineering shown as motion.</p>
+        <div class="sc-foot"><span class="sc-go">View live demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
       </a>
-      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Bold Landing Page</h3><p class="sc-desc">A focused one-page site built to explain the offer and push visitors toward action.</p></div></div>
-      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Premium Dark</h3><p class="sc-desc">A sharper look for brands that want depth, contrast, and a more polished feel.</p></div></div>
-      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Soft Coastal</h3><p class="sc-desc">Light, calm layouts with warm spacing, clean sections, and a relaxed visual style.</p></div></div>
-      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Modern Portfolio</h3><p class="sc-desc">A visual-first layout for showing work, projects, photos, or case studies.</p></div></div>
-      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Full Client Portal</h3><p class="sc-desc">A site with login, dashboard access, payments, forms, and backend features.</p></div></div>
+      <div class="style-card rv d2">
+        <span class="sc-index" aria-hidden="true">02</span>
+        <div class="sc-kicker">Landing</div>
+        <h3 class="sc-title">Bold Landing Page</h3>
+        <p class="sc-desc">A focused one-page site built to explain the offer and push visitors toward one clear action.</p>
+        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
+      </div>
+      <div class="style-card rv d3">
+        <span class="sc-index" aria-hidden="true">03</span>
+        <div class="sc-kicker">Dark · Premium</div>
+        <h3 class="sc-title">Premium Dark</h3>
+        <p class="sc-desc">A sharper look for brands that want depth, contrast, and a more polished, high-end feel.</p>
+        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
+      </div>
+      <div class="style-card rv d1">
+        <span class="sc-index" aria-hidden="true">04</span>
+        <div class="sc-kicker">Coastal</div>
+        <h3 class="sc-title">Soft Coastal</h3>
+        <p class="sc-desc">Light, calm layouts with warm spacing, clean sections, and a relaxed, unhurried style.</p>
+        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
+      </div>
+      <div class="style-card rv d3">
+        <span class="sc-index" aria-hidden="true">05</span>
+        <div class="sc-kicker">Client Portal</div>
+        <h3 class="sc-title">Full Client Portal</h3>
+        <p class="sc-desc">A site with login, dashboard access, payments, forms, and backend features.</p>
+        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
+      </div>
     </div>
   </div>
 </section>
@@ -325,7 +346,7 @@ body.lock{overflow:hidden;height:100vh}
 const obs=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');obs.unobserve(e.target)}});
 },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
-document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
+document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
 
 // ── MARINE SNOW (generated once, CSS-animated) ───────────────────────────────
 (function(){
@@ -441,7 +462,7 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
 </script>
 
 <!-- ── AUTH-AWARE NAV CTA (unchanged behaviour) ────────────────────────────── -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/vendor/supabase.min.js"></script>
 <script src="js/supabase-config.js"></script>
 <script>
 // Shows "Sign In" for visitors and "View Dashboard" once a client is signed in —

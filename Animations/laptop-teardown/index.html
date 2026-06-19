@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Served at /Animations/laptop-teardown — anchor all relative asset URLs
+     (style.css, script.js, vendor/, fonts, and the import map) to this folder so
+     they resolve whether or not the clean URL carries a trailing slash. -->
+<base href="/Animations/laptop-teardown/">
+<title>WebSharke — Anatomy of a Build</title>
+<meta name="description" content="A scroll-driven 3D teardown: a laptop separating into its internal components.">
+<!-- Site tab icon (root-absolute so it ignores <base>); also avoids a /favicon.ico 404. -->
+<link rel="icon" href="/images/Tab-Logo.png" type="image/png">
+
+<!-- Always start at the top, never mid-teardown -->
+<script>
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.__teardownReady = false;
+  window.__teardownError = null;
+
+  function teardownShowError(msg) {
+    document.getElementById('loader')?.classList.add('error');
+    var d = document.getElementById('err-detail');
+    if (d && msg) d.textContent = msg;
+  }
+  var FILE_MSG = 'This page must be served by the website over http(s), not opened as a local ' +
+    'file (browsers block ES modules on the file:// protocol). Open it from the WebSharke ' +
+    'site at /Animations/laptop-teardown/.';
+
+  // An ES-module page can't run from file:// — say so immediately, don't wait 6s.
+  if (location.protocol === 'file:')
+    document.addEventListener('DOMContentLoaded', function () { teardownShowError(FILE_MSG); });
+
+  // Capture the first real error so the fallback can explain *why* it failed.
+  window.addEventListener('error', function (e) {
+    if (!window.__teardownError && e && (e.message || e.filename))
+      window.__teardownError = (e.message || 'Load error') +
+        (e.filename ? ' — ' + e.filename.split('/').pop() : '');
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) {
+    if (!window.__teardownError)
+      window.__teardownError = String((e.reason && e.reason.message) || e.reason || 'Load failed');
+  });
+  // Fallback: if the scene never initialises within a few seconds, explain why.
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      if (window.__teardownReady) return;
+      teardownShowError(location.protocol === 'file:'
+        ? FILE_MSG
+        : (window.__teardownError || 'Please refresh to try again.'));
+    }, 6000);
+  });
+</script>
+
+<!-- Fonts (Cormorant Garamond + Mulish) — vendored locally, no external CDN. -->
+<link rel="stylesheet" href="vendor/fonts.css">
+
+<link rel="stylesheet" href="style.css">
+
+<!-- GSAP + ScrollTrigger (vendored locally → window.gsap / window.ScrollTrigger) -->
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+
+<!-- Three.js via import map — vendored locally, NO external CDN (works offline,
+     and can't be blocked by Tracking Prevention / ad-blockers / proxies). -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/jsm/"
+  }
+}
+</script>
+</head>
+
+<body>
+
+<!-- ── LOADING FALLBACK ─────────────────────────────────────────────────────── -->
+<div id="loader" aria-hidden="true">
+  <div class="loader-inner">
+    <span class="spinner"></span>
+    <p class="loading-msg">Preparing teardown</p>
+    <p class="error-msg">
+      Couldn’t start the 3D experience.<br>
+      <span id="err-detail">Please refresh to try again.</span>
+    </p>
+  </div>
+</div>
+
+<!-- ── INTRO ────────────────────────────────────────────────────────────────── -->
+<section id="intro">
+  <div class="intro-wrap">
+    <p class="eyebrow">WebSharke · Engineering</p>
+    <h1>Anatomy of a <em>build</em></h1>
+    <p class="lede">
+      Every site we ship is engineered in layers — front to back, screen to silicon.
+      Scroll to take one apart.
+    </p>
+    <div class="scroll-cue"><span></span></div>
+  </div>
+</section>
+
+<!-- ── TEARDOWN (pinned 3D stage) ───────────────────────────────────────────── -->
+<section id="teardown">
+  <div id="stage">
+    <canvas id="webgl"></canvas>
+
+    <!-- Overlays (non-interactive so scrolling passes straight through) -->
+    <div class="overlay">
+      <h2 id="stage-title">A laptop, in full.</h2>
+
+      <ul id="index" class="side-index"><!-- built from STAGES in script.js --></ul>
+
+      <div class="caption">
+        <span id="cap-num">01</span>
+        <span id="cap-name">Assembled</span>
+      </div>
+
+      <div id="hint" class="scroll-hint">Scroll to disassemble</div>
+      <div class="progress"><span id="bar"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── OUTRO ────────────────────────────────────────────────────────────────── -->
+<section id="outro">
+  <div class="intro-wrap">
+    <h2>Built like hardware.<br><em>Shipped like software.</em></h2>
+    <p class="lede">
+      The same care, layer by layer, goes into the websites we build for you.
+    </p>
+    <a class="btn" href="/onboarding">Start a Project</a>
+  </div>
+</section>
+
+<footer id="site-footer">© 2026 WebSharke. All rights reserved.</footer>
+
+<!-- Main module (must be type="module" for the import map) -->
+<script type="module" src="script.js"></script>
+
+<!-- No-JS / module-unsupported fallback -->
+<noscript>
+  <p style="position:fixed;inset:0;display:grid;place-items:center;background:#070a0e;color:#e7edf2;font-family:sans-serif;text-align:center;padding:2rem;">
+    This interactive 3D teardown requires JavaScript.
+  </p>
+</noscript>
+
+</body>
+</html>

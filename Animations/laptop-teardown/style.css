@@ -1,0 +1,311 @@
+/* ============================================================================
+   PREMIUM LAPTOP TEARDOWN — styles
+   Dark "product reveal" register. Typography matches the main WebSharke site
+   (Cormorant Garamond for display, Mulish for UI). Tune the palette in :root.
+   ========================================================================== */
+
+:root {
+  --bg:      #070a0e;   /* page base (deepest) */
+  --bg-2:    #0d1218;   /* upper gradient stop */
+  --ink:     #e9eef3;   /* primary text */
+  --muted:   #8a97a3;   /* secondary text */
+  --faint:   #5b6670;   /* tertiary / labels */
+  --line:    rgba(255, 255, 255, 0.08);
+  --accent:  #6fb6c6;   /* site aqua — used sparingly */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Mulish', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Elegant, simple background: a soft graphite gradient + a single cool glow.
+   Fixed so it stays steady behind the transparent WebGL canvas. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(120% 80% at 50% -10%, #131a22 0%, transparent 55%),
+    radial-gradient(80% 60% at 50% 50%, rgba(111, 182, 198, 0.06), transparent 60%),
+    linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 60%);
+}
+/* Whisper-faint vignette for depth. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  box-shadow: inset 0 0 240px 40px rgba(0, 0, 0, 0.55);
+}
+
+em { font-style: italic; }
+
+/* ── LOADER ─────────────────────────────────────────────────────────────────── */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  transition: opacity 0.6s ease, visibility 0s 0.6s;
+}
+#loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-inner { text-align: center; }
+.spinner {
+  display: block;
+  width: 34px; height: 34px;
+  margin: 0 auto 1.2rem;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-msg {
+  font-size: 0.74rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.error-msg {
+  display: none;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+/* Error state: swap spinner+loading for the message. */
+#loader.error .spinner,
+#loader.error .loading-msg { display: none; }
+#loader.error .error-msg { display: block; }
+#loader.error { opacity: 1; visibility: visible; }
+
+/* ── SHARED TEXT SECTIONS (intro / outro) ───────────────────────────────────── */
+#intro, #outro {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: clamp(4rem, 10vh, 8rem) 1.5rem;
+}
+.intro-wrap { max-width: 720px; }
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.85;
+  margin-bottom: 1.5rem;
+}
+#intro h1, #outro h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: 0.005em;
+  font-size: clamp(2.8rem, 7vw, 5.4rem);
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.5);
+}
+.lede {
+  font-weight: 300;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  line-height: 1.8;
+  color: var(--muted);
+  max-width: 46ch;
+  margin: 1.6rem auto 0;
+}
+
+/* Scroll cue under the intro headline. */
+.scroll-cue {
+  width: 24px; height: 38px;
+  margin: clamp(2.4rem, 5vh, 3.4rem) auto 0;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  position: relative;
+}
+.scroll-cue span {
+  position: absolute;
+  left: 50%; top: 8px;
+  width: 3px; height: 7px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--accent);
+  animation: cue 1.8s ease-in-out infinite;
+}
+@keyframes cue { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 70% { opacity: 1; transform: translateY(11px); } 100% { opacity: 0; transform: translateY(11px); } }
+
+/* ── TEARDOWN STAGE (pinned) ────────────────────────────────────────────────── */
+#teardown { position: relative; }
+#stage {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+#webgl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Overlays sit above the canvas but never intercept scroll/clicks. */
+.overlay { position: absolute; inset: 0; pointer-events: none; }
+
+/* Big title shown over the assembled laptop; fades out on scroll (via JS). */
+#stage-title {
+  position: absolute;
+  top: clamp(1.6rem, 6vh, 3.4rem);
+  left: 0; right: 0;
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: clamp(1.4rem, 3vw, 2.3rem);
+  color: var(--ink);
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
+  transition: opacity 0.2s linear;
+}
+
+/* Stage caption — bottom-left "01 — Display". */
+.caption {
+  position: absolute;
+  left: clamp(1.4rem, 4vw, 3.2rem);
+  bottom: clamp(1.8rem, 6vh, 3.4rem);
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+}
+.caption #cap-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+}
+.caption #cap-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* Side index — the list of teardown stages, active one highlighted. */
+.side-index {
+  position: absolute;
+  right: clamp(1.4rem, 4vw, 3.2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  list-style: none;
+  text-align: right;
+}
+.side-index li {
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  padding: 0.42rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  opacity: 0.55;
+  transition: color 0.4s ease, opacity 0.4s ease;
+}
+.side-index li span {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.64rem;
+  color: var(--faint);
+  transition: color 0.4s ease;
+}
+.side-index li.on { color: var(--ink); opacity: 1; }
+.side-index li.on span { color: var(--accent); }
+
+/* Scroll hint — fades on first scroll. */
+.scroll-hint {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: clamp(1.8rem, 6vh, 3.4rem);
+  text-align: center;
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: opacity 0.5s ease;
+}
+
+/* Thin scroll-progress bar at the very bottom of the stage. */
+.progress {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--line);
+}
+.progress #bar {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--accent), #a7d6df);
+}
+
+/* ── OUTRO CTA ──────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-block;
+  margin-top: 2.4rem;
+  padding: 1rem 2.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--bg);
+  background: linear-gradient(135deg, #d8eef2, var(--accent));
+  border-radius: 100px;
+  box-shadow: 0 12px 34px rgba(111, 182, 198, 0.22);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+.btn:hover { transform: translateY(-3px); box-shadow: 0 20px 46px rgba(111, 182, 198, 0.32); }
+
+#site-footer {
+  text-align: center;
+  padding: 1.8rem 1.5rem 2.4rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────────────────── */
+@media (max-width: 820px) {
+  .side-index { display: none; }            /* keep mobile stage uncluttered */
+}
+@media (max-width: 600px) {
+  .caption { left: 1.2rem; bottom: 1.4rem; }
+  .scroll-hint { bottom: 1.4rem; }
+}
+
+/* ── REDUCED MOTION ─────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .spinner, .scroll-cue span { animation: none; }
+}

@@ -83,11 +83,11 @@
       display:block;width:100%;cursor:pointer;border:none;margin-top:.4rem;
       font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.15rem;
       color:#eaf2ff;padding:.6rem 1.5rem;border-radius:9px;
-      background:linear-gradient(160deg,#2d57b4,#1d3f8f);
-      box-shadow:0 8px 20px rgba(18,40,90,.32),inset 0 1px 0 rgba(255,255,255,.18);
+      background:linear-gradient(160deg,#16465f,#0c2636);
+      box-shadow:0 8px 20px rgba(8,40,55,.36),inset 0 1px 0 rgba(255,255,255,.16);
       transition:transform .25s,filter .25s,box-shadow .25s;
     }
-    .btn-signin:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 12px 26px rgba(18,40,90,.4)}
+    .btn-signin:hover{transform:translateY(-1px);filter:brightness(1.12);box-shadow:0 12px 28px rgba(8,40,55,.46)}
     .btn-signin:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
     .btn-signin[disabled]{opacity:.6;cursor:not-allowed;transform:none;filter:none}
 
@@ -159,7 +159,7 @@
   </main>
 
   <!-- ── Supabase (shared client `db`) — same config every page uses ────────── -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/vendor/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
 
   <script>

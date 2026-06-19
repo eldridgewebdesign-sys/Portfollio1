@@ -78,8 +78,10 @@ module.exports = async (req, res) => {
     }
 
     // Reuse the customer for this email if one already exists, otherwise create one.
-    const existingCustomers = await stripe.customers.list({ email, limit: 1 });
-    let customer = existingCustomers.data[0];
+    // Declared before the try so the catch block (and the code after it) can
+    // still read them, and with `let` so we never leak an implicit global.
+    let customer;
+    let subscription;
 
     try {
       const existingCustomers = await stripe.customers.list({
