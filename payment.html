@@ -218,6 +218,7 @@
       gap:.85rem;
     }
     .plan-card{
+      position:relative;
       min-height:224px;
       display:flex;
       flex-direction:column;
@@ -235,6 +236,21 @@
       border-color:#15707f;
       border-left-color:#15707f;
       box-shadow:0 14px 30px rgba(0,68,82,.18);
+    }
+    .plan-badge{
+      position:absolute;
+      top:-11px;
+      right:14px;
+      background:#15707f;
+      color:#eaf6f8;
+      font-family:"Mulish",system-ui,sans-serif;
+      font-size:.64rem;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      padding:.32rem .7rem;
+      border-radius:999px;
+      box-shadow:0 6px 14px rgba(8,70,84,.3);
     }
     .plan-card.filtered-out{display:none}
     .plan-card.muted{opacity:.62}
@@ -532,6 +548,7 @@
         type: "Hosting",
         priceId: "price_1Te82R5dqO1i8gb8tug1dYUD",
         category: "hosting",
+        popular: true,
       },
       {
         name: "Full Stack Annual",
@@ -633,6 +650,14 @@
         .forEach((plan) => {
           const card = document.createElement("article");
           card.className = "plan-card";
+
+          if (plan.popular) {
+            card.classList.add("recommended");
+            const badge = document.createElement("span");
+            badge.className = "plan-badge";
+            badge.textContent = "Most Popular";
+            card.appendChild(badge);
+          }
 
           const title = document.createElement("h3");
           title.className = "plan-name";

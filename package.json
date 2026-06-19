@@ -1,8 +1,8 @@
 {
-  "name": "portfollio-site-copy",
+  "name": "websharke-site",
   "version": "1.0.0",
-  "description": "",
-  "main": "js/planets.js",
+  "description": "WebSharke — websites for small businesses, fully handled (static site + Vercel serverless API + Supabase + Stripe).",
+  "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

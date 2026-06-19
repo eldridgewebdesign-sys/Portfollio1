@@ -19,6 +19,7 @@
 // =====================================================================
 
 const { createClient } = require("@supabase/supabase-js");
+const { applyCors } = require("./_cors");
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com")
   .trim()
@@ -65,12 +66,8 @@ function indexBy(rows, key) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Content-Type", "application/json");
+  if (applyCors(req, res)) return; // answered an OPTIONS preflight
 
-  if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed. Use POST." });

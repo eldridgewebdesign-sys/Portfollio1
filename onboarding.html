@@ -142,13 +142,13 @@
     .submit-row{margin-top:1.4rem}
     .btn{
       display:block;width:100%;cursor:pointer;border:none;
-      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.2rem;
-      color:#eaf6f8;padding:.85rem 1.5rem;border-radius:10px;
-      background:#15707f;
-      box-shadow:0 6px 16px rgba(8,70,84,.28);
+      font-family:'Mulish',sans-serif;font-weight:700;font-size:.86rem;letter-spacing:.08em;text-transform:uppercase;
+      color:#eaf6f8;padding:.95rem 1.5rem;border-radius:10px;
+      background:linear-gradient(160deg,#1f93a8,#15707f);
+      box-shadow:0 8px 18px rgba(8,70,84,.28),inset 0 1px 0 rgba(255,255,255,.18);
       transition:transform .25s,filter .25s,box-shadow .25s;text-decoration:none;text-align:center;
     }
-    .btn:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 10px 22px rgba(8,70,84,.34)}
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 12px 24px rgba(8,70,84,.36)}
     .btn:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
     .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none;filter:none}
 
@@ -553,6 +553,18 @@
           "error"
         );
         return;
+      }
+
+      // 2b. NOTIFY THE ADMIN (best-effort, never blocks the client). ----
+      // The endpoint re-reads the lead server-side and emails a summary; it
+      // quietly no-ops if email isn't configured yet.
+      if (user && user.id) {
+        fetch("/api/notify-lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+          keepalive: true,
+        }).catch(() => {});
       }
 
       // 3. SUCCESS — show the thank-you screen and route the client. -

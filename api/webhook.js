@@ -132,6 +132,33 @@ const handler = async (req, res) => {
         break;
       }
 
+      case "payment_intent.succeeded": {
+        // One-time design purchases use the Payment Element (a PaymentIntent
+        // created in /api/checkout), not Stripe Checkout — so this, not
+        // checkout.session.completed, is where they land. Subscription
+        // invoices also create PaymentIntents, but those carry an `invoice`
+        // id; we only record true one-time orders (invoice == null) that
+        // were tagged with our metadata in /api/checkout.
+        const pi = event.data.object;
+        const meta = pi.metadata || {};
+        if (!pi.invoice && meta.supabase_user_id) {
+          const order = {
+            user_id: meta.supabase_user_id,
+            stripe_payment_intent_id: pi.id,
+            stripe_customer_id: pi.customer || null,
+            price_id: meta.price_id || null,
+            amount: pi.amount_received != null ? pi.amount_received / 100 : pi.amount / 100,
+            currency: pi.currency || "usd",
+            status: "paid",
+            paid_at: new Date().toISOString(),
+          };
+          await supabaseAdmin
+            .from("orders")
+            .upsert(order, { onConflict: "stripe_payment_intent_id" });
+        }
+        break;
+      }
+
       case "customer.subscription.updated":
       case "customer.subscription.created": {
         const subscription = event.data.object;
