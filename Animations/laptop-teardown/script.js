@@ -1,5 +1,5 @@
 /* ============================================================================
-   PREMIUM LAPTOP TEARDOWN — scroll-driven 3D exploded view
+   Laptop teardown — scroll-driven 3D exploded view
    Three.js (r160) + GSAP ScrollTrigger
    ----------------------------------------------------------------------------
    The laptop is built from PLACEHOLDER GEOMETRY (procedural Three.js meshes).
@@ -30,7 +30,7 @@ if (!gsap || !ScrollTrigger) {
 gsap.registerPlugin(ScrollTrigger);
 
 /* ----------------------------------------------------------------------------
-   CONFIG — the single place to adjust the whole experience
+   CONFIG — the single place to adjust the teardown
    -------------------------------------------------------------------------- */
 const CONFIG = {
   /* —— Scroll ———————————————————————————————————————————————————————————— */
@@ -60,7 +60,7 @@ const CONFIG = {
 
   /* —— Colours / materials ———————————————————————————————————————————————————
      Restrained graphite / space-grey palette. No neon. The site aqua is used
-     only as a whisper-faint accent. Edit here, or tweak buildMaterials(). */
+     only as a faint accent. Edit here, or tweak buildMaterials(). */
   col: {
     shell:   0x3b3e44,  // anodised graphite aluminium (lid + bottom)
     deck:    0x303338,  // keyboard top case
@@ -382,7 +382,7 @@ function registerParts() {
    4. SCENE / RENDERER / LIGHTS
    ========================================================================== */
 function initScene(canvas) {
-  // Renderer — transparent so the elegant CSS background shows through.
+  // Renderer — transparent so the CSS background shows through.
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;

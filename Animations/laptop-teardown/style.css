@@ -1,6 +1,6 @@
 /* ============================================================================
-   PREMIUM LAPTOP TEARDOWN — styles
-   Dark "product reveal" register. Typography matches the main WebSharke site
+   Laptop teardown — styles
+   Dark, restrained styling. Typography matches the main WebSharke site
    (Cormorant Garamond for display, Mulish for UI). Tune the palette in :root.
    ========================================================================== */
 
@@ -27,7 +27,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Elegant, simple background: a soft graphite gradient + a single cool glow.
+/* Simple background: a soft graphite gradient + one faint cool glow.
    Fixed so it stays steady behind the transparent WebGL canvas. */
 body::before {
   content: '';
@@ -39,7 +39,7 @@ body::before {
     radial-gradient(80% 60% at 50% 50%, rgba(111, 182, 198, 0.06), transparent 60%),
     linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 60%);
 }
-/* Whisper-faint vignette for depth. */
+/* Subtle vignette for depth. */
 body::after {
   content: '';
   position: fixed;
@@ -282,10 +282,10 @@ em { font-style: italic; }
   color: var(--bg);
   background: linear-gradient(135deg, #d8eef2, var(--accent));
   border-radius: 100px;
-  box-shadow: 0 12px 34px rgba(111, 182, 198, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 12px 30px rgba(111, 182, 198, 0.16);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
 }
-.btn:hover { transform: translateY(-3px); box-shadow: 0 20px 46px rgba(111, 182, 198, 0.32); }
+.btn:hover { transform: translateY(-3px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 18px 40px rgba(111, 182, 198, 0.24); }
 
 #site-footer {
   text-align: center;

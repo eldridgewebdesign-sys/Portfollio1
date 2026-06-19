@@ -13,7 +13,7 @@ browser tracking prevention.
 FILES
 -----
 index.html    markup, <base href="/Animations/laptop-teardown/">, import map, overlays
-style.css     dark "product reveal" styling
+style.css     dark teardown styling
 script.js     the 3D scene + scroll-driven teardown (tune the CONFIG block at top)
 vendor/       Three.js r160, GSAP 3.12.5, and vendored fonts (offline copies)
 
