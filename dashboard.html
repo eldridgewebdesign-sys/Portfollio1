@@ -7,12 +7,14 @@
   <title>Dashboard — WebSharke</title>
   <meta name="robots" content="noindex" />
 
-  <!-- Same brand fonts as the rest of the WebSharke site (no more space theme) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
   <style>
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cormorantgaramond-700.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/mulish-500.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/mulish-700.woff2) format('woff2')}
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
       --ink:#11364c;            /* deep navy — primary text */

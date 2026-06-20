@@ -62,11 +62,11 @@ const CONFIG = {
      Restrained graphite / space-grey palette. No neon. The site aqua is used
      only as a faint accent. Edit here, or tweak buildMaterials(). */
   col: {
-    shell:   0x3b3e44,  // anodised graphite aluminium (lid + bottom)
-    deck:    0x303338,  // keyboard top case
-    glass:   0x0b0d12,  // screen / trackpad glass
-    key:     0x24262b,  // keycaps
-    pcb:     0x18342e,  // muted deep-teal logic board (NOT neon green)
+    shell:   0x4a4e55,  // anodised space-grey aluminium (lid + bottom)
+    deck:    0x41444b,  // keyboard top case (a touch darker than the shell)
+    glass:   0x0a0c11,  // screen / trackpad glass (near-black)
+    key:     0x1f2126,  // keycaps + thin screen bezel (dark)
+    pcb:     0x163a31,  // muted deep teal-green logic board (NOT neon green)
     chip:    0x1b1d22,  // chip packages / housings
     metal:   0xb9bfc6,  // brushed metal (heat-spreaders, contacts, ports)
     copper:  0x9c6b43,  // desaturated copper (heat-pipe)
@@ -116,8 +116,8 @@ const damp = { x: 0, y: 0 };       // damped parallax
    ========================================================================== */
 function buildMaterials() {
   const C = CONFIG.col;
-  M.shell   = new THREE.MeshStandardMaterial({ color: C.shell,  metalness: 0.92, roughness: 0.42 });
-  M.deck    = new THREE.MeshStandardMaterial({ color: C.deck,   metalness: 0.85, roughness: 0.50 });
+  M.shell   = new THREE.MeshStandardMaterial({ color: C.shell,  metalness: 0.95, roughness: 0.35 });
+  M.deck    = new THREE.MeshStandardMaterial({ color: C.deck,   metalness: 0.90, roughness: 0.44 });
   M.glass   = new THREE.MeshPhysicalMaterial({ color: C.glass,  metalness: 0.10, roughness: 0.08,
                                                clearcoat: 1.0, clearcoatRoughness: 0.06 });
   M.key     = new THREE.MeshStandardMaterial({ color: C.key,    metalness: 0.30, roughness: 0.62 });
@@ -141,45 +141,49 @@ function shadow(mesh) {
    2. COMPONENT BUILDERS  (PLACEHOLDER GEOMETRY)
    Each returns a THREE.Group. Replace a builder's body with a GLTF node to
    upgrade that single part — the rest of the system keeps working untouched.
+
+   Proportions target a thin, unbranded aluminium ultrabook: every part is slim,
+   and the internals all fit inside one shallow base cavity (floor-top ≈ 0.03 →
+   deck-underside ≈ 0.17) that the thin top deck caps — so nothing intersects.
    ========================================================================== */
 
-// —— Lid: outer aluminium back cover ————————————————————————————————————————
+// —— Lid: outer aluminium back cover (unbranded — no logo) ————————————————————
 function buildBackCover() {
   const g = new THREE.Group();
-  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(3.10, 0.09, 2.02, 4, 0.08), M.shell)));
-  const logo = new THREE.Mesh(new THREE.CircleGeometry(0.16, 40), M.metal);
-  logo.rotation.x = -Math.PI / 2;
-  logo.position.y = 0.051;                 // sit just proud of the surface
-  g.add(logo);
+  // Thin anodised panel. Intentionally blank — no logo / branding of any kind.
+  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(3.04, 0.05, 2.00, 5, 0.05), M.shell)));
   return g;
 }
 
-// —— Lid: display panel (bezel + glass) ——————————————————————————————————————
+// —— Lid: display panel (slim black bezel + glass) ————————————————————————————
 function buildScreen() {
   const g = new THREE.Group();
-  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(2.96, 0.05, 1.92, 4, 0.05), M.deck)));
-  const glass = new THREE.Mesh(new RoundedBoxGeometry(2.74, 0.06, 1.68, 4, 0.03), M.glass);
+  // Thin black bezel frame.
+  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(2.96, 0.035, 1.94, 4, 0.03), M.key)));
+  // Display glass — near edge-to-edge, slim border, sitting just proud of the bezel.
+  const glass = new THREE.Mesh(new RoundedBoxGeometry(2.78, 0.045, 1.74, 4, 0.02), M.glass);
   glass.position.y = 0.012;
   g.add(glass);
   return g;
 }
 
-// —— Keyboard top case (deck) ——————————————————————————————————————————————
+// —— Keyboard top case (deck) — thin plate + shallow key bed ——————————————————
 function buildKeyboardDeck() {
   const g = new THREE.Group();
-  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(3.16, 0.10, 2.06, 4, 0.07), M.deck)));
-  const well = new THREE.Mesh(new RoundedBoxGeometry(2.52, 0.03, 1.00, 3, 0.03), M.key);
-  well.position.set(0, 0.05, -0.42);       // recessed keyboard well
-  g.add(well);
+  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(3.20, 0.05, 2.14, 5, 0.045), M.deck)));
+  // Shallow dark bed the keycaps sit in (toward the hinge half of the deck).
+  const bed = new THREE.Mesh(new RoundedBoxGeometry(2.62, 0.02, 1.00, 3, 0.02), M.key);
+  bed.position.set(0, 0.016, -0.45);
+  g.add(bed);
   return g;
 }
 
-// —— Keycaps (InstancedMesh grid — cheap & swappable) ———————————————————————
+// —— Keycaps (InstancedMesh grid — low-profile, cheap & swappable) —————————————
 function buildKeys() {
   const g = new THREE.Group();
   const cols = isMobile ? 12 : 14, rows = 5;     // fewer keys on mobile
-  const areaW = 2.40, areaD = 0.92, z0 = -0.42;
-  const kw = (areaW / cols) * 0.82, kd = (areaD / rows) * 0.78;
+  const areaW = 2.50, areaD = 0.90, z0 = -0.45;
+  const kw = (areaW / cols) * 0.86, kd = (areaD / rows) * 0.80;
   const geo = new RoundedBoxGeometry(1, 1, 1, 2, 0.16);     // unit cube, scaled per-instance
   const mesh = new THREE.InstancedMesh(geo, M.key, cols * rows);
   mesh.castShadow = useShadows;
@@ -190,7 +194,7 @@ function buildKeys() {
     for (let c = 0; c < cols; c++) {
       const x = (c - (cols - 1) / 2) * (areaW / cols);
       const z = z0 + (r - (rows - 1) / 2) * (areaD / rows);
-      p.set(x, 0, z); s.set(kw, 0.05, kd);
+      p.set(x, 0, z); s.set(kw, 0.025, kd);     // low-profile caps
       m.compose(p, q, s);
       mesh.setMatrixAt(i++, m);
     }
@@ -200,63 +204,64 @@ function buildKeys() {
   return g;
 }
 
-// —— Trackpad (glass) ————————————————————————————————————————————————————————
+// —— Trackpad (large, thin glass) ————————————————————————————————————————————
 function buildTrackpad() {
   const g = new THREE.Group();
-  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(1.06, 0.03, 0.72, 4, 0.04), M.glass)));
+  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(1.20, 0.02, 0.74, 4, 0.03), M.glass)));
   return g;
 }
 
-// —— Logic board / motherboard ——————————————————————————————————————————————
+// —— Logic board / motherboard (thin, compact) ———————————————————————————————
 function buildMotherboard() {
   const g = new THREE.Group();
-  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(2.70, 0.05, 0.78, 3, 0.03), M.pcb)));
+  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(1.70, 0.03, 0.62, 3, 0.03), M.pcb)));
   const box = (w, h, d, x, z, mat) => {
     const mm = shadow(new THREE.Mesh(
       new RoundedBoxGeometry(w, h, d, 2, Math.min(w, d) * 0.12), mat));
-    mm.position.set(x, 0.025 + h / 2, z);
+    mm.position.set(x, 0.015 + h / 2, z);
     g.add(mm);
   };
-  box(0.50, 0.06, 0.50, -0.85, 0.00, M.chip);   // chipset
-  box(0.22, 0.10, 0.50,  1.05, 0.00, M.chip);   // RAM bank
-  box(0.22, 0.10, 0.50,  0.78, 0.00, M.chip);   // RAM bank
-  box(0.60, 0.04, 0.18,  0.10, 0.28, M.metal);  // connector strip
+  box(0.26, 0.035, 0.34, -0.70, 0.00, M.chip);   // chipset (left, clear of the CPU/GPU)
+  box(0.15, 0.045, 0.40,  0.58, 0.00, M.chip);   // RAM bank
+  box(0.15, 0.045, 0.40,  0.74, 0.00, M.chip);   // RAM bank
+  box(0.50, 0.025, 0.10,  0.00, 0.24, M.metal);  // front connector strip
   return g;
 }
 
-// —— CPU / GPU heat-spreaders ————————————————————————————————————————————————
+// —— CPU / GPU heat-spreaders (low-profile, centred on the board) ——————————————
 function buildChips() {
   const g = new THREE.Group();
-  for (const x of [-0.45, 0.45]) {
-    const base = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.60, 0.06, 0.60, 3, 0.02), M.chip));
-    const lid  = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.05, 0.42, 3, 0.02), M.metal));
+  for (const x of [-0.27, 0.27]) {
+    const base = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.46, 0.035, 0.46, 3, 0.02), M.chip));
+    const lid  = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.32, 0.025, 0.32, 3, 0.02), M.metal));
     base.position.x = x;
-    lid.position.set(x, 0.05, 0);
+    lid.position.set(x, 0.030, 0);
     g.add(base, lid);
   }
   return g;
 }
 
-// —— Cooling fan + copper heat-pipe ——————————————————————————————————————————
+// —— Cooling: thin blower fan + short copper heat-pipe ————————————————————————
 function buildFan() {
   const g = new THREE.Group();
-  g.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.12, 44), M.chip)));
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.03, 12, 44), M.shell);
+  g.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 40), M.chip)));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.018, 10, 40), M.shell);
   ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.012;
   g.add(ring);
 
   // Rotor (hub + blades) — spun continuously in the render loop.
   const rotor = new THREE.Group();
-  rotor.add(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.14, 24), M.metal));
+  rotor.add(new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 20), M.metal));
   const N = 13;
-  const blades = new THREE.InstancedMesh(new RoundedBoxGeometry(0.40, 0.02, 0.11, 1, 0.01), M.metal, N);
+  const blades = new THREE.InstancedMesh(new RoundedBoxGeometry(0.24, 0.012, 0.06, 1, 0.006), M.metal, N);
   blades.castShadow = useShadows;
   const m = new THREE.Matrix4();
   for (let i = 0; i < N; i++) {
     const a = (i / N) * Math.PI * 2;
     m.identity()
       .multiply(new THREE.Matrix4().makeRotationY(a))
-      .multiply(new THREE.Matrix4().makeTranslation(0.27, 0.02, 0))
+      .multiply(new THREE.Matrix4().makeTranslation(0.17, 0.012, 0))
       .multiply(new THREE.Matrix4().makeRotationZ(0.5));   // blade pitch
     blades.setMatrixAt(i, m);
   }
@@ -264,58 +269,74 @@ function buildFan() {
   rotor.add(blades);
   g.add(rotor);
 
-  const pipe = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 16), M.copper));
+  // Short, thin heat-pipe running toward the CPU/GPU — sits above the board.
+  const pipe = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.95, 14), M.copper));
   pipe.rotation.z = Math.PI / 2;
-  pipe.position.set(-0.70, 0, 0);
+  pipe.position.set(-0.62, 0.02, 0);
   g.add(pipe);
 
   g.userData.rotor = rotor;                // picked up during registration
   return g;
 }
 
-// —— Battery (pouch cells) ———————————————————————————————————————————————————
+// —— Battery (thin, flat, wide pouch cells) ——————————————————————————————————
 function buildBattery() {
   const g = new THREE.Group();
   for (let i = 0; i < 3; i++) {
-    const cell = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.78, 0.10, 0.82, 3, 0.04), M.battery));
-    cell.position.x = (i - 1) * 0.84;
+    const cell = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.74, 0.05, 0.92, 3, 0.03), M.battery));
+    cell.position.x = (i - 1) * 0.80;
     g.add(cell);
   }
   return g;
 }
 
-// —— Speakers (L / R) ————————————————————————————————————————————————————————
+// —— Speakers (slim L / R bars) ——————————————————————————————————————————————
 function buildSpeakers() {
   const g = new THREE.Group();
-  for (const x of [-1.30, 1.30]) {
-    const sp = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.10, 0.92, 3, 0.04), M.chip));
+  for (const x of [-1.40, 1.40]) {
+    const sp = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.24, 0.05, 0.70, 3, 0.03), M.chip));
     sp.position.x = x;
     g.add(sp);
   }
   return g;
 }
 
-// —— Ports (USB-C-style connectors) —————————————————————————————————————————
+// —— Ports (USB-C-style connectors — tucked just inside the side wall) —————————
 function buildPorts() {
   const g = new THREE.Group();
   for (let i = 0; i < 3; i++) {
-    const z = (i - 1) * 0.34;
-    const shell = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.30, 0.09, 0.16, 2, 0.03), M.metal));
+    const z = (i - 1) * 0.32;
+    const shell = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.28, 0.05, 0.15, 2, 0.025), M.metal));
     shell.position.z = z;
-    const hole = new THREE.Mesh(new RoundedBoxGeometry(0.22, 0.05, 0.10, 2, 0.02), M.glass);
-    hole.position.set(0.06, 0, z);
+    const hole = new THREE.Mesh(new RoundedBoxGeometry(0.20, 0.028, 0.09, 2, 0.015), M.glass);
+    hole.position.set(0, 0.014, z);
     g.add(shell, hole);
   }
   return g;
 }
 
-// —— Bottom shell (+ rubber feet) ————————————————————————————————————————————
+// —— Bottom shell: slim unibody tray (floor + perimeter rim + feet) ————————————
 function buildBottomShell() {
   const g = new THREE.Group();
-  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(3.20, 0.12, 2.14, 4, 0.09), M.shell)));
+  // Thin floor.
+  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(3.20, 0.06, 2.14, 5, 0.05), M.shell)));
+  // Perimeter rim walls — close the slim side profile up to the deck underside.
+  const fb = (z) => {
+    const w = shadow(new THREE.Mesh(new RoundedBoxGeometry(3.20, 0.14, 0.05, 2, 0.02), M.shell));
+    w.position.set(0, 0.10, z);
+    g.add(w);
+  };
+  const lr = (x) => {
+    const w = shadow(new THREE.Mesh(new RoundedBoxGeometry(0.05, 0.14, 2.14, 2, 0.02), M.shell));
+    w.position.set(x, 0.10, 0);
+    g.add(w);
+  };
+  fb(-1.045); fb(1.045);
+  lr(-1.575); lr(1.575);
+  // Rubber feet.
   for (const x of [-1.30, 1.30]) for (const z of [-0.80, 0.80]) {
-    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 16), M.key);
-    foot.position.set(x, -0.07, z);
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 16), M.key);
+    foot.position.set(x, -0.045, z);
     g.add(foot);
   }
   return g;
@@ -325,7 +346,7 @@ function buildBottomShell() {
 function buildScrews() {
   const g = new THREE.Group();
   const pos = [[-1.45, 0.95], [1.45, 0.95], [-1.45, -0.95], [1.45, -0.95], [0, 0.98], [0, -0.98]];
-  const mesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.05, 0.05, 0.05, 18), M.metal, pos.length);
+  const mesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 16), M.metal, pos.length);
   mesh.castShadow = useShadows;
   pos.forEach((p, i) => mesh.setMatrixAt(i, new THREE.Matrix4().makeTranslation(p[0], 0, p[1])));
   mesh.instanceMatrix.needsUpdate = true;
@@ -341,20 +362,25 @@ function buildScrews() {
    `expPos` / `expRot` optionally override the default centred layer position.
    ========================================================================== */
 const ASSEMBLED = {
-  // name             build                pos (assembled)        rot (assembled)  layer
-  'Back cover':   { build: buildBackCover,   pos: [0, 1.06, -0.97], rot: [-1.62, 0, 0], layer: 11.0 },
-  'Screen':       { build: buildScreen,      pos: [0, 1.00, -0.88], rot: [-1.62, 0, 0], layer: 10.0 },
-  'Keys':         { build: buildKeys,        pos: [0, 0.315, 0.00], rot: [0, 0, 0],     layer: 8.95 },
-  'Keyboard deck':{ build: buildKeyboardDeck,pos: [0, 0.260, 0.00], rot: [0, 0, 0],     layer: 8.60 },
-  'Trackpad':     { build: buildTrackpad,    pos: [0, 0.305, 0.66], rot: [0, 0, 0],     layer: 7.70 },
-  'Speakers':     { build: buildSpeakers,    pos: [0, 0.130, 0.42], rot: [0, 0, 0],     layer: 6.90 },
-  'CPU / GPU':    { build: buildChips,       pos: [0, 0.180, -0.50],rot: [0, 0, 0],     layer: 6.00 },
-  'Motherboard':  { build: buildMotherboard, pos: [0, 0.135, -0.50],rot: [0, 0, 0],     layer: 5.40 },
-  'Cooling fan':  { build: buildFan,         pos: [0.95, 0.170, -0.50], rot: [0, 0, 0], layer: 4.60 },
-  'Battery':      { build: buildBattery,     pos: [0, 0.135, 0.55], rot: [0, 0, 0],     layer: 3.40 },
-  'Ports':        { build: buildPorts,       pos: [1.55, 0.150, 0.10],  rot: [0, 0, 0], layer: 2.50 },
-  'Bottom shell': { build: buildBottomShell, pos: [0, 0.000, 0.00], rot: [0, 0, 0],     layer: 1.20 },
-  'Screws':       { build: buildScrews,      pos: [0, 0.050, 0.00], rot: [0, 0, 0],     layer: 0.70 },
+  // Slim base: floor centred at y=0 (top ≈ 0.03); internals live in the cavity
+  // 0.03 → 0.17; the deck plate caps it (top ≈ 0.22); keys/trackpad sit just
+  // proud; the lid hinges up from the back. Footprints are zoned so no two parts
+  // intersect (battery centre-front, speakers front-sides, board centre-back,
+  // fan back-right, ports back-left).
+  // name             build                pos (assembled)            rot (assembled)   layer
+  'Back cover':   { build: buildBackCover,   pos: [0, 1.24, -1.01],    rot: [-1.62, 0, 0], layer: 11.0 },
+  'Screen':       { build: buildScreen,      pos: [0, 1.18, -0.92],    rot: [-1.62, 0, 0], layer: 10.0 },
+  'Keys':         { build: buildKeys,        pos: [0, 0.234, 0.00],    rot: [0, 0, 0],     layer: 8.95 },
+  'Keyboard deck':{ build: buildKeyboardDeck,pos: [0, 0.195, 0.00],    rot: [0, 0, 0],     layer: 8.60 },
+  'Trackpad':     { build: buildTrackpad,    pos: [0, 0.232, 0.52],    rot: [0, 0, 0],     layer: 7.70 },
+  'Speakers':     { build: buildSpeakers,    pos: [0, 0.075, 0.40],    rot: [0, 0, 0],     layer: 6.90 },
+  'CPU / GPU':    { build: buildChips,       pos: [0, 0.108, -0.50],   rot: [0, 0, 0],     layer: 6.00 },
+  'Motherboard':  { build: buildMotherboard, pos: [0, 0.075, -0.55],   rot: [0, 0, 0],     layer: 5.40 },
+  'Cooling fan':  { build: buildFan,         pos: [1.18, 0.115, -0.52],rot: [0, 0, 0],     layer: 4.60 },
+  'Battery':      { build: buildBattery,     pos: [0, 0.075, 0.40],    rot: [0, 0, 0],     layer: 3.40 },
+  'Ports':        { build: buildPorts,       pos: [-1.40, 0.085, -0.50],rot: [0, 0, 0],    layer: 2.50 },
+  'Bottom shell': { build: buildBottomShell, pos: [0, 0.000, 0.00],    rot: [0, 0, 0],     layer: 1.20 },
+  'Screws':       { build: buildScrews,      pos: [0, 0.050, 0.00],    rot: [0, 0, 0],     layer: 0.70 },
 };
 
 function registerParts() {

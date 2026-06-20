@@ -1,5 +1,406 @@
 # WebSharke — Work Log
 
+> **Newest entries first** as of the 2026-06-19 role-system redesign. Entries below this banner that
+> predate it remain in their original oldest-first order. Entry format: see `CLAUDE.md` → "docs/logs.md
+> Format".
+
+---
+
+## 2026-06-20 00:40 - Efficiency - no-cdn-fonts-remaining-pages
+
+Action:
+Finished
+
+Task:
+Efficiency: Finish the site-wide no-CDN web fonts (remaining pages) → [REVIEW]
+
+Files changed:
+
+- `dashboard.html`, `login.html`, `payment.html`, `onboarding.html`, `success.html`, `cancel.html` — removed
+  the 2 `preconnect`s + the Google Fonts CDN `<link>` (+ the stale "Same brand fonts…" comment) from `<head>`;
+  added a tailored inline `@font-face` block at the top of each page's existing `<style>` (`font-display:swap`,
+  `src:url(fonts/…)`). Head/font region only — no JS / markup / logic changed.
+- `fonts/` — added `cormorantgaramond-700.woff2` (downloaded, Google latin subset) + `mulish-700.woff2`
+  (copied from `Animations/laptop-teardown/vendor/fonts/`).
+- `docs/performance-log.md` (finding → Fixed + completion entry), `docs/CHANGELOG.md`, `docs/taskboard.md`
+  (→ [REVIEW] + checklist), `docs/logs.md` (START + this FINISH).
+
+Per-page `@font-face` sets (only the faces each page actually renders):
+- dashboard — CG 600/700 + Mulish 400/500/600/700 (6; CG-700 + Mulish-500 are admin-panel only)
+- login — CG 600 + Mulish 400 (2)
+- payment / onboarding / cancel — CG 600 + Mulish 400/600/700 (4 each)
+- success — CG 600 + Mulish 400/600 (3)
+
+Why these faces (audited each page; didn't trust the CDN URL):
+The shared CDN URL requested 12 faces; the pages render ≤6. **No italic** on any of these pages (onboarding's
+lone `<em>` is overridden to `font-style:normal`), so CG-500-italic (homepage-only) was omitted. **Mulish-800**
+(dashboard cards/badges) already mapped to 700 under the CDN, so providing Mulish-700 keeps it identical — no
+800 face. **CG-700** is dashboard-admin-only (`.adm-h1`/`.adm-panel-box h3`/`.adm-drawer-title`/`.adm-modal h3`
++ the UA-bold `.adm-empty h4`); the CDN served it, so it had to be preserved → the one download.
+
+Testing:
+- Grep: **zero** `googleapis`/`gstatic`/`preconnect` across all 6 pages.
+- Fonts: both new files start with `wOF2` magic; `mulish-700` is `cmp`-identical to its vendor source;
+  `cormorantgaramond-700` = 22,340 B (the same Google latin-subset woff2 the CDN serves today). Every
+  `src:url(fonts/X.woff2)` resolves to a file now in `/fonts` (no 404); no `/fonts` file is unreferenced.
+- Per-page `@font-face` counts match the audit (6 / 2 / 4 / 4 / 3 / 4).
+- Scope: `git diff --stat` = 29 ins / 29 del, head/font lines only; diff body is only font tags + `@font-face`
+  + a CSS comment — no logic. Vendored fonts untouched. Working copies are consistently CRLF (repo `autocrlf`;
+  HEAD is LF) — not mixed; git diff is clean.
+
+Risks / Notes:
+- **Did not run a live HTTP server / browser.** These are plain static files at correct relative paths
+  (`fonts/…` → `/fonts/…`) — the same pattern already live on the homepage (Task C) — so file-existence +
+  path-match prove resolution. The in-browser **type-renders-unchanged + Network shows local woff2 / no CDN**
+  eyeball is the GUI-only item left for review (same limitation Task C signed off with).
+- Review per the task: **Security** (head/font tags only on the auth/payment pages), **Manager** (scope),
+  **Designer** (type unchanged). Absorbs legacy **Task E**.
+
+---
+
+## 2026-06-20 00:24 - Efficiency - no-cdn-fonts-remaining-pages
+
+> (Concurrent multi-session run — other sessions' clocks read ahead of this one; timestamp is this session's
+> own clock, matching the new `fonts/*.woff2` mtimes. Newest by write order.)
+
+Action:
+Started
+
+Task:
+Efficiency: Finish the site-wide no-CDN web fonts (remaining pages)
+
+Files claimed:
+
+- `dashboard.html`, `login.html`, `payment.html`, `onboarding.html`, `success.html`, `cancel.html` — head
+  font `<link>`s + top of the inline `<style>` only
+- `fonts/` (added woff2)
+- `docs/performance-log.md`, `docs/logs.md`, `docs/taskboard.md` (status), `docs/CHANGELOG.md`
+
+Files changed (so far):
+
+- `fonts/mulish-700.woff2` — copied from `Animations/laptop-teardown/vendor/fonts/` (byte-identical; `cmp` OK)
+- `fonts/cormorantgaramond-700.woff2` — downloaded (Google Fonts latin subset, v21) — the only download
+
+Summary:
+Picking up the Efficiency task to finish the no-CDN font policy on the 6 non-homepage pages. Audited each
+page's real usage (every `font-family`/`font-weight`/`font-style` + a `<strong>`/`<b>`/heading sweep). Union of
+faces actually rendered = **CG-600, CG-700, Mulish-400/500/600/700** — no italic on these pages (onboarding's
+only `<em>` is overridden to `font-style:normal`), and no real Mulish-800 face needed (800 already maps to 700,
+matching today's CDN behaviour). `/fonts` was missing exactly two of those: `mulish-700` (present in the
+animation vendor set → copied) and `cormorantgaramond-700` (used only by the dashboard admin panel —
+`.adm-h1`/`.adm-panel-box h3`/`.adm-drawer-title`/`.adm-modal h3` + the UA-bold `.adm-empty h4`; not vendored
+anywhere → downloaded the Google latin-subset woff2, the same file the CDN serves today). Next: replace each
+page's CDN `<link>` + preconnects with a per-page inline `@font-face` block (only the faces that page renders),
+matching the homepage (Task C) convention.
+
+Testing (so far):
+`head -c 4` → `wOF2` on both new files; `cmp` confirms `mulish-700` is byte-identical to its vendor source;
+`cormorantgaramond-700` is 22,340 B (sane for a CG latin subset). Page edits + grep/serve verification to
+follow in the FINISH entry.
+
+Risks / Notes:
+- Reserves the 6 page `<head>`s. Verified **no collision** with the concurrent Designer session (edited only
+  `index.html` `.btn-sand` + `--warm`, no font tags) or the read-only Security audit pass.
+- Auth/payment pages: only the `<head>` font tags + the `@font-face` `<style>` block change — no logic edits.
+
+---
+
+## 2026-06-20 02:10 - Security - site-wide-audit-pass
+
+Action:
+Finished
+
+Task:
+Security: Run a site-wide security audit pass and populate the security log
+
+Files claimed:
+
+- docs/security-log.md
+- docs/logs.md
+- docs/taskboard.md (Security task status line only)
+
+Files changed:
+
+- docs/security-log.md — added 8 evidence-backed findings (F1–F8) under a new "Live audit pass — 2026-06-20"
+  subsection, above the migrated baseline.
+- docs/taskboard.md — Security task [TODO] → [REVIEW]; Owner set; completion checklist ticked.
+- docs/logs.md — START + this FINISH entry.
+
+Summary:
+Completed the read-only, site-wide security audit (the CLAUDE.md Security checklist) and populated
+docs/security-log.md. Recorded **8 findings: 1 High, 4 Medium (one conditional, one verify-only), 1 Low, plus
+an informational bundle and a verified-clean baseline.** Headline — **F1: `api/customer-portal.js` has no
+caller authentication and uses the service-role key to mint a Stripe Billing Portal session for any supplied
+`user_id`/`customer_id` → IDOR on live billing data (High).** F2: `api/checkout.js` shares the same
+missing-auth pattern (Medium). F3: Chart.js is loaded from jsDelivr on the admin dashboard (supply-chain +
+blocked-CDN, Medium). F4: `docs/` is served publicly (Medium/verify). F5: RLS is unverifiable from the repo
+(Medium/confirm). F6: no security response headers (Low). F7: low/informational bundle. F8: documents what is
+correct — secret handling, webhook signature verification, admin server-side authZ, and XSS-safe escaping. No
+production code was touched.
+
+Testing:
+Read-only audit only. Method: 3 parallel read-only sweeps (frontend HTML / API + config / repo-wide patterns)
+plus first-hand reads of api/customer-portal.js, api/admin.js, api/checkout.js, api/webhook.js, the
+dashboard.html innerHTML/esc() surface, vercel.json, and .gitignore. Every finding cites file:line and the
+evidence was re-grep-confirmed. `git status` shows only the three docs files changed — no code/vendor/payment/
+auth files.
+
+Risks / Notes:
+- **For the Manager:** cut a High-priority fix task for **F1** (pair **F2**) — add Supabase bearer-token
+  verification + a caller-identity (`userId === caller.id`) check, reusing the pattern already implemented in
+  `api/admin.js:86-103`. The fix touches payment/Stripe/auth logic, so it must be its own task with explicit
+  approval (not done in this audit pass, per the global rules). Security can implement it once that task exists.
+- **F4** (is `/docs/security-log.md` actually fetchable?) and **F5** (RLS state) need a real Vercel preview /
+  the Supabase dashboard — a non-GUI session can't confirm them.
+- This pass is read-only on code, so it does not collide with the Designer / Efficiency font/design work.
+
+---
+
+## 2026-06-20 01:45 - Security - site-wide-audit-pass
+
+Action:
+Started
+
+Task:
+Security: Run a site-wide security audit pass and populate the security log
+
+Files claimed:
+
+- docs/security-log.md
+- docs/logs.md
+- docs/taskboard.md (Security task status line only)
+
+Files changed:
+
+- (none at start — read-only audit; findings recorded in the FINISH entry above)
+
+Summary:
+Claimed the Security audit task ([TODO] → [IN PROGRESS]). Read-only sweep of the whole site against the
+CLAUDE.md Security checklist: all root *.html, js/supabase-config.js, api/*.js, vercel.json, .gitignore,
+Animations/**. Audit-only — no production code edited; findings go to docs/security-log.md for the Manager to
+triage. (Audit performed in plan mode; edits applied after plan approval.)
+
+Testing:
+N/A at start (read-only). Evidence gathered via Grep + direct file Reads; see the FINISH entry for results.
+
+Risks / Notes:
+Read-only on code → no collision with concurrent Designer/Efficiency work. Will hand findings to the Manager;
+will not fix payment/auth logic in this pass.
+
+---
+
+## 2026-06-20 01:10 - Designer - homepage-design-baseline
+
+Action:
+Finished
+
+Task:
+Designer: Establish the homepage design baseline and fix obvious visual inconsistencies → [REVIEW]
+
+Files claimed:
+
+- `index.html` (inline `<style>` only) · `docs/design-guide.md` · `docs/logs.md` · `docs/taskboard.md` (status only)
+
+Files changed:
+
+- `index.html` — 2 lines in the inline `<style>`: wired the unused `--warm` token into the `.btn-sand`
+  gradient (`#e4cfa6` → `var(--warm)`, byte-identical) and made the `--warm` token comment self-documenting.
+  No other CSS, no markup, no JS touched.
+- `docs/design-guide.md` — filled all four "to document" placeholders with the real system (10 `:root`
+  tokens + a used/unused audit, the Cormorant Garamond / Mulish type scale per element + breakpoints, the
+  spacing/rhythm scale, the canonical component inventory); added an "Open design follow-ups" section (5
+  proposed tasks) + a dated Designer decision entry; removed 2 now-redundant summary bullets.
+- `docs/taskboard.md` — Designer task [TODO] → [IN PROGRESS] → [REVIEW]; Owner set; checklist filled.
+- `docs/logs.md` — START + this FINISH.
+
+Summary:
+Documentation-first baseline. The homepage design system was already sound and consistent — the gap was that
+it wasn't written down. Catalogued it into `docs/design-guide.md` so future Designer work stays on-brand.
+Applied exactly one clearly-safe consistency fix (the `--warm` tokenization) and deliberately left every
+value-changing item (off-white unification, unused-token cleanup, alpha tokenization, focus parity, reveal
+stagger) as proposed follow-ups — matching the task's "document + propose; only trivially-safe fixes" scope.
+
+Testing:
+
+- `index.html`: grep confirms `#e4cfa6` now appears once (the `:root` definition) and `var(--warm)` once
+  (the gradient); the `--warm` definition (line 51) precedes `.btn-sand` (line 106) so the property
+  resolves. The swap is byte-identical by construction → no rendered difference. No `googleapis`/`gstatic`
+  introduced (fonts untouched).
+- `design-guide.md`: grep confirms zero "To document" placeholders remain; re-read for coherence (sections
+  flow, no orphaned headers / duplicate `---`; component dedup done).
+- `git status`: only in-scope files in my change set; `script.js` / `dashboard-style.html` / `CHANGELOG.md`
+  / untracked docs + `fonts/` were all pre-existing from other sessions, not this one.
+- Not run (non-GUI session): a live browser render — N/A for a byte-identical token swap, but a reviewer
+  with a browser can confirm the CTA + type render unchanged in ~20 s.
+
+Risks / Notes:
+
+- Review per the task: **Manager (scope)**. Efficiency/Security review is **not** triggered — no assets,
+  scripts, links, forms, or iframes added; CSS-only, no new colors invented (`--warm` already existed).
+- The 5 "Open design follow-ups" in `docs/design-guide.md` are for the Manager to triage into formatted
+  tasks; each changes a rendered value or behaviour and wants its own pass + an in-browser eyeball.
+- No collision with the Efficiency font task: I edited only the `.btn-sand` rule + the `--warm` comment, no
+  font `<link>`/`@font-face`. Line ranges don't overlap if Efficiency picks up the homepage head.
+- During review the `.btn-sand` **upper** stop was also tokenized (a new `--warm-lt:#f8ecd3` added alongside
+  my `--warm` wiring), so the gradient is now fully `linear-gradient(135deg,var(--warm-lt),var(--warm))` —
+  byte-identical, the button is fully palette-driven. `docs/design-guide.md` updated to match (token list,
+  component entry, and follow-up #2).
+
+---
+
+## 2026-06-20 00:35 - Designer - homepage-design-baseline
+
+Action:
+Started
+
+Task:
+Designer: Establish the homepage design baseline and fix obvious visual inconsistencies
+
+Files claimed:
+
+- `index.html` — inline `<style>` only (the `:root` token block + the `.btn-sand` rule; read-only on the rest)
+- `docs/design-guide.md`
+- `docs/logs.md`
+- `docs/taskboard.md` (this task's status only)
+
+Files changed:
+
+- (START — none yet; see the FINISH entry)
+
+Summary:
+Claimed the Designer baseline task ([TODO] → [IN PROGRESS]). Read `index.html` in full. Plan: document the
+real design system (the 10 `:root` color tokens with a used/unused audit, the Cormorant Garamond / Mulish
+type scale per element + breakpoint, the spacing/rhythm scale, and the canonical `.btn-sand` / `.style-card`
+/ nav / section-scaffold components) into `docs/design-guide.md`, replacing its "to document" placeholders.
+Then apply only clearly-safe consistency fixes and write anything larger up as proposed follow-ups.
+
+Pre-edit audit (evidence from the full read): `--sand`, `--surf`, `--aqua-d`, `--warm` are all defined but
+never referenced via `var()`; `.btn-sand` hardcodes `#e4cfa6`, which is exactly `--warm`. Body copy uses
+`rgba(240,248,250,.8/.78)` — a different base white than `--foam` (`#ecf4f3`).
+
+Testing:
+None yet (START).
+
+Risks / Notes:
+
+- The Efficiency font task may also read page `<head>`s. This session edits only `index.html`'s inline
+  `<style>` (the `:root` `--warm` comment + the `.btn-sand` gradient) — **no** font `<link>`/`@font-face`
+  changes, so no collision with Efficiency's scope.
+- Not touching: payment/Stripe/Supabase/auth (incl. the auth-cta script), vendor files, `Animations/`
+  internals, the `#styles` "Preview coming soon" cards 02–05, and every other page. No large redesign.
+
+---
+
+## 2026-06-20 00:02 - Manager - assign-tasks-per-role
+
+Action:
+Planned
+
+Task:
+Create one task per role (Manager, Designer, Efficiency, Security)
+
+Files claimed:
+
+- docs/taskboard.md
+- docs/logs.md
+
+Files changed:
+
+- docs/taskboard.md — added an "Active tasks (new role system)" section with four `[TODO]` tasks in the
+  `CLAUDE.md` format, one per role. Legacy task bodies below are unchanged.
+- docs/logs.md — this entry.
+
+Summary:
+Gave every role a concrete, grounded first task:
+- **Manager** — Triage the three role logs and drive the laptop-teardown `[REVIEW]` cluster to closure
+  (via Task A live-verify + Task B closeout). Risk Low.
+- **Designer** — Establish the homepage design baseline: document the real tokens (color / type scale /
+  spacing / components) into `docs/design-guide.md`, then apply only clearly-safe consistency fixes. Risk
+  Medium.
+- **Efficiency** — Finish the site-wide no-CDN web fonts on the 6 remaining pages (dashboard, login,
+  payment, onboarding, success, cancel), reusing `/fonts`. Absorbs legacy Task E. Risk Medium.
+- **Security** — Run a read-only site-wide audit pass and populate `docs/security-log.md` with
+  evidence-backed findings; propose fixes as tasks, change no code. Risk Low.
+
+Testing:
+Docs-only. Verified each task carries all required fields (Assigned Role, Owner, Risk, Goal, Why, Files,
+Do not touch, Steps, Completion checklist, Review requirements, Notes) and a new role owner. No website
+code touched.
+
+Risks / Notes:
+
+- The Designer and Efficiency tasks both may read page `<head>`s — each must claim files in a START log
+  entry first to avoid a collision.
+- The Efficiency task supersedes the legacy **Task E** further down the board (single source of truth =
+  the new-format task). Legacy Task E left in place as history.
+- Security task is read-only on code → safe to run first / in parallel with the others.
+- Suggested order to run: **Security** (read-only, no collision) and **Efficiency** (Task E) first;
+  **Designer** baseline next; **Manager** triages results and runs Task A/B once a GUI session is available.
+
+---
+
+## 2026-06-19 23:46 - Manager - role-system-redesign
+
+Action:
+Planned
+
+Task:
+Replace the Manager/Worker/Reviewer workflow with the Manager/Designer/Efficiency/Security role system
+
+Files claimed:
+
+- CLAUDE.md
+- docs/taskboard.md
+- docs/logs.md
+- docs/design-guide.md (new)
+- docs/performance-log.md (new)
+- docs/security-log.md (new)
+
+Files changed:
+
+- CLAUDE.md — replaced the working-rules/role section with the new four-role system; preserved the
+  architecture + critical-constraints content as a "Project Reference" section.
+- docs/taskboard.md — new role-system header + pointer to the `CLAUDE.md` status labels/format; added a
+  "Role-system migration" banner that reassigns every open task to a new role; removed the obsolete
+  reviewer-sourced template. Legacy task bodies kept as history.
+- docs/design-guide.md — **created** (Designer log): design direction, AI-patterns-to-avoid, typography/
+  spacing/color/component notes, entry format, and one migrated decision (laptop-teardown AI cleanup).
+- docs/performance-log.md — **created** (Efficiency log): entry format + migrated findings (homepage loads
+  no Three.js = baseline; Google Fonts CDN still on 7 pages = Task E).
+- docs/security-log.md — **created** (Security log): entry format + migrated findings (teardown audit
+  baseline clean; inline-scripts/no-CSP hardening note; third-party font CDN).
+- docs/logs.md — this entry (logs are now newest-first).
+
+Summary:
+Redesigned the multi-session workflow. **New roles: Manager, Designer, Efficiency, Security.** Manager
+organizes; Designer owns visual design/UX/copy; Efficiency owns performance/loading/code weight; Security
+audits and fixes safety issues. **How tasks are assigned now:** specialists log findings to their own role
+log (design-guide / performance-log / security-log); the Manager reads those logs, groups/prioritizes, and
+cuts specific, role-tagged tasks into `docs/taskboard.md` using the `CLAUDE.md` task format (assigned role,
+risk, goal, why, files, do-not-touch, steps, checklist, review requirements). Roles claim one task, mark it
+[IN PROGRESS] with a START log entry, and never edit another role's claimed files. Workflow/docs only this
+session — no website code, CSS, JS, animation, vendor, payment, Stripe, Supabase, or auth touched.
+
+Testing:
+Docs-only change. Verified `CLAUDE.md` header structure (role sections + preserved architecture reference);
+confirmed the three new role logs exist; confirmed the taskboard migration banner reassigns each open task
+(Tasks A/B/C/E, the two teardown [REVIEW] tasks, the 3D-model [REVIEW] task, the `Animations/` backlog) to a
+new role, with Task D left [DONE].
+
+Risks / Notes:
+
+- **`CLAUDE.md` is gitignored** (`.gitignore:9`) — the role system is live on disk for local sessions but
+  will not commit / won't survive a fresh clone. Flagged previously; say the word to track it (un-ignore or
+  mirror into a tracked `docs/ROLES.md`).
+- **`docs/reviewer-log.md` is deprecated** (empty, superseded). Left in place as history, noted in the
+  migration banner; not deleted.
+- **Logs ordering switched to newest-first** as of this entry; older entries below remain oldest-first.
+- Concurrent sessions have been active (Tasks C/D/E + the 3D-model redesign). I edited only docs + CLAUDE.md,
+  so there should be no collision with their code edits.
+- **Next:** run **Security** (quick site-wide audit pass → seed `docs/security-log.md`) or **Efficiency**
+  (pick up Task E to finish the no-CDN font policy). Designer can take Task A (live-verify) once a GUI/browser
+  session is available. Manager should then triage the new role-log findings into formatted tasks.
+
 ---
 
 ## 2026-06-18 — Manager — Inspect project & write "Laptop Teardown in Styles tab" task
@@ -304,3 +705,328 @@ the vendor-load error string — left intact. Card 03 "Premium Dark" and the hom
    eyeball on a Vercel preview is still worth it.
 2. Copy is subjective — rewrites follow the task's tone examples; the reviewer may want to fine-tune voice
    (e.g. the outro headline "Like the way this is built?").
+
+---
+
+## 2026-06-19 — Manager — Block request moot (task already done); queued next tasks (A–D + backlog)
+
+**Role:** Manager (docs only).
+
+### Block request
+The instruction to hold "Remove AI Aspects From Laptop Teardown Feature" as `[BLOCKED — waiting on audit]`
+**arrived after the task was already complete.** A Worker had finished it → `[REVIEW]` (copy/comment
+cleanup, no vendor edits), and the verify/audit task is **also** `[REVIEW]` (no code changes). So "waiting
+on audit" is satisfied on both fronts.
+- **Decision:** did **not** revert it to BLOCKED — that would undo finished work and contradict the board.
+  Left it in `[REVIEW]`; it can be bounced to `[TODO]`/`[BLOCKED]` only if the review wants rework.
+
+### Concurrency outcome
+The collision risk I flagged did happen in *timing* (both sessions ran on the same files) but caused **no
+conflict**: the verify/audit pass was read-only on code (docs-only edits), so the cleanup worker's edits
+stand clean. Lesson reinforced in the new tasks: claim files in a START entry; don't run two `index.html`
+editors at once.
+
+### State
+Both original tasks are in `[REVIEW]`. Only open item across both = the in-browser WebGL/scroll eyeball on
+a real preview (every load-gating check already passed in code).
+
+### Tasks queued (all `[TODO]`)
+- **A — Live-verify on a real preview** [High] — the outstanding GUI-only item; closes the loop for A+B.
+- **B — Review & close out the two `[REVIEW]` tasks** [High] — diff/scope/Traps check + tone call →
+  move both to `[DONE]` or bounce.
+- **C — Vendor homepage Google Fonts locally** [Medium] — homepage still uses `fonts.googleapis.com`;
+  reuse the woff2 already vendored under the animation. (`[[cdn-blocked-vendor-locally]]`.)
+- **D — Resolve orphaned `dashboard-style.html`** [Low] — confirmed unreferenced; keep-or-remove
+  (confirm before delete).
+- **Backlog (optional)** — lowercase `Animations/` → `animations/` for case-safety.
+
+### Sequencing
+A = read-only/ops · B = docs-only · C edits `index.html` · D edits only `dashboard-style.html` · backlog
+rename edits `index.html`. → **C and the rename must not run concurrently.**
+
+---
+
+## 2026-06-19 — Worker (Opus) — START: Task C — Vendor the homepage Google Fonts locally
+
+**Role:** Worker. Claimed **Task C** ([TODO]/unassigned → [IN PROGRESS]). Replace the homepage Google
+Fonts CDN `<link>` with locally-vendored `@font-face`, matching the project's vendor-locally policy
+(`[[cdn-blocked-vendor-locally]]` — the user's browser blocks CDNs, so today's homepage type likely
+isn't even loading for them).
+
+**Files claimed:** `index.html` (the `<link …googleapis…>` + 2 `preconnect`s near line 29–31, and the
+inline `<style>`), a new top-level `fonts/` folder (woff2 **copies** only). Docs: `taskboard.md`,
+`logs.md`, `CHANGELOG.md`. **Not touching** the animation's vendored fonts (read-only source), any other
+page, payment/Stripe/Supabase/auth, or style cards 02–06.
+
+**Audit done before editing — exact font usage on `index.html` (every `font-family`/`font-weight`/
+`font-style` + a bold/`<strong>`/`<b>`/heading sweep):**
+- **Mulish** — 400, 500, 600 only (body default 400; `.signin`/`.btn` 500; `.sc-kicker`/`.sc-go`/
+  `.sc-soon` 600; `.how-body p`/`.why-col p`/`.sc-desc`/`#site-footer` 400). **No 300, no 700.**
+- **Cormorant Garamond** — normal **600** (`.sec-title`, `.hero-title`, `.why-col h3`, `.sc-index`,
+  `.sc-title`) and **italic 500** (`.hero-eyebrow`, `.hero-title em`, `.how-close`). **No 400/700 normal,
+  no 400i/600i.** All `<h1>`–`<h3>` are explicitly CG-600 (no UA-default-bold leaking in); no `<strong>`/
+  `<b>`/`bold`/700 anywhere.
+- → The CDN URL **over-requests** (CG 0,400;500;600;700 / 1,400;500;600 and Mulish 300;400;500;600;700),
+  but the page only ever renders **5 faces**: CG-600, CG-500i, Mulish-400/500/600 — **all already vendored**
+  under `Animations/laptop-teardown/vendor/fonts/`. Per the task's own wording ("download only any weight
+  the vendored set lacks **if the homepage uses it**"), **nothing needs downloading**; I copy the 5 used
+  files into `fonts/` and define exactly those 5 `@font-face`s. Unused requested weights are intentionally
+  omitted (they never render → identical output, less dead weight).
+
+**Plan:** (1) `fonts/` ← copy the 5 used woff2; (2) `index.html`: delete the 2 `preconnect`s + the CDN
+`<link>`, add 5 inline `@font-face` rules (`font-display:swap`, `src:url(fonts/…)`); (3) verify no
+`googleapis`/`gstatic` remains + the 5 woff2 are valid (`wOF2` magic); (4) FINISH log + CHANGELOG +
+Task C → [REVIEW]. **Out-of-scope finding to file:** the **other 7 pages** also load the same CDN
+(`dashboard`, `login`, `payment`, `onboarding`, `success`, `cancel`, `dashboard-style`) — will add a
+follow-up task, not fix here.
+
+---
+
+## 2026-06-19 — Worker (Opus) — FINISH: Task C — Vendor the homepage Google Fonts locally → REVIEW
+
+**Role:** Worker. **Task C → [REVIEW].** The homepage no longer depends on the Google Fonts CDN; the 5
+faces it renders are served from a local `/fonts` folder. No visual change intended; no payment/auth/other
+pages touched.
+
+### Files changed
+- **`index.html`** — removed the Google Fonts `<link>` + both `preconnect`s (old lines 29–31); added 5
+  inline `@font-face` rules at the top of the existing `<style>` (`font-display:swap`, `src:url(fonts/…)`).
+  Net **+9 / −3**. The bg-image preload `<link>` and the rest of `<head>` are untouched.
+- **`fonts/` (new)** — 5 woff2 **copied** from `Animations/laptop-teardown/vendor/fonts/` (originals
+  untouched): `cormorantgaramond-600.woff2`, `cormorantgaramond-500i.woff2`, `mulish-400.woff2`,
+  `mulish-500.woff2`, `mulish-600.woff2`.
+- **`docs/CHANGELOG.md`** — created (was 0 bytes) + first entry.
+- **`docs/taskboard.md`** — Task C → [REVIEW] + checklist filled; filed follow-up **Task E**.
+- **`docs/logs.md`** — START + this FINISH.
+
+### Why only 5 faces (the CDN URL listed 12)
+Audited every `font-family`/`font-weight`/`font-style` on the page plus a `<strong>`/`<b>`/`bold`/heading
+sweep. The page only ever renders **Cormorant Garamond 600 + 500-italic** and **Mulish 400/500/600** (all
+`<h1>`–`<h3>` are explicitly CG-600, so no UA-default-bold leaks in; no `<strong>`/`<b>`/`bold`/700/300
+anywhere). The old URL over-requested CG 400/500/700-normal, CG 400i/600i, and Mulish 300/700 — none are
+used, so omitting them is byte-for-byte identical output with no dead weight, and meant **zero downloads**
+(all 5 used faces were already vendored under the animation; the 3 weights the vendored set lacks —
+CG-700/400i/600i — aren't used by the homepage anyway).
+
+### Verified
+- Grep of `index.html` for `googleapis|gstatic|preconnect|fonts.google` → **zero**. With no CDN URL left,
+  no such Network request can be made.
+- All 5 `/fonts/*.woff2` have valid `wOF2` magic bytes; sizes match their source copies.
+- `@font-face` family names (`'Cormorant Garamond'`, `'Mulish'`) match the CSS `font-family` declarations
+  exactly.
+- `git status`: only `index.html`, the new `fonts/`, and docs changed — no other production files.
+
+### Remaining for reviewer
+1. **~30 s eyeball** on a preview: homepage type renders identically and DevTools→Network shows the 5 local
+   woff2 (200) and **no** `googleapis`/`gstatic` request. (Provable from source — no CDN URL remains — but
+   not visually rendered in a non-GUI session, so checklist item left `[~]`.)
+2. **Optional perf:** could add `<link rel="preload" as="font" crossorigin>` for the 2–3 above-the-fold
+   faces (hero = CG-600, CG-500i, Mulish-500) to offset losing `preconnect`. Left out to keep scope tight;
+   `font-display:swap` already prevents invisible text.
+
+### Out-of-scope finding filed → Task E
+The **other 7 pages** still load the same Google Fonts CDN (grep-confirmed): `dashboard`, `login`,
+`payment`, `onboarding`, `success`, `cancel`, `dashboard-style`. Not fixed here (Task C is homepage-only)
+— added as **Task E**. ⚠️ Those pages need a **per-page weight audit**; some may use faces the homepage
+doesn't (e.g. Mulish-700 bold, CG italic 400/600) that are **not** in `/fonts` yet and that the animation's
+vendored set also lacks → may require downloading a few woff2.
+
+### Suggested next task
+**Task E** (finish the no-CDN font policy on the remaining 7 pages — same pattern, reuses `/fonts`). Or
+**Task A** (the GUI-only live-verify of the laptop teardown) if a browser session is available, which then
+unblocks **Task B**.
+
+---
+
+## 2026-06-19 — Manager — Add Reviewer role + reviewer-log system (workflow/docs only)
+
+**Role:** Manager (workflow/documentation only — **no** website code, CSS, JS, animation, vendor, payment,
+Stripe, Supabase, or auth files touched).
+
+### Files changed
+- **`CLAUDE.md`** — restructured **# Claude Working Rules** to name **three roles** (Manager / Worker /
+  Reviewer) and separate them clearly; fixed the stale pre-work reading list to point at the docs that
+  actually exist (`taskboard.md`, `logs.md`, `reviewer-log.md`, `CHANGELOG.md` — the old list referenced
+  `PROJECT_STATE.md` / `TASK_BOARD.md` / `DECISIONS.md`, which don't exist); added three sections:
+  **Reviewer Role**, **Manager Responsibility For Reviewer Log**, **Worker Relationship To Reviewer Log**.
+- **`docs/reviewer-log.md`** — **created.** Customer-style UX feedback log: purpose, the Status set
+  (`[NEW]`→`[TRIAGED]`→`[ACCEPTED]`→`[CONVERTED]` / `[DUPLICATE]` / `[REJECTED]` / `[NEEDS RECHECK]` /
+  `[RESOLVED]`), the Severity scale (Low/Medium/High/Critical), the required per-finding **Finding format**
+  template, and an empty **Findings** section seeded to start at `REVIEW-0001`.
+- **`docs/taskboard.md`** — added a **Task format (reviewer-sourced)** template near the top (carries a
+  `Source: Reviewer Log REVIEW-####` line) so Manager-created tasks trace back to a reviewer finding; added
+  a board-intro pointer to it. Existing tasks untouched.
+- **`docs/logs.md`** — this entry.
+
+### Reviewer role added
+The Reviewer behaves like a **real customer**, not a developer: tests the live experience (first
+impression, visual design, mobile layout, buttons/links/tabs/forms, animations, copy, loading/error
+states, trust/professional feel, and anything that looks AI-generated, generic, broken, confusing, slow,
+or unfinished) and **writes findings only** — it does not code. The Reviewer may edit just
+`docs/reviewer-log.md` + `docs/logs.md`; production code, CSS, JS, animation, vendor, payment, Stripe,
+Supabase, and auth are all off-limits. Findings must use the required format and avoid vague asks like
+"make design better."
+
+### `docs/reviewer-log.md` created
+Single home for that feedback. Each finding gets a sequential `REVIEW-####` ID, a Severity, a
+**Manager Status**, and the structured fields (User Experience / Issue / Why It Matters / Steps /
+Expected / Actual / Suggested Fix). Currently empty — awaiting the first Reviewer session.
+
+### How Managers triage reviewer feedback
+The **Manager owns `docs/reviewer-log.md`.** Regularly review new `[NEW]` findings and set each one's
+**Manager Status**: accepted task / rejected / duplicate / needs more testing / low-priority note /
+already fixed. For accepted findings, **convert** them into clean tasks on `docs/taskboard.md` using the
+new **Task format (reviewer-sourced)** (cite the `REVIEW-####` ID in **Source**), then set the finding to
+`[CONVERTED]` and record the task title under **Converted Task**. Do **not** blindly copy complaints into
+the board — clean them up, group duplicates, prioritize, and make them actionable for Workers.
+
+### How Workers reference reviewer issues
+Workers don't manage the reviewer log (read-only, for context) and only work tasks the Manager has placed
+on `docs/taskboard.md`. When a task originated from a reviewer finding, the **Worker cites the reviewer
+issue ID (`REVIEW-####`) in its `docs/logs.md` entry** — closing the loop finding → task → fix.
+
+### Suggested next task
+Run a **Reviewer session** against the live site (start with the homepage and the laptop-teardown route on
+mobile) and file the first findings as `REVIEW-0001+`; the Manager then triages them into Worker tasks.
+
+---
+
+## 2026-06-19 — Worker (Opus) — START: Redesign Laptop Teardown 3D Model
+
+**Role:** Worker. Created + claimed "Redesign Laptop Teardown 3D Model" (new task → [IN PROGRESS]). Goal:
+make the assembled laptop read as a thin, premium, **unbranded** ultrabook; thin/aligned internals; no
+clipping/phasing in the assembled OR exploded state; premium aluminium materials — without breaking the
+scroll teardown framework or touching vendor files.
+
+**Files claimed:** `Animations/laptop-teardown/script.js` (procedural model: builders, `ASSEMBLED{}`
+layout, `CONFIG` materials/spacing) · `Animations/laptop-teardown/style.css` (only if framing needs a
+nudge) · `docs/taskboard.md`, `docs/logs.md`. **Not** touching `vendor/*`, the homepage style cards,
+payment/Stripe/Supabase/auth, or unrelated sections.
+
+**Concurrency:** the two earlier teardown tasks are both [REVIEW] (no active editor on these files) and
+Tasks A–E are unassigned or homepage-scoped (Task C/E touch fonts/`index.html`, not `script.js`), so no
+session currently holds `script.js`. Proceeding. Flagged on the board that this redesign **supersedes the
+model** those REVIEW tasks examined → Task A (live WebGL/scroll eyeball) should re-run against the new
+model.
+
+**Findings from inspecting the current model (the targets):**
+- **Branding:** `buildBackCover()` adds a metal logo disc on the lid → violates "unbranded / no Apple
+  logo". Remove it.
+- **Too thick:** the assembled base stack spans Y ≈ −0.06 → 0.34 over a 3.2-wide body (ratio ~0.125 — an
+  ultrabook is ~0.04–0.05). ~2.5× too chunky.
+- **Clipping:** motherboard chips reach Y ≈ 0.26 into the keyboard deck (0.21–0.31); cooling-fan top
+  (0.23) clips the deck underside (0.21). Internals intersect the deck.
+
+**Plan:** (1) ✅ confirmed `RoundedBoxGeometry` clamps `radius` to the shortest half-dim (vendor file
+line 49) → thin parts are safe. (2) refine `CONFIG.col` + materials toward anodised aluminium / dark
+glass / muted board. (3) rewrite the 13 builders thinner + drop the lid logo. (4) recompute `ASSEMBLED{}`
+for a slim base: bottom-shell floor top ≈ 0.045, a clean internal cavity 0.045–0.155, deck plate
+0.155–0.205, keys just proud, trackpad inset — no part crosses the deck underside. (5) retune exploded
+`layer`/`spacing` so thin layers stay separated. (6) `node --check` + local static-serve load check.
+(7) FINISH entry → [REVIEW].
+
+---
+
+## 2026-06-19 — Worker (Opus) — FINISH: Redesign Laptop Teardown 3D Model → REVIEW
+
+**Role:** Worker. Task → **[REVIEW]**. Redesigned the procedural laptop into a thin, unbranded aluminium
+ultrabook. **Only** `Animations/laptop-teardown/script.js` was edited for the model — `style.css` needed
+no change, and no vendor / homepage / cards / payment / auth files were touched.
+
+### Files changed
+- `Animations/laptop-teardown/script.js` — materials (`CONFIG.col` + `buildMaterials`), all 13 component
+  builders, and the `ASSEMBLED{}` transform table. All 13 part **names** unchanged → the scroll timeline
+  (which references them by name) is untouched.
+- `docs/taskboard.md` — status → [REVIEW] + checklist filled.
+- `docs/logs.md` — START + this FINISH.
+
+### 3D redesign — what changed
+**Unbranded:** removed the lid logo disc (was a `CircleGeometry` / `M.metal` mark in `buildBackCover`); the
+back cover is now a blank anodised panel. Grep confirms no `CircleGeometry` / `logo` geometry remains.
+
+**Thinner everything (real ultrabook silhouette):** the assembled base stack went from y ≈ −0.06 → 0.34
+(ratio ~0.125 over the 3.2-wide body — chunky) to **−0.03 → 0.22** at the deck top (keys to ~0.25 → ratio
+~0.078). Per part: lid 0.09→0.05 thick; screen bezel slimmed + glass near edge-to-edge; deck plate
+0.10→0.05; keycaps 0.05→0.025 (low-profile); trackpad enlarged 1.06→1.20 wide and thinned 0.03→0.02;
+battery cells 0.10→0.05 (thin/flat/wide); logic board 2.70×0.78×0.05 → 1.70×0.62×0.03 with low chips;
+CPU/GPU spreaders lowered; cooling fan Ø1.04→Ø0.64 and 0.12→0.05 thick with a thin 0.028 heat-pipe;
+speakers → slim 0.24-wide bars; ports thinned; bottom shell turned from a 0.12 slab into a slim **unibody
+tray** (0.06 floor + 0.14 perimeter rim walls + feet) so the slim side profile reads solid.
+
+**Clipping / phasing fixed (the old model intersected itself):**
+- *Old:* motherboard chips reached y≈0.26 **into** the keyboard deck (0.21–0.31); the cooling-fan top
+  (0.23) clipped the deck underside (0.21).
+- *New:* one clean internal cavity (floor-top **0.03** → deck-underside **0.17**); every internal part is
+  thinned + placed to top-out below 0.17 (tallest internals: CPU/GPU lid ≈0.15, heat-pipe ≈0.16). The deck
+  plate caps 0.17→0.22; keys/trackpad rest just proud (no intersection). Footprints are **zoned** so no two
+  internals overlap: battery centre-front · speakers front-sides · board centre-back · fan back-right ·
+  ports back-left · screws in the corners — all inside the rim walls (x≤±1.54, z≤±1.0 vs rim inner
+  ±1.55/±1.02). The lid was lifted so it hinges from the **back of the deck** (bottom ≈0.21) instead of
+  passing down through it.
+- *Exploded view:* `layer`/`spacing` (0.52) left as-is, but since parts are now much thinner the layers
+  read with more air. Traced every adjacent pair → **min gap ≈0.14** (keys↔deck), others 0.2–0.6, so thin
+  layers don't merge. Each part still recenters to x0/z0 and lies flat (rot 0).
+
+**Materials (premium, restrained):** shell → space-grey aluminium `0x4a4e55` (metalness 0.95 / roughness
+0.35); deck a touch darker; screen bezel now dark (`M.key`) for a black-bezel look; glass near-black
+`0x0a0c11`; board muted deep teal-green `0x163a31` (not neon); brushed `M.metal` + desaturated copper kept.
+No neon, no glow parts.
+
+**Performance:** geometry stayed light — kept InstancedMesh for keys/screws/fan-blades, lowered some
+segment counts (fan 44→40, screws 18→16), trimmed board chips; net add is ~8 small tray/rim/foot boxes. No
+new libraries, no textures, no model downloads.
+
+### Tested
+- `node --check` on `script.js` (as an ES module) → **OK**.
+- All 13 `explode('…')` timeline calls map 1:1 to `ASSEMBLED{}` keys (grep) → timeline intact.
+- `CircleGeometry` / `logo` geometry → **gone** (grep; only "no logo" comments remain).
+- Local static server (project root): `/Animations/laptop-teardown` **200 text/html**; `script.js` **200
+  text/javascript** (ESM MIME) with the new code served; `style.css` 200; `vendor/three.module.js` 200.
+- Only `script.js` + docs changed — **no vendor files touched.**
+
+### Remaining risks / for the reviewer
+1. **In-browser WebGL + scroll eyeball is the one thing a non-GUI session can't run.** The "thin/premium"
+   look and the no-clip claims come from geometry math (cavity clearances + exploded-layer tracing), not a
+   rendered frame. **Re-run Task A** on this new model: confirm the assembled laptop looks thin / premium /
+   unbranded, scrub the full teardown for any part passing through another, and check the console.
+2. This redesign **supersedes** the model the two earlier teardown `[REVIEW]` tasks examined. Their copy /
+   audit findings still stand (copy untouched), but the *visual* sign-off should be against this model.
+3. `CONFIG` camera/spacing left as-is to avoid reframing risk; the lid is slightly taller (top ≈2.24 vs
+   2.06). Expected to stay in frame (assembled framing had headroom) — worth a glance in Task A.
+
+### Suggested next task
+Re-run **Task A** (live WebGL/scroll verify) on the new model; then **Task B** can close out the teardown
+review tasks.
+
+---
+
+## 2026-06-19 — Worker (Opus) — FINISH: Task D — Resolve orphaned `dashboard-style.html` → DONE
+
+**Role:** Worker. Picked up **Task D** — the only board task that is non-GUI, unblocked, and not held by
+another session: Task A/B need a real browser (live WebGL eyeball), Task C and the 3D-model redesign are
+already `[REVIEW]`, and Task E depends on D. Task → **[DONE]**.
+
+**What I found:** `dashboard-style.html` was **already removed and staged for deletion** by an earlier
+session — `git status` shows `D dashboard-style.html` (gone from the working tree + index, still in HEAD so
+recoverable). Task D step 3 requires user/Manager sign-off **before** removal is final, and that
+confirmation had never been recorded — so I treated the staged deletion as *unratified* and got it
+confirmed rather than rubber-stamping another session's unconfirmed delete.
+
+**Verification (read-only):** repo-wide grep for `dashboard-style` → **every** match is inside `docs/**`;
+**zero** inbound links, JS redirects, or `vercel.json` rewrites anywhere in production code. Confirmed
+genuinely orphaned (it was the old "Sales Dashboard" mockup, replaced by the teardown card).
+
+**Decision / action:** user **confirmed removal** (2026-06-19). Left the file staged-deleted — did **not**
+restore it, did **not** `git commit` (no commit was requested). Recoverable via
+`git checkout HEAD -- dashboard-style.html` if ever wanted.
+
+**Files changed (this session):** `docs/taskboard.md` (Task D → DONE + checklist), `docs/CHANGELOG.md`
+(Removed entry), `docs/logs.md` (this entry). **No production code touched** — the removal was already on
+disk; I verified + ratified + recorded it.
+
+**Knock-on:** Task E's page list drops `dashboard-style.html` → now **6 pages** (`dashboard`, `login`,
+`payment`, `onboarding`, `success`, `cancel`).
+
+**Suggested next task:** **Task E** — vendor Google Fonts on those 6 remaining pages (same pattern as
+Task C, reuses `/fonts`; needs a per-page weight audit, since some pages may use faces not yet in `/fonts`,
+e.g. Mulish-700 / CG-italic). Task A (GUI live-verify) is the other open item but needs a browser session.
