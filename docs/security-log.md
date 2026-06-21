@@ -32,6 +32,52 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+### Fix applied — 2026-06-21 — Security — security-headers-vercel-json
+
+## 2026-06-21 12:10 - Security - F6-security-headers-added
+
+Area Reviewed:
+`vercel.json` HTTP response headers.
+
+Finding:
+**Resolved.** F6 (`missing-security-headers`) is fixed: `vercel.json` now sends a `headers` block on all routes
+with `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy:
+strict-origin-when-cross-origin`, `Strict-Transport-Security: max-age=63072000; includeSubDomains`, a
+`Permissions-Policy` deny-list that keeps `payment=(self)`, and a minimal CSP `frame-ancestors 'none';
+base-uri 'self'; object-src 'none'`. Clickjacking (the main F6 gap) is closed.
+
+Severity:
+Low (defense-in-depth) — now mitigated.
+
+Evidence:
+`vercel.json` → `headers[0]` on `source: "/(.*)"` (valid JSON; `cleanUrls`/`trailingSlash`/`rewrites`
+unchanged). The minimal CSP **omits** `script-src`/`style-src`/`connect-src` by design, so it cannot block the
+pervasive inline scripts/styles, Stripe, or Supabase. Verified safe against the current site (3 read-only
+sweeps + Stripe/Supabase/Vercel docs): the only external script origin is `js.stripe.com` (Chart.js + fonts now
+vendored locally); `X-Frame-Options: DENY` is safe (Stripe is framed by us, not vice versa); `payment=(self)`
+== the current browser default (no wallet regression); the animation's same-origin
+`<base href="/Animations/laptop-teardown/">` is compatible with `base-uri 'self'`.
+
+Recommendation:
+Verify on a Vercel preview (`curl -sI` shows the 6 headers; sign-in → `/payment` → Payment Element mounts with
+**no CSP violations** in the console; "Manage Subscription" opens the portal; the animation renders). Response
+headers only take effect on a real deploy.
+
+Deferred follow-up — a **full enforcing CSP**, to be validated via `Content-Security-Policy-Report-Only`
+against the live Stripe/Supabase flow **before** enforcing (needs `'unsafe-inline'` until a build step exists,
+so its XSS value is limited):
+`default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://*.js.stripe.com;
+style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.stripe.com https://websharke.com;
+font-src 'self'; connect-src 'self' https://pvamosrjqgzeuymwkruv.supabase.co
+wss://pvamosrjqgzeuymwkruv.supabase.co https://api.stripe.com; frame-src https://js.stripe.com
+https://*.js.stripe.com https://hooks.stripe.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none';
+form-action 'self';` — caveats: Stripe Radar may need `https://*.stripe.network` in `connect-src`; confirm the
+Supabase realtime `wss://`; add `maps.googleapis.com` only if the Stripe Address Element is ever added. Extends
+the `inline-scripts-no-csp` baseline.
+
+Status:
+Fixed (in working tree; verify the headers on a preview before/with deploy). Supersedes the F6 "New" entry below.
+
 ### Fix applied — 2026-06-20 — Security — billing-endpoints-auth-fix
 
 ## 2026-06-20 10:40 - Security - F1-F2-fixed-pending-live-test

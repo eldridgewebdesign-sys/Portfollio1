@@ -2,6 +2,15 @@
 
 All notable changes to the WebSharke site. Newest first.
 
+## 2026-06-21
+
+### Changed
+- **Optimized `images/` (−84% on disk; −94% of what modern browsers fetch).** The 1.5 MB homepage background
+  `Site_bkg.png` is now `Site_bkg.webp` (73 KB) with a `Site_bkg.jpg` fallback via `<picture>` (and a WebP
+  preload) — the `fetchpriority="high"` LCP image dropped ~95%. The two 1920×1080 logo PNGs were downscaled +
+  quantized in place (Tab-Logo 47→3 KB, Main-Logo 39→13 KB) with unchanged filenames, so no page references
+  changed. No visible quality loss; optimized directly with Pillow (no build step / dependency). _(Efficiency.)_
+
 ## 2026-06-20
 
 ### Changed

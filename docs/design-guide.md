@@ -178,6 +178,47 @@ Notes:
 Anything the Manager or future Designer should know
 ```
 
+## 2026-06-21 12:30 - Designer - corporate-demo
+
+Area Reviewed:
+New reusable corporate-site demo template (`demos/corporate/index.html`) + the homepage `#styles` section
+(linking it as a second live demo).
+
+Finding:
+The Styles section showed only the laptop-teardown demo plus a "more on the way" line. The owner asked for a
+corporate-site demo to stand alongside it — built as an **unnamed, reusable template** (the way the teardown
+is a live demo), not WebSharke's own brand and not a generic AI template.
+
+Decision:
+- **Its own brand, on the studio's bones.** The corporate demo gets a distinct identity — an editorial
+  "warm paper + ink + one muted forest-teal accent" palette (`--bg #f4f1ea` / `--ink #1a1c1a` /
+  `--accent #2f5d52`) — deliberately *not* the homepage ocean palette, so it reads as a different company.
+  It still reuses the studio's two vendored families (Cormorant Garamond display + Mulish body/UI) via local
+  `@font-face` (root-absolute `/fonts/...`, `font-display:swap`, no CDN) so it inherits the later font swap
+  (Task F) for free. The CTA is a considered "paper chip" (inset highlight + layered shadow, no glow) — the
+  same physics as the homepage `.btn-sand`, in this brand's palette.
+- **No raster, ever.** All visuals are inline SVG / CSS — single-letter monogram, client-logo placeholders,
+  consistent 1.75px line icons, hero/work motifs. Standing rule for demo templates: keep them fully
+  self-contained (inline CSS/JS, vendored fonts, no CDN/network) so one file is the whole deliverable.
+- **Swappable by design.** A single-letter monogram + a bracketed `[Company Name]` slot, realistic
+  professional-services copy, and an HTML `SWAP:` comment on every editable region — so a client site is a
+  find-and-replace, not a rebuild.
+- **Honest Styles section.** Present real demos, not placeholders: the section now shows **two** live samples
+  side by side (teardown + corporate) under a plain lede ("both live below"), reusing the canonical
+  `.style-card.feat` in a new `.style-two` 2-up grid (collapses to 1 col ≤680px). Continues the
+  styles-redesign principle — state things honestly in copy, don't fake them.
+
+Technical rule recorded (reusable):
+**CSS `var()` does not resolve inside SVG *presentation attributes*** (e.g. `fill="var(--accent)"`). Inline
+SVG that needs to follow tokens must either use `style="fill:var(--accent)"` (CSS context), inherit via
+`fill="currentColor"`, or — as done here for the static work-tile motifs — use the literal token hex value
+with a comment. Caught + fixed two work-tile SVGs that would otherwise have rendered black/uncolored.
+
+Notes:
+- Built ahead of Task F (fonts) per owner direction; forward-compatible because it reuses the CG/Mulish
+  family names F will swap site-wide.
+- Live in-browser eyeball (render/hover/mobile/console) still advised per the usual non-GUI caveat.
+
 ## 2026-06-20 10:53 - Designer - styles-redesign
 
 Area Reviewed:

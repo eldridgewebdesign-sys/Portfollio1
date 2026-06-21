@@ -25,7 +25,7 @@ if('scrollRestoration' in history)history.scrollRestoration='manual';
 window.addEventListener('load',function(){window.scrollTo(0,0)});
 window.addEventListener('pageshow',function(){window.scrollTo(0,0)});
 </script>
-<link rel="preload" as="image" href="images/Site_bkg.png" fetchpriority="high">
+<link rel="preload" as="image" href="images/Site_bkg.webp" type="image/webp" fetchpriority="high">
 <style>
 /* ── FONTS — vendored locally, no CDN (assets are bundled locally; CDNs are blocked in the user's
    environment). Cormorant Garamond + Mulish, latin woff2 copied into /fonts. Only the faces the page
@@ -154,6 +154,9 @@ body.ready #hero .anim{opacity:1;transform:none}
    set apart — no fake browser chrome, no off-brand dashboard art, no neon glow. ── */
 .styles-lede{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:clamp(1rem,1.4vw,1.12rem);line-height:1.8;max-width:46ch;margin:clamp(1.2rem,2.5vw,1.8rem) auto 0}
 .style-one{max-width:540px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
+/* two live samples, side by side */
+.style-two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,1.6vw,1.4rem);max-width:760px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
+@media(max-width:680px){.style-two{grid-template-columns:1fr}}
 .style-card{position:relative;display:flex;flex-direction:column;min-height:202px;padding:1.7rem 1.6rem 1.45rem;border-radius:16px;
   background:rgba(174,195,201,.05);border:1px solid rgba(174,195,201,.14);
   backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);
@@ -224,7 +227,10 @@ body.lock{overflow:hidden;height:100vh}
 </div>
 
 <!-- background image + ocean fx (all behind content) -->
-<img id="bg" src="images/Site_bkg.png" alt="" fetchpriority="high" decoding="async">
+<picture>
+  <source srcset="images/Site_bkg.webp" type="image/webp">
+  <img id="bg" src="images/Site_bkg.jpg" alt="" fetchpriority="high" decoding="async">
+</picture>
 <div id="snow"></div>
 <div id="fish"></div>
 
@@ -285,12 +291,18 @@ body.lock{overflow:hidden;height:100vh}
 <section id="styles" class="sx">
   <div class="wrap">
     <h2 class="sec-title rv">Styles</h2>
-    <p class="styles-lede rv d1">A look at the kinds of sites we build. The first one's live — more on the way.</p>
-    <div class="style-one">
+    <p class="styles-lede rv d1">A couple of the kinds of sites we build — both live below.</p>
+    <div class="style-two">
       <a class="style-card feat rv d2" href="/Animations/laptop-teardown" aria-label="3D Laptop Teardown — open interactive demo">
         <div class="sc-kicker">Interactive · 3D</div>
         <h3 class="sc-title">3D Laptop Teardown</h3>
         <p class="sc-desc">A scroll-based 3D build study — a laptop coming apart, layer by layer.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d3" href="/demos/corporate" aria-label="Corporate site template — open demo">
+        <div class="sc-kicker">Corporate · Template</div>
+        <h3 class="sc-title">Corporate Site</h3>
+        <p class="sc-desc">A clean, professional corporate site — built as a reusable template.</p>
         <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
       </a>
     </div>

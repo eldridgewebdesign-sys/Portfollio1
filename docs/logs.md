@@ -6,6 +6,364 @@
 
 ---
 
+## 2026-06-21 12:30 - Designer - corporate-demo
+
+Action:
+Finished
+
+Task:
+Designer: Create a corporate-style demo site (single self-contained reusable template) → [REVIEW]
+
+Files claimed:
+
+- `demos/corporate/index.html` (new — the template page)
+- `index.html` — the `#styles` section only (markup + a small `.style-two` CSS rule)
+- `docs/design-guide.md`, `docs/logs.md`, `docs/taskboard.md` (this task's status only)
+
+Files changed:
+
+- `demos/corporate/index.html` — built/finalized a self-contained, **unnamed/reusable** corporate-site
+  template (served at `/demos/corporate` via cleanUrls; `<base href="/demos/corporate/">`, root-absolute
+  favicon `/images/Tab-Logo.png`). Editorial "warm paper + ink + one forest-teal accent" brand — its OWN
+  palette, not the homepage ocean theme. Reuses the vendored CG + Mulish woff2 via `@font-face` with
+  root-absolute `/fonts/...` paths (`font-display:swap`, no CDN). All visuals are inline SVG / CSS (monogram,
+  client-logo placeholders, line icons, hero/work motifs) — no raster images, no emoji. Sections: header/nav
+  (sticky + mobile panel), hero, trust strip, practice cards, approach + stats, selected work, testimonial,
+  insights, closing CTA, contact (INERT form — `preventDefault`, inline "demo" notice, no fetch/XHR/endpoint),
+  footer. A11y: `<html lang="en">`, semantic landmarks, aria-labels, labelled inputs, two-layer
+  `:focus-visible`, skip link, `<noscript>` keeps reveal content visible. Reveal-on-scroll via
+  IntersectionObserver; `prefers-reduced-motion` shows everything immediately. 22 `SWAP:` markers flag every
+  swappable region; brand is a single-letter monogram + a `[Company Name]` slot.
+  - **Bug fixed this session:** the two "selected work" SVG motifs used `fill="var(--surface-2)"` /
+    `stroke="var(--line)"` / `fill="var(--accent)"` — CSS `var()` does **not** resolve in SVG *presentation
+    attributes*, so those charts would have rendered with default (black/none) colors. Replaced with the
+    literal token hex values (`#f0ece2` / `#d8d3c7` / `#2f5d52`) + an explanatory comment.
+- `index.html` — `#styles` section: extended the single featured teardown card to a **2-up** layout. Added
+  `.style-two` (`grid-template-columns:1fr 1fr`, max-width 760px) + a `@media(max-width:680px)` 1-col
+  override; replaced the `.style-one` wrapper with `.style-two` holding both cards — the existing teardown
+  card (`feat rv d2`) + a new corporate card (`feat rv d3` → `/demos/corporate`, kicker "Corporate ·
+  Template", title "Corporate Site"). Updated the `.styles-lede` copy to "A couple of the kinds of sites we
+  build — both live below." (honest: two live demos). `.style-one` left defined (now unused).
+- `docs/design-guide.md` — added a `corporate-demo` decision entry (style direction + the SVG-`var()` rule).
+- `docs/taskboard.md` — task [IN PROGRESS] → [REVIEW] + checklist; `docs/logs.md` — START (11:35) + this FINISH.
+
+Summary:
+Delivered the owner-requested corporate demo as a polished, reusable, unnamed template and wired it into the
+homepage Styles section as the second real demo (the section now shows two live samples instead of one + "more
+on the way"). The template matches the studio's craft level (considered paper-chip CTA, restrained glass-free
+cards with hover lift + accent underline, reveal-on-scroll) while wearing its own brand so it reads as a real
+corporate site, not WebSharke's and not a generic AI template.
+
+Testing:
+- `demos/corporate/index.html`: grep — **0** remaining `var()` in SVG presentation attrs (post-fix); all 7
+  `@font-face` `src` refs resolve to files in `/fonts`; `<base>` + root-absolute favicon + `<html lang="en">`
+  present; landmarks balanced (1 header/main/footer, 4 nav, 9 section open=close); 22 `SWAP:` markers;
+  `prefers-reduced-motion` + `<noscript>` present; CSS braces balanced (net 0); no `http(s)://` except the SVG
+  `xmlns` namespace in an inline `data:` URI (not a network request) — no CDN/fetch/XHR/external `.src`/SRI.
+- `index.html`: `git diff` confirms my hunks are the `.style-two` CSS rule + the `#styles` markup only; `.d3`
+  delay class exists (line 121); the `Site_bkg` `<picture>`/WebP hunks are the **concurrent Efficiency
+  session's**, not mine (different region, no conflict).
+- **Not run (non-GUI):** a live in-browser render of `/demos/corporate` and the homepage 2-up Styles grid
+  (desktop hover lift + accent underline, mobile 1-col reflow at ≤680px, `:focus-visible` rings, inert-form
+  notice, clean console). Recommend a ~1-min eyeball before deploy.
+
+Risks / Notes:
+- Built **ahead of Task F** (fonts) per owner direction; reuses the vendored families so it inherits the new
+  fonts when F lands (the `@font-face` family names — Cormorant Garamond / Mulish — are what F will swap).
+- Extends the Task S `#styles` redesign from one demo to two real demos (the intended end state). No new
+  external links/forms/scripts beyond the same-origin `/demos/corporate` link + the page's own inert form →
+  Security/Efficiency review is light, but flag per the task's review requirements.
+- Concurrent sessions are editing `index.html` (Efficiency `Site_bkg`) and several docs (Security/Manager) —
+  my edits are scoped to non-overlapping regions; no textual conflict observed.
+- Not touched: payment/Stripe/Supabase/auth, other features' vendor JS, the laptop-teardown files.
+
+Adversarial review + fixes (ultracode workflow — appended after the build/integrate notes above):
+- Reviewed by 3 independent lenses (brand/de-AI · front-end QA · security/scope) — **all pass**. 7 findings
+  were applied to `demos/corporate/index.html`:
+  - **[high] Removed `<base href="/demos/corporate/">`** — this **corrects the "base present" note above**.
+    Combined with fragment-only `<use href="#icon">` refs, `<base>` makes WebKit/Firefox resolve the icon
+    refs against the base URL and blank **every** SVG icon. All asset paths are already root-absolute
+    (`/fonts`, `/images`) and in-page links are pure `#fragments`, so `<base>` was unnecessary — removed
+    (an HTML comment warns not to re-add it). Verified on disk: no `<base>` element remains.
+  - **[medium]** Monogram was hardcoded `M` while the wordmark is `[Company Name]` → set to a neutral `A`
+    with a SWAP comment on both the header and footer marks (swap name + monogram together).
+  - **[low ×4]** De-clichéd the demo: dropped the hand-drawn hero underline; named concrete
+    disciplines/sectors in the copy; renamed/trimmed the placeholder client logos + added a
+    "(placeholder logos)" caption; bracketed the illustrative stat/result figures with SWAP notes.
+- **⚠ Cross-role flag (Manager → Efficiency; NOT fixed — out of Designer scope, shared `/fonts`):** the
+  vendored **Mulish woff2 are byte-identical across all four weights** — `mulish-400/500/600/700.woff2` all
+  hash to md5 `50220d0057de0b9e5dc8b4fb36ee97a9` (29,968 B each). So **no Mulish weight renders distinctly
+  anywhere on the site** (homepage included), not just this demo. Recommend Efficiency re-vendor genuine
+  Mulish 500 / 600 / 700 woff2. Both the corporate demo and the homepage reference these weights and will
+  render correctly once real files land.
+
+---
+
+## 2026-06-21 11:48 - Efficiency - image-optimization
+
+Action:
+Finished
+
+Task:
+Efficiency: Image / asset optimization audit → [REVIEW]
+
+Files changed:
+
+- `images/Site_bkg.png` (1,542,028 B) **deleted** → `images/Site_bkg.webp` (73,072 B, q82) +
+  `images/Site_bkg.jpg` (165,215 B, q84 fallback), both 1366×4182.
+- `images/Tab-Logo.png` 46,981 → **2,972 B** (256×144, quantized) — favicon + dashboard fin mask.
+- `images/Main-Logo.png` 39,154 → **13,224 B** (1280×720, quantized) — wordmark mask + loader img.
+- `index.html` — preload `<link>` → WebP (`type="image/webp"`); `<img id="bg">` → `<picture>` (WebP source +
+  JPEG fallback `<img>`, `id="bg"` kept). No other markup.
+- Docs: `docs/performance-log.md`, `docs/CHANGELOG.md`, `docs/taskboard.md` (→ [REVIEW] + checklist),
+  `docs/logs.md` (START + this FINISH).
+
+Result:
+`images/` on disk **1,628,163 → 254,483 B (−84.4%)**. What a modern browser actually fetches (WebP bg + the two
+logos) = **89,268 B vs 1,628,163 (−94.5%)**; the 165 KB JPEG is fetched only by the ~3% without WebP. Site_bkg
+(the LCP / `fetchpriority="high"` hero) went **1.5 MB → 73 KB (−95.3%)**.
+
+Tooling / how:
+No ImageMagick (the `convert` on PATH is the Windows NTFS tool — avoided). Used **Pillow 12.2.0** (already
+installed → no build step, no `package.json` change) via one-shot `python -` scripts; temp candidates cleaned up.
+
+Testing — "no visible quality loss" (the acceptance bar):
+- **Visual:** built side-by-side crops, viewed original vs optimized. Site_bkg across 3 gradient regions
+  (beach/foam, mid dark-teal gradient, near-black bottom) at q70/q78 → **no banding/artifacts**; shipped q82
+  (above the proven-clean q78). Logos viewed at render size (favicon fin; wordmark on white at the 420px loader)
+  → **identical**; the alpha silhouette the CSS masks use is preserved.
+- **Quantitative:** mean abs pixel diff for the WebP ≈ 1/255 per channel.
+- **Functional:** zero remaining `Site_bkg.png` refs (grep); `<picture>`/preload correct; logos keep their exact
+  paths so all 8 pages + `demos/corporate` resolve unchanged; `#bg` is `position:absolute` → the `<picture>`
+  wrapper is layout-inert; every final file re-opens valid (correct mode/dims).
+- **Scope:** `git status` = the 3 image files (+2 new) + `index.html` + docs only.
+
+Risks / Notes:
+- ~3% old browsers get the JPEG via `<picture>` (handled). Native dims kept on Site_bkg (no resize) → no
+  softness/layout risk.
+- Out of scope (flag for Manager): `demos/corporate/` (new, still being built) wasn't audited — a future asset
+  pass could cover it once finalized.
+- Reviews: **Manager** + **Designer** (confirm no visible quality regression — a GUI eyeball; everything
+  statically/visually checkable here passed).
+
+---
+
+## 2026-06-21 12:15 - Security - security-headers-vercel-json
+
+Action:
+Finished
+
+Task:
+Security: Add security response headers in vercel.json (audit F6) → [REVIEW]
+
+Files claimed:
+
+- vercel.json, docs/security-log.md, docs/logs.md, docs/taskboard.md (status only)
+
+Files changed:
+
+- vercel.json — added a `headers` block on `source: "/(.*)"` with 6 headers: `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security`
+  (`max-age=63072000; includeSubDomains`), `Permissions-Policy` (deny camera/mic/geo/usb/serial; `payment=(self)`),
+  and a minimal CSP (`frame-ancestors 'none'; base-uri 'self'; object-src 'none'`). `cleanUrls`/`trailingSlash`/
+  `rewrites` untouched.
+- docs/security-log.md — F6 → Fixed; recorded the deferred full-CSP allowlist for the follow-up.
+- docs/taskboard.md — task → [REVIEW] + checklist; docs/logs.md — START + this FINISH.
+
+Summary:
+Shipped the safe, non-breaking defense-in-depth header set (audit F6). The minimal CSP deliberately omits
+`script-src`/`style-src`/`connect-src`, so it cannot block the pervasive inline scripts/styles, Stripe, or
+Supabase — it only adds clickjacking protection (`frame-ancestors`/XFO), blocks `<base>` injection
+(`base-uri 'self'`, verified compatible with the animation's same-origin `<base>`), and blocks plugins
+(`object-src 'none'`). The full enforcing CSP is documented as a deferred follow-up (needs `'unsafe-inline'` +
+report-only validation against live Stripe/Supabase first).
+
+Testing:
+- `vercel.json` is valid JSON (node parse); 6 headers present on `/(.*)`; routing keys preserved.
+- Header presence + a live regression check (Payment Element mounts, no CSP violations, portal opens, animation
+  renders) need a Vercel preview (`curl -sI` + the browser pass) — NOT runnable headless. Fold into the F1/F2
+  preview check already in progress.
+- `git` scope: only `vercel.json` + 3 docs changed.
+
+Risks / Notes:
+- Response headers only exist on a real deploy. Did NOT `git commit` or deploy.
+- Vercel already auto-applies HSTS; the explicit value here matches it (no `preload` → no permanent commitment;
+  the owner can opt into preload later).
+- If the owner ever enables Stripe Express Checkout wallets needing cross-origin delegation, change
+  `payment=(self)` → `payment=(self "https://js.stripe.com")` — not needed for the current Payment Element.
+- Remaining open Security tasks: F7 admin hardening (`docs/taskboard.md:1097`) and the post-brand re-audit.
+
+---
+
+## 2026-06-21 12:00 - Security - security-headers-vercel-json
+
+Action:
+Started
+
+Task:
+Security: Add security response headers in vercel.json (audit F6)
+
+Files claimed:
+
+- vercel.json
+- docs/security-log.md
+- docs/logs.md
+- docs/taskboard.md (this task's status only)
+
+Files changed:
+
+- (in progress — see the FINISH entry)
+
+Summary:
+Claimed the F6 task ([TODO] → [IN PROGRESS]). Adding a `headers` block to vercel.json with the safe,
+non-breaking defense-in-depth set: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+`Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security`, a `Permissions-Policy`
+deny-list that keeps `payment=(self)`, and a minimal CSP (`frame-ancestors 'none'; base-uri 'self';
+object-src 'none'`). The full enforcing CSP is deferred (inline scripts everywhere + no build step) and
+documented for a follow-up task.
+
+Research:
+Read-only sweep (3 Explore agents + Stripe/Supabase/Vercel docs) confirmed: the only external script origin is
+`js.stripe.com` (Chart.js + Google Fonts are now vendored locally); `X-Frame-Options: DENY` / `frame-ancestors
+'none'` are safe with Stripe (Stripe is framed by us, not vice versa); `payment=(self)` preserves the current
+wallet default (no regression); the animation's `<base href="/Animations/laptop-teardown/">` is same-origin, so
+`base-uri 'self'` is compatible.
+
+Testing:
+Planned: JSON validity (node). Header presence + a live regression check (Payment Element mounts, no CSP
+violations) require a Vercel preview — folded into the F1/F2 browser pass; not runnable headless. Will NOT
+commit or deploy.
+
+Risks / Notes:
+Headers only take effect on a real deploy. The minimal CSP deliberately omits `script-src`/`style-src`/
+`connect-src`, so it cannot block inline code, Stripe, or Supabase. Task will move to [REVIEW].
+
+---
+
+## 2026-06-21 11:40 - Efficiency - image-optimization
+
+Action:
+Started
+
+Task:
+Efficiency: Image / asset optimization audit
+
+Files claimed:
+
+- `images/` (optimize `Site_bkg.png`, `Tab-Logo.png`, `Main-Logo.png`)
+- `index.html` (only the bg `<img>`→`<picture>` + the preload `<link>`)
+- `docs/performance-log.md`, `docs/logs.md`, `docs/taskboard.md` (status), `docs/CHANGELOG.md`
+
+Summary:
+Audited `images/` (3 files, 1.6 MB). `Site_bkg.png` is 1.5 MB / 96% — a 1366×4182 **RGB** PNG used as the
+homepage full-bleed `<img id="bg">` (preloaded `fetchpriority="high"`); PNG is the wrong format. Optimizing with
+**Pillow** (already installed → no build step / no new dependency; the `convert` on PATH is the Windows NTFS
+tool, not ImageMagick):
+- Site_bkg → WebP q82 (~62 KB) + JPEG q84 fallback (~165 KB) via `<picture>`; delete the 1.5 MB PNG.
+- Tab-Logo (favicon + fin mask) → 256px quantized PNG (~3 KB), in place.
+- Main-Logo (wordmark mask + visible loader img) → 1280px quantized PNG (~13 KB), in place.
+
+Visually verified each candidate vs the original (Site_bkg across 3 gradient regions; logos at their render
+size) — **no visible quality loss**. Logos keep their filenames/paths → no per-page edits; only `index.html`'s
+bg markup changes.
+
+Risks / Notes:
+- Concurrent sessions are churning docs/`index.html` — will re-read on any conflict.
+- `images/` masks (`Main-Logo`/`Tab-Logo`) use relative `mask-size`, so downscaling is layout-safe.
+
+---
+
+## 2026-06-21 11:35 - Designer - corporate-demo
+
+Action:
+Started
+
+Task:
+Designer: Create a corporate-style demo site (single self-contained reusable template)
+
+Files claimed:
+
+- `demos/corporate/index.html` (new — the template page)
+- `index.html` — the `#styles` section only (markup + a small `.style-two` CSS rule), to link the demo
+- `docs/design-guide.md`
+- `docs/logs.md`
+- `docs/taskboard.md` (this task's status only)
+
+Files changed:
+
+- (START — none yet; see the FINISH entry)
+
+Summary:
+Claimed the owner-requested corporate-demo task ([TODO] → [IN PROGRESS]). Plan: build one self-contained,
+**unnamed/reusable** corporate-site template at `demos/corporate/index.html` (served at `/demos/corporate`
+via cleanUrls — no `vercel.json` change, mirrors the teardown), then link it from the redesigned `#styles`
+as a second real demo (the section currently shows only the teardown). "Editorial corporate" direction:
+light/paper, its own brand, reusing the vendored Cormorant Garamond + Mulish families (inherits Task F's
+fonts later), restrained palette, SVG icons, subtle reveal — no generic AI-template look. Self-contained:
+inline CSS/JS, `@font-face` → `/fonts`, all visuals inline SVG/CSS (no raster images), no CDN, responsive,
+reduced-motion, a11y, inert contact form (no backend/leak).
+
+Execution: ultracode Workflow (design panel → build → integrate → adversarial verify → fix); docs finalized
+in the main loop.
+
+Testing:
+None yet (START).
+
+Risks / Notes:
+
+- Built **ahead of Task F** (fonts) per owner direction; reuses the vendored families so it inherits the new
+  fonts when F lands. Flag for Manager.
+- Touches the `#styles` section that's currently in `[REVIEW]` (Task S) — extends it from one demo to two
+  real demos (the intended end state of removing the placeholders).
+- Not touching: payment/Stripe/Supabase/auth, other features' vendor JS, the teardown files.
+
+---
+
+## 2026-06-21 11:12 - Manager - round2-tasks-plus-corporate
+
+Action:
+Planned
+
+Task:
+Give every role more tasks (round 2) + a Designer corporate-site template task
+
+Files claimed:
+
+- docs/taskboard.md
+- docs/logs.md
+
+Files changed:
+
+- docs/taskboard.md — added "# More tasks — 2026-06-20 (round 2)" with 8 tasks (2 per role); refined the
+  corporate-site task to the owner-confirmed scope.
+- docs/logs.md — this entry.
+
+Summary:
+Per the owner ("give everyone more tasks" + "give the designer a task to create a corporate site"), added 8
+tasks:
+- **Manager:** clean & archive the board + "Current focus" list; start `docs/DECISIONS.md`.
+- **Designer:** create a corporate-style demo site — scope confirmed as a **single self-contained page built
+  as an unnamed, reusable template** with swappable placeholder content (pairs with Task S); extend the
+  design system to the inner pages.
+- **Efficiency:** image/asset optimization audit; prune the unused CG/Mulish woff2 after Task F.
+- **Security:** harden the admin-API F7 minor items; re-audit external requests after the brand changes land.
+
+Testing:
+Docs only — no website code changed.
+
+Risks / Notes:
+
+- Several round-2 tasks depend on **Task F** (fonts) or land after **S / T / D1** — sequencing noted on each.
+- The board is now large; the Manager "clean & archive" round-2 task is meant to tame it — run it when no
+  other session is mid-edit.
+- Concurrent sessions are active (a Designer just finished `styles-redesign`; an Efficiency `deploy-hygiene`
+  session ran earlier). I touched only docs. A later Manager pass should confirm the styles redesign was
+  done on the new type system (Task F → S order) or flag rework.
+- **Next:** Task F (fonts) is the foundation for the brand work; F1 (High billing-auth) remains the top
+  security priority.
+
+---
+
 ## 2026-06-20 11:00 - Designer - styles-redesign
 
 Action:

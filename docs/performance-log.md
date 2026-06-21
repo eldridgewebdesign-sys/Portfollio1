@@ -28,6 +28,30 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+## 2026-06-21 11:48 - Efficiency - image-optimization
+
+Area Reviewed:
+`images/` (3 files, 1.6 MB) — esp. the homepage full-bleed background.
+
+Finding:
+`Site_bkg.png` was a **1.5 MB** (96% of `images/`) 1366×4182 **RGB** PNG used as the homepage `<img id="bg">`
+(preloaded `fetchpriority="high"`, the LCP element) — PNG is the wrong format for a photographic/gradient
+background. The two logos were 1920×1080 PNGs used only at small sizes (favicon, ≤420px loader, CSS masks).
+
+Impact:
+High (LCP / mobile) for `Site_bkg`; Low for the logos.
+
+Recommendation / done:
+Re-encoded with Pillow (no build step): Site_bkg → WebP q82 (**73 KB**) + JPEG q84 fallback via `<picture>`
+(PNG deleted); Tab-Logo → 256px quantized (**3 KB**); Main-Logo → 1280px quantized (**13 KB**). Before/after:
+`images/` **1,628,163 → 254,483 B (−84.4%)**; modern-browser image payload **89 KB (−94.5%)**; Site_bkg
+**−95.3%**. No visible quality loss (multi-region visual + quantitative-diff verification).
+
+Status:
+Fixed (→ [REVIEW]). GUI eyeball for final sign-off (Designer/Manager).
+
+---
+
 ## 2026-06-20 10:50 - Efficiency - deploy-hygiene
 
 Area Reviewed:

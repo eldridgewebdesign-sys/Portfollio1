@@ -531,13 +531,13 @@ From `docs/security-log.md` 2026-06-20 (F5 `rls-not-verifiable-from-repo`). Need
 
 ---
 
-## [TODO] Security: Add security response headers in vercel.json
+## [REVIEW] Security: Add security response headers in vercel.json
 
 Assigned Role:
 Security
 
 Owner:
-None
+Security — Opus (security-headers-vercel-json, 2026-06-21)
 
 Risk:
 Low
@@ -566,12 +566,12 @@ Steps:
 
 Completion checklist:
 
-- [ ] Change completed
-- [ ] Relevant tests/checks run
-- [ ] No unrelated files changed
-- [ ] Role-specific log updated
-- [ ] docs/logs.md updated
-- [ ] Task moved to [REVIEW] or [DONE]
+- [x] Change completed — *6 headers added to `vercel.json` (`source: "/(.*)"`); minimal CSP only — no script/style/connect restriction*
+- [x] Relevant tests/checks run — *valid JSON (node parse); routing keys preserved. **Header presence + live regression need a Vercel preview (curl -sI + browser) — not runnable headless.***
+- [x] No unrelated files changed — *only `vercel.json` + 3 docs; `cleanUrls`/`trailingSlash`/`rewrites` untouched*
+- [x] Role-specific log updated — *`docs/security-log.md` F6 → Fixed; deferred full-CSP allowlist recorded*
+- [x] docs/logs.md updated — *START + FINISH entries*
+- [x] Task moved to [REVIEW] or [DONE] — *[REVIEW]: verify the 6 headers + no CSP violations on a preview before deploy*
 
 Review requirements:
 Manager; Efficiency if it affects loading.
@@ -774,6 +774,436 @@ Manager (scope) + Efficiency (no heavy assets added; perf intact) + Security (if
 Notes:
 **Depends on Task F** (type alignment) — sequence after it. Keep the useful runtime guards / strings
 (`file://` message, loader / error text). Don't touch `script.js` geometry / animation.
+
+---
+
+# More tasks — 2026-06-20 (round 2)
+
+> Owner asked for more tasks across all roles, plus a corporate-site Designer task. Several depend on
+> **Task F** (fonts) — don't start those until F lands. Severity/sequence noted per task.
+
+## [TODO] Manager: Clean & archive the task board + add a "Current focus" list
+
+Assigned Role:
+Manager
+
+Owner:
+None
+
+Risk:
+Low
+
+Goal:
+Move `[DONE]`/closed legacy items into a "History (archived)" section at the bottom, keep active work near
+the top, and add a short "Current focus" priority list so any session sees what matters most.
+
+Why:
+The board has grown long and mixes finished history with active work. "Keep `docs/taskboard.md` clean" is
+core Manager work.
+
+Files likely involved:
+
+- `docs/taskboard.md`; `docs/logs.md`
+
+Do not touch:
+
+- website code; do not delete task history — **move** it to an archive section and log what moved.
+
+Steps:
+
+1. Add a "## Current focus" list ordering the open work (F1 billing-auth first, then brand F→S→T, etc.).
+2. Move `[DONE]`/closed legacy tasks into "## History (archived)" at the bottom.
+3. Log the cleanup.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+None (Manager owns the board).
+
+Notes:
+This rewrites large parts of `docs/taskboard.md` — don't run it while another session is editing task statuses.
+
+---
+
+## [TODO] Manager: Start a decisions log (docs/DECISIONS.md)
+
+Assigned Role:
+Manager
+
+Owner:
+None
+
+Risk:
+Low
+
+Goal:
+Create `docs/DECISIONS.md` capturing standing decisions so sessions stop re-litigating them: no-CDN/
+vendor-locally policy, the four-role system, the font change (Distillery + Playfair), the F1 auth-fix
+direction, docs/ excluded from deploy, etc.
+
+Why:
+`CLAUDE.md` originally referenced a decisions doc that never existed; decisions are scattered across logs.
+
+Files likely involved:
+
+- new `docs/DECISIONS.md`; `docs/logs.md`; optionally `CLAUDE.md` reading list.
+
+Do not touch:
+
+- website code
+
+Steps:
+
+1. Create `docs/DECISIONS.md` with dated one-paragraph entries (each with its "why").
+2. Optionally link it from `CLAUDE.md`.
+3. Log it.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+None.
+
+Notes:
+Low priority; do after the board cleanup.
+
+---
+
+## [REVIEW] Designer: Create a corporate-style demo site
+
+Assigned Role:
+Designer
+
+Owner:
+Designer · Opus — corporate-demo (2026-06-21)
+
+Risk:
+Medium
+
+Goal:
+Build a **single self-contained corporate-style demo page, as a reusable template** — generic/**unnamed**
+brand with realistic, swappable placeholder content — that WebSharke can showcase in the Styles section and
+reuse for future client corporate sites (the way the laptop-teardown is a live demo).
+
+Why:
+Owner request. The Styles section (Task S) is being redesigned to show real examples instead of empty
+"Preview coming soon" placeholders; a corporate demo is one such example.
+
+Files likely involved:
+
+- a new self-contained folder/page, e.g. `demos/corporate/` (HTML/CSS/JS inline per convention), all assets
+  vendored locally (no CDN); images under `images/`.
+- `index.html` `#styles` — link the demo from a card (coordinate with Task S).
+- `vercel.json` only if a clean route is needed; `docs/design-guide.md` (record the style direction).
+
+Do not touch:
+
+- payment / Stripe / Supabase / auth; vendor JS of other features.
+
+Steps:
+
+1. Build **one** self-contained corporate landing page as a reusable template: **no company name**;
+   realistic placeholder copy in clearly-swappable blocks (hero, services, about, contact, etc.).
+2. Design a clean, professional corporate aesthetic (strong hierarchy, restrained, real-feeling content),
+   reusing the site's new fonts/components where sensible; **no** generic AI-template look.
+3. Self-contained, responsive, no external CDNs; test desktop/mobile/console.
+4. Link it from the redesigned Styles section; record the decision in `docs/design-guide.md`.
+
+Completion checklist:
+
+- [x] Change completed — built `demos/corporate/index.html` (self-contained, unnamed, reusable; own
+      warm-paper/forest-teal brand; vendored CG+Mulish `@font-face`, inline SVG only, inert form) + wired it
+      into `index.html` `#styles` as the 2nd live demo (new `.style-two` 2-up grid). Fixed an SVG-`var()`
+      presentation-attr bug in the work-tile motifs.
+- [x] Relevant tests/checks run — grep: 0 SVG-`var()` left, all 7 font `src` resolve, base/favicon/lang
+      present, landmarks balanced (9/9 sections), 22 `SWAP:` markers, reduced-motion + `<noscript>`, CSS
+      braces net 0, no CDN/fetch/XHR/SRI; `index.html` diff scoped to `.style-two` CSS + `#styles` markup.
+      **Live in-browser render NOT run (non-GUI) — recommend a ~1-min eyeball.**
+- [x] No unrelated files changed — my footprint is `demos/corporate/index.html` (new) + `index.html`
+      `#styles`; the `Site_bkg` `<picture>` hunks in `index.html` are the concurrent Efficiency session's.
+- [x] Role-specific log updated — `docs/design-guide.md` `corporate-demo` decision entry (+ the reusable
+      SVG-`var()` rule).
+- [x] docs/logs.md updated — START (11:35) + FINISH (12:30).
+- [x] Task moved to [REVIEW] or [DONE] — **[REVIEW]**.
+
+Review requirements:
+Manager (scope/aesthetic) + Efficiency (asset weight; no CDN) + Security (any forms/links/scripts).
+→ Same-origin `/demos/corporate` link only; the page's contact form is inert (no endpoint/fetch). Built
+ahead of Task F (fonts) per owner direction — reuses the CG/Mulish family names F will swap, so it inherits
+the new fonts with no rework here.
+
+Notes:
+Scope confirmed by the owner: **single demo page, built as an unnamed reusable template** with swappable
+placeholder content (not a full multi-page site). Pairs with Task S (extends `#styles` from one demo to two).
+Keep it lightweight and fully self-contained. No raster images — all visuals inline SVG/CSS.
+
+---
+
+## [TODO] Designer: Extend the documented design system to the inner pages
+
+Assigned Role:
+Designer
+
+Owner:
+None
+
+Risk:
+Medium
+
+Goal:
+Audit the inner pages (`login`, `onboarding`, `payment`, `dashboard`, `success`, `cancel`) against the
+design system documented in `docs/design-guide.md` and align their typography/spacing/color/components —
+**presentation only**.
+
+Why:
+The baseline only documented/standardized the homepage; the inner pages have their own inline styles and may
+drift from the brand, especially after the font change.
+
+Files likely involved:
+
+- the 6 inner pages' inline `<style>` / presentation markup (CSS only).
+- `docs/design-guide.md`.
+
+Do not touch:
+
+- payment / Stripe / Supabase / auth **logic** on those pages — presentation only.
+
+Steps:
+
+1. Compare each page's tokens/type/spacing/components to the design-guide; list inconsistencies.
+2. Align presentation to the documented system + new fonts; apply safe fixes, propose larger reworks.
+3. Test each page desktop/mobile/console; record decisions in `docs/design-guide.md`.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+Manager (scope) + Security (confirm only presentation changed on payment/auth pages) + Efficiency if assets.
+
+Notes:
+**Sequence after Task F** (fonts). Also folds in the design-guide "Open design follow-ups" (unused/duplicate
+tokens `--sand` / `--surf` / `--aqua-d`).
+
+---
+
+## [REVIEW] Efficiency: Image / asset optimization audit
+
+Assigned Role:
+Efficiency
+
+Owner:
+Efficiency · Opus · image-optimization (2026-06-21)
+
+Risk:
+Low
+
+Goal:
+Audit `images/` for oversized assets and optimize them — especially the full-bleed homepage background
+`images/Site_bkg.png` (loaded `fetchpriority="high"`) and the logos — with no visible quality loss.
+
+Why:
+The homepage paints a full-screen background image early; an oversized PNG hurts LCP/mobile load.
+
+Files likely involved:
+
+- `images/*` (compress/resize; consider WebP + appropriate sizes); references in pages if formats change.
+- `docs/performance-log.md`.
+
+Do not touch:
+
+- payment/auth logic; keep the `images/` path convention (don't break image links).
+
+Steps:
+
+1. List image sizes; flag the heaviest (likely `Site_bkg.png`).
+2. Compress/resize (and/or add WebP with fallback); preserve visual quality.
+3. Verify each page renders; record before/after sizes in `docs/performance-log.md`.
+
+Completion checklist:
+
+- [x] Change completed — Site_bkg.png (1.5 MB) → WebP 73 KB + JPEG fallback via `<picture>`; logos quantized in place (Tab 47→3 KB, Main 39→13 KB); `images/` −84% on disk, −94.5% modern payload
+- [x] Relevant tests/checks run — visual orig-vs-optimized (3 gradient regions + logos at render size) → no banding/regression; quantitative pixel diff ≈1/255; grep clean of `Site_bkg.png`; every page's logo paths unchanged
+- [x] No unrelated files changed — only `images/*` + `index.html` (bg `<picture>` + WebP preload); no JS/auth/payment
+- [x] Role-specific log updated — `docs/performance-log.md` (before/after entry)
+- [x] docs/logs.md updated — START + FINISH
+- [x] Task moved to [REVIEW] or [DONE] — **[REVIEW]** (Designer/Manager: GUI quality eyeball)
+
+Review requirements:
+Manager + Designer (confirm no visible quality regression).
+
+Notes:
+Don't add a build step/dependency — optimize the files directly.
+
+---
+
+## [TODO] Efficiency: Prune the now-unused Cormorant Garamond / Mulish woff2 (after Task F)
+
+Assigned Role:
+Efficiency
+
+Owner:
+None
+
+Risk:
+Low
+
+Goal:
+Once Task F swaps the site to Distillery + Playfair, remove the orphaned CG/Mulish woff2 from `/fonts` and
+any dead `@font-face` rules so the repo doesn't ship unused fonts.
+
+Why:
+Task F leaves the old families unused; dead font files = wasted weight + confusion.
+
+Files likely involved:
+
+- `/fonts/` (delete orphaned woff2); leftover `@font-face`/`font-family` refs across pages.
+- `docs/performance-log.md`.
+
+Do not touch:
+
+- the laptop-teardown's `vendor/fonts/*` unless Task T also moved it off CG/Mulish (coordinate).
+
+Steps:
+
+1. After F lands, grep for remaining `cormorant`/`mulish` refs; confirm none still used.
+2. Delete orphaned woff2 + dead `@font-face`; verify every page's type still renders.
+3. Log before/after in `docs/performance-log.md`.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+Manager.
+
+Notes:
+**Blocked until Task F is done.** Don't remove a font still referenced anywhere.
+
+---
+
+## [TODO] Security: Harden the admin API minor items (audit F7)
+
+Assigned Role:
+Security
+
+Owner:
+None
+
+Risk:
+Low
+
+Goal:
+Address the low/informational F7 items: parameterize/escape the PostgREST `.or()` search filters in
+`api/admin.js` and return generic admin error messages instead of raw `err.message`.
+
+Why:
+Defense-in-depth from the 2026-06-20 audit. Admin-only (low impact) but cheap to harden; partial hardening
+already exists (commit `c9a3cc3`).
+
+Files likely involved:
+
+- `api/admin.js` (`:143` raw error; `:245`, `:516`, `:521` `.or()` interpolation).
+- `docs/security-log.md`.
+
+Do not touch:
+
+- the admin auth gate (`:86-103`) — it's correct; payment/Stripe/Supabase logic beyond these items.
+
+Steps:
+
+1. Escape/encode the search term used in `.or()` (or build the filter safely) so metacharacters can't alter it.
+2. Return generic client errors; keep `console.error` server-side.
+3. Confirm admin search/sort still works; update F7 status in `docs/security-log.md`.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+Manager + Efficiency if loading affected (it won't be).
+
+Notes:
+Lower priority than F1 (the High billing-auth fix). From `docs/security-log.md` 2026-06-20 (F7).
+
+---
+
+## [TODO] Security: Re-audit external requests after the brand changes land
+
+Assigned Role:
+Security
+
+Owner:
+None
+
+Risk:
+Low
+
+Goal:
+After Tasks F (fonts), D1 (corporate demo), and T (teardown) land, re-check that they introduced **no** new
+external requests, inline-script risks, or unsafe loads — keeping the no-CDN posture intact.
+
+Why:
+Task F downloads a commercial font and D1 builds a new demo; both could accidentally pull a CDN or add risky
+markup. The Security review of Designer changes is part of the role review flow.
+
+Files likely involved:
+
+- read-only: the changed pages + `/fonts`, the corporate demo, the teardown.
+- write: `docs/security-log.md`.
+
+Do not touch:
+
+- production code (audit only; file fixes as findings/tasks).
+
+Steps:
+
+1. Grep the changed files for `http(s)`/`googleapis`/`gstatic`/`jsdelivr`/`cdn`; confirm all assets are local.
+2. Spot-check the new demo for unsafe `innerHTML`/inline handlers/forms; confirm no new external scripts.
+3. Record results in `docs/security-log.md`.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+Manager.
+
+Notes:
+**Sequence after Tasks F + D1 + T.** Read-only audit.
 
 ---
 
