@@ -101,7 +101,11 @@ This is the standing Manager loop — re-open it whenever the role logs accumula
 
 ---
 
-## [REVIEW] Designer: Establish the homepage design baseline and fix obvious visual inconsistencies
+## [DONE] Designer: Establish the homepage design baseline and fix obvious visual inconsistencies
+
+> **Manager review — 2026-06-20:** Scope verified — only `index.html` (a 2-line `--warm`/`--warm-lt` token
+> substitution, visually a pure variable swap) + the docs. `docs/design-guide.md` is now fully documented
+> (palette tokens, type scale, spacing, component rules) with an "Open design follow-ups" list. Approved → **DONE**.
 
 Assigned Role:
 Designer
@@ -164,7 +168,13 @@ glows or hype copy.
 
 ---
 
-## [REVIEW] Efficiency: Finish the site-wide no-CDN web fonts (remaining pages)
+## [DONE] Efficiency: Finish the site-wide no-CDN web fonts (remaining pages)
+
+> **Manager review — 2026-06-20:** Scope verified — `git diff` on all 6 pages (incl. `payment.html` and
+> `dashboard.html`) shows **head/font-only** changes: CDN `<link>`+`preconnect` removed, inline `@font-face`
+> added → `/fonts`; no payment/auth/Stripe logic touched. Two woff2 added (`mulish-700`, `cormorantgaramond-700`).
+> Site is now CDN-free for fonts. Residual: a GUI type-render eyeball (non-blocking). Approved → **DONE**.
+> Legacy **Task E** below is superseded by this task.
 
 Assigned Role:
 Efficiency
@@ -236,7 +246,12 @@ collision.
 
 ---
 
-## [REVIEW] Security: Run a site-wide security audit pass and populate the security log
+## [DONE] Security: Run a site-wide security audit pass and populate the security log
+
+> **Manager review — 2026-06-20:** Audit complete and in scope (read-only; `git status` confirms no code
+> changed — only docs). 8 evidence-cited findings (1 High, 4 Medium, 1 Low, 1 informational bundle, 1 clean
+> baseline). Findings triaged into fix tasks below ("Fix tasks triaged from the 2026-06-20 Security audit").
+> Approved → **DONE**.
 
 Assigned Role:
 Security
@@ -293,6 +308,472 @@ Manager (prioritize the findings into fix tasks).
 Notes:
 Evidence-based only — no scary claims without a code reference. This pass is non-blocking and won't collide
 with the font/design work (it's read-only on code).
+
+---
+
+# Fix tasks triaged from the 2026-06-20 Security audit
+
+> Source: `docs/security-log.md` (live audit pass, 2026-06-20). **F1 is the priority** — a High-severity
+> IDOR on live billing. Tasks ordered by severity.
+
+## [REVIEW] Security: Add caller authentication to the unauthenticated billing endpoints (customer-portal + checkout)
+
+Assigned Role:
+Security
+
+Owner:
+Security — Opus (billing-endpoints-auth-fix, 2026-06-20)
+
+Risk:
+High
+
+Goal:
+Require an authenticated Supabase session on `api/customer-portal.js` and `api/checkout.js`, and verify the
+requested `userId` belongs to the caller, before doing any Stripe work.
+
+Why:
+Security audit **F1 (High)** + **F2 (Medium)**: `api/customer-portal.js` has no caller auth — anyone who
+supplies a victim's `user_id` (or `cus_…`) gets a working Stripe Billing Portal URL for that victim (IDOR on
+live billing: view invoices, change card, cancel). `api/checkout.js` similarly trusts an attacker-supplied
+`userId`. Shared root cause and fix.
+
+Files likely involved:
+
+- `api/customer-portal.js`, `api/checkout.js`
+- pattern reference (already implemented): `api/admin.js:86-103` (bearer token → `auth.getUser` → identity check)
+- frontend callers that must now send the token: `dashboard.html` ("Manage Subscription"), `payment.html` (checkout)
+
+Do not touch:
+
+- the Stripe price IDs, the webhook, or the working Payment Element / subscription logic beyond adding the auth gate
+- unrelated endpoints
+
+Steps:
+
+1. Read `Authorization: Bearer <token>`; 401 if missing.
+2. Verify server-side with `supabaseAdmin.auth.getUser(token)`; 401 on failure.
+3. Enforce `userId === caller.id` (403 otherwise) before resolving the customer / creating the portal or
+   payment-intent/subscription.
+4. Narrow CORS from `*` to the site origin; update the two frontend callers to send the access token.
+5. Test the full live flow end-to-end (sign-in → checkout → manage subscription) before deploy.
+
+Completion checklist:
+
+- [x] Change completed — *auth gate on both endpoints + token sent by all 4 frontend callers; `caller`-derived identity*
+- [x] Relevant tests/checks run — *`node --check` both API files; static 401/403 negative-path trace; `git diff` scope check. **Live e2e NOT run (needs browser/env/live keys) — required before deploy.***
+- [x] No unrelated files changed — *only the 2 API files + 2 frontend callers + 3 docs; no webhook, no price IDs, no vendor*
+- [x] Role-specific log updated — *`docs/security-log.md` "Fix applied" entry (F1/F2 → Fixed, pending live test)*
+- [x] docs/logs.md updated — *START + FINISH entries*
+- [x] Task moved to [REVIEW] or [DONE] — *[REVIEW]: live billing → needs e2e test + owner deploy sign-off*
+
+Review requirements:
+Manager (scope) + a careful end-to-end payment test. **Touches LIVE billing — confirm with the owner before deploying.**
+
+Notes:
+From `docs/security-log.md` 2026-06-20 (F1 `customer-portal-missing-auth-idor`, F2 `checkout-missing-auth`).
+Highest priority on the board.
+
+---
+
+## [REVIEW] Efficiency: Exclude docs/ from the Vercel deploy (.vercelignore)
+
+Assigned Role:
+Efficiency
+
+Owner:
+Efficiency · Opus · deploy-hygiene (2026-06-20)
+
+Risk:
+Medium
+
+Goal:
+Stop the `docs/` folder (task board, work log, security log) from being served publicly on Vercel.
+
+Why:
+Security audit **F4**: with no `.vercelignore`, a static deploy serves `/docs/*` — publishing an
+attacker-readable roadmap of known, unfixed weaknesses (including the F1 IDOR). Opsec / info-disclosure;
+quick to fix.
+
+Files likely involved:
+
+- new `.vercelignore` (list `docs/`)
+- `vercel.json` only if a different exclusion mechanism is chosen
+
+Do not touch:
+
+- routing / rewrites that serve the actual site
+
+Steps:
+
+1. Add `.vercelignore` containing `docs/`.
+2. On a Vercel preview, confirm `/docs/security-log.md` returns 404 and the site still works.
+3. Log it in `docs/logs.md`.
+
+Completion checklist:
+
+- [x] Change completed — added root `.vercelignore` excluding `docs`, `db`, `CLAUDE.md`
+- [x] Relevant tests/checks run — confirmed no site page / `/api` references `docs/` or `db/` at runtime (only Stripe-SDK doc-comments in `node_modules`); `.vercelignore` syntax verified
+- [x] No unrelated files changed — only the new `.vercelignore`
+- [x] Role-specific log updated — `docs/performance-log.md` (deploy-hygiene entry, covers F4+F3)
+- [x] docs/logs.md updated — START + FINISH
+- [x] Task moved to [REVIEW] or [DONE] — **[REVIEW]** (Security to confirm `/docs/*` + `/db/*` 404 on a preview)
+
+Review requirements:
+Manager; Security (confirm `/docs/*` 404 on preview).
+
+Notes:
+From `docs/security-log.md` 2026-06-20 (F4 `docs-folder-publicly-served`). Do this soon — it currently
+exposes the security findings themselves.
+
+---
+
+## [REVIEW] Efficiency: Vendor Chart.js locally on the admin dashboard (remove jsDelivr CDN)
+
+Assigned Role:
+Efficiency
+
+Owner:
+Efficiency · Opus · deploy-hygiene (2026-06-20)
+
+Risk:
+Medium
+
+Goal:
+Replace the jsDelivr Chart.js `<script>` on `dashboard.html` with a locally-vendored copy (or add SRI),
+matching the no-CDN policy.
+
+Why:
+Security audit **F3**: `dashboard.html:830` loads `chart.js@4.4.1` from jsDelivr with no SRI, in the admin
+(PII) context — supply-chain risk — and it breaks in the user's CDN-blocked environment.
+
+Files likely involved:
+
+- `dashboard.html` (the chart.js `<script src>` ~line 830)
+- a new vendored `chart.umd.min.js` (e.g. under `vendor/` or `js/`)
+
+Do not touch:
+
+- the Stripe.js loads (`dashboard.html:828`, `payment.html:477`) — Stripe MUST load from `js.stripe.com` and
+  does not support SRI; leave them
+- admin / auth logic
+
+Steps:
+
+1. Download `chart.js@4.4.1` UMD build; vendor it locally; reference it with a root-relative path.
+2. Confirm the dashboard charts still render; grep the page clean of `jsdelivr`.
+3. Log in `docs/performance-log.md`.
+
+Completion checklist:
+
+- [x] Change completed — vendored `chart.js@4.4.1` UMD to `js/vendor/chart.umd.min.js`; dashboard `<script>` points there
+- [x] Relevant tests/checks run — 205 KB, contains "Chart.js v4.4.1", `node --check` OK; `dashboard.html` grep-clean of `jsdelivr`/`cdn.` (only Stripe's `js.stripe.com` remains)
+- [x] No unrelated files changed — my `dashboard.html` change is only the Chart.js `<script>`; the concurrent Security F1/F2 client-auth edits in the same file are theirs (different region — see logs)
+- [x] Role-specific log updated — `docs/performance-log.md` (deploy-hygiene entry)
+- [x] docs/logs.md updated — START + FINISH
+- [x] Task moved to [REVIEW] or [DONE] — **[REVIEW]** (render is admin-GUI; Security confirms CDN gone)
+
+Review requirements:
+Manager; Security (confirm the CDN is gone / SRI added).
+
+Notes:
+From `docs/security-log.md` 2026-06-20 (F3 `chartjs-jsdelivr-cdn`).
+
+---
+
+## [TODO] Manager / Owner: Verify Supabase RLS policies in the Supabase dashboard
+
+Assigned Role:
+Manager
+
+Owner:
+None
+
+Risk:
+Medium (verification)
+
+Goal:
+Confirm Row Level Security is ON and correctly scoped for `project_inquiries` and `subscriptions`, so the
+exposed anon key cannot read other users' rows.
+
+Why:
+Security audit **F5**: frontend data isolation depends entirely on RLS, which isn't in the repo and can't be
+verified from source. If RLS is missing or mis-scoped, the anon key could read other users' data.
+
+Files likely involved:
+
+- none in-repo — this is a check in the **Supabase dashboard**; record the result in `docs/security-log.md`
+
+Do not touch:
+
+- n/a (verification only)
+
+Steps:
+
+1. In Supabase, confirm RLS is enabled on `project_inquiries` + `subscriptions`, policies scoped to `auth.uid()`.
+2. Re-check the onboarding `signUp`→insert path under the current email-confirmation setting (`auth.uid()`
+   may be null if confirmation is ON).
+3. Record the outcome in `docs/security-log.md` (update F5 status).
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+Manager.
+
+Notes:
+From `docs/security-log.md` 2026-06-20 (F5 `rls-not-verifiable-from-repo`). Needs the owner's Supabase access.
+
+---
+
+## [TODO] Security: Add security response headers in vercel.json
+
+Assigned Role:
+Security
+
+Owner:
+None
+
+Risk:
+Low
+
+Goal:
+Add a `headers` block to `vercel.json` for defense-in-depth.
+
+Why:
+Security audit **F6** (+ the `inline-scripts-no-csp` note): no `X-Frame-Options` / `frame-ancestors` (the
+auth/payment pages are frameable → clickjacking), and no `nosniff`, `Referrer-Policy`, or HSTS.
+
+Files likely involved:
+
+- `vercel.json` (`headers` block)
+
+Do not touch:
+
+- existing `cleanUrls` / `trailingSlash` / `rewrites`
+
+Steps:
+
+1. Add `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (or CSP `frame-ancestors 'none'`),
+   `Referrer-Policy: strict-origin-when-cross-origin`, and `Strict-Transport-Security`.
+2. A full script-`src` CSP is harder (every page inlines scripts) — note it as a follow-up; don't break pages.
+3. Verify the headers on a preview; log it.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+Manager; Efficiency if it affects loading.
+
+Notes:
+From `docs/security-log.md` 2026-06-20 (F6 `missing-security-headers`). The Low/informational F7 items
+(admin-email disclosure, `admin.js` raw errors + `.or()` interpolation, checkout email-dedupe) are logged as
+defense-in-depth notes — fold them in here or leave as low-priority; not urgent.
+
+---
+
+# Designer queue — brand de-AI (2026-06-20)
+
+> Owner request: the site reads as AI-generated; restore the intended identity. **Run in order F → S → T**
+> (one Designer at a time). **F and S both edit `index.html` — never concurrently.** Each session claims
+> files in a `docs/logs.md` START entry first.
+
+## [TODO] Designer: Restore original-snapshot typography (Distillery Display + Playfair Display), site-wide
+
+Assigned Role:
+Designer
+
+Owner:
+None
+
+Risk:
+High
+
+Goal:
+Replace Cormorant Garamond (display) + Mulish (body) with **Distillery Display** (headers/display) +
+**Playfair Display** (subtext/body) across the whole site, vendored locally (no CDN).
+
+Why:
+The owner wants the original typographic identity back; the current CG + Mulish reads generic. Git history
+has no Distillery/Playfair, so this is a fresh vendor, not a revert.
+
+Files likely involved:
+
+- `/fonts/` — add `distillery-display-*.woff2` (downloaded / licensed) + `playfair-display-*.woff2` (Google
+  Fonts latin subset). The existing CG/Mulish woff2 become unused → Efficiency prunes later.
+- `index.html` — the `@font-face` block + **every** `font-family` declaration (the type system documented in
+  `docs/design-guide.md`).
+- `dashboard.html`, `login.html`, `payment.html`, `onboarding.html`, `success.html`, `cancel.html` — head
+  `@font-face` + `font-family` **only**.
+- `docs/design-guide.md` — rewrite the Typography section to the new families.
+- (Teardown fonts are handled in Task T, not here.)
+
+Do not touch:
+
+- payment / Stripe / Supabase / auth **logic** (font CSS only on those pages); vendor JS; the teardown files.
+
+Steps:
+
+1. Download & vendor Distillery Display (legitimate / licensed web font) + Playfair Display woff2 into
+   `/fonts`. Pick the weights actually used (map CG 600 / CG 500-italic / Mulish 400-500-600-700 → matching
+   Distillery display weights + Playfair regular / medium / semibold / italic).
+2. Add `@font-face` rules (`font-display:swap`, `src:url(fonts/…)`); swap `font-family` site-wide
+   (display → Distillery, body/subtext → Playfair).
+3. Update `docs/design-guide.md` Typography to the new families.
+4. Verify: type renders on every page; grep clean of `googleapis`/`gstatic`; no stray old-family refs left
+   unintentionally; legibility check on Playfair at body/subtext sizes.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+Manager (scope) + Efficiency (loading + prune unused woff2) + Designer (visual).
+
+Notes:
+Distillery Display is commercial — use a legitimately obtained web font; if a proper woff2 can't be sourced,
+flag to the owner and set this `[BLOCKED]`. Playfair Display = OFL (free). **Collides with Task S on
+`index.html` — run first, not concurrently.**
+
+---
+
+## [REVIEW] Designer: Redesign the Styles section (remove the AI numbered placeholder grid)
+
+Assigned Role:
+Designer
+
+Owner:
+Designer · Opus — styles-redesign (2026-06-20)
+
+Risk:
+Medium
+
+Goal:
+Full redesign of the homepage `#styles` section so it stops reading as an AI/template grid: remove the
+`01–06` `.sc-index` numbering and the five empty "Preview coming soon" placeholder cards, and present the
+real content intentionally and on-brand.
+
+Why:
+Owner: "the styles section looks like ai… the 01,02,etc is ai." Only card 01 (the teardown) is real; 02–06
+are empty placeholders → the section looks unfinished / templated.
+
+Files likely involved:
+
+- `index.html` — the `#styles` markup (`~290–339`) + its inline CSS (`.style-grid`, `.style-card`,
+  `.sc-index`, `.sc-kicker`, `.sc-title`, `.sc-desc`, `.sc-foot`, `.sc-go`, `.sc-soon`, `~144–199`).
+- `docs/design-guide.md` — record the decision.
+
+Do not touch:
+
+- payment / auth / etc.; the teardown animation files (keep the card → `/Animations/laptop-teardown` link
+  working); other homepage sections unless a shared component must change.
+
+Steps:
+
+1. Remove the `.sc-index` numbered motif.
+2. Replace the 6-card placeholder grid with an intentional treatment (e.g. feature the real Teardown
+   showcase + an honest, minimal "more coming" instead of 5 fake cards), using the canonical components and
+   the new fonts.
+3. Keep card 01 → teardown link functional; retire the "Preview coming soon" placeholders.
+4. Test desktop / mobile / hover / console; record the decision in `docs/design-guide.md`.
+
+Completion checklist:
+
+- [x] Change completed — *`#styles` redesigned: numbered grid + 5 placeholder cards removed; single
+      featured teardown card (`.style-card.feat`) + honest lede. `index.html` diff +10/−51, Styles-only.*
+- [x] Relevant tests/checks run — *grep: 0 `.sc-index`/`.sc-soon`/`.style-grid`/"Preview coming soon"
+      left, 1 `.style-card`, teardown link intact; CSS braces 124/124; no JS/payment/auth hunks. Live
+      in-browser eyeball still advised (non-GUI).*
+- [x] No unrelated files changed — *only `index.html` (#styles) + docs; `--warm` token fix in HEAD untouched.*
+- [x] Role-specific log updated — *`docs/design-guide.md` styles-redesign decision entry + ref sections.*
+- [x] docs/logs.md updated — *START + FINISH (2026-06-20).*
+- [x] Task moved to [REVIEW] or [DONE] — *[REVIEW].*
+
+Review requirements:
+Manager (scope) + Efficiency if assets added + Security if new links added.
+→ **Manager:** done **ahead of Task F** (typography) per owner direction — forward-compatible (canonical
+components + current fonts; the later `font-family` swap needs no rework here). Efficiency/Security **not**
+triggered: no new assets/links/forms/scripts (net markup + CSS removed; same single teardown link).
+
+Notes:
+"Full redesign" per the owner. **Sequence after Task F** (build on the new type system) — both edit
+`index.html`. The teardown's functional `cap-num` "01" counter is handled in Task T, not here.
+Done 2026-06-20 (Designer · styles-redesign); see `docs/logs.md` FINISH + `docs/design-guide.md`.
+
+---
+
+## [TODO] Designer: De-AI / on-theme polish pass on the laptop-teardown feature
+
+Assigned Role:
+Designer
+
+Owner:
+None
+
+Risk:
+Medium
+
+Goal:
+Audit `Animations/laptop-teardown/` for anything that looks AI-generated or off-theme, list it in
+`docs/design-guide.md`, and apply the safe fixes — aligning typography, color, copy, and the CTA with the
+WebSharke brand.
+
+Why:
+The owner wants the "computer unfolding" page to match the site and shed any generic / AI feel. It currently
+uses a generic dark/aqua studio look, a plain `.btn` CTA (not `.btn-sand`), and will diverge from the site
+after the font change.
+
+Files likely involved:
+
+- `Animations/laptop-teardown/index.html` (copy / structure), `style.css` (theme / color / effects / type),
+  `vendor/fonts.css` (only to align fonts — coordinate with Task F).
+- `docs/design-guide.md`.
+
+Do not touch:
+
+- vendor JS (three / gsap / ScrollTrigger); `script.js` model / animation logic (geometry already
+  redesigned — presentation only); payment / auth.
+
+Steps:
+
+1. Inventory AI / off-theme items: generic glows, colors vs the palette (`--deep`/`--foam`/`--aqua`/`--ink`/
+   sand), plain `.btn` vs `.btn-sand`, fonts not matching the new site fonts, copy tone, the `01/Assembled`
+   caption styling, missing coastal/brand cues.
+2. Align typography to the new site fonts; match the CTA to `.btn-sand`; tune colors to the palette; tighten
+   copy. Apply safe fixes; propose bigger reworks for Manager review.
+3. Test the scroll render + console + mobile; record findings / decisions in `docs/design-guide.md`.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run
+- [ ] No unrelated files changed
+- [ ] Role-specific log updated
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] or [DONE]
+
+Review requirements:
+Manager (scope) + Efficiency (no heavy assets added; perf intact) + Security (if any link / script changes).
+
+Notes:
+**Depends on Task F** (type alignment) — sequence after it. Keep the useful runtime guards / strings
+(`file://` message, loader / error text). Don't touch `script.js` geometry / animation.
 
 ---
 

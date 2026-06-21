@@ -13,6 +13,16 @@ All notable changes to the WebSharke site. Newest first.
   Google latin subset — used by the dashboard admin panel). No visual change intended; finishes removing the
   site's last third-party font requests, which the user's browser blocks. _(Efficiency task — files: the 6
   pages + `fonts/`.)_
+- **Vendored Chart.js locally on the admin dashboard.** Replaced the jsDelivr `chart.js@4.4.1` `<script>` on
+  `dashboard.html` with a local copy at `js/vendor/chart.umd.min.js` (the exact jsDelivr-served UMD file) —
+  removes a render-blocking third-party script in the admin context and fixes the Overview charts breaking in
+  the user's CDN-blocked browser. Stripe.js intentionally stays on `js.stripe.com`. _(Efficiency — Security F3.)_
+
+### Security
+- **Stopped serving internal/sensitive files publicly.** Added a root `.vercelignore` excluding `docs/`
+  (task board, work log, **security log**), `db/` (Supabase schema + admin-setup SQL), and `CLAUDE.md` from the
+  Vercel deploy — they were otherwise world-readable. _(Efficiency — Security F4; `db`/`CLAUDE.md` flagged as
+  extensions beyond the literal docs-only finding.)_
 
 ## 2026-06-19
 

@@ -6,6 +6,387 @@
 
 ---
 
+## 2026-06-20 11:00 - Designer - styles-redesign
+
+Action:
+Finished
+
+Task:
+Designer: Redesign the Styles section (remove the AI numbered placeholder grid) → [REVIEW]
+
+Files claimed:
+
+- `index.html` (#styles markup + its inline `<style>` rules) · `docs/design-guide.md` · `docs/logs.md` ·
+  `docs/taskboard.md` (status only)
+
+Files changed:
+
+- `index.html` — redesigned `#styles`. Removed the `.style-grid` 3-col grid, all six `01–06` `.sc-index`
+  numerals, the five "Preview coming soon" placeholder cards, and the now-unused `.sc-soon` rule + the two
+  `.style-grid` responsive overrides. Added one honest `.styles-lede` line + a single featured
+  `.style-card.feat` (the teardown) wrapped in a centered `.style-one` block. `git diff` = +10 / −51, scoped
+  entirely to the Styles CSS + markup (no JS / payment / auth hunks).
+- `docs/design-guide.md` — added the `styles-redesign` decision entry; updated the type-scale, color
+  (`--mist` now unused), spacing/grid, breakpoint, and component sections to match; marked the old
+  "5-card grid empty cell" observation + follow-up #5 resolved.
+- `docs/taskboard.md` — task [TODO]→[IN PROGRESS]→[REVIEW] + checklist.
+- `docs/logs.md` — START + this FINISH.
+
+Summary:
+Acted on owner feedback ("the styles section looks like ai… the 01,02,etc is ai"). The `#styles` section
+now presents the one real sample — the 3D Laptop Teardown — as a single featured card (reusing the
+canonical `.style-card.feat`, no new component) under a plain, honest lede ("A look at the kinds of sites we
+build. The first one's live — more on the way."). No numbered placeholder grid, no fake "coming soon" cards.
+
+Testing:
+- grep: `.sc-index` / `.sc-soon` / `.style-grid` / "Preview coming soon" → **0** remaining in `index.html`;
+  exactly **1** `.style-card`; teardown `href="/Animations/laptop-teardown"` intact.
+- Pre-edit grep confirmed those selectors were CSS/markup-only (no JS hooks) → safe removal; the
+  `#styles`/`#site-footer` offset JS + `.rv` reveal observer are unaffected.
+- CSS brace balance in `<style>` = 124/124 (BALANCED). `git diff` hunks all within the Styles region.
+- **Not** run (non-GUI): the live in-browser render — recommend a ~30s eyeball (section renders one card,
+  hover lift + aqua hairline + arrow nudge, `:focus-visible` ring, mobile reflow, clean console).
+
+Risks / Notes:
+
+- Superseded the earlier in-session card-06 grid rebalance (removed here). The already-DONE
+  `--warm`/`--warm-lt` button token fix (now in HEAD) is untouched.
+- **Scope flag for Manager:** this task nominally sequences *after* the typography-restore task; done now
+  per owner direction. It uses canonical components + current fonts, so the later site-wide `font-family`
+  swap needs no rework here. Also `#styles` markup line ranges shifted — later tasks should re-grep.
+- Token knock-on: `--mist` is now defined-but-unused (folded into the unused-token follow-up).
+- `docs/design-guide.md` saw "modified since read" churn during the session (OneDrive sync); all edits were
+  re-verified on disk after landing.
+- Review: Manager (scope + sequencing flag). Security/Efficiency not triggered (no new links/forms/scripts;
+  net markup/CSS removed).
+
+---
+
+## 2026-06-20 10:53 - Designer - styles-redesign
+
+Action:
+Started
+
+Task:
+Designer: Redesign the Styles section (remove the AI numbered placeholder grid)
+
+Files claimed:
+
+- `index.html` — the `#styles` section markup + its inline `<style>` rules (`.style-grid`, `.style-card`,
+  `.sc-*`, the two `.style-grid` responsive overrides). No JS, no other section.
+- `docs/design-guide.md`
+- `docs/logs.md`
+- `docs/taskboard.md` (this task's status only)
+
+Files changed:
+
+- (START — none yet; see the FINISH entry)
+
+Summary:
+Claimed the owner-driven Styles redesign ([TODO] → [IN PROGRESS]). Owner feedback: "the styles section
+looks like ai… the 01,02,etc is ai." Plan: remove the `01–06` `.sc-index` numerals + the five "Preview
+coming soon" placeholder cards (and the `.sc-soon` / `.style-grid` rules), and present the one real sample
+(the 3D Laptop Teardown) intentionally — a single featured card (reusing the canonical `.style-card.feat`)
+plus one honest lede line ("more on the way"). Keep the `/Animations/laptop-teardown` link working.
+
+Pre-edit verification (read-only): grep confirms `.sc-index` / `.sc-soon` / `.style-grid` are referenced
+only in the `#styles` CSS + markup — **no JS selectors** use them, so removal is safe. The `#styles` /
+`#site-footer` offset JS and the `.rv` reveal observer are unaffected.
+
+Testing:
+None yet (START).
+
+Risks / Notes:
+
+- Supersedes the card-06 / `.sc-soon`-size edits left in the working tree from the earlier in-session grid
+  rebalance — those are removed by this rewrite. The already-DONE `--warm`/`--warm-lt` token fix stays.
+- Sequencing: this task nominally runs after the typography-restore task; doing it now is forward-compatible
+  (canonical components + current fonts; the later font swap sweeps `font-family` site-wide). Flag to Manager.
+- Not touching: payment/Stripe/Supabase/auth, the teardown animation files, vendor files, other sections.
+
+---
+
+## 2026-06-20 10:50 - Efficiency - deploy-hygiene
+
+Action:
+Finished
+
+Task:
+Two Efficiency fixes from the Security triage → both **[REVIEW]**: **F4** `.vercelignore` (stop serving
+internal files) + **F3** vendor Chart.js locally.
+
+Files changed:
+
+- **`.vercelignore`** (new) — excludes `docs`, `db`, `CLAUDE.md` from the Vercel deploy. `docs/` holds the task
+  board / work log / **security log** (F4); `db/admin-schema.sql` + `ADMIN_SETUP.md` is the same class of schema
+  leak (not separately in the audit — flagged); `CLAUDE.md` is belt-and-suspenders (also gitignored).
+- **`js/vendor/chart.umd.min.js`** (new) — Chart.js 4.4.1 UMD, 205 KB, the exact jsDelivr-served file.
+- **`dashboard.html`** — swapped the Chart.js `<script src>` from the jsDelivr URL to
+  `js/vendor/chart.umd.min.js` (+ updated its comment). **Only those 2 lines are mine.**
+- **`js/vendor/README.md`** — documented the Chart.js vendoring; removed the stale "Chart.js still loads from
+  jsdelivr" note.
+- Docs: `docs/performance-log.md` (deploy-hygiene entry), `docs/CHANGELOG.md`, `docs/taskboard.md` (both →
+  [REVIEW] + checklists), `docs/logs.md` (START + this FINISH).
+
+⚠️ Coordination — shared file:
+`dashboard.html` also carries the **concurrent Security session's F1/F2 client-auth changes** (the
+`db.auth.getSession()` + `Authorization: Bearer <token>` additions on the billing fetches). Those are **not
+mine** — a different region of the file, no textual conflict; both edits coexist in the working tree, so a
+commit picks up both. Flagged so the Chart.js change isn't conflated with the billing fix.
+
+Testing:
+- Chart.js: `dashboard.html` grep-clean of `jsdelivr`/`cdn.` (only `js.stripe.com` remains — required); vendored
+  file is 205 KB, contains "Chart.js v4.4.1", passes `node --check` (defines the `Chart` global the inline code
+  uses, guarded by `if(!window.Chart)`). Same bytes jsDelivr served → identical behavior.
+- `.vercelignore`: no site page or `/api` references `docs/` or `db/` at runtime (only Stripe-SDK doc-comments
+  under `node_modules` — irrelevant) → excluding them can't break the site. `package.json` kept (Vercel needs it
+  for `/api` deps).
+- Scope: `git status` = new `.vercelignore`, new `js/vendor/chart.umd.min.js`, modified `dashboard.html` +
+  `js/vendor/README.md`. No payment/Stripe/Supabase/auth **logic** touched by me.
+
+Risks / Notes:
+- `db/` + `CLAUDE.md` in `.vercelignore` go beyond the literal docs-only F4 — flagged for Security/Manager;
+  trivially trimmable, safe to exclude.
+- Live items for review (non-GUI): `/docs/*` + `/db/*` → 404 on a Vercel preview (Security); admin charts render
+  from the local file (admin-login GUI). Consistent with prior non-GUI sign-offs.
+- Reviews: **Manager** (scope) + **Security** (CDN gone / 404s).
+
+---
+
+## 2026-06-20 10:40 - Manager - create-designer-brand-tasks
+
+Action:
+Planned
+
+Task:
+Create three Designer tasks (de-AI the brand) from the owner's request
+
+Files claimed:
+
+- docs/taskboard.md
+- docs/logs.md
+
+Files changed:
+
+- docs/taskboard.md — added a "Designer queue — brand de-AI (2026-06-20)" block with three `[TODO]` tasks.
+- docs/logs.md — this entry.
+
+Summary:
+Owner flagged that the site reads as AI-generated and wants its intended identity back. Authored three
+Designer tasks (planned in `~/.claude/plans/zany-questing-simon.md`, approved):
+- **Task F — typography (High):** headers → **Distillery Display** (download & self-host), subtext/body →
+  **Playfair Display** (OFL, vendored), site-wide, no CDN.
+- **Task S — Styles section (Medium):** **full redesign** — remove the AI `01–06` `.sc-index` numbering and
+  the five empty "Preview coming soon" placeholder cards (`index.html:296–331`); only card 01 is real.
+- **Task T — laptop-teardown (Medium):** de-AI / on-theme pass — align fonts, colors, copy, and the CTA
+  (`.btn` → `.btn-sand`) to the brand; inventory findings in `docs/design-guide.md`.
+
+Owner decisions: download & self-host Distillery Display (commercial — task flags using a licensed web
+font); full Styles-section redesign.
+
+Testing:
+Docs/planning only — no website code changed. Confirmed `.sc-index` numbering at `index.html:296–331`;
+`git log -S` confirms Distillery/Playfair never existed in the repo (fresh vendor, not a revert).
+
+Risks / Notes:
+
+- **Sequence F → S → T**, one Designer at a time. **F and S both rewrite `index.html` — never concurrently.**
+  S and T depend on F's new fonts.
+- **Task F is potentially BLOCKED** on sourcing a legitimate Distillery Display web font — if a proper woff2
+  can't be obtained, the Designer flags it to the owner.
+- These are brand changes, not the security fixes — the **F1 (High) billing-auth IDOR** remains the top
+  overall priority on the board.
+- **Next:** run **Task F** (fonts) first; then S, then T. (An Efficiency session is concurrently handling the
+  `docs/` deploy-hygiene fix.)
+
+---
+
+## 2026-06-20 10:36 - Efficiency - deploy-hygiene
+
+Action:
+Started
+
+Task:
+Two Efficiency fixes from the 2026-06-20 Security triage — **F4** (`.vercelignore` to stop serving `docs/`) and
+**F3** (vendor Chart.js locally on the dashboard). Doing F4 first.
+
+Files claimed:
+
+- new `.vercelignore`; `docs/`, `db/` (deploy-exclusion scope only)
+- `dashboard.html` (the Chart.js `<script src>` only, ~line 832); new `js/vendor/chart.umd.min.js`;
+  `js/vendor/README.md`
+- `docs/performance-log.md`, `docs/logs.md`, `docs/taskboard.md` (status), `docs/CHANGELOG.md`,
+  `docs/security-log.md` (note F3/F4 addressed)
+
+Files changed (so far):
+
+- `js/vendor/chart.umd.min.js` — downloaded Chart.js 4.4.1 UMD (205 KB; the exact jsDelivr-served file —
+  banner says "already minified … chart.umd.js"; `node --check` OK; contains "Chart.js v4.4.1").
+
+Summary:
+F4: no `.vercelignore` exists → a Vercel deploy serves `/docs/*` (incl. the security log with the F1 IDOR
+write-up). Found `db/admin-schema.sql` + `db/ADMIN_SETUP.md` is the same class of leak → excluding both. F3:
+`dashboard.html:832` loads Chart.js from jsDelivr (breaks in the user's CDN-blocked browser); vendoring it to
+`js/vendor/` (matching the existing `js/vendor/supabase.min.js`) and pointing the `<script>` at it. Stripe.js
+(`dashboard.html:830`) left untouched — it must stay on `js.stripe.com`.
+
+Risks / Notes:
+- `.vercelignore` includes `db/` (+ `CLAUDE.md`) beyond the literal docs-only F4 wording — same opsec fix,
+  flagged for Security/Manager; reviewer can trim. Excluding them is safe (not referenced at runtime).
+- No collision: the concurrent Security session is editing `api/*` (F1/F2 auth), not these files.
+
+---
+
+## 2026-06-20 10:45 - Security - billing-endpoints-auth-fix
+
+Action:
+Finished
+
+Task:
+Security: Add caller authentication to the unauthenticated billing endpoints (customer-portal + checkout) → [REVIEW]
+
+Files claimed:
+
+- api/customer-portal.js, api/checkout.js, dashboard.html, payment.html
+- docs/security-log.md, docs/logs.md, docs/taskboard.md (status only)
+
+Files changed:
+
+- api/customer-portal.js — added a Supabase bearer-token auth gate (mirrors `api/admin.js:86-103`); now
+  resolves the Stripe customer ONLY from the authenticated `caller.id` (client `customerId`/`userId` ignored);
+  CORS narrowed `*` → site origin + `OPTIONS` 204. Closes the F1 IDOR.
+- api/checkout.js — added `require("@supabase/supabase-js")` (already a dependency), the same auth gate, and
+  derives identity from the token (`userId = caller.id`, `email = caller.email`; 403 if a body `userId`
+  mismatches); keeps the client `priceId`; CORS narrowed. Closes F2.
+- dashboard.html — the 2 `/api/customer-portal` fetches + the `/api/checkout` fetch now send
+  `Authorization: Bearer <access_token>` (token via `db.auth.getSession()`); bodies simplified (server derives
+  identity). No other dashboard logic touched.
+- payment.html — the `/api/checkout` fetch now sends the bearer token; body trimmed to `priceId` only.
+- docs/security-log.md — added a "Fix applied" entry marking F1/F2 Fixed (pending live test).
+- docs/taskboard.md — task → `[REVIEW]` + checklist; docs/logs.md — START + this FINISH.
+
+Summary:
+Implemented the F1/F2 fix. Root cause: both billing endpoints trusted a client-supplied `userId`/`customerId`
+with no authentication, letting anyone open a victim's Stripe Billing Portal (F1 IDOR) or attribute Stripe
+objects to an arbitrary user (F2). The fix mirrors the project's own working pattern in `api/admin.js`: verify
+the Supabase access token server-side, then act only as the authenticated user. Additive gate — Stripe price
+IDs, the webhook, and the Payment Element / subscription flow are unchanged.
+
+Testing:
+- `node --check api/customer-portal.js` and `node --check api/checkout.js` → both OK.
+- Static trace: with no/invalid token → 401 before any Stripe/service-role call; body `userId` ≠ `caller.id`
+  → 403 (checkout). Positive path: legit callers send their own session token + (for checkout) their own id,
+  so behaviour is unchanged.
+- `git diff` scope: only the 4 code files + 3 docs; no webhook, no price IDs, no vendor files.
+- **NOT run (needs a browser + env + live keys): the full e2e flow** (sign-in → checkout → manage
+  subscription) and the cross-account "can't open another user's portal" check. Required before deploy.
+
+Risks / Notes:
+- **LIVE billing.** Did NOT `git commit` or deploy. Task is `[REVIEW]`, not `[DONE]` — needs the live e2e test
+  + owner deploy sign-off (the task's Review requirements).
+- `checkout.js` now reads `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` — confirm they're set on Vercel before
+  deploy (already set for webhook/customer-portal/admin).
+- CORS is now `https://websharke.com`; same-origin calls are unaffected. If production also serves from `www.`
+  or another origin, confirm/adjust (CORS isn't the access control here — the token is — so it won't break the
+  same-origin flow).
+- Follow-on Security task still open: F6 "Add security response headers in vercel.json" (Low).
+
+---
+
+## 2026-06-20 10:20 - Security - billing-endpoints-auth-fix
+
+Action:
+Started
+
+Task:
+Security: Add caller authentication to the unauthenticated billing endpoints (customer-portal + checkout)
+
+Files claimed:
+
+- api/customer-portal.js
+- api/checkout.js
+- payment.html (the `/api/checkout` fetch only)
+- dashboard.html (the 2 `/api/customer-portal` fetches + the `/api/checkout` fetch only)
+- docs/security-log.md
+- docs/logs.md
+- docs/taskboard.md (this task's status only)
+
+Files changed:
+
+- (in progress — see the FINISH entry)
+
+Summary:
+Claimed the High-priority F1/F2 fix (`[TODO]` → `[IN PROGRESS]`). Adding a Supabase bearer-token auth gate to
+`api/customer-portal.js` and `api/checkout.js` (mirroring `api/admin.js:86-103`), deriving identity from the
+verified token (customer-portal acts only on `caller.id`; checkout uses `caller.id` + `caller.email`), and
+updating the 4 frontend callers to send the access token (mirroring the dashboard `adminApi` pattern). Additive
+auth gate only — no change to Stripe price IDs, the webhook, or the Payment Element / subscription logic.
+
+Concurrency:
+Efficiency's font task already finished on `payment.html` / `dashboard.html` (head-only). I touch only the
+billing fetch call sites (well below the head) → no collision. This task was triaged by the Manager from the
+2026-06-20 security audit.
+
+Testing:
+Planned: `node --check` on both API files + a static negative/positive-path trace. **Live end-to-end (sign-in
+→ checkout → manage subscription) + owner sign-off are required before deploy — not runnable headless.** Will
+NOT `git commit` or deploy.
+
+Risks / Notes:
+Touches LIVE billing. `checkout.js` now also needs `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` in the `/api`
+env (already set for webhook/customer-portal/admin). Task will move to `[REVIEW]`, not `[DONE]`.
+
+---
+
+## 2026-06-20 09:57 - Manager - review-and-triage-role-tasks
+
+Action:
+Reviewed
+
+Task:
+Review the three finished role tasks (Designer / Efficiency / Security) and triage the Security audit findings
+
+Files claimed:
+
+- docs/taskboard.md
+- docs/logs.md
+
+Files changed:
+
+- docs/taskboard.md — moved Designer, Efficiency, and Security tasks `[REVIEW]` → `[DONE]` (each with a
+  Manager review note); added "Fix tasks triaged from the 2026-06-20 Security audit" (5 tasks).
+- docs/logs.md — this entry.
+
+Summary:
+All three specialist tasks are complete and verified in scope:
+- **Designer → DONE** — documented the full homepage design system in `docs/design-guide.md`; one safe
+  `--warm`/`--warm-lt` token substitution in `index.html` (visually identical).
+- **Efficiency → DONE** — vendored fonts on the 6 remaining pages; `git diff` confirms **head/font-only**
+  changes (incl. `payment.html` / `dashboard.html`), no payment/auth logic touched. Site is now CDN-free for
+  fonts. Supersedes legacy Task E. Residual: a GUI type-render eyeball (non-blocking).
+- **Security → DONE** — read-only audit, no code changed; 8 evidence-cited findings.
+
+Triaged the Security findings into 5 fix tasks (severity-ordered). **Headline: F1 (High) —
+`api/customer-portal.js` has no caller auth → IDOR on live billing** (an unauthenticated request with a
+victim's `user_id`/`cus_…` returns a working Stripe Billing Portal URL). Cut as the top-priority fix
+(paired with F2 checkout). Others: docs/ served publicly on Vercel (F4), Chart.js jsDelivr CDN in the admin
+context (F3), Supabase RLS verification (F5), missing security headers (F6).
+
+Testing:
+Docs/triage only — the Manager changed no website code. Verified role-edit scope via `git status` +
+`git diff HEAD -- payment.html dashboard.html` (font-only).
+
+Risks / Notes:
+
+- **F1 is a live-billing vulnerability** — prioritize it; the fix touches live payment endpoints, so it
+  needs careful end-to-end testing and owner awareness before deploy.
+- **F4** means the security log itself (with the F1 write-up) is likely world-readable on the deployed site
+  — the `.vercelignore` task is a quick, high-value win; do it before/with any public deploy.
+- The laptop-teardown `[REVIEW]` cluster still awaits the GUI live-render (Task A) — not closed this round.
+- **Next:** assign **F1 (Security, High)** and the **`.vercelignore` (Efficiency)** first.
+
+---
+
 ## 2026-06-20 00:40 - Efficiency - no-cdn-fonts-remaining-pages
 
 Action:

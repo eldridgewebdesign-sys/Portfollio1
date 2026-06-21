@@ -28,6 +28,30 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+## 2026-06-20 10:50 - Efficiency - deploy-hygiene
+
+Area Reviewed:
+Deploy configuration (`.vercelignore`) + the admin dashboard's third-party `<script>`s.
+
+Finding:
+(1) No `.vercelignore` → a Vercel deploy serves `/docs/*` and `/db/*` publicly (internal logs/board, the
+security log, and the Supabase schema). (2) `dashboard.html` loaded Chart.js 4.4.1 from jsDelivr — a
+render-blocking third-party script in the admin (PII) context that also breaks in the user's CDN-blocked
+browser (the Overview charts silently no-op).
+
+Impact:
+Medium — opsec/info-disclosure (F4) + a broken admin feature & supply-chain surface in the user's environment (F3).
+
+Recommendation:
+Done — added `.vercelignore` (`docs`, `db`, `CLAUDE.md`); vendored Chart.js to `js/vendor/chart.umd.min.js` (the
+exact jsDelivr-served file) and pointed the dashboard `<script>` at it. Stripe.js left on its CDN (required).
+
+Status:
+Fixed (both tasks → [REVIEW]). Live checks pending review: `/docs/*` + `/db/*` → 404 on a Vercel preview; admin
+charts render from the local copy.
+
+---
+
 ## 2026-06-20 00:40 - Efficiency - no-cdn-fonts-remaining-pages
 
 Area Reviewed:

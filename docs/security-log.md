@@ -32,6 +32,39 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+### Fix applied — 2026-06-20 — Security — billing-endpoints-auth-fix
+
+## 2026-06-20 10:40 - Security - F1-F2-fixed-pending-live-test
+
+Area Reviewed:
+`api/customer-portal.js`, `api/checkout.js` + their frontend callers (`dashboard.html`, `payment.html`).
+
+Finding:
+**Resolved (pending live verification).** F1 (`customer-portal-missing-auth-idor`, High) and F2
+(`checkout-missing-auth`, Medium) are fixed: both endpoints now require a valid Supabase access token
+(`Authorization: Bearer …` → `supabaseAdmin.auth.getUser` → 401) and derive identity from the verified token
+instead of the request body — customer-portal acts **only** on the authenticated caller's own Stripe customer
+(client `customerId`/`userId` ignored), and checkout uses `caller.id` + `caller.email` (403 if a body `userId`
+mismatches). CORS narrowed from `*` to the site origin. The IDOR (any-user billing portal) is closed.
+
+Severity:
+High (F1) / Medium (F2) — now mitigated.
+
+Evidence:
+Server: `api/customer-portal.js` auth gate + caller-only `subscriptions` lookup; `api/checkout.js` auth gate +
+`userId = caller.id` / `email = caller.email`; both mirror `api/admin.js:86-103`. Both pass `node --check`.
+Client: the 4 billing fetches now send the token via `db.auth.getSession()` (`dashboard.html` ×3,
+`payment.html` ×1), mirroring the existing `adminApi` pattern (`dashboard.html:1509-1517`).
+
+Recommendation:
+**Before deploy:** run the live end-to-end flow (sign-in → checkout → manage subscription) and confirm a second
+account cannot open the first's portal. Ensure `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set in the
+`/api` env (checkout now needs them). **Live billing — owner sign-off required before deploy.**
+
+Status:
+Fixed (in working tree; pending live e2e test + owner deploy sign-off). Supersedes the F1/F2 "Task Created"
+entries below.
+
 ### Live audit pass — 2026-06-20 — Security — site-wide-audit-pass
 
 > Read-only sweep of the whole site against the `CLAUDE.md` Security checklist (3 parallel read-only sweeps +

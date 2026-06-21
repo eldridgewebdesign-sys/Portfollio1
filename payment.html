@@ -750,13 +750,14 @@
       button.textContent = "Starting...";
 
       try {
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) throw new Error("Your session expired. Please sign in again.");
         const res = await fetch("/api/checkout", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
           body: JSON.stringify({
             priceId: plan.priceId,
-            userId: currentUserId,
-            email: currentEmail,
           }),
         });
         const data = await res.json().catch(() => ({}));

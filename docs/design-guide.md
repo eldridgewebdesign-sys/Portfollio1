@@ -52,11 +52,10 @@ https://vervaunt.com/examples-of-luxury-brand-led-ecommerce-websites-premium-eco
   - **How-close** `.how-close` — CG italic 500 · `clamp(1.5rem,2.8vw,2.1rem)` · lh 1.4 · `--foam`.
   - **Why-column head** `.why-col h3` — CG 600 UPPERCASE · `clamp(1.5rem,2.4vw,2rem)` · ls .05em · `--foam`.
   - **Card title** `.sc-title` (h3) — CG 600 · 1.5rem · lh 1.12 · ls .01em · `--foam`.
-  - **Card index numeral** `.sc-index` — CG 600 · 2.5rem · lh 1 · aqua @ .16 alpha.
   - **Body copy** — `.how-body p` Mulish 400 · `clamp(1rem,1.4vw,1.16rem)` · lh 1.9; `.why-col p` Mulish 400 · .95rem · lh 1.8; `.sc-desc` Mulish 400 · .9rem · lh 1.66.
   - **Buttons** `.btn` — Mulish 500 · .8rem · ls .18em · UPPERCASE.
   - **Nav sign-in** `.signin` — Mulish 500 · .76rem · ls .24em (→ .16em ≤680px) · UPPERCASE.
-  - **Labels / kickers** — `.sc-kicker` Mulish 600 · .66rem · ls .22em; `.sc-go` Mulish 600 · .7rem · ls .16em; `.sc-soon` Mulish 600 · .66rem · ls .16em — all UPPERCASE.
+  - **Labels / kickers** — `.sc-kicker` Mulish 600 · .66rem · ls .22em; `.sc-go` (card-footer link) Mulish 600 · .7rem · ls .16em — all UPPERCASE. (`.sc-soon` was removed in the 2026-06-20 styles-redesign.)
   - **Footer** `#site-footer` — Mulish 400 · .76rem · ls .08em · `--foam` @ .68.
 - **Type rules (observed — keep new work on these):** serif (CG) carries display + editorial accents
   (italic 500 = eyebrows/closers); sans (Mulish) carries body + UI. Display = tight tracking
@@ -72,16 +71,17 @@ https://vervaunt.com/examples-of-luxury-brand-led-ecommerce-websites-premium-eco
   tightens to `clamp(3.5rem,9vh,5rem)` / 1.4rem and `#hero` top → 30vh.
 - **Containers.** `.wrap` max-width 1100px (centered); `#how` narrows to 680px; `.why-cols` max 1080px;
   `.sec-title` capped at 22ch for a balanced measure.
-- **Grid gaps.** `.why-cols` `clamp(2.2rem,5vw,4.5rem)`; `.style-grid` `clamp(1rem,1.6vw,1.4rem)`.
+- **Grid gaps.** `.why-cols` `clamp(2.2rem,5vw,4.5rem)`. (The `#styles` `.style-grid` was removed in the
+  2026-06-20 styles-redesign; the section now uses one centered `.style-one` block, max-width 540px.)
 - **Vertical rhythm (intra-block).** body `<p>` mb 1.4rem; `.how-close` mt 1.8rem; `.why-col h3` mb 1.1rem;
-  block-start gaps `clamp(2rem,4vw,3rem)` (how/why) and `clamp(2.4rem,4.5vw,3.4rem)` (style grid); card
+  block-start gaps `clamp(2rem,4vw,3rem)` (how/why) and `clamp(2.4rem,4.5vw,3.4rem)` (`.style-one`); card
   internals `.sc-kicker` mb .85rem, `.sc-desc` mt .6rem, `.sc-foot` pt 1.05rem.
 - **Component box.** `.style-card` padding 1.7rem 1.6rem 1.45rem · min-height 202px · radius 16px.
   `.btn-sand` padding 1.05rem 2.9rem · radius 100px (pill). `nav` 1rem 2.6rem 1rem 1.6rem (compact .7rem
   when `.scrolled`; .8rem 1.4rem ≤680px).
-- **Breakpoints.** 900px (`.why-cols` → 1 col / max 460px; `.style-grid` → 2 col) and 680px (compact nav,
-  logo 140×79, `.style-grid` → 1 col, tighter section padding, hero top 30vh). JS: marine-snow count 14
-  ≤768px else 24.
+- **Breakpoints.** 900px (`.why-cols` → 1 col / max 460px) and 680px (compact nav, logo 140×79, tighter
+  section padding, hero top 30vh). JS: marine-snow count 14 ≤768px else 24. (The old `.style-grid` column
+  breakpoints were removed with the grid; `.style-one` is a single centered block that needs none.)
 
 ## Color usage
 
@@ -92,7 +92,7 @@ https://vervaunt.com/examples-of-luxury-brand-led-ecommerce-websites-premium-eco
   - `--ink #102536` — deep navy, text on sand · used (hero, signin, btn text, logo mask); also as `rgba(16,37,54,α)` shadow literals.
   - `--ink-soft #3a586b` — muted coastal blue, secondary on sand · used (hero eyebrow).
   - `--foam #ecf4f3` — soft off-white, text on water · used widely (body, sec-title, how-close, why h3, sc-title); footer = `rgba(236,244,243,.68)` (foam @ .68).
-  - `--mist #aec3c9` — blue-gray muted text · used (`.sc-soon`).
+  - `--mist #aec3c9` — blue-gray muted text · **defined, unused** since the 2026-06-20 styles-redesign removed `.sc-soon` (its only consumer).
   - `--deep #030d16` — page base / deepest water · used (body + loader bg).
   - `--surf #0a3d50` — surface teal · **defined, unused.**
   - `--aqua #62b6c6` — soft aqua accent · used (kicker, sc-go, focus outlines); alpha variants as `rgba(98,182,198,α)` literals (index numeral, hover border, `::before` hairline, loader glow).
@@ -112,10 +112,12 @@ https://vervaunt.com/examples-of-luxury-brand-led-ecommerce-websites-premium-eco
 - **Cards.** `.style-card` is the canonical card: glass surface (`rgba(174,195,201,.05)` bg, 1px
   `rgba(174,195,201,.14)` border, `backdrop-filter:blur(13px) saturate(140%)`, inset top highlight + soft
   drop shadow), radius 16px, min-height 202px. Hover: lift −5px, aqua-tinted border, and an aqua hairline
-  (`::before`) wipes across the top edge. `.style-card.feat` (the one live sample, card 01) = subtle
-  aqua-tinted gradient bg + aqua border. Parts: `.sc-index` (quiet CG numeral, aqua @ .16), `.sc-kicker`
-  (aqua label), `.sc-title` (CG 600), `.sc-desc`, `.sc-foot` (hairline top border), `.sc-go` (aqua
-  "View demo" + arrow that nudges on hover), `.sc-soon` (mist "Preview coming soon").
+  (`::before`) wipes across the top edge. `.style-card.feat` (the live teardown sample) = subtle
+  aqua-tinted gradient bg + aqua border; since the 2026-06-20 styles-redesign it is the **single featured
+  card** in `#styles` (no grid, no numerals), wrapped in `.style-one` (max-width 540px, centered) under a
+  `.styles-lede` line. Parts: `.sc-kicker` (aqua label), `.sc-title` (CG 600), `.sc-desc`, `.sc-foot`
+  (hairline top border), `.sc-go` (aqua "View demo" + arrow that nudges on hover). (The `.sc-index` numeral,
+  `.sc-soon` "coming soon" placeholder, and the `.style-grid` were removed in that redesign.)
 - **Nav.** Fixed; transparent over the sand, then a downward teal glass gradient once `.scrolled`. The logo
   is a CSS-masked PNG that recolors `--ink` → `--foam` on scroll. `.signin` underlines on hover/focus.
 - **Section scaffold.** `.sx` (flex-centered, clamped padding, `scroll-margin-top`) + `.wrap` (max 1100px,
@@ -135,10 +137,10 @@ that wants its own task + an in-browser eyeball). The one clearly-safe fix done 
 1. **Unify the dim body-text color on `--foam` (Low).** `.how-body p`, `.why-col p` and `.sc-desc` use
    `rgba(240,248,250,.8/.78)` — a *different* base white than `--foam` (236,244,243); the footer correctly
    uses foam @ .68. Propose a `--foam-dim` token derived from `--foam` and normalize the .78/.80 drift.
-2. **Resolve unused palette tokens (Low).** `--sand`, `--surf`, `--aqua-d` are defined but unused; the
-   favicon-glow teal is still a bespoke literal (`rgba(46,126,144,.85)` ≈ `--aqua-d`). Either wire them in
-   or remove them so the palette is honest. (`--warm` + `--warm-lt` now drive the `.btn-sand` gradient —
-   the button is fully tokenized.)
+2. **Resolve unused palette tokens (Low).** `--sand`, `--surf`, `--aqua-d` — and now `--mist` (its only
+   user `.sc-soon` was removed in the 2026-06-20 styles-redesign) — are defined but unused; the favicon-glow
+   teal is still a bespoke literal (`rgba(46,126,144,.85)` ≈ `--aqua-d`). Either wire them in or remove them
+   so the palette is honest. (`--warm` + `--warm-lt` now drive the `.btn-sand` gradient — fully tokenized.)
 3. **Tokenize aqua/ink alpha variants (Low, support-gated).** Replace the repeated `rgba(98,182,198,α)` /
    `rgba(16,37,54,α)` literals with `color-mix(in srgb, var(--aqua) X%, transparent)` etc. — only if the
    browser-support target allows `color-mix`. Manager/Efficiency call.
@@ -149,9 +151,10 @@ that wants its own task + an in-browser eyeball). The one clearly-safe fix done 
 5. **Normalize the Styles-grid reveal stagger (Low, cosmetic).** Cards run `d1,d2,d3,d1,d3` — row 2 skips
    `d2`. Make the per-row stagger consistent.
 
-Observation (not a task): the `#styles` 3-column grid holds 5 cards, leaving one empty cell on row 2. The
-"Preview coming soon" placeholders (cards 02–05) are intentional and out of scope; revisit the grid only
-when real previews replace them.
+Observation — **resolved 2026-06-20 (styles-redesign):** the `#styles` numbered placeholder grid (the
+`01–06` cards + the empty-cell asymmetry) was removed per owner feedback ("the 01,02 is ai"). The section
+now shows one featured teardown card + an honest "more on the way" lede. See the styles-redesign decision
+entry below. (Follow-up #5 — grid reveal stagger — is therefore moot.)
 
 ---
 
@@ -174,6 +177,40 @@ What design direction should be followed
 Notes:
 Anything the Manager or future Designer should know
 ```
+
+## 2026-06-20 10:53 - Designer - styles-redesign
+
+Area Reviewed:
+Homepage `#styles` section (`index.html`) — markup + its inline CSS.
+
+Finding:
+The section read as an AI/template grid. Owner: "the styles section looks like ai… the 01,02,etc is ai."
+Only card 01 (the live 3D Laptop Teardown) was real; cards 02–06 were empty "Preview coming soon"
+placeholders, each stamped with a large `01–06` `.sc-index` numeral — so the section looked unfinished and
+generic, the opposite of brand-led/human.
+
+Decision:
+Removed the numbered placeholder grid entirely and present the one real sample intentionally:
+- Deleted the `.sc-index` numeral motif, the five placeholder cards, and the now-unused `.sc-soon` and
+  `.style-grid` rules (incl. the two `.style-grid` responsive overrides).
+- New treatment: section title + one honest lede line ("A look at the kinds of sites we build. The first
+  one's live — more on the way.") + a single featured card for the teardown, reusing the **canonical
+  `.style-card.feat`** component (no new card component invented). Two small layout helpers added:
+  `.styles-lede` (centered muted lede) and `.style-one` (max-width 540px, centered block, left-aligned).
+- Standing direction for "coming soon" content: **state it honestly in copy, don't fake it with empty
+  cards.** One clear focal point per section over a busy grid (the editorial principle in this guide).
+
+Notes:
+- The `/Animations/laptop-teardown` link + the card's hover/focus behaviour are unchanged.
+- Token knock-on: `--mist` was only used by `.sc-soon`, so it is now **defined-but-unused** (reference
+  only) — folds into the existing "resolve unused palette tokens" follow-up.
+- Supersedes the earlier in-session card-06 grid rebalance (removed here). The reference sections above
+  (type scale / spacing / components) and the old "5-card grid leaves an empty cell" observation are now
+  out of date re: `#styles` — the grid/`.sc-index`/`.sc-soon` no longer exist; treat this entry as the
+  source of truth for the section until those are refreshed.
+- Sequencing: nominally this task follows the typography-restore task; done now per owner direction. It
+  uses canonical components + current fonts, so the later site-wide `font-family` swap needs no rework here.
+- Live in-browser eyeball (render/hover/mobile) still advised, per the usual non-GUI caveat.
 
 ## 2026-06-20 00:55 - Designer - homepage-design-baseline
 

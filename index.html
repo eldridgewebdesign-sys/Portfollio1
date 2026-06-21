@@ -148,11 +148,12 @@ body.ready #hero .anim{opacity:1;transform:none}
 .why-col h3{font-family:'Cormorant Garamond',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
 .why-col p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:.95rem;line-height:1.8}
 
-/* ── STYLES — a curated gallery of the kinds of sites WebSharke builds ─────────
-   Editorial cards: one consistent family, quiet index numerals, an aqua hairline
-   that draws in on hover. The single live sample is intentionally set apart — no
-   fake browser chrome, no off-brand dashboard art, no neon glow. ─────────────── */
-.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1rem,1.6vw,1.4rem);margin-top:clamp(2.4rem,4.5vw,3.4rem);text-align:left}
+/* ── STYLES — one live sample (the 3D Laptop Teardown), presented on its own ───
+   No numbered grid, no "coming soon" placeholder cards: a single featured card
+   (the canonical .style-card.feat) + one honest lede line. The live sample is
+   set apart — no fake browser chrome, no off-brand dashboard art, no neon glow. ── */
+.styles-lede{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:clamp(1rem,1.4vw,1.12rem);line-height:1.8;max-width:46ch;margin:clamp(1.2rem,2.5vw,1.8rem) auto 0}
+.style-one{max-width:540px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
 .style-card{position:relative;display:flex;flex-direction:column;min-height:202px;padding:1.7rem 1.6rem 1.45rem;border-radius:16px;
   background:rgba(174,195,201,.05);border:1px solid rgba(174,195,201,.14);
   backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);
@@ -166,10 +167,6 @@ body.ready #hero .anim{opacity:1;transform:none}
 .style-card:hover{transform:translateY(-5px);border-color:rgba(98,182,198,.32);
   background:rgba(174,195,201,.07);box-shadow:0 24px 52px rgba(0,0,0,.4)}
 .style-card:hover::before{transform:scaleX(1)}
-/* quiet editorial index numeral, top-right */
-.sc-index{position:absolute;top:.5rem;right:1.05rem;font-family:'Cormorant Garamond',serif;font-weight:600;
-  font-size:2.5rem;line-height:1;color:rgba(98,182,198,.16);pointer-events:none;transition:color .5s}
-.style-card:hover .sc-index{color:rgba(98,182,198,.3)}
 .sc-kicker{font-family:'Mulish',sans-serif;font-weight:600;font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--aqua);opacity:.85;margin-bottom:.85rem}
 .sc-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.5rem;line-height:1.12;letter-spacing:.01em;color:var(--foam)}
 .sc-desc{font-family:'Mulish',sans-serif;font-weight:400;font-size:.9rem;line-height:1.66;color:rgba(240,248,250,.78);margin-top:.6rem}
@@ -177,7 +174,6 @@ body.ready #hero .anim{opacity:1;transform:none}
 .sc-go{display:inline-flex;align-items:center;gap:.45rem;font-family:'Mulish',sans-serif;font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua)}
 .sc-go svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s cubic-bezier(.16,1,.3,1)}
 .style-card:hover .sc-go svg{transform:translate(3px,-3px)}
-.sc-soon{font-family:'Mulish',sans-serif;font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mist);opacity:.8}
 /* the one live sample — a quietly featured, clickable card */
 .style-card.feat{background:linear-gradient(165deg,rgba(98,182,198,.1),rgba(174,195,201,.045) 62%);border-color:rgba(98,182,198,.26)}
 .style-card.feat:hover{background:linear-gradient(165deg,rgba(98,182,198,.14),rgba(174,195,201,.06) 62%)}
@@ -203,13 +199,11 @@ body.lock{overflow:hidden;height:100vh}
 /* ── RESPONSIVE (desktop-first) ──────────────────────────────────────────── */
 @media(max-width:900px){
   .why-cols{grid-template-columns:1fr;gap:2.6rem;max-width:460px}
-  .style-grid{grid-template-columns:1fr 1fr}
 }
 @media(max-width:680px){
   nav{padding:.8rem 1.4rem}
   .logo{width:140px;height:79px}
   .signin{letter-spacing:.16em}
-  .style-grid{grid-template-columns:1fr}
   .sx{min-height:auto;padding:clamp(3.5rem,9vh,5rem) 1.4rem}
   #hero{padding-top:30vh}
 }
@@ -287,53 +281,18 @@ body.lock{overflow:hidden;height:100vh}
   </div>
 </section>
 
-<!-- ── STYLES — placeholders ──────────────────────────────────────────────── -->
+<!-- ── STYLES — one live sample, presented intentionally (no placeholder grid) ── -->
 <section id="styles" class="sx">
   <div class="wrap">
     <h2 class="sec-title rv">Styles</h2>
-    <div class="style-grid">
-      <a class="style-card feat rv d1" href="/Animations/laptop-teardown" aria-label="3D Laptop Teardown — open interactive demo">
-        <span class="sc-index" aria-hidden="true">01</span>
+    <p class="styles-lede rv d1">A look at the kinds of sites we build. The first one's live — more on the way.</p>
+    <div class="style-one">
+      <a class="style-card feat rv d2" href="/Animations/laptop-teardown" aria-label="3D Laptop Teardown — open interactive demo">
         <div class="sc-kicker">Interactive · 3D</div>
         <h3 class="sc-title">3D Laptop Teardown</h3>
         <p class="sc-desc">A scroll-based 3D build study — a laptop coming apart, layer by layer.</p>
         <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
       </a>
-      <div class="style-card rv d2">
-        <span class="sc-index" aria-hidden="true">02</span>
-        <div class="sc-kicker">Landing</div>
-        <h3 class="sc-title">Bold Landing Page</h3>
-        <p class="sc-desc">A focused one-page site built to explain the offer and push visitors toward one clear action.</p>
-        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
-      </div>
-      <div class="style-card rv d3">
-        <span class="sc-index" aria-hidden="true">03</span>
-        <div class="sc-kicker">Dark · Premium</div>
-        <h3 class="sc-title">Premium Dark</h3>
-        <p class="sc-desc">A sharper look for brands that want depth, contrast, and a more polished, high-end feel.</p>
-        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
-      </div>
-      <div class="style-card rv d1">
-        <span class="sc-index" aria-hidden="true">04</span>
-        <div class="sc-kicker">Coastal</div>
-        <h3 class="sc-title">Soft Coastal</h3>
-        <p class="sc-desc">Light, calm layouts with warm spacing, clean sections, and a relaxed, unhurried style.</p>
-        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
-      </div>
-      <div class="style-card rv d3">
-        <span class="sc-index" aria-hidden="true">05</span>
-        <div class="sc-kicker">Client Portal</div>
-        <h3 class="sc-title">Full Client Portal</h3>
-        <p class="sc-desc">A site with login, dashboard access, payments, forms, and backend features.</p>
-        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
-      </div>
-      <div class="style-card rv d3">
-        <span class="sc-index" aria-hidden="true">06</span>
-        <div class="sc-kicker">Commerce</div>
-        <h3 class="sc-title">Online Store</h3>
-        <p class="sc-desc">A storefront with product pages, a cart, and checkout — built to take payments without extra tools.</p>
-        <div class="sc-foot"><span class="sc-soon">Preview coming soon</span></div>
-      </div>
     </div>
   </div>
 </section>

@@ -828,8 +828,8 @@
   <script src="js/supabase-config.js"></script>
   <!-- Stripe.js (official CDN) — used for the Payment Element modal below. -->
   <script src="https://js.stripe.com/v3/"></script>
-  <!-- Chart.js — only used by the admin Overview charts. -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Chart.js v4.4.1, vendored locally (no CDN) — only used by the admin Overview charts. -->
+  <script src="js/vendor/chart.umd.min.js"></script>
 
   <script>
     // =================================================================
@@ -934,10 +934,13 @@
       btn.disabled = true;
       btn.textContent = "Opening billing…";
       try {
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) throw new Error("You must be signed in to manage billing.");
         const res = await fetch("/api/customer-portal", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ customerId: stripeCustomerId }),
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({}),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.url) throw new Error(data.error || "Could not open the billing portal.");
@@ -968,11 +971,14 @@
         if (userErr) throw new Error("Could not verify your session. Please sign in again.");
         if (!user) { showBillError("You must be signed in to manage your subscription."); return; }
 
-        // 2-4. Ask the server for a billing-portal URL for this user.
+        // 2-4. Ask the server for a billing-portal URL (resolved from the verified session).
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) { showBillError("You must be signed in to manage your subscription."); return; }
         const res = await fetch("/api/customer-portal", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id }),
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({}),
         });
         const data = await res.json().catch(() => ({}));
 
@@ -1086,10 +1092,13 @@
         if (!user) { showBillError("You must be signed in to choose a plan."); return; }
 
         // Ask the server for a Payment Element client secret.
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) { showBillError("You must be signed in to choose a plan."); return; }
         const res = await fetch("/api/checkout", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ priceId: priceId, userId: user.id, email: user.email }),
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ priceId: priceId }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "Could not start checkout. Please try again.");
