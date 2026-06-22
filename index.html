@@ -149,14 +149,18 @@ body.ready #hero .anim{opacity:1;transform:none}
 .why-col p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:.95rem;line-height:1.8}
 
 /* ── STYLES — one live sample (the 3D Laptop Teardown), presented on its own ───
-   No numbered grid, no "coming soon" placeholder cards: a single featured card
-   (the canonical .style-card.feat) + one honest lede line. The live sample is
-   set apart — no fake browser chrome, no off-brand dashboard art, no neon glow. ── */
+   No numbered grid, no "coming soon" placeholder cards: a responsive grid of
+   live featured cards (the canonical .style-card.feat) + one honest lede line.
+   Every card is a real, live sample — no fake browser chrome, no neon glow. ── */
 .styles-lede{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:clamp(1rem,1.4vw,1.12rem);line-height:1.8;max-width:46ch;margin:clamp(1.2rem,2.5vw,1.8rem) auto 0}
 .style-one{max-width:540px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
-/* two live samples, side by side */
+/* two live samples, side by side (kept for reference) */
 .style-two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,1.6vw,1.4rem);max-width:760px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
 @media(max-width:680px){.style-two{grid-template-columns:1fr}}
+/* responsive grid of live demo samples (teardown + the reusable templates) */
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1rem,1.6vw,1.4rem);max-width:1100px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
+@media(max-width:900px){.style-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.style-grid{grid-template-columns:1fr}}
 .style-card{position:relative;display:flex;flex-direction:column;min-height:202px;padding:1.7rem 1.6rem 1.45rem;border-radius:16px;
   background:rgba(174,195,201,.05);border:1px solid rgba(174,195,201,.14);
   backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);
@@ -287,22 +291,52 @@ body.lock{overflow:hidden;height:100vh}
   </div>
 </section>
 
-<!-- ── STYLES — one live sample, presented intentionally (no placeholder grid) ── -->
+<!-- ── STYLES — live demo templates, presented intentionally (every card is a real, live sample) ── -->
 <section id="styles" class="sx">
   <div class="wrap">
     <h2 class="sec-title rv">Styles</h2>
-    <p class="styles-lede rv d1">A couple of the kinds of sites we build — both live below.</p>
-    <div class="style-two">
-      <a class="style-card feat rv d2" href="/Animations/laptop-teardown" aria-label="3D Laptop Teardown — open interactive demo">
+    <p class="styles-lede rv d1">A range of styles we build — each one a live demo below.</p>
+    <div class="style-grid">
+      <a class="style-card feat rv d1" href="/Animations/laptop-teardown" aria-label="3D Laptop Teardown — open interactive demo">
         <div class="sc-kicker">Interactive · 3D</div>
         <h3 class="sc-title">3D Laptop Teardown</h3>
         <p class="sc-desc">A scroll-based 3D build study — a laptop coming apart, layer by layer.</p>
         <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
       </a>
-      <a class="style-card feat rv d3" href="/demos/bold" aria-label="Bold creative brand template — open demo">
+      <a class="style-card feat rv d2" href="/demos/bold" aria-label="Bold creative brand template — open demo">
         <div class="sc-kicker">Bold · Template</div>
         <h3 class="sc-title">Creative Studio</h3>
         <p class="sc-desc">A bold, colorful brand site with real personality — built as a reusable template.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d3" href="/demos/dark" aria-label="Dark mode product template — open demo">
+        <div class="sc-kicker">Dark · Template</div>
+        <h3 class="sc-title">Studio Dark</h3>
+        <p class="sc-desc">A sleek dark-mode product site — deep navy, one clean accent, glass panels.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d1" href="/demos/vintage" aria-label="Vintage editorial template — open demo">
+        <div class="sc-kicker">Retro · Template</div>
+        <h3 class="sc-title">Heritage Press</h3>
+        <p class="sc-desc">A 1970s editorial print look, rebuilt with modern spacing and UX.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d2" href="/demos/brutalist" aria-label="Brutalist template — open demo">
+        <div class="sc-kicker">Brutalist · Template</div>
+        <h3 class="sc-title">Raw Grid</h3>
+        <p class="sc-desc">Raw, high-contrast and grid-exposed — bold, deliberate, unconventional.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d3" href="/demos/photo" aria-label="Photography-led template — open demo">
+        <div class="sc-kicker">Visual · Template</div>
+        <h3 class="sc-title">Lens &amp; Frame</h3>
+        <p class="sc-desc">Image-led and immersive, with minimal copy — built for visual-first brands.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d1" href="/demos/cards" aria-label="Card-based modular template — open demo">
+        <div class="sc-kicker">Modular · Template</div>
+        <h3 class="sc-title">Modular</h3>
+        <p class="sc-desc">A clean, scannable card system — modular and dashboard-ready.</p>
         <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
       </a>
     </div>

@@ -166,7 +166,7 @@ header comment ("writes EXACTLY the columns defined below").
 
 ---
 
-## [TODO] Task 2 — Admin Invoice Builder UI (design direction)
+## [REVIEW] Task 2 — Admin Invoice Builder UI (design direction)
 
 Assigned Role:
 Designer
@@ -222,7 +222,7 @@ Direction only — no code. Pairs with Task 3. No Stripe / no Pay UI here (that'
 
 ---
 
-## [TODO] Task 3 — Implement the Admin Invoice Builder
+## [REVIEW] Task 3 — Implement the Admin Invoice Builder
 
 Assigned Role:
 Developer / Implementation
@@ -284,7 +284,7 @@ region. No Stripe.
 
 ---
 
-## [TODO] Task 4 — Client Billing Page Invoice List (design direction)
+## [REVIEW] Task 4 — Client Billing Page Invoice List (design direction)
 
 Assigned Role:
 Designer
@@ -338,7 +338,7 @@ Direction only. Pairs with Task 5. The Pay button is a disabled placeholder unti
 
 ---
 
-## [TODO] Task 5 — Implement the Client Billing Invoice List
+## [REVIEW] Task 5 — Implement the Client Billing Invoice List
 
 Assigned Role:
 Developer / Implementation
@@ -400,7 +400,7 @@ stay **untouched** this phase — whether the invoice list replaces them is a Ph
 
 ---
 
-## [TODO] Task 6 — Security Review of the invoice system
+## [REVIEW] Task 6 — Security Review of the invoice system
 
 Assigned Role:
 Security
@@ -520,7 +520,7 @@ RPC) should be scheduled as a Developer task ahead of Phase-2 Stripe; the rest a
 
 ---
 
-## [TODO] Task 8 — Manual Testing of the invoice flow (Reviewer)
+## [REVIEW] Task 8 — Manual Testing of the invoice flow (Reviewer)
 
 Assigned Role:
 Reviewer
@@ -572,6 +572,325 @@ Manager triages the findings into Developer/Designer tasks.
 
 Notes:
 After Tasks 1/3/5. Needs a browser/preview. Files findings only.
+
+---
+
+## 🚦 ROUND 2 — Pre-Stripe gate (from the Reviewer's conditional NO-GO, 2026-06-22)
+
+> The Reviewer's source-level pass (`docs/reviewer-log.md`, REVIEW-0001…0013) returned a **conditional NO-GO**:
+> the build has **no blocking code defect**, but the mandatory **live** test was not run and two items must be
+> fixed before Stripe. These four gate tasks (G1–G4) are the **only** things between Phase 1 and Phase 2.
+>
+> **🔒 Manager gate — do NOT approve or start Stripe Checkout until ALL of:**
+> 1. **G1** — atomic invoice creation is fixed,
+> 2. **G2** — the mobile admin-builder label issue is fixed,
+> 3. **G3** — Security passes the live RLS cross-tenant isolation check, and
+> 4. **G4** — the Reviewer runs a real live browser pass and returns **GO**.
+
+### Board sync — Phase-1 status (Manager, 2026-06-22)
+
+Phase-1 build/review tasks were executed by concurrent sessions; the Manager has synced their board status from
+`docs/logs.md`. **None can go [DONE] until the Round-2 gate (G1–G4) closes the live verification they all
+deferred.**
+
+| Task | What | Status | Evidence (docs/logs.md) |
+|---|---|---|---|
+| 1 | Admin invoice API | [REVIEW] | 13:03 Developer · admin-invoices-route |
+| 2 | Admin builder design | [REVIEW] | 14:00 Designer · invoice-billing-ux |
+| 3 | Admin builder impl | [REVIEW] | 13:40 Developer · admin-invoice-ui |
+| 4 | Client billing design | [REVIEW] | 14:00 Designer · invoice-billing-ux |
+| 5 | Client billing impl | [REVIEW] | 13:42 Developer · client-billing-invoices-ui; 16:40 · payment-page-invoices |
+| 6 | Security review | [REVIEW] | 15:00 Security · invoice-security-review |
+| 7 | Efficiency review | [REVIEW] | 17:05 Efficiency · invoice-system-review |
+| 8 | Reviewer pass | [REVIEW] | 18:30 Reviewer · invoice-source-review (source pass → conditional NO-GO; live pass re-cut as **G4**) |
+
+---
+
+## [TODO] Gate Task G1 — Fix atomic invoice creation (owner "Task 1")
+
+Assigned Role:
+Developer / Implementation
+
+Owner:
+None (Manager assigns + marks [IN PROGRESS] before the Developer starts)
+
+Risk:
+High — **pre-Stripe blocker**
+
+Source:
+Reviewer **REVIEW-0002** (Medium, data-integrity) + Efficiency "no atomic invoice create" + Security "non-atomic write" (grouped — one fix).
+
+Goal:
+Make invoice creation atomic — the `invoices` row and all `invoice_items` are created together, or nothing is.
+
+Why:
+Today the header + items are two non-transactional inserts with a compensating delete; if the items insert
+fails AND the delete also fails, an **issued** invoice can persist with a Total but no line items — the client
+sees a "phantom charge." Must be fixed before money flows.
+
+Files likely involved:
+
+- `db/invoices-schema.sql` — add a Postgres function `create_invoice_with_items(...)` that inserts header +
+  items in ONE transaction and returns the rows (admin/service-role only; do not widen RLS)
+- `api/admin/invoices.js` — replace the two-insert + compensating-delete flow with one
+  `rpc('create_invoice_with_items', …)` call
+- read-only: `docs/reviewer-log.md` (REVIEW-0002), `docs/performance-log.md`, `docs/security-log.md`
+
+Do not touch:
+
+- the admin auth gate, the server-side total calculation, or input validation (keep them — only the persistence step changes)
+- payment/Stripe/customer-portal/webhook; price IDs; client-facing pages; no Stripe
+
+Steps:
+
+1. Add `create_invoice_with_items` to `db/invoices-schema.sql` (idempotent `create or replace function`): takes
+   the validated invoice fields + the items, inserts the invoice then the items in one transaction, returns the
+   created invoice + items.
+2. In `api/admin/invoices.js`, after the existing auth + validation + **server-side** total calc, call the RPC
+   instead of the two separate inserts; remove the compensating-delete path. Keep returning `{invoice, items}`.
+3. Confirm validation + server-calculated totals are unchanged; RLS + service-role safety intact.
+4. `node --check api/admin/invoices.js`; reason through the failure path (item insert fails → nothing persists);
+   note the RPC must be **applied in Supabase**. Report in docs/logs.md.
+
+Completion checklist:
+
+- [ ] Change completed
+- [ ] Relevant tests/checks run (`node --check`; failure-path reasoning; live e2e via `vercel dev` noted)
+- [ ] No unrelated files changed
+- [ ] Reported in docs/logs.md
+- [ ] docs/logs.md updated (START + FINISH)
+- [ ] Manager notified to record [REVIEW] (the Developer does not edit the board)
+
+Review requirements:
+Manager + **Security** (re-review the route: still admin-only, totals server-side, RLS/service-role intact) + Efficiency.
+
+Acceptance criteria (owner):
+
+- Invoice and invoice_items are created as one safe operation.
+- If invoice_items fail, the invoice is not left behind.
+- Server still calculates totals.
+- Admin route still validates input.
+- Existing RLS and service-role safety stay intact.
+
+Notes:
+The new RPC must be **applied in Supabase** (like the schema migration). Folds in REVIEW-0002. No Stripe.
+
+---
+
+## [TODO] Gate Task G2 — Fix the mobile admin invoice-builder labels (owner "Task 2")
+
+Assigned Role:
+Designer → Developer / Implementation (coupled design+build pair, per owner assignment)
+
+Owner:
+None (Manager assigns; the Manager marks the Developer half [IN PROGRESS] before build)
+
+Risk:
+Medium — pre-Stripe (usability)
+
+Source:
+Reviewer **REVIEW-0001** (Medium) + **REVIEW-0007** (Low, paired).
+
+Goal:
+Make the admin invoice builder usable on small screens (≤560px) — every line-item field clearly labelled.
+
+Why:
+At ≤560px the column header is `display:none` and the Qty / Unit price / Amount fields carry only `aria-label`s
+(invisible to sighted users), so an admin on a phone sees unlabelled numeric boxes and can type a price into
+Quantity. The **client** read-only table already does this right via `data-label` / `::before`.
+
+Files likely involved:
+
+- **Designer (step A):** `docs/design-guide.md` — spec the mobile labelling (reuse the client table's
+  `data-label` + `::before` pattern; caption the read-only Amount; give the price input room at ~360px).
+- **Developer (step B):** `dashboard.html` — admin invoice-builder region only (the ≤560px CSS ~`:576-577` and
+  the line-item row builder ~`:2744-2747`).
+
+Do not touch:
+
+- the client billing region; payment/Stripe/auth; the server route; no Stripe
+
+Steps:
+
+A. **Designer** — write the mobile-label spec into `docs/design-guide.md` (visible labels for Qty / Unit price /
+   Amount + the read-only Amount caption, mirroring the client table). Set [REVIEW]; hand off to the Developer.
+B. **Developer** — implement per the spec: add visible labels at ≤560px; caption the read-only Amount so it
+   doesn't read as editable; ease the price field at the smallest widths. Inline CSS per convention.
+C. Test at 360px and 560px (a browser eyeball is the real check); confirm desktop unchanged; console clean.
+   Report in docs/logs.md (Developer) / docs/design-guide.md (Designer).
+
+Completion checklist:
+
+- [ ] Change completed (Designer spec + Developer build)
+- [ ] Relevant tests/checks run (≤560px + 360px render; desktop unaffected; console clean)
+- [ ] No unrelated files changed (admin builder region only)
+- [ ] Role-specific logs updated (design-guide.md for the Designer; docs/logs.md for the Developer)
+- [ ] docs/logs.md updated
+- [ ] Designer sets its own task status; Manager records the Developer/[REVIEW] status
+
+Review requirements:
+Manager + Designer (matches spec) + Reviewer (re-checks on mobile in G4).
+
+Acceptance criteria (owner):
+
+- Item name, description, quantity, and price fields are clearly labelled on mobile.
+- The admin can understand every field without guessing.
+- No cramped or overlapping invoice fields.
+- Layout works on small phone widths.
+
+Notes:
+Owner-assigned **design+build pair** — a deliberate exception to the usual "design and build are separate tasks,"
+because the design fix is trivial (reuse an existing pattern). Folds in REVIEW-0001 + REVIEW-0007. No Stripe.
+
+---
+
+## [TODO] Gate Task G3 — Live RLS cross-tenant isolation check (owner "Task 3") — STRIPE BLOCKER
+
+Assigned Role:
+Security
+
+Owner:
+None
+
+Risk:
+High — **Stripe blocker** (live verification; needs the owner's Supabase access + 2 client accounts)
+
+Source:
+Reviewer **REVIEW-0013** (gating) = Security **IV-GATE** (`invoice-gate-rls-must-be-live`) = standing F5.
+
+Goal:
+Confirm **live** that one client cannot read another client's invoices or invoice_items, and that normal
+clients cannot write invoices or reach admin invoice routes.
+
+Why:
+Cross-tenant isolation rests **entirely** on Supabase RLS, which is invisible from the repo and unverifiable in
+source. This is the single highest-impact failure mode and a hard prerequisite before any billing ships.
+
+Files likely involved:
+
+- the **Supabase dashboard** (RLS state — not in the repo); read-only: `db/invoices-schema.sql`,
+  `js/supabase-config.js`, the client billing reads in `dashboard.html` / `payment.html`
+- write: `docs/security-log.md`
+
+Do not touch:
+
+- production code (verification only; if RLS is wrong, the FIX becomes a separate Developer/owner task)
+
+Steps:
+
+1. In Supabase confirm `rowsecurity = true` on `public.invoices` AND `public.invoice_items`, and that all four
+   policies + `public.is_admin()` exist (the migration + the G1 RPC were applied).
+2. Signed in as **Client A** (anon key): `db.from('invoices').select('*')` (no `.eq`) → returns only A's rows.
+3. As A, attempt to read a known **Client B** invoice id AND its `invoice_items` → must return **0 rows**.
+4. As a normal client, attempt INSERT / UPDATE / DELETE on `invoices` → must be denied.
+5. As a normal client (no admin token), call `POST /api/admin/invoices` → 401/403.
+6. Record pass/fail per check in `docs/security-log.md`; if any fails, flag a fix task to the Manager. **This is
+   a GO/NO-GO input — report the result clearly.**
+
+Completion checklist:
+
+- [ ] Change completed (live checks run + recorded)
+- [ ] Relevant checks run (the 5 isolation checks above, against live Supabase)
+- [ ] No unrelated files changed (docs only)
+- [ ] Role-specific log updated (docs/security-log.md)
+- [ ] docs/logs.md updated
+- [ ] Task moved to [REVIEW] (Security sets its own task status) + result reported to the Manager
+
+Review requirements:
+Manager (records the gate result).
+
+Acceptance criteria (owner):
+
+- RLS is enabled on invoices and invoice_items; `rowsecurity` is active.
+- Client A can read Client A invoices; Client A cannot read Client B invoices or Client B invoice_items.
+- Normal clients cannot create, update, or delete invoices.
+- Normal clients cannot access admin invoice routes.
+
+Notes:
+Needs the owner's Supabase access + a 2nd test client. No code change if RLS is correct. **Stripe blocker.**
+
+---
+
+## [TODO] Gate Task G4 — Real live Reviewer pass (owner "Task 4") — final GO / NO-GO
+
+Assigned Role:
+Reviewer
+
+Owner:
+None
+
+Risk:
+Required after fixes (live)
+
+Source:
+The Reviewer's own conditional NO-GO (`docs/reviewer-log.md`, 2026-06-22) — the live pass that was owed.
+
+Goal:
+Run the actual browser-based invoice flow **after G1 + G2 are fixed and G3 has passed**, and return a final
+**GO or NO-GO** for Stripe.
+
+Why:
+The first Reviewer pass was source-only (no browser). Stripe cannot be approved without a real live pass.
+
+Files likely involved:
+
+- write: `docs/reviewer-log.md` (re-test results + final GO/NO-GO; close out REVIEW-0001 / 0002 / 0013)
+- NO code (the Reviewer reports the experience)
+
+Do not touch:
+
+- production code; `docs/taskboard.md` (the Manager records status)
+
+Steps (needs a real browser against a deployed preview or `vercel dev` + live Supabase):
+
+1. Admin creates a **draft** invoice; admin **issues** an invoice.
+2. Client sees the **issued** invoice; the client **cannot edit** anything.
+3. The client **cannot** access another client's invoice (the live cross-account check — coordinate with G3).
+4. Mobile **client billing** page works; the **admin invoice builder** works on mobile (confirm G2's label fix).
+5. Console has **no major errors**.
+6. Confirm the G1 atomic fix (no itemless issued invoice) holds.
+7. Record results in `docs/reviewer-log.md` and give a clear **GO or NO-GO** for Stripe.
+
+Completion checklist:
+
+- [ ] Change completed (live re-test done; GO/NO-GO recorded)
+- [ ] Relevant checks run (full flow desktop + phone; console)
+- [ ] No unrelated files changed (reviewer-log only)
+- [ ] Role-specific log updated (docs/reviewer-log.md)
+- [ ] docs/logs.md updated
+- [ ] Manager notified (the Reviewer does not edit the board)
+
+Review requirements:
+Manager records the GO/NO-GO and, on GO + G1/G2/G3 all green, opens the Stripe phase.
+
+Acceptance criteria (owner):
+
+- Admin creates a draft invoice; admin creates an issued invoice.
+- Client sees the issued invoice; cannot edit it; cannot access another client's invoice.
+- Mobile billing page works; admin invoice builder works on mobile.
+- Console has no major errors.
+- Reviewer gives a final GO or NO-GO for Stripe.
+
+Notes:
+**Last gate.** Sequence **after** G1, G2 (fixed) and G3 (passed). Needs a browser/preview.
+
+---
+
+### Deferred — non-gating invoice polish backlog (NOT a Stripe blocker)
+
+Triaged from the Reviewer pass; batch these **after** GO (a future Developer/Designer cleanup task — none of
+these block Stripe):
+
+- **REVIEW-0003** (Low) — fractional-qty live estimate disagrees with Save (client-side).
+- **REVIEW-0004** (Low) — client "Created" date can show the previous day in US timezones.
+- **REVIEW-0005** (Low) — over-cap qty/price fails late as a generic toast (add client-side max checks).
+- **REVIEW-0006** (Low) — client-list load-failure shows a misleading "Select a client" error.
+- **REVIEW-0008** (Low) — admin identity defined in two places (route env vs SQL `is_admin()` literal) → can drift.
+- **REVIEW-0009** (Low) — a client can read their OWN drafts via a direct anon query (owner decision: tighten
+  the owner-SELECT policy to exclude drafts, or accept). Worth checking during G3.
+- **REVIEW-0010** (Info) — no discount/tax input → Subtotal == Total (intentional phase-1; add a clarifying note).
+- **REVIEW-0011** (Info) — dashboard billing loading/empty states not in an aria-live region (vs `/payment`).
+- **REVIEW-0012** (Info) — cancelling "Issue invoice" gives no acknowledgement.
 
 ---
 

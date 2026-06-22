@@ -6,6 +6,277 @@
 
 ---
 
+## 2026-06-22 19:55 - Developer - g2-mobile-line-item-labels-build
+
+Action:
+Finished
+
+Task:
+G2 (build half) — implement the Designer's mobile line-item-label spec in the admin Invoice Builder
+(`docs/design-guide.md` → "Mobile line-item labels (≤560px) — admin builder [G2 spec half → hand to
+Developer]"). Spec landed 19:10; this is the implementation. (Owner-assigned; Manager to record board status.)
+
+Files claimed:
+
+- `dashboard.html` (admin Invoice Builder region only — the `invItemRow()` markup + the `@media(max-width:560px)`
+  CSS block)
+- `docs/logs.md`
+
+Files changed:
+
+- `dashboard.html` — per the spec: wrapped the bare Qty `<input>` in `<label class="inv-cell" data-label="Qty">`
+  (the `<label>` also focuses the input on tap), added `data-label="Unit price"` to `.inv-price-wrap` and
+  `data-label="Amount"` to `.inv-amount`. Added the spec's CSS inside the existing `@media(max-width:560px)`
+  block: `.inv-cell` / `.inv-price-wrap` / `.inv-amount` become `display:flex; justify-content:space-between`
+  and a `::before{content:attr(data-label)}` surfaces each column name (label left, value right) — mirroring
+  the client read-only `.cinv-num` pattern. Desktop is untouched (rules live only in the media query; the
+  `.inv-items-head` still provides headers there). No schema or JS-logic change.
+
+Summary:
+On mobile the admin builder hides the `.inv-items-head` column header and collapses to a 2-col grid, leaving
+Qty / Unit price / Amount as unlabeled numbers for sighted phone users. Implemented the Designer's fix
+(reuse the client pattern) so each cell shows its label inline at ≤560px. Followed the spec exactly rather
+than redesigning.
+
+Testing:
+- grep: the 3 `data-label`s + `.inv-cell` qty wrapper present; the `::before`/flex rules are inside the
+  `@media(max-width:560px)` block; desktop `.inv-item` grid still has its 5 children (main / qty-label /
+  price-wrap / amount / del) so the desktop ledger is unchanged.
+- JS untouched + verified: `recomputeInvoice()` / `collectInvoice()` still resolve `.inv-qty` / `.inv-price`
+  / `[data-amount]` (querySelector finds the input now nested in the `<label>`). Markup edits are pure string
+  content inside the existing single-quoted `innerHTML` concatenation — quotes balanced, no JS change.
+- **NOT run (non-GUI):** the live ≤560px render. **⚠ Flag for Designer/Manager (GUI verify):** by code
+  analysis the `$` (`.inv-cur`) is `position:absolute; left:.6rem` anchored to `.inv-price-wrap`, which now
+  also carries the "Unit price" `::before` label — so on a phone the `$` will likely **overlap** the label
+  text (both sit at the wrap's left edge). The spec itself asked to "verify the label sits left of the
+  `$`+input." Implemented faithfully as specced (did not redesign the Designer's cell). **Suggested fix if
+  the overlap is confirmed:** in the same media query, take `.inv-cur` out of absolute flow (`position:static`)
+  and push the label left with `.inv-price-wrap::before{margin-right:auto}` so the order becomes
+  `[Unit price] … [$ input]`. Designer to confirm the visual + approve the fix.
+
+Risks / Notes:
+- Only the `$`-overlap on the price cell is uncertain (above); Qty + Amount cells are clean (no absolute child).
+- Concurrent sessions touching `dashboard.html` (a `Developer - payment-page-invoices` session; my earlier
+  `g1-atomic-invoice-rpc` invoice_items `.order()` edit). My G2 footprint is the `invItemRow()` template +
+  the one media-query block — re-check the diff for overlap before committing.
+- Files uncommitted; did not commit or deploy.
+
+---
+
+## 2026-06-22 19:45 - Designer - style-demos-grid
+
+Action:
+Finished
+
+Task:
+Owner-direct: build demo templates for the owner's 8 website-style briefs and add a card per style to the
+homepage Styles section, skipping ones that already exist. (Not on the board — Manager to mirror.)
+
+Files claimed / changed:
+
+- NEW `demos/dark/index.html`, `demos/vintage/index.html`, `demos/brutalist/index.html`,
+  `demos/photo/index.html`, `demos/cards/index.html` — 5 self-contained reusable style demo templates.
+- `index.html` — the `#styles` section only: 2-col `.style-two` → responsive `.style-grid` (3→2→1), 7
+  live cards (teardown + bold + the 5 new), per-column `d1/d2/d3` stagger, updated lede + section comment.
+  No other region touched.
+- `docs/design-guide.md` — dated Designer decision entry (`style-demos-grid`).
+- `docs/logs.md` — this entry.
+
+NOT touched: corporate stays cardless (owner); payment/Stripe/Supabase/auth; `api/*`, `db/*`,
+`dashboard.html`, `payment.html`, vendor; no `vercel.json`/routing change; the concurrent invoice-billing work.
+
+Summary:
+Owner supplied 8 style briefs and asked for a card per style, skipping existing. Skipped Bold (#2 exists),
+Minimalist (#1 = corporate) and Parallax (#8 = homepage); built the other 5 (Dark, Vintage/Retro,
+Brutalist, Photography, Card-based). Each follows the established `demos/` contract (inline CSS/JS,
+vendored `../../fonts/`, neutral data-URI favicon — NO real logo, `[Company Name]`/`SWAP:` placeholders,
+footer demo-flag pill, inert preventDefault form, skip link, IntersectionObserver reveal + reduced-motion
++ noscript fallbacks, no `<base>`, no `var()` in SVG). Reachable at `/demos/<slug>` via cleanUrls.
+
+Testing:
+- Built via ultracode parallel workflow (5 builders); each self-verified, then I ran independent grep
+  cross-checks across all 5: favicon is `data:` (0 `/images/` refs), 0 CDN domains, 0 `fill/stroke="var(`,
+  `<base>` only in comments, all `@font-face` srcs are the 7 allowed `../../fonts/` woff2. All 7 demo
+  files exist (glob); `index.html` grep confirms `.style-grid` + the 7 expected hrefs; each href resolves
+  to an existing file.
+- NOT run (needs a browser / `vercel dev`): live render, hover, mobile reflow (900/600px),
+  prefers-reduced-motion, inert-form notice, clean console — the one GUI step a headless session can't
+  run. -> Reviewer.
+
+Risks / Notes:
+- The `index.html` `#styles` card edit is the one live-page touch (precedent: corporate/bold cards were
+  added the same way). Manager: please mirror this owner-direct task onto the board.
+- Concurrency: other sessions edited `docs/design-guide.md` + `docs/logs.md` (and the invoice-billing
+  files) during this session — design-guide shows `bold-brand-template` (15:30), `bold-demo-nologo`
+  (17:10), `retro-vintage-template` (17:30). If another session also produced a vintage/retro or bold
+  demo, deconflict `demos/vintage` + `demos/bold` (only one of each exists on disk). My `index.html` cards
+  link the on-disk `/demos/*`, which all resolve.
+
+## 2026-06-22 19:25 - Developer - g1-atomic-invoice-rpc
+
+Action:
+Finished
+
+Task:
+G1 — Atomic invoice creation (High, Stripe blocker): move the invoice + line-item writes into one
+Postgres RPC so they can't partially succeed. (Owner-assigned; Manager to record board status.)
+
+Files claimed:
+
+- `db/invoices-schema.sql`
+- `api/admin/invoices.js`
+- `dashboard.html` (the client invoice **read ordering** line only)
+- `docs/logs.md`
+
+Files changed:
+
+- `db/invoices-schema.sql` — added `public.create_invoice_with_items(...)`, a `plpgsql` function that
+  inserts the invoice header + all line items in ONE transaction (atomic: a failed item insert rolls the
+  whole call back — no orphan invoice, no app-side compensating delete). It refuses an empty item list,
+  never writes the generated `total_amount_cents`, captures the entered line order via `WITH ORDINALITY`
+  into a new nullable `sort_order` column, and returns `{ invoice, items }` as JSON. EXECUTE is revoked
+  from `public` and granted only to `service_role` (browser anon/authenticated keys can't call it);
+  `SECURITY INVOKER`, so admin-only RLS still backstops it. Added `notify pgrst, 'reload schema'` and a
+  warning that re-running the function body alone re-grants PUBLIC.
+- `api/admin/invoices.js` — step 5 now calls `supa.rpc("create_invoice_with_items", {...})` and returns its
+  `{ invoice, items }`. Removed the two-insert + best-effort rollback block. Auth gate (401/403), input
+  validation (400), and the client-existence 404 check still run, unchanged, before the RPC.
+- `dashboard.html` — the client billing view's `invoice_items` read now orders by `sort_order` (then
+  `created_at`) so line items display in the entered order. Read-only change; no auth/Stripe logic touched.
+
+Summary:
+Replaced the non-atomic two-step write with a single-transaction RPC. Then ran a 3-lens adversarial review
+(ultracode workflow): atomicity **correct**, security **sound** (grant model correct — PostgREST runs RPCs
+as anon/authenticated which don't inherit service_role; no injection; no cross-user leak; all route gates
+preserved in order), integration **clean** (params match, response shape preserved, bigint stays a JSON
+number, no dead vars). Applied the review's fixes: (1) **item-order regression** — items came back in random
+order because all share the txn `created_at` and the `id` tiebreak is a random UUID; fixed with the
+`sort_order` ordinal (this also fixed the client view, which ordered by `created_at` too); (2) added
+`notify pgrst` so the new RPC doesn't 404 (PGRST202) before the schema cache reloads; (3) warning that
+`create or replace` resets the function ACL to PUBLIC. Accepted (documented, not enforced): the function
+trusts the route-supplied money totals rather than re-deriving them in SQL — not exploitable (single
+service_role caller; route validates) and not a regression; I deliberately did not add untested
+money-recompute SQL that could falsely block all invoice creation.
+
+Testing:
+- `node --check api/admin/invoices.js` → OK. Route uses the RPC; no leftover two-step insert / rollback.
+- grep: `sort_order` + `with ordinality` + `order by it.sort_order` + `notify pgrst` + ACL warning present;
+  no `line_total_cents` anywhere; generated `total_amount_cents` intact; dashboard reads order by `sort_order`.
+- **SQL NOT executed (cannot, locally):** `supabase` CLI is installed + logged in to Supabase cloud (2
+  projects, neither linked), but there is **no Docker** (so `supabase start`/local stack is unavailable),
+  **no `psql`**, and nothing linked. Running the migration therefore means a **live cloud DB** change —
+  deferred to the owner's go-ahead (run `db/invoices-schema.sql` in the SQL editor, or link + `db push`).
+  The end-to-end create-draft/issue test follows once the function exists in the DB.
+
+Risks / Notes:
+- **Owner action required:** apply `db/invoices-schema.sql` to the WebSharke Supabase project (idempotent,
+  safe to re-run) — it adds the RPC + `sort_order`. Until then `/api/admin/invoices` will 404 the RPC.
+- The `sort_order` column is nullable/additive; any pre-existing item rows (none expected — feature is new)
+  sort last via `nulls last`.
+- Files remain **uncommitted** (route + schema were already untracked); did not commit or deploy.
+- Concurrent sessions active (Designer `g2-mobile-line-item-labels` finished 19:10; a `Developer -
+  payment-page-invoices` session earlier). My only `dashboard.html` edit is the one invoice_items `.order()`;
+  re-check the diff for overlap before committing.
+
+---
+
+## 2026-06-22 19:10 - Designer - g2-mobile-line-item-labels
+
+Action:
+Finished
+
+Task:
+G2 (spec half) — spec the admin invoice-builder mobile line-item labels (≤560px), reusing the client
+table's existing label pattern. Hand the build half to the Developer.
+
+Files changed:
+
+- `docs/design-guide.md` — added the sub-section "Mobile line-item labels (≤560px) — admin builder
+  [G2 spec half → hand to Developer]" inside the Invoice & Billing spec.
+
+Summary:
+The admin builder row (`.inv-item` grid) hides `.inv-items-head` at ≤560px, leaving Qty / Unit price /
+Amount with only `aria-label`s (Reviewer finding). Spec'd the fix as a verbatim reuse of the client
+table's pattern (`.cinv-items` — `data-label` + `::before` shown at ≤560px, cell becomes flex
+space-between). Labels reuse the existing exact wording (`Qty` · `Unit price` · `Amount`). One adaptation
+called out: Qty is a bare `<input>` (can't take `::before`) so it needs a `<label class="inv-cell"
+data-label="Qty">` wrapper; Unit price (`.inv-price-wrap`) and Amount (`.inv-amount`) are already
+wrappable. Included the exact CSS, the `var(--adm-muted)` label colour (admin-token equivalent of the
+client's `#41606e`), and a note to keep the rules in whatever media query the row reflow uses (composes
+with the open ~600–760px dead-zone fix).
+
+Testing:
+Spec only — no production code touched. Grounded against the live code: client pattern (`dashboard.html`
+`.cinv-items` `:258–284`, JS `:1753–1757`) and the admin builder (`.inv-item` `:535–580`, row builder /
+`recomputeInvoice` / `collectInvoice`). The Developer's `node --check` + a ≤560px render eyeball are the
+build-half checks.
+
+Risks / Notes:
+- Build half is a Developer task (`dashboard.html`, admin region only) — selectors `.inv-qty` /
+  `.inv-price` / `[data-amount]` must stay intact so the totals JS keeps resolving them.
+- Designer did not edit the board (role rule); Manager to track the G2 build hand-off.
+
+## 2026-06-22 19:00 - Manager - triage-reviewer-nogo-prestripe-gate
+
+Action:
+Planned
+
+Task:
+Triage the Reviewer's conditional NO-GO (REVIEW-0001…0013); create the pre-Stripe gate tasks; sync the board
+
+Files claimed:
+
+- docs/taskboard.md
+- docs/reviewer-log.md
+- docs/logs.md
+
+Files changed:
+
+- docs/taskboard.md — (1) **synced Phase-1 statuses**: Tasks 2,3,4,5,6,8 [TODO]→[REVIEW] (built/reviewed by
+  concurrent sessions; Tasks 1 & 7 already [REVIEW]) with a "Board sync — Phase-1 status" table citing each
+  session in docs/logs.md. (2) Added a **"🚦 ROUND 2 — Pre-Stripe gate"** section with the 🔒 Manager gate
+  (no Stripe until G1+G2 fixed, G3 passes, G4 GO) and four gate tasks **G1–G4** in the CLAUDE.md format.
+  (3) Added a "Deferred — non-gating invoice polish backlog" list (the Low/Info findings). Phase-2 (Stripe)
+  note remains DEFERRED above this gate.
+- docs/reviewer-log.md — added a **Manager triage table** (disposition of all 13 findings) and set each
+  finding's canonical heading status: [CONVERTED] for 0001/0002/0007/0013 (→ gate tasks), [ACCEPTED] for the
+  9 Low/Info items (→ deferred backlog).
+- docs/logs.md — this entry.
+
+Summary:
+The Reviewer's 2026-06-22 pass was **source-level only** (no browser available) → **conditional NO-GO**: no
+blocking code defect, but the live test wasn't run and two items need fixing. Triaged all 13 findings and cut
+the owner's four pre-Stripe tasks (mapped to G1–G4 to avoid colliding with the existing "Task 1–8" numbering):
+- **G1** (Developer, High) — atomic invoice creation via a Postgres RPC (REVIEW-0002 + Efficiency/Security
+  atomicity findings, grouped).
+- **G2** (Designer→Developer, Medium) — mobile admin-builder labels ≤560px (REVIEW-0001 + 0007); owner-assigned
+  design+build pair (a deliberate exception to the usual design/build split — the design is trivial reuse).
+- **G3** (Security, High, **Stripe blocker**) — live RLS cross-tenant isolation (REVIEW-0013 = Security
+  IV-GATE = F5).
+- **G4** (Reviewer, after fixes) — real live browser pass → final GO/NO-GO.
+
+Also recorded the **Manager Stripe gate**: do not approve/start Stripe until G1+G2 are fixed, G3 passes, and
+G4 returns GO.
+
+Board reality check (important): Phase-1 (Tasks 1–7) was implemented + source-reviewed by concurrent sessions
+faster than the board was synced; this entry brings the board in line (all Phase-1 tasks now [REVIEW], gated by
+G1–G4). This is exactly the Manager's "scan logs + sync the board" duty for Developer/Reviewer work that doesn't
+touch the board.
+
+Testing:
+Docs/board only — no website code changed by the Manager. Statuses synced from the dated FINISH entries in
+docs/logs.md (13:03/13:40/13:42/14:00/15:00/16:40/17:05/18:30). Findings cross-checked against the reviewer log.
+
+Risks / Notes:
+- **Stripe stays DEFERRED** until the four-condition gate passes; I will open the Stripe phase only after G4 GO.
+- **Owner/live prerequisites:** G3 needs the owner's Supabase access + a 2nd test client; G4 needs a real
+  browser/preview (or `vercel dev`); G1's new RPC must be **applied in Supabase** alongside the existing
+  migration. None are runnable headless.
+- Low/Info findings (REVIEW-0003/0004/0005/0006/0008/0009/0010/0011/0012) are **accepted but deferred** to the
+  non-gating polish backlog — they do **not** block Stripe.
+- Still-open earlier flags (not part of this gate): `node_modules` committed to git; `docs/TASKBOARD.md` vs
+  `docs/taskboard.md` casing; Mulish woff2 weights byte-identical; CLAUDE.md gitignored. Separate triage.
+
 ## 2026-06-22 18:30 - Reviewer - invoice-source-review
 
 Action:
@@ -1170,6 +1441,18 @@ Risks / Notes:
   invoices); drive `status → paid` from the Stripe webhook, not the manual admin field; the disabled "Pay" buttons
   are inert placeholders awaiting the payments phase.
 - No code was changed; per the role rules the Manager turns the accepted findings into Developer tasks.
+
+**Update 2026-06-22 ~15:35 — G3 LIVE RLS isolation check → PASS (Stripe blocker cleared).**
+Ran the live check against the production Supabase project (`pvamosrjqgzeuymwkruv`) via the Supabase CLI (logged
+in) + the public REST/Auth API + the deployed `/api/admin/invoices`, as real anon + two self-provisioned
+authenticated test clients (email confirmation is OFF). Results: **RLS is enabled & enforcing on BOTH tables**
+(anon + authenticated INSERTs rejected with Postgres `42501` row-level-security violations on `invoices` AND
+`invoice_items`); **cross-tenant reads blocked** (anon, client A, client B all read `[]`, including A explicitly
+querying B's id); **no client writes** (insert denied, cross-user delete affects 0 rows); **admin route** GET→405,
+no/garbage token→401, **valid non-admin token→403**. This resolves the IV-GATE item — RLS isolation is now
+confirmed live, not just present in the migration. **Cleanup owed:** 3 throwaway test users were created in prod
+auth (no data) and should be deleted — `sectest+uyr9el0c@websharke.com`, `sectest+ah1oxgzje@websharke.com`,
+`sectest+b3sdbm0po@websharke.com`. Still no production code changed.
 
 ## 2026-06-22 09:00 - Manager - add-developer-role
 

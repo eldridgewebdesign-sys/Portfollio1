@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="description" content="A 1970s editorial / classic-print VINTAGE website TEMPLATE with realistic swappable placeholder copy. No brand, no logo — built to re-skin. Self-contained, no CDN.">
+<meta name="robots" content="noindex">
+<title>Vintage editorial — demo template</title>
+
+<!-- ============================================================================
+     VINTAGE / RETRO reusable TEMPLATE — committed era: 1970s EDITORIAL / CLASSIC PRINT.
+     Warm cream paper, deep ink, rationed mustard + rust accents (faded teal as a 4th).
+     Period devices used as FLAVOUR, not costume: column rules, hairline borders, a drop
+     cap, ticket / stamp / rosette motifs as inline SVG, and a very-low-opacity SVG grain.
+     - NO logo / NO wordmark image. A bracketed "[Company Name]" slot stands in. The favicon
+       is a neutral geometric data-URI rosette built from THIS palette (no letter).
+     - Self-contained: inline <style>/<script>, fonts from the repo /fonts (relative ../../),
+       zero CDN / zero network calls, zero raster images (every visual is SVG/CSS).
+     - Re-skin the whole template from the :root token block below.
+     - Every editable region is marked "SWAP:".
+     - No <base>: in-page links are #fragments; SVG colour is fill="currentColor" or a literal
+       hex (CSS var() does NOT resolve inside SVG presentation attributes).
+     ========================================================================= -->
+
+<!-- Favicon — neutral geometric rosette/stamp (no letter, no wordmark). Palette:
+     %23f3ead6 cream, %231f1a14 ink, %23b5471f rust, %23c98a1e mustard. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23f3ead6'/><circle cx='16' cy='16' r='12.5' fill='none' stroke='%231f1a14' stroke-width='1.6'/><circle cx='16' cy='16' r='8.5' fill='none' stroke='%231f1a14' stroke-width='1'/><circle cx='16' cy='16' r='4' fill='%23b5471f'/><g stroke='%23c98a1e' stroke-width='1.4'><path d='M16 1.5V6M16 26v4.5M1.5 16H6M26 16h4.5'/></g></svg>">
+
+<style>
+/* ── Fonts: vendored woff2 (relative ../../fonts, no CDN). Display=Cormorant Garamond,
+      body/UI=Mulish. Georgia + a mono system stack carry extra "print" flavour with no
+      downloaded font. Paths resolve to the repo /fonts from demos/vintage/ both when served
+      (/demos/vintage → /fonts) and via file://; re-point if you move this file's depth. ── */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/cormorantgaramond-600.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/cormorantgaramond-700.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(../../fonts/cormorantgaramond-500i.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(../../fonts/mulish-400.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(../../fonts/mulish-500.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/mulish-600.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/mulish-700.woff2) format('woff2')}
+
+/* ── :root — RE-SKIN THE WHOLE TEMPLATE FROM HERE ──────────────────────────── */
+:root{
+  /* SWAP: 1970s print palette — cream paper, deep ink, mustard + rust, faded teal */
+  --paper:#f3ead6;        /* page canvas — warm cream newsprint (never pure #fff) */
+  --paper-2:#ece0c6;      /* deeper cream — raised panels / alternating bands */
+  --card:#f8f1e0;         /* lightest card stock */
+  --ink:#1f1a14;          /* body text, rules, borders — warm near-black (never #000) */
+  --ink-soft:#544b3c;     /* secondary text on cream (passes 4.5:1) */
+  --rust:#b5471f;         /* primary accent — burnt rust (small text + fills) */
+  --rust-deep:#8f3717;    /* deeper rust — large-fill text / hovers */
+  --mustard:#c98a1e;      /* secondary accent — goldenrod / mustard */
+  --mustard-deep:#9a6710; /* mustard for SMALL text on cream (passes 4.5:1) */
+  --teal:#2f6b62;         /* rationed 4th — faded teal / avocado-adjacent */
+  --line:#cdbf9f;         /* hairline rule on cream */
+  --line-strong:#b3a47f;  /* stronger hairline / column rule */
+
+  --focus:0 0 0 2px var(--paper),0 0 0 4px var(--rust);
+  --ease:cubic-bezier(.2,.8,.25,1);
+  --maxw:1180px;
+  --pad:clamp(1.2rem,5vw,2.6rem);
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Mulish',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,Menlo,Consolas,'Courier New',monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-weight:400;line-height:1.62;
+  font-size:clamp(1rem,.97rem + .18vw,1.0625rem);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{color:inherit}
+h1,h2,h3,h4{margin:0;font-family:var(--serif);font-weight:600;letter-spacing:-.005em;line-height:1.02}
+p{margin:0}
+ul,ol{margin:0}
+
+/* Static print grain — warms the cream, alpha capped so it never dims text */
+.grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size:200px 200px;mix-blend-mode:multiply}
+
+/* ── Typography primitives ─────────────────────────────────────────────────── */
+.serif{font-family:var(--serif)}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font-family:var(--sans);font-weight:700;
+  font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--rust);margin:0 0 1.2rem}
+.eyebrow .idx{font-family:var(--mono);font-weight:400;font-size:.72rem;letter-spacing:.1em;color:var(--ink-soft)}
+.eyebrow.neutral{color:var(--ink-soft)}
+.eyebrow .dash{width:1.9rem;height:1px;background:var(--rust)}
+.std{color:var(--ink-soft);max-width:46ch;font-size:clamp(1.02rem,.98rem + .25vw,1.16rem)}
+.kicker{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--rust-deep)}
+em{font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.05em;color:var(--rust-deep)}
+
+/* ── Layout helpers ────────────────────────────────────────────────────────── */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);position:relative;z-index:1}
+section{padding:clamp(3.6rem,8vw,6.5rem) 0;position:relative;z-index:1}
+.rule-top{border-top:1px solid var(--line)}
+.dbl-rule{border-top:3px double var(--line-strong)}
+
+/* ── Reveal-on-scroll (visible-by-default if JS/IO never fires) ─────────────── */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.rv.on{opacity:1;transform:none}
+.d1{transition-delay:.07s}.d2{transition-delay:.14s}.d3{transition-delay:.21s}.d4{transition-delay:.28s}.d5{transition-delay:.35s}
+
+/* ── Skip link + focus ─────────────────────────────────────────────────────── */
+.skip{position:absolute;left:-9999px;top:0;z-index:80;background:var(--ink);color:var(--paper);
+  padding:.7rem 1.1rem;font-weight:700;text-decoration:none}
+.skip:focus{left:1rem;top:1rem}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{
+  outline:none;box-shadow:var(--focus);border-radius:2px}
+@media (forced-colors:active){a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid CanvasText;outline-offset:2px}}
+
+/* ── Buttons — pressed "letterpress" chips ─────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--sans);font-weight:700;
+  font-size:.86rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;cursor:pointer;
+  padding:.85rem 1.5rem;border:1.5px solid var(--ink);border-radius:2px;background:var(--card);color:var(--ink);
+  transition:transform .2s var(--ease),background .2s var(--ease),color .2s var(--ease),box-shadow .2s var(--ease)}
+.btn .arr{transition:transform .25s var(--ease)}
+.btn:hover .arr,.btn:focus-visible .arr{transform:translateX(3px)}
+.btn-fill{background:var(--ink);color:var(--paper)}
+.btn-fill:hover,.btn-fill:focus-visible{background:var(--rust-deep);border-color:var(--rust-deep)}
+.btn-ghost:hover,.btn-ghost:focus-visible{background:var(--ink);color:var(--paper)}
+.btn-lg{padding:1rem 1.8rem;font-size:.92rem}
+
+/* ── Stamp / rosette badge ─────────────────────────────────────────────────── */
+.stamp{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  width:122px;height:122px;border-radius:50%;border:2px solid var(--rust);color:var(--rust-deep);
+  background:transparent;transform:rotate(-9deg);position:relative;flex:0 0 auto}
+.stamp::before{content:"";position:absolute;inset:7px;border:1px dashed var(--rust);border-radius:50%}
+.stamp .top{font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase}
+.stamp .big{font-family:var(--serif);font-weight:700;font-size:1.55rem;line-height:1;margin:.12rem 0}
+.stamp .bot{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em}
+
+/* ── Header / nav (masthead) ───────────────────────────────────────────────── */
+.masthead{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:1px solid transparent;
+  transition:border-color .35s var(--ease),box-shadow .35s var(--ease)}
+.masthead.scrolled{border-bottom:1px solid var(--ink);box-shadow:0 1px 0 rgba(31,26,20,.05)}
+.nav{max-width:var(--maxw);margin:0 auto;padding:.7rem var(--pad);display:flex;align-items:center;gap:1.4rem}
+/* Brand SLOT — bracketed name, no logo image. Vol/No flavour line under it. */
+.brand{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);flex-shrink:0;line-height:1}
+.brand .name{font-family:var(--serif);font-weight:700;font-size:1.4rem;letter-spacing:.01em}
+.brand .meta{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);margin-top:.18rem}
+.nav-desk{display:contents}
+.nav-links{display:flex;align-items:center;gap:1.5rem;margin-left:auto;list-style:none;padding:0}
+.nav-links a{position:relative;text-decoration:none;color:var(--ink);font-family:var(--sans);font-weight:600;
+  font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:-3px;height:1.5px;width:100%;background:var(--rust);
+  transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
+.nav-links a:hover::after,.nav-links a:focus-visible::after{transform:scaleX(1)}
+.nav-cta{margin-left:.4rem}
+.hamburger{display:none;margin-left:auto;width:44px;height:44px;align-items:center;justify-content:center;
+  background:var(--card);border:1.5px solid var(--ink);border-radius:2px;cursor:pointer;color:var(--ink)}
+.hamburger svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round}
+.mobile-panel{display:none}
+
+/* ── Hero ──────────────────────────────────────────────────────────────────── */
+#hero{padding-top:clamp(2.4rem,6vw,4rem);overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.45fr .85fr;gap:clamp(1.6rem,4vw,3.4rem);align-items:center}
+.hero-main{min-width:0}
+.hero-dateline{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-family:var(--mono);
+  font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);
+  padding-bottom:.9rem;margin-bottom:1.4rem;border-bottom:1px solid var(--line)}
+.hero-dateline .b{width:4px;height:4px;border-radius:50%;background:var(--rust)}
+.hero-h1{font-family:var(--serif);font-weight:700;letter-spacing:-.015em;line-height:.96;
+  font-size:clamp(2.9rem,1.5rem + 6.6vw,5.8rem);margin:0}
+.hero-h1 .ln{display:block}
+.hero-h1 .ital{font-style:italic;font-weight:500;color:var(--rust-deep)}
+.hero-sub{margin-top:clamp(1.3rem,3vw,1.9rem);font-family:var(--serif);font-style:italic;font-weight:500;
+  font-size:clamp(1.2rem,1.05rem + .8vw,1.55rem);line-height:1.42;color:var(--ink);max-width:42ch}
+.hero-actions{margin-top:clamp(1.6rem,3vw,2.2rem);display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
+
+/* hero side — ticket-stub card + rosette stamp (pure SVG/CSS) */
+.hero-aside{position:relative;display:flex;flex-direction:column;align-items:center;gap:1.3rem}
+.ticket{width:100%;max-width:300px;background:var(--card);border:1.5px solid var(--ink);border-radius:3px;
+  padding:1.4rem 1.5rem 1.3rem;position:relative;box-shadow:5px 5px 0 var(--paper-2),5px 5px 0 1.5px var(--ink)}
+.ticket::before,.ticket::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;
+  background:var(--paper);border:1.5px solid var(--ink);top:50%;transform:translateY(-50%)}
+.ticket::before{left:-10px}.ticket::after{right:-10px}
+.ticket .perf{position:absolute;left:1rem;right:1rem;top:50%;border-top:1.5px dashed var(--line-strong)}
+.ticket .t-top{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);
+  display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:.6rem;margin-bottom:.8rem}
+.ticket .t-big{font-family:var(--serif);font-weight:700;font-size:2.1rem;line-height:1;margin:0 0 .2rem}
+.ticket .t-cap{font-size:.86rem;color:var(--ink-soft)}
+.ticket .t-foot{margin-top:1.5rem;padding-top:.8rem;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rust-deep)}
+.hero-aside .stamp{align-self:flex-end;margin-right:.4rem}
+
+/* hero foot rule — three-column standfirst, classic newspaper */
+.hero-foot{margin-top:clamp(2.4rem,5vw,3.4rem);padding-top:1.4rem;border-top:3px double var(--line-strong);
+  display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.2rem,3vw,2.4rem)}
+.hero-foot .col{position:relative;padding-left:1.2rem}
+.hero-foot .col:not(:first-child)::before{content:"";position:absolute;left:0;top:.2rem;bottom:.2rem;width:1px;background:var(--line-strong)}
+.hero-foot .num{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;color:var(--rust);display:block;margin-bottom:.4rem}
+.hero-foot h3{font-family:var(--sans);font-weight:700;font-size:.96rem;margin-bottom:.3rem}
+.hero-foot p{color:var(--ink-soft);font-size:.9rem}
+
+/* ── Story (editorial multi-column + drop cap) ─────────────────────────────── */
+#story{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.story-head{max-width:30ch;margin-bottom:clamp(1.8rem,4vw,2.6rem)}
+.story-head h2{font-size:clamp(2rem,1.4rem + 2.8vw,3.2rem)}
+.story-cols{column-count:2;column-gap:clamp(2rem,5vw,3.6rem);column-rule:1px solid var(--line-strong);
+  font-size:1.04rem;line-height:1.7;color:var(--ink)}
+.story-cols p{margin-bottom:1.05rem;break-inside:avoid-column}
+.story-cols p:last-child{margin-bottom:0}
+.story-cols .drop::first-letter{float:left;font-family:var(--serif);font-weight:700;font-size:3.9em;
+  line-height:.74;padding:.04em .12em 0 0;color:var(--rust-deep)}
+.story-pull{margin:1.2rem 0;padding:.2rem 0 .2rem 1.1rem;border-left:3px solid var(--rust);
+  font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.5rem;line-height:1.28;color:var(--ink);break-inside:avoid}
+.story-sign{margin-top:1.4rem;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+
+/* ── Services / menu (ticket-style cards) ──────────────────────────────────── */
+.svc-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1.5rem;flex-wrap:wrap;margin-bottom:clamp(2rem,4vw,3rem)}
+.svc-head h2{font-size:clamp(2rem,1.4rem + 2.8vw,3.2rem);max-width:14ch}
+.menu{counter-reset:dish;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1rem,2.4vw,1.5rem)}
+.dish{counter-increment:dish;position:relative;display:flex;flex-direction:column;background:var(--card);
+  border:1.5px solid var(--ink);border-radius:3px;padding:1.6rem 1.5rem 1.4rem;text-decoration:none;color:var(--ink);
+  transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .35s var(--ease)}
+.dish::before{content:"";position:absolute;left:-1.5px;right:-1.5px;top:-1.5px;height:6px;border-radius:3px 3px 0 0;background:var(--ac,var(--rust))}
+.dish:nth-child(4n+1){--ac:var(--rust)}
+.dish:nth-child(4n+2){--ac:var(--mustard)}
+.dish:nth-child(4n+3){--ac:var(--teal)}
+.dish:nth-child(4n+4){--ac:var(--ink)}
+.dish .dish-no{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;color:var(--ink-soft)}
+.dish .dish-no::before{content:"No. " counter(dish,decimal-leading-zero)}
+.dish .motif{width:42px;height:42px;margin:.9rem 0 1rem;color:var(--ac,var(--rust))}
+.dish .motif svg{width:100%;height:100%;display:block}
+.dish h3{font-family:var(--serif);font-weight:700;font-size:1.55rem;margin-bottom:.4rem;display:flex;align-items:baseline;gap:.6rem}
+.dish h3 .lead-dots{flex:1;border-bottom:1.5px dotted var(--line-strong);transform:translateY(-.18em)}
+.dish h3 .price{font-family:var(--mono);font-size:.82rem;letter-spacing:.04em;color:var(--rust-deep)}
+.dish p{color:var(--ink-soft);font-size:.96rem;flex:1}
+.dish .more{margin-top:1.1rem;display:inline-flex;align-items:center;gap:.4rem;font-family:var(--sans);font-weight:700;
+  font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.dish .more .arr{transition:transform .25s var(--ease)}
+.dish:hover,.dish:focus-visible{transform:translateY(-4px);background:var(--paper);box-shadow:0 14px 30px rgba(31,26,20,.1)}
+.dish:hover .more .arr,.dish:focus-visible .more .arr{transform:translateX(3px)}
+
+/* ── Stats band ────────────────────────────────────────────────────────────── */
+#figures{background:var(--ink);color:var(--paper);border-top:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+#figures .eyebrow{color:var(--mustard)}
+.fig-head{max-width:28ch;margin-bottom:clamp(1.6rem,3.5vw,2.4rem)}
+.fig-head h2{color:var(--paper);font-size:clamp(1.8rem,1.3rem + 2.4vw,2.8rem)}
+.figs{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.4rem,4vw,3rem);
+  border-top:1px solid rgba(243,234,214,.22);padding-top:clamp(1.8rem,4vw,2.8rem)}
+.fig{position:relative}
+.fig .n{font-family:var(--serif);font-weight:700;line-height:.9;font-size:clamp(2.8rem,2rem + 3.6vw,4.6rem);color:var(--paper)}
+.fig .n .mk{color:var(--mustard)}
+.fig .l{margin-top:.5rem;font-size:.92rem;color:rgba(243,234,214,.78);max-width:22ch}
+
+/* ── Press clippings (testimonials) ────────────────────────────────────────── */
+.clips{display:grid;grid-template-columns:repeat(12,1fr);gap:clamp(1rem,2.4vw,1.6rem);align-items:start}
+.clip{background:var(--card);border:1px solid var(--line-strong);border-radius:2px;padding:1.5rem 1.5rem 1.4rem;
+  position:relative;box-shadow:3px 3px 0 var(--paper-2)}
+.clip:nth-child(odd){transform:rotate(-.8deg)}
+.clip:nth-child(even){transform:rotate(.7deg)}
+.clip .clip-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+  border-bottom:1px solid var(--line);padding-bottom:.6rem;margin-bottom:.9rem}
+.clip .pub{font-family:var(--serif);font-weight:700;font-size:1.05rem}
+.clip .date{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.clip .stars{color:var(--mustard-deep);font-size:.95rem;letter-spacing:.12em;margin-bottom:.5rem}
+.clip blockquote{margin:0;font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.16rem;line-height:1.4;color:var(--ink)}
+.clip .by{margin-top:1rem;font-family:var(--sans);font-weight:700;font-size:.82rem}
+.clip .role{font-size:.78rem;color:var(--ink-soft)}
+.clip.lead{grid-column:span 6}
+.clip.lead blockquote{font-size:clamp(1.3rem,1.05rem + 1.1vw,1.7rem);line-height:1.34}
+.clip.col{grid-column:span 3}
+@media (max-width:980px){.clip.lead{grid-column:span 12}.clip.col{grid-column:span 6}}
+
+/* ── CTA band ──────────────────────────────────────────────────────────────── */
+#cta{background:var(--rust);color:var(--paper);border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);text-align:center}
+#cta .eyebrow{color:var(--paper);opacity:.85}
+.cta-h{font-family:var(--serif);font-weight:700;line-height:1;font-size:clamp(2.2rem,1.5rem + 3.4vw,4rem);
+  color:var(--paper);max-width:18ch;margin:0 auto}
+.cta-h .ital{font-style:italic;font-weight:500}
+.cta-sub{margin:1.3rem auto 1.9rem;max-width:46ch;color:rgba(243,234,214,.9);font-size:1.05rem}
+.cta-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+#cta .btn-fill{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+#cta .btn-fill:hover,#cta .btn-fill:focus-visible{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#cta .btn-ghost{color:var(--paper);border-color:var(--paper)}
+#cta .btn-ghost:hover,#cta .btn-ghost:focus-visible{background:var(--paper);color:var(--ink)}
+
+/* ── Contact ───────────────────────────────────────────────────────────────── */
+#contact{background:var(--paper-2);border-top:1px solid var(--line)}
+.contact-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(2rem,5vw,4.5rem);align-items:start}
+.contact-intro{font-family:var(--serif);font-style:italic;font-weight:500;font-size:clamp(1.5rem,1.2rem + 1.3vw,2.1rem);
+  line-height:1.3;color:var(--ink);margin-bottom:1.8rem;max-width:24ch}
+.form-row{margin-bottom:1.15rem}
+.form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:1.15rem;margin-bottom:0}
+.form-row.two .form-row{margin-bottom:1.15rem}
+label{display:block;font-family:var(--sans);font-weight:700;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:.45rem;color:var(--ink)}
+label .opt{font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink-soft)}
+input,textarea{width:100%;font-family:var(--sans);font-size:1rem;color:var(--ink);background:var(--card);
+  border:1.5px solid var(--line-strong);border-radius:2px;padding:.78rem .9rem;transition:border-color .25s var(--ease)}
+input::placeholder,textarea::placeholder{color:#8a8068}
+input:hover,textarea:hover{border-color:var(--ink-soft)}
+input:focus,textarea:focus{outline:none;border-color:var(--rust)}
+textarea{resize:vertical;min-height:118px}
+.form-note{margin-top:1rem;font-family:var(--sans);font-size:.92rem;color:var(--rust-deep);font-weight:700;display:none}
+.form-note.show{display:block}
+.contact-card{background:var(--card);border:1.5px solid var(--ink);border-radius:3px;padding:1.6rem 1.6rem 1.4rem;position:relative}
+.contact-card .eyebrow{margin-bottom:1.2rem}
+.contact-card dl{margin:0}
+.contact-card dt{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-top:1.2rem}
+.contact-card dt:first-of-type{margin-top:0}
+.contact-card dd{margin:.3rem 0 0;font-size:1rem}
+.contact-card .hours-rule{margin:1.3rem 0 0;border:0;border-top:1px solid var(--line)}
+
+/* ── Footer (colophon) ─────────────────────────────────────────────────────── */
+.colophon{background:var(--ink);color:var(--paper)}
+.colo-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2rem;padding:clamp(2.6rem,6vw,4rem) 0 clamp(1.8rem,4vw,2.6rem)}
+.colo-brand .name{font-family:var(--serif);font-weight:700;font-size:1.5rem}
+.colo-brand .meta{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(243,234,214,.6);margin-top:.4rem}
+.colo-brand .tag{font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.08rem;color:rgba(243,234,214,.8);margin-top:1rem;max-width:30ch}
+.colo-col h4{font-family:var(--sans);font-weight:700;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mustard);margin:0 0 1rem}
+.colo-col ul{list-style:none;margin:0;padding:0}
+.colo-col li{margin-bottom:.55rem}
+.colo-col a{color:rgba(243,234,214,.85);text-decoration:none;font-size:.94rem;transition:color .25s}
+.colo-col a:hover,.colo-col a:focus-visible{color:var(--mustard)}
+.colo-bottom{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;
+  padding:1.5rem 0 2.2rem;border-top:1px solid rgba(243,234,214,.2)}
+.colo-legal{font-size:.84rem;color:rgba(243,234,214,.62)}
+.demo-flag{display:inline-block;font-family:var(--sans);font-size:.74rem;font-weight:700;letter-spacing:.04em;
+  color:var(--paper);background:var(--rust);border:1px solid var(--rust-deep);border-radius:100px;padding:.3rem .85rem;margin-left:.5rem}
+.socials{display:flex;gap:.6rem}
+.socials a{width:38px;height:38px;border:1px solid rgba(243,234,214,.3);border-radius:2px;display:flex;align-items:center;justify-content:center;
+  color:rgba(243,234,214,.7);transition:color .25s,border-color .25s}
+.socials a:hover,.socials a:focus-visible{color:var(--mustard);border-color:var(--mustard)}
+.socials svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr;gap:2.4rem}
+  .hero-aside{flex-direction:row;align-items:center;justify-content:space-between}
+  .hero-aside .stamp{align-self:center;margin-right:0}
+  .hero-foot{grid-template-columns:1fr;gap:0}
+  .hero-foot .col{padding-left:0;padding:1.1rem 0;border-top:1px solid var(--line)}
+  .hero-foot .col:not(:first-child)::before{display:none}
+  .menu{grid-template-columns:repeat(2,1fr)}
+  .figs{grid-template-columns:1fr;gap:1.6rem}
+  .contact-grid{grid-template-columns:1fr;gap:2.4rem}
+  .colo-top{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  .nav-desk{display:none}
+  .hamburger{display:flex}
+  .mobile-panel.open{display:block;border-top:1px solid var(--ink);background:var(--paper)}
+  .mobile-panel ul{list-style:none;margin:0;padding:.4rem var(--pad) 1.1rem}
+  .mobile-panel li{border-bottom:1px solid var(--line)}
+  .mobile-panel a{display:block;padding:.85rem 0;text-decoration:none;color:var(--ink);font-family:var(--sans);
+    font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}
+  .story-cols{column-count:1}
+  .menu{grid-template-columns:1fr}
+  .hero-aside{flex-direction:column}
+  .clip:nth-child(odd),.clip:nth-child(even){transform:none}
+  .form-row.two{grid-template-columns:1fr;gap:0}
+  .colo-top{grid-template-columns:1fr;gap:1.6rem}
+}
+
+/* ── Reduced motion: freeze everything, reveal all content ─────────────────── */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1!important;transform:none!important}
+  .clip:nth-child(odd),.clip:nth-child(even){transform:none!important}
+}
+
+/* ── No-JS fallback ────────────────────────────────────────────────────────── */
+.no-js .rv{opacity:1;transform:none}
+.no-js .hamburger{display:none}
+@media (max-width:640px){.no-js .mobile-panel{display:block}}
+</style>
+
+<!-- No-JS safety: never leave revealed content hidden -->
+<noscript><style>.rv{opacity:1!important;transform:none!important}.hamburger{display:none!important}.mobile-panel{display:block!important}</style></noscript>
+</head>
+
+<body class="no-js">
+<script>document.body.classList.remove('no-js');</script>
+
+<a class="skip" href="#main">Skip to content</a>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ════════ MASTHEAD / NAV ════════ -->
+<header class="masthead" id="top">
+  <nav class="nav" aria-label="Primary">
+    <!-- SWAP: brand name slot (bracketed) + the Vol/No flavour line. No logo image by design. -->
+    <a class="brand" href="#top" aria-label="[Company Name] — home">
+      <span class="name">[Company&nbsp;Name]</span>
+      <span class="meta">Est. 1974 · Vol. IV · No. 07</span>
+    </a>
+    <div class="nav-desk">
+      <ul class="nav-links">
+        <li><a href="#story">Story</a></li>
+        <li><a href="#services">Catalogue</a></li>
+        <li><a href="#figures">Figures</a></li>
+        <li><a href="#press">Press</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <a class="btn btn-fill nav-cta" href="#contact">Enquire <span class="arr" aria-hidden="true">→</span></a>
+    </div>
+    <button class="hamburger" type="button" aria-expanded="false" aria-controls="mobile-panel" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </nav>
+  <div class="mobile-panel" id="mobile-panel">
+    <ul>
+      <li><a href="#story">Story</a></li>
+      <li><a href="#services">Catalogue</a></li>
+      <li><a href="#figures">Figures</a></li>
+      <li><a href="#press">Press</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li><a href="#contact">Enquire →</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ════════ 1 · HERO ════════ -->
+  <section id="hero" aria-labelledby="hero-h1">
+    <div class="wrap">
+      <!-- SWAP: dateline (left-to-right reads like a newspaper masthead line) -->
+      <p class="hero-dateline rv">
+        <span>The Workshop Edition</span><span class="b" aria-hidden="true"></span>
+        <span>Goods &amp; Counsel since 1974</span><span class="b" aria-hidden="true"></span>
+        <span>Made by hand, sold by name</span>
+      </p>
+
+      <div class="hero-grid">
+        <div class="hero-main">
+          <!-- SWAP: headline — keep one italic accent word -->
+          <h1 class="hero-h1 rv d1" id="hero-h1">
+            <span class="ln">Old-world</span>
+            <span class="ln"><span class="ital">craft,</span> built for</span>
+            <span class="ln">the long haul.</span>
+          </h1>
+          <!-- SWAP: standfirst -->
+          <p class="hero-sub rv d2">A small house making honest goods and plain counsel — the slow way, on purpose, the way it was done before the rush.</p>
+          <div class="hero-actions rv d3">
+            <a class="btn btn-fill btn-lg" href="#services">View the catalogue <span class="arr" aria-hidden="true">→</span></a>
+            <a class="btn btn-ghost btn-lg" href="#story">Read our story</a>
+          </div>
+        </div>
+
+        <!-- ticket stub + rosette stamp — pure SVG/CSS, no photo -->
+        <aside class="hero-aside rv d2" aria-hidden="true">
+          <div class="ticket">
+            <span class="perf"></span>
+            <div class="t-top"><span>Admit one</span><span>Series&nbsp;A</span></div>
+            <p class="t-big">Since 1974</p>
+            <p class="t-cap">Fifty years of doing one thing properly.</p>
+            <p class="t-foot">No. 0001 — keep this stub</p>
+          </div>
+          <span class="stamp">
+            <span class="top">Approved</span>
+            <span class="big">100%</span>
+            <span class="bot">Hand-made</span>
+          </span>
+        </aside>
+      </div>
+
+      <!-- SWAP: three standfirst pillars -->
+      <div class="hero-foot rv d3">
+        <div class="col"><span class="num">01</span><h3>Built by hand</h3><p>Every piece is made to order in a single small workshop — never on a line, never in a hurry.</p></div>
+        <div class="col"><span class="num">02</span><h3>Plain dealing</h3><p>Fair prices, plain language, and a name we put on the work. No fine print, no upsell.</p></div>
+        <div class="col"><span class="num">03</span><h3>Made to last</h3><p>Materials chosen to outlive a trend — and a guarantee that says we mean it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 2 · STORY (editorial multi-column + drop cap) ════════ -->
+  <section id="story" aria-labelledby="story-h2">
+    <div class="wrap">
+      <div class="story-head">
+        <p class="eyebrow rv"><span class="dash" aria-hidden="true"></span> <span class="idx">[01]</span> Our story</p>
+        <h2 class="rv d1" id="story-h2">A workshop, a name, and one stubborn idea.</h2>
+      </div>
+
+      <!-- SWAP: the editorial story copy. The first paragraph carries the drop cap. -->
+      <div class="story-cols rv d2">
+        <p class="drop">It began the way most good things do — small, and slightly against the advice of everyone sensible. A single bench, a borrowed lamp, and the conviction that things made carefully are worth waiting for. We have never seen a reason to change that.</p>
+        <p>For half a century the rule has stayed the same: take the time it takes. We have turned down work that would have made us bigger and worse, and kept the work that lets us put our name on the result without flinching.</p>
+        <blockquote class="story-pull">"We would rather make fewer, and mean it."</blockquote>
+        <p>The catalogue you are reading is short on purpose. Each entry is something we are glad to make again and again, refined quietly over the years rather than reinvented for the sake of a new season.</p>
+        <p>If a thing can be done by hand and done better, that is how we do it. The slow way is not nostalgia for its own sake — it is simply, still, the way that lasts.</p>
+        <p class="story-sign">— Set by hand · The Workshop · Established 1974</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 3 · CATALOGUE (menu / ticket-style cards) ════════ -->
+  <section id="services" aria-labelledby="svc-h2">
+    <div class="wrap">
+      <div class="svc-head">
+        <div>
+          <p class="eyebrow rv"><span class="dash" aria-hidden="true"></span> <span class="idx">[02]</span> The catalogue</p>
+          <h2 class="rv d1" id="svc-h2">A short list, done properly.</h2>
+        </div>
+        <p class="std rv d2">Six things we are glad to make. Prices are honest, lead times are real, and nothing here is for everyone.</p>
+      </div>
+
+      <!-- Cards auto-number (CSS counter) and auto-cycle accents — add/remove freely (3–6).
+           Each has its OWN motif so meaning isn't carried by colour alone. SWAP all copy. -->
+      <div class="menu">
+        <a class="dish rv" href="#contact">
+          <span class="dish-no" aria-hidden="true"></span>
+          <span class="motif" aria-hidden="true"><!-- compass / direction -->
+            <svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" stroke-width="2"/><path d="M22 10 L27 22 L22 34 L17 22 Z" fill="currentColor"/></svg>
+          </span>
+          <h3>Bespoke goods <span class="lead-dots" aria-hidden="true"></span> <span class="price">from $480</span></h3>
+          <p>Made to order, to your measure. One bench, one maker, start to finish — the slow way that shows.</p>
+          <span class="more">See terms <span class="arr" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="dish rv d1" href="#contact">
+          <span class="dish-no" aria-hidden="true"></span>
+          <span class="motif" aria-hidden="true"><!-- sun / rays -->
+            <svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="8" fill="none" stroke="currentColor" stroke-width="2"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 4v6M22 34v6M4 22h6M34 22h6M9 9l4 4M31 31l4 4M35 9l-4 4M13 31l-4 4"/></g></svg>
+          </span>
+          <h3>Restoration <span class="lead-dots" aria-hidden="true"></span> <span class="price">by quote</span></h3>
+          <p>Bring us the worn and the well-loved. We mend honestly and leave the history showing where it should.</p>
+          <span class="more">See terms <span class="arr" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="dish rv d2" href="#contact">
+          <span class="dish-no" aria-hidden="true"></span>
+          <span class="motif" aria-hidden="true"><!-- pennant / flag -->
+            <svg viewBox="0 0 44 44"><path d="M11 6v32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 8 L36 14 L11 22 Z" fill="currentColor"/></svg>
+          </span>
+          <h3>Counsel <span class="lead-dots" aria-hidden="true"></span> <span class="price">$120 / hr</span></h3>
+          <p>Plain advice from people who have made the mistakes already. No jargon, no theatre — just what we would do.</p>
+          <span class="more">See terms <span class="arr" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="dish rv" href="#contact">
+          <span class="dish-no" aria-hidden="true"></span>
+          <span class="motif" aria-hidden="true"><!-- mug / supplies -->
+            <svg viewBox="0 0 44 44"><rect x="9" y="12" width="22" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M31 16h5a4 4 0 0 1 0 12h-5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 6v4M21 6v4M27 6v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <h3>The supply shelf <span class="lead-dots" aria-hidden="true"></span> <span class="price">from $14</span></h3>
+          <p>Small, useful, ready-to-go. The everyday things we keep stocked because we use them ourselves.</p>
+          <span class="more">See terms <span class="arr" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="dish rv d1" href="#contact">
+          <span class="dish-no" aria-hidden="true"></span>
+          <span class="motif" aria-hidden="true"><!-- mountain / workshops -->
+            <svg viewBox="0 0 44 44"><path d="M5 36 L17 14 L25 28 L31 18 L39 36 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </span>
+          <h3>Workshops <span class="lead-dots" aria-hidden="true"></span> <span class="price">$95 / seat</span></h3>
+          <p>An afternoon at the bench. Small groups, real tools, and something to take home that you actually made.</p>
+          <span class="more">See terms <span class="arr" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="dish rv d2" href="#contact">
+          <span class="dish-no" aria-hidden="true"></span>
+          <span class="motif" aria-hidden="true"><!-- envelope / subscription -->
+            <svg viewBox="0 0 44 44"><rect x="6" y="11" width="32" height="22" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 13 L22 25 L37 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </span>
+          <h3>The dispatch <span class="lead-dots" aria-hidden="true"></span> <span class="price">free</span></h3>
+          <p>A short letter, now and then. New work, the odd opinion, and never a word more than it needs.</p>
+          <span class="more">See terms <span class="arr" aria-hidden="true">→</span></span>
+        </a>
+        <!-- SWAP: add a 7th <a class="dish"> and numbering + colour keep cycling. -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 4 · FIGURES (stats band) ════════ -->
+  <section id="figures" aria-labelledby="fig-h2">
+    <div class="wrap">
+      <div class="fig-head">
+        <p class="eyebrow rv"><span class="dash" aria-hidden="true" style="background:currentColor"></span> <span class="idx" style="color:rgba(243,234,214,.6)">[03]</span> By the numbers</p>
+        <h2 class="rv d1" id="fig-h2">Fifty years, counted honestly.</h2>
+      </div>
+      <!-- SWAP: figures. data-count animates up; the real number shows if JS is off. -->
+      <div class="figs">
+        <div class="fig rv d1"><div class="n"><span class="mk" data-count="50">50</span></div><div class="l">years at the same bench, under the same name</div></div>
+        <div class="fig rv d2"><div class="n"><span class="mk" data-count="6200">6200</span>+</div><div class="l">pieces made to order, each signed and dated</div></div>
+        <div class="fig rv d3"><div class="n"><span class="mk" data-count="97">97</span>%</div><div class="l">of customers who come back, sooner or later</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 5 · PRESS CLIPPINGS (testimonials) ════════ -->
+  <section id="press" class="rule-top" aria-labelledby="press-h2">
+    <div class="wrap">
+      <p class="eyebrow rv"><span class="dash" aria-hidden="true"></span> <span class="idx">[04]</span> In the press <span class="ph-caption" style="color:var(--ink-soft);font-weight:400;letter-spacing:.04em;text-transform:none">(placeholder clippings)</span></p>
+      <h2 class="rv d1" id="press-h2" style="font-size:clamp(2rem,1.4rem + 2.8vw,3.2rem);margin-bottom:clamp(1.8rem,4vw,2.6rem)">Kind words, set in type.</h2>
+
+      <!-- SWAP: testimonials styled as newspaper clippings. First is the larger lead. -->
+      <div class="clips">
+        <figure class="clip lead rv">
+          <div class="clip-head"><span class="pub">The Maker's Review</span><span class="date">Spring · 2026</span></div>
+          <div class="stars" aria-label="5 out of 5">★★★★★</div>
+          <blockquote>"In an age of the disposable, finding a house that still measures twice and means it feels almost radical. We left with one piece and the urge to throw out three."</blockquote>
+          <figcaption><div class="by">Eleanor Hartwell</div><div class="role">Editor-at-large, The Maker's Review (placeholder)</div></figcaption>
+        </figure>
+
+        <figure class="clip col rv d1">
+          <div class="clip-head"><span class="pub">Bench &amp; Bevel</span><span class="date">Jan · 2026</span></div>
+          <div class="stars" aria-label="5 out of 5">★★★★★</div>
+          <blockquote>"Quietly the best in town. They under-promise, then quietly over-deliver."</blockquote>
+          <figcaption><div class="by">Marcus Ovie</div><div class="role">Columnist (placeholder)</div></figcaption>
+        </figure>
+
+        <figure class="clip col rv d2">
+          <div class="clip-head"><span class="pub">Town Gazette</span><span class="date">Nov · 2025</span></div>
+          <div class="stars" aria-label="5 out of 5">★★★★★</div>
+          <blockquote>"Worth the wait, every time. The kind of place you tell your friends about — then hope they don't book first."</blockquote>
+          <figcaption><div class="by">Priya Anand</div><div class="role">Local correspondent (placeholder)</div></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 6 · CTA BAND ════════ -->
+  <section id="cta" aria-labelledby="cta-h2">
+    <div class="wrap">
+      <p class="eyebrow rv">Take the slow road with us</p>
+      <!-- SWAP: closing headline -->
+      <h2 class="cta-h rv d1" id="cta-h2">Start something <span class="ital">made to last.</span></h2>
+      <p class="cta-sub rv d2">Tell us what you have in mind. We take a small number of commissions at a time — so the right fit matters to us as much as to you.</p>
+      <div class="cta-actions rv d3">
+        <a class="btn btn-fill btn-lg" href="#contact">Begin an enquiry <span class="arr" aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost btn-lg" href="#services">Browse the catalogue</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 7 · CONTACT ════════ -->
+  <section id="contact" aria-labelledby="contact-h2">
+    <div class="wrap">
+      <div class="contact-grid">
+        <div>
+          <p class="eyebrow rv"><span class="dash" aria-hidden="true"></span> <span class="idx">[05]</span> Write to us</p>
+          <!-- SWAP: contact intro -->
+          <p class="contact-intro rv d1" id="contact-h2">If any of this sounds like your sort of thing, we'd be glad to hear from you.</p>
+
+          <!-- INERT demo form: no action/endpoint, JS preventDefault, no network requests -->
+          <form id="contact-form" class="rv d2" novalidate>
+            <div class="form-row two">
+              <div class="form-row">
+                <label for="cf-name">Name</label>
+                <input type="text" id="cf-name" name="name" autocomplete="name" placeholder="Your name">
+              </div>
+              <div class="form-row">
+                <label for="cf-email">Email</label>
+                <input type="email" id="cf-email" name="email" autocomplete="email" placeholder="you@example.com">
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="cf-subject">Subject <span class="opt">(optional)</span></label>
+              <input type="text" id="cf-subject" name="subject" placeholder="A commission, a question, a hello">
+            </div>
+            <div class="form-row">
+              <label for="cf-message">Message</label>
+              <textarea id="cf-message" name="message" placeholder="A line or two about what you have in mind."></textarea>
+            </div>
+            <button class="btn btn-fill btn-lg" type="submit">Send your note <span class="arr" aria-hidden="true">→</span></button>
+            <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <aside class="contact-card rv d2">
+          <!-- SWAP: contact details -->
+          <p class="eyebrow neutral">The particulars</p>
+          <dl>
+            <dt>By post</dt><dd>[14 Tannery Row,<br>Old Quarter, Portland]</dd>
+            <dt>By telephone</dt><dd>[+1 (555) 010-1974]</dd>
+            <dt>By wire</dt><dd>[hello@company.example]</dd>
+          </dl>
+          <hr class="hours-rule">
+          <dl>
+            <dt>The shop is open</dt><dd>[Tue–Sat · 9 to 5]<br>[Closed Sun &amp; Mon]</dd>
+          </dl>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ════════ COLOPHON / FOOTER ════════ -->
+<footer class="colophon">
+  <div class="wrap">
+    <div class="colo-top">
+      <div class="colo-brand">
+        <!-- SWAP: footer brand slot (matches the masthead; no logo image) -->
+        <div class="name">[Company&nbsp;Name]</div>
+        <div class="meta">Est. 1974 · Vol. IV · No. 07</div>
+        <p class="tag">A small house making honest goods and plain counsel — the slow way, on purpose.</p>
+      </div>
+      <nav class="colo-col" aria-label="Catalogue">
+        <h4>Catalogue</h4>
+        <ul>
+          <li><a href="#services">Bespoke goods</a></li>
+          <li><a href="#services">Restoration</a></li>
+          <li><a href="#services">Counsel</a></li>
+          <li><a href="#services">Workshops</a></li>
+        </ul>
+      </nav>
+      <nav class="colo-col" aria-label="The house">
+        <h4>The house</h4>
+        <ul>
+          <li><a href="#story">Our story</a></li>
+          <li><a href="#figures">By the numbers</a></li>
+          <li><a href="#press">In the press</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+      <nav class="colo-col" aria-label="Particulars">
+        <h4>Particulars</h4>
+        <ul>
+          <li><a href="#">Guarantee</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="colo-bottom">
+      <!-- SWAP: footer legal -->
+      <p class="colo-legal">© [1974–2026] [Company Name]. Set and printed as a demonstration.
+        <span class="demo-flag">Demo template — placeholder content</span>
+      </p>
+      <div class="socials" aria-label="Social links (placeholder)">
+        <a href="#" aria-label="Correspondence (placeholder)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M4 8l8 5 8-5"/></svg>
+        </a>
+        <a href="#" aria-label="Journal (placeholder)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h10l4 4v12H6z"/><path d="M16 4v4h4"/><path d="M9 12h7M9 15.5h7"/></svg>
+        </a>
+        <a href="#" aria-label="Directory (placeholder)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  /* Sticky masthead border once scrolled */
+  var head = document.querySelector(".masthead");
+  function onScroll(){ if(head) head.classList.toggle("scrolled", window.scrollY > 8); }
+  window.addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+  /* Mobile menu toggle */
+  var burger = document.querySelector(".hamburger");
+  var panel  = document.getElementById("mobile-panel");
+  if(burger && panel){
+    burger.addEventListener("click", function(){
+      var open = panel.classList.toggle("open");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+      burger.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    });
+    panel.addEventListener("click", function(e){
+      if(e.target.closest("a")){
+        panel.classList.remove("open");
+        burger.setAttribute("aria-expanded","false");
+        burger.setAttribute("aria-label","Open menu");
+      }
+    });
+  }
+
+  /* Reveal-on-scroll — visible-by-default if IO is unavailable or reduced motion */
+  var rvs = Array.prototype.slice.call(document.querySelectorAll(".rv"));
+  if(reduce || !("IntersectionObserver" in window)){
+    rvs.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add("on"); io.unobserve(en.target); }
+      });
+    }, {threshold:0.14, rootMargin:"0px 0px -8% 0px"});
+    rvs.forEach(function(el){ io.observe(el); });
+  }
+
+  /* Count-up figures (final value already in the DOM, so no-JS shows it) */
+  var nums = Array.prototype.slice.call(document.querySelectorAll("[data-count]"));
+  function countUp(el){
+    var target = parseInt(el.getAttribute("data-count"), 10);
+    if(isNaN(target)) return;
+    if(reduce){ el.textContent = target.toLocaleString(); return; }
+    var start = null, dur = 1200;
+    function step(ts){
+      if(start === null) start = ts;
+      var p = Math.min((ts - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased).toLocaleString();
+      if(p < 1) requestAnimationFrame(step);
+    }
+    el.textContent = "0";
+    requestAnimationFrame(step);
+  }
+  if(!reduce && "IntersectionObserver" in window){
+    var sio = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ countUp(en.target); sio.unobserve(en.target); }
+      });
+    }, {threshold:0.5});
+    nums.forEach(function(el){ sio.observe(el); });
+  } else {
+    nums.forEach(function(el){ var t=parseInt(el.getAttribute("data-count"),10); if(!isNaN(t)) el.textContent=t.toLocaleString(); });
+  }
+
+  /* INERT contact form: never sends; shows inline demo notice only */
+  var form = document.getElementById("contact-form");
+  var note = document.getElementById("form-note");
+  if(form && note){
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      note.textContent = "Thanks — this is a demonstration form, so nothing was sent.";
+      note.classList.add("show");
+    });
+  }
+})();
+</script>
+</body>
+</html>

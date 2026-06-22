@@ -32,6 +32,44 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+## 2026-06-22 15:35 - Security - G3-live-rls-isolation-verified
+
+Area Reviewed:
+**LIVE** verification of invoice RLS isolation + the admin route, against the production Supabase project
+(`pvamosrjqgzeuymwkruv`) and the deployed `/api/admin/invoices`. Run via the Supabase CLI (logged in) + the
+public REST/Auth API as real anon + two freshly-provisioned authenticated clients (email confirmation is OFF).
+**Resolves the IV-GATE item below.**
+
+Finding:
+**PASS — RLS is enabled and enforcing in production, client isolation holds, clients cannot write, and the admin
+route rejects non-admins.** Every G3 sub-check passed against the live system.
+
+Severity:
+Resolves the verification gate → confirmed safe (was the one hard Stripe blocker).
+
+Evidence:
+- **RLS ON + enforcing on BOTH tables:** anon `INSERT invoices` → 401 Postgres `42501 new row violates
+  row-level security policy for "invoices"`; authenticated client `INSERT invoices` → 403 `42501 ... "invoices"`;
+  authenticated client `INSERT invoice_items` → 403 `42501 ... "invoice_items"`. (42501 = RLS denial; if RLS were
+  disabled these would have succeeded — so RLS is provably live with the policy set active.)
+- **Cross-tenant read isolation:** anon read invoices/items → `[]`; authed client A read all invoices → `[]`, all
+  invoice_items → `[]`, and `?client_user_id=eq.<B-uuid>` → `[]`; symmetric for client B. No other user's row was
+  ever returned.
+- **No client writes:** client INSERT (even for self) denied (42501); DELETE of another user's invoices → 204 /
+  0 rows (scoped to none). No client INSERT/UPDATE/DELETE policy exists.
+- **Admin route:** GET → 405 (deployed); POST no token → 401; POST garbage token → 401; POST with a **valid
+  non-admin session token → 403 "admin access required"**. A normal client cannot create invoices via the route.
+
+Recommendation:
+G3 is cleared — safe to proceed to Stripe on the isolation front. *Optional 100%-positive flourish:* have the
+admin create ONE invoice for a test client via the admin UI, then confirm a different client's session returns 0
+rows for it (the policy is already proven active, so this is confirmation, not a gap). **Cleanup required:** 3
+throwaway test users were created in production auth and hold no data — delete them (Supabase → Authentication →
+Users): `sectest+uyr9el0c@websharke.com`, `sectest+ah1oxgzje@websharke.com`, `sectest+b3sdbm0po@websharke.com`.
+
+Status:
+Verified / PASS. Clears IV-GATE; invoice RLS isolation confirmed live in production.
+
 ### Invoice system pre-Stripe review — 2026-06-22 — Security — invoice-security-review
 
 > Full security review of the custom-invoice system (phase 1, NO Stripe yet) before moving to payments.
@@ -100,7 +138,9 @@ Recommendation:
 check — signed in as client A, attempt to read client B's invoice id over the anon key and confirm **0 rows**.
 
 Status:
-New (verification item for the Manager / owner — gates the "safe to proceed" verdict).
+**Verified live — PASS (2026-06-22 15:35; see the G3 entry above).** RLS confirmed enabled + enforcing on both
+tables in production (anon + authenticated INSERTs rejected with Postgres 42501; cross-tenant reads return 0
+rows; admin route 401/403). No longer a blocker.
 
 ## 2026-06-22 15:00 - Security - invoice-draft-readable-by-client
 

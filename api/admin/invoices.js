@@ -306,49 +306,30 @@ module.exports = async (req, res) => {
       return res.status(404).json({ error: "No client found for the supplied client_user_id." });
     }
 
-    // ---- 5. Create the invoice row. ----
-    const { data: invoice, error: invErr } = await supa
-      .from("invoices")
-      .insert(parsed.invoice)
-      .select()
-      .single();
-    if (invErr || !invoice) {
-      throw new Error(invErr ? invErr.message : "Invoice insert returned no row.");
-    }
+    // ---- 5. Create the invoice + its line items ATOMICALLY. ----
+    // A single Postgres RPC inserts the header and the line items inside ONE
+    // transaction, so they can never partially succeed: if the items fail, the
+    // invoice is rolled back too. No orphaned invoice with no line items, and no
+    // application-side compensating delete. (See public.create_invoice_with_items
+    // in db/invoices-schema.sql — the DB also generates each item's total.)
+    const { data: created, error: rpcErr } = await supa.rpc("create_invoice_with_items", {
+      p_client_user_id: parsed.invoice.client_user_id,
+      p_title: parsed.invoice.title,
+      p_notes: parsed.invoice.notes,
+      p_due_date: parsed.invoice.due_date,
+      p_status: parsed.invoice.status,
+      p_subtotal_amount_cents: parsed.invoice.subtotal_amount_cents,
+      p_discount_amount_cents: parsed.invoice.discount_amount_cents,
+      p_tax_amount_cents: parsed.invoice.tax_amount_cents,
+      p_total_amount_cents: parsed.invoice.total_amount_cents,
+      p_items: parsed.items,
+    });
+    if (rpcErr) throw new Error(rpcErr.message);
+    const invoice = created && created.invoice;
+    const items = (created && created.items) || [];
+    if (!invoice) throw new Error("Invoice creation returned no data.");
 
-    // ---- 6. Create the invoice_items rows, linked to the new invoice. ----
-    const itemRows = parsed.items.map((it) => ({ ...it, invoice_id: invoice.id }));
-    const { data: items, error: itemErr } = await supa
-      .from("invoice_items")
-      .insert(itemRows)
-      .select();
-
-    if (itemErr) {
-      // Best-effort rollback so we never leave an invoice with no line items.
-      // (The Supabase JS client has no multi-statement transaction; for true
-      // atomicity move steps 5-6 into a Postgres RPC — see db/invoices-schema.sql.)
-      const { error: rollbackErr } = await supa.from("invoices").delete().eq("id", invoice.id);
-      if (rollbackErr) {
-        // The compensating delete itself failed: an invoice with no line items
-        // now exists and is readable by the client. Log loudly with the id so
-        // it can be removed manually, and tell the admin.
-        console.error(
-          "ROLLBACK FAILED — orphaned invoice with no line items:",
-          invoice.id,
-          "| item error:", itemErr.message,
-          "| rollback error:", rollbackErr.message
-        );
-        throw new Error(
-          "Failed to save line items, and automatic cleanup of the empty invoice (" +
-            invoice.id +
-            ") also failed — please delete it manually. Cause: " +
-            itemErr.message
-        );
-      }
-      throw new Error(itemErr.message);
-    }
-
-    // ---- 7. Audit trail (best-effort, mirrors the other admin writes). ----
+    // ---- 6. Audit trail (best-effort, mirrors the other admin writes). ----
     await logActivity(supa, {
       admin_email: caller.email,
       action: "invoice_created",
@@ -362,12 +343,12 @@ module.exports = async (req, res) => {
         " — " +
         parsed.invoice.total_amount_cents +
         " cents (" +
-        (items ? items.length : 0) +
+        items.length +
         " item(s))",
     });
 
-    // ---- 8. Return the created invoice and its items. ----
-    return res.status(201).json({ invoice, items: items || [] });
+    // ---- 7. Return the created invoice and its items. ----
+    return res.status(201).json({ invoice, items });
   } catch (err) {
     // Mirror api/admin.js: log server-side and surface the (admin-only, safe)
     // message so the dashboard toast can show a useful reason — e.g. a column

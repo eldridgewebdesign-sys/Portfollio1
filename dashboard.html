@@ -577,6 +577,20 @@
       .inv-item{grid-template-columns:1fr 1fr;gap:.5rem .6rem;padding:.8rem 0}
       .inv-item-main{grid-column:1 / -1}
       .inv-del{grid-column:2;justify-self:end}
+      /* G2 (Designer spec, 2026-06-22): the column header (.inv-items-head) is
+         hidden on mobile, so surface each numeric cell's name inline — label left,
+         value right — mirroring the client read-only table's .cinv-num pattern. */
+      .inv-item .inv-cell,
+      .inv-item .inv-price-wrap,
+      .inv-item .inv-amount{
+        display:flex;align-items:center;justify-content:space-between;gap:1rem;text-align:right;
+      }
+      .inv-item .inv-cell::before,
+      .inv-item .inv-price-wrap::before,
+      .inv-item .inv-amount::before{
+        content:attr(data-label);
+        font-weight:700;font-size:.78rem;letter-spacing:.02em;color:var(--adm-muted);
+      }
     }
     .adm-kv{display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0;
       border-bottom:1px solid var(--adm-bd);font-size:.86rem}
@@ -1632,6 +1646,7 @@
           .from("invoice_items")
           .select("id,invoice_id,name,description,quantity,unit_amount_cents,total_amount_cents,created_at")
           .in("invoice_id", ids)
+          .order("sort_order", { ascending: true, nullsFirst: false })
           .order("created_at", { ascending: true });
         if (itemErr) throw itemErr;
         (items || []).forEach((it) => {
@@ -2741,10 +2756,10 @@
           '<input class="inv-name" maxlength="200" placeholder="Item name (e.g. Stripe integration)" aria-label="Item name" />' +
           '<input class="inv-desc" maxlength="2000" placeholder="Description (optional)" aria-label="Item description" />' +
         "</div>" +
-        '<input class="inv-qty" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Quantity" />' +
-        '<div class="inv-price-wrap"><span class="inv-cur">$</span>' +
+        '<label class="inv-cell" data-label="Qty"><input class="inv-qty" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Quantity" /></label>' +
+        '<div class="inv-price-wrap" data-label="Unit price"><span class="inv-cur">$</span>' +
           '<input class="inv-price" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal" aria-label="Unit price in dollars" /></div>' +
-        '<div class="inv-amount" data-amount>$0.00</div>' +
+        '<div class="inv-amount" data-amount data-label="Amount">$0.00</div>' +
         '<button class="adm-mini danger inv-del" type="button" aria-label="Remove line item" title="Remove line item">&times;</button>';
       row.querySelector(".inv-del").addEventListener("click", () => {
         row.remove();

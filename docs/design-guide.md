@@ -238,6 +238,60 @@ compute the "payable" set ONCE so the banner total always equals the sum of visi
 ship, show a success panel echoing the 201 instead of dropping to a permanently-empty list (prevents duplicate
 re-creation).
 
+### Mobile line-item labels (≤560px) — admin builder [G2 spec half → hand to Developer]
+
+**Problem (Reviewer-flagged).** The admin builder line-item row (`.inv-item`, a CSS grid) hides its column
+header (`.inv-items-head`) at ≤560px and collapses to a 2-col grid, so the **Qty / Unit price / Amount**
+fields are left with only `aria-label`s — invisible to a sighted phone user, who sees unlabeled numbers. The
+**client** read-only table already solves this; copy its pattern (don't invent a new one).
+
+**Reuse the client pattern verbatim** (`dashboard.html` `.cinv-items` — CSS `:280–281`, JS `:1753–1757`):
+each numeric cell carries `data-label="…"`, and at ≤560px a `::before{content:attr(data-label)}` shows the
+label while the cell becomes `display:flex; justify-content:space-between` (label left, control/value right).
+
+**Labels (match the existing `.inv-items-head` + client wording exactly — do not reword):** `Qty` ·
+`Unit price` · `Amount`.
+
+**Apply to the three admin `.inv-item` numeric cells:**
+
+- **Amount** — already a `<div>` (`.inv-amount` / `[data-amount]`): add `data-label="Amount"`.
+- **Unit price** — already a wrapper `<div>` (`.inv-price-wrap`): add `data-label="Unit price"`.
+- **Qty** — currently a **bare `<input>`** (`.inv-qty`); `::before` can't render on an `<input>`, so wrap it
+  in a cell element that carries the label, e.g. `<label class="inv-cell" data-label="Qty"><input class="inv-qty" …></label>`
+  (the `<label>` also makes the tap focus the input — an a11y bonus). Keep the `.inv-qty` / `.inv-price` /
+  `[data-amount]` selectors intact so `recomputeInvoice()` / `collectInvoice()` still resolve them.
+
+**CSS — add inside the existing `@media(max-width:560px)` block, mirroring `.cinv-items td.cinv-num`:**
+
+```css
+.inv-item .inv-cell,            /* qty wrapper */
+.inv-item .inv-price-wrap,
+.inv-item .inv-amount{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;text-align:right;
+}
+.inv-item .inv-cell::before,
+.inv-item .inv-price-wrap::before,
+.inv-item .inv-amount::before{
+  content:attr(data-label);
+  font-weight:700;font-size:.78rem;letter-spacing:.02em;color:var(--adm-muted);
+}
+```
+
+Notes:
+
+- Use `var(--adm-muted)` for the label colour — the on-theme admin-token equivalent of the client pattern's
+  literal `#41606e`.
+- The `::before` rules live **only** inside the media query, so desktop is unchanged (the `.inv-items-head`
+  still provides the headers there) — no desktop regression.
+- The absolutely-positioned `$` prefix in `.inv-price-wrap` (`.inv-cur`) is unaffected; verify the label sits
+  left of the `$`+input on a phone.
+- Composes with the "~600–760px dead zone" note above: **if** the Developer raises the reflow breakpoint to
+  ~720px, put these label rules in that same (raised) media query so the labels appear whenever the row is in
+  its stacked state.
+- **Build half is the Developer's** (`dashboard.html`, admin region only): the qty wrapper + three
+  `data-label`s + the CSS above — no schema or JS-logic change. Check: at the reflow width each of Qty / Unit
+  price / Amount shows its visible label; desktop ledger unchanged; `node --check` clean.
+
 ### Pay-button copy (a deliberate Designer decision)
 
 The two critics disagreed: keep it an active blue "Pay invoice" (don't look broken) vs. relabel/demote (don't
@@ -336,6 +390,43 @@ What design direction should be followed
 Notes:
 Anything the Manager or future Designer should know
 ```
+
+## 2026-06-22 19:45 - Designer - style-demos-grid
+
+Area Reviewed:
+Homepage `#styles` section + the `demos/` template family — added 5 new style demo templates from the
+owner's 8-style brief.
+
+Finding:
+The Styles section showed 2 live demos (teardown + bold). The owner supplied 8 website-style briefs and
+asked for a card per style, **skipping the ones that already exist**. Reconciliation: Bold (#2) already
+exists (`demos/bold`); Corporate covers Minimalist (#1) and the WebSharke homepage covers Full-screen
+Parallax (#8) — all skipped (owner-confirmed). Nothing existed for Dark Mode, Vintage/Retro, Brutalist,
+Photography-heavy, Card-based.
+
+Decision:
+Built 5 new self-contained, reusable, brand-neutral demo templates — `demos/dark` (dark-mode product,
+emerald accent), `demos/vintage` (1970s editorial print), `demos/brutalist` (stark B/W + one red accent),
+`demos/photo` (image-led editorial; inline-SVG image-slot placeholders, no raster), `demos/cards`
+(modular card system) — each following the standing demo contract. Expanded `#styles` from the 2-col
+`.style-two` into a responsive `.style-grid` (3→2→1 col) holding **7 live cards** (teardown + bold + the
+5 new); per-column `d1/d2/d3` reveal stagger. **Corporate stays cardless** per the owner. Lede updated to
+"A range of styles we build — each one a live demo below."
+
+Standing rule reinforced — **demo templates ship NO real logo**: each new demo uses a neutral inline
+`data:image/svg+xml` favicon (geometric, no letter/wordmark, no `/images/` ref). (Corporate's
+`/images/Tab-Logo.png` favicon remains the lone exception, still flagged for a separate fix.)
+
+Notes:
+- Built via an ultracode parallel workflow (5 builders); each self-verified the contract and I re-ran
+  independent grep cross-checks: data-URI favicon, vendored `../../fonts/` only, no CDN/raster, no
+  `<base>` tag, no `var()` in SVG presentation attrs, SWAP + demo-flag + inert form present.
+- Live in-browser eyeball (render/hover/mobile reflow at 900–600px/reduced-motion/console) still advised
+  per the usual non-GUI caveat.
+- **Concurrency:** other Designer sessions edited this file in parallel (entries `bold-brand-template`
+  15:30, `bold-demo-nologo` 17:10, `retro-vintage-template` 17:30) plus the invoice-billing docs —
+  flagged for the Manager to reconcile any overlap (esp. if another session also produced a vintage/retro
+  demo; only one `demos/vintage` exists on disk).
 
 ## 2026-06-22 17:30 - Designer - retro-vintage-template
 

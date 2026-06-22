@@ -277,7 +277,35 @@ See the individual **REVIEW-####** findings under **## Findings** below. Headlin
 
 ## Findings
 
-## REVIEW-0001 - [NEW] Admin invoice builder: line-item fields lose their visible labels on small screens (≤560px)
+## Manager triage — 2026-06-22 (disposition of REVIEW-0001…0013)
+
+> Triaged by the Manager from the 2026-06-22 conditional NO-GO. **Each finding's heading carries the canonical
+> status.** Gating items became the **Pre-Stripe gate** tasks (G1–G4) on `docs/taskboard.md`; Low/Info items
+> are accepted but **deferred** to the non-gating "invoice polish backlog" (none block Stripe).
+
+| Finding | Sev | Status | Disposition |
+|---|---|---|---|
+| REVIEW-0002 | Medium | [CONVERTED] | **Gate G1** — fix atomic invoice creation |
+| REVIEW-0001 | Medium | [CONVERTED] | **Gate G2** — mobile admin-builder labels |
+| REVIEW-0007 | Low | [CONVERTED] | folded into **Gate G2** |
+| REVIEW-0013 | High | [CONVERTED] | **Gate G3** — live RLS isolation (Stripe blocker) |
+| (live pass owed) | — | — | **Gate G4** — real live Reviewer pass → final GO/NO-GO |
+| REVIEW-0003 | Low | [ACCEPTED] | deferred → polish backlog |
+| REVIEW-0004 | Low | [ACCEPTED] | deferred → polish backlog |
+| REVIEW-0005 | Low | [ACCEPTED] | deferred → polish backlog |
+| REVIEW-0006 | Low | [ACCEPTED] | deferred → polish backlog |
+| REVIEW-0008 | Low | [ACCEPTED] | deferred → polish backlog (check during G3) |
+| REVIEW-0009 | Low | [ACCEPTED] | deferred → polish backlog (owner RLS decision; check during G3) |
+| REVIEW-0010 | Info | [ACCEPTED] | deferred → polish backlog (intentional phase-1) |
+| REVIEW-0011 | Info | [ACCEPTED] | deferred → polish backlog |
+| REVIEW-0012 | Info | [ACCEPTED] | deferred → polish backlog |
+
+> The per-finding `Manager Status:` mirror lines below are left as-logged; this table + each finding's heading
+> are authoritative (the Reviewer-log rule: the heading is the canonical status).
+
+---
+
+## REVIEW-0001 - [CONVERTED] Admin invoice builder: line-item fields lose their visible labels on small screens (≤560px)
 
 Date:
 2026-06-22 18:30
@@ -332,7 +360,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0002 - [NEW] Rare double-DB-failure can show a client an "issued" invoice with a Total but no line items
+## REVIEW-0002 - [CONVERTED] Rare double-DB-failure can show a client an "issued" invoice with a Total but no line items
 
 Date:
 2026-06-22 18:30
@@ -384,7 +412,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0003 - [NEW] Fractional quantity shows a valid-looking estimate, then Save rejects it
+## REVIEW-0003 - [ACCEPTED] Fractional quantity shows a valid-looking estimate, then Save rejects it
 
 Date:
 2026-06-22 18:30
@@ -436,7 +464,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0004 - [NEW] "Created" date on the client invoice card can show the previous calendar day (timezone shift)
+## REVIEW-0004 - [ACCEPTED] "Created" date on the client invoice card can show the previous calendar day (timezone shift)
 
 Date:
 2026-06-22 18:30
@@ -490,7 +518,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0005 - [NEW] Over-cap quantity/price fails late as a generic toast instead of an inline field error
+## REVIEW-0005 - [ACCEPTED] Over-cap quantity/price fails late as a generic toast instead of an inline field error
 
 Date:
 2026-06-22 18:30
@@ -541,7 +569,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0006 - [NEW] If the client list fails to load, Save shows a misleading "Select a client" error on an empty, disabled dropdown
+## REVIEW-0006 - [ACCEPTED] If the client list fails to load, Save shows a misleading "Select a client" error on an empty, disabled dropdown
 
 Date:
 2026-06-22 18:30
@@ -592,7 +620,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0007 - [NEW] Admin builder on mobile: read-only line Amount can look editable; price field cramped at ~360px
+## REVIEW-0007 - [CONVERTED] Admin builder on mobile: read-only line Amount can look editable; price field cramped at ~360px
 
 Date:
 2026-06-22 18:30
@@ -643,7 +671,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0008 - [NEW] Admin identity is defined in two independent places and can drift
+## REVIEW-0008 - [ACCEPTED] Admin identity is defined in two independent places and can drift
 
 Date:
 2026-06-22 18:30
@@ -692,7 +720,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0009 - [NEW] A client can read their OWN draft invoices via a direct anon-key query (UI draft-hiding is cosmetic)
+## REVIEW-0009 - [ACCEPTED] A client can read their OWN draft invoices via a direct anon-key query (UI draft-hiding is cosmetic)
 
 Date:
 2026-06-22 18:30
@@ -741,7 +769,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0010 - [NEW] Builder has no discount/tax input, so Subtotal always equals Total
+## REVIEW-0010 - [ACCEPTED] Builder has no discount/tax input, so Subtotal always equals Total
 
 Date:
 2026-06-22 18:30
@@ -781,7 +809,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0011 - [NEW] Dashboard billing loading/empty states aren't in a status live-region (a11y inconsistency vs /payment)
+## REVIEW-0011 - [ACCEPTED] Dashboard billing loading/empty states aren't in a status live-region (a11y inconsistency vs /payment)
 
 Date:
 2026-06-22 18:30
@@ -821,7 +849,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0012 - [NEW] Cancelling the "Issue invoice" confirmation gives no acknowledgement
+## REVIEW-0012 - [ACCEPTED] Cancelling the "Issue invoice" confirmation gives no acknowledgement
 
 Date:
 2026-06-22 18:30
@@ -861,7 +889,7 @@ _Empty until Manager creates a task._
 
 ---
 
-## REVIEW-0013 - [NEW] GATING: cross-tenant invoice isolation depends entirely on Supabase RLS, which is unverifiable from the repo
+## REVIEW-0013 - [CONVERTED] GATING: cross-tenant invoice isolation depends entirely on Supabase RLS, which is unverifiable from the repo
 
 Date:
 2026-06-22 18:30
