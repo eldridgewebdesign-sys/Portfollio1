@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
+  <title>Start Your Project — WebSharke</title>
+  <meta name="description" content="Tell WebSharke about your business and we build and run your website end to end — design, hosting, backend, forms, and payments. No agency price tag, no DIY headache." />
+
+  <style>
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/mulish-700.woff2) format('woff2')}
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --ink:#11364c;            /* deep navy — primary text */
+      --ink-soft:#2c5468;       /* muted coastal blue — secondary text */
+      --turq:#10b6cc;           /* turquoise accent */
+      --card:rgba(224,241,243,.82);
+      --card-bd:rgba(255,255,255,.6);
+      --inner:rgba(255,255,255,.52);
+      --inner-bd:rgba(255,255,255,.6);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Mulish',system-ui,sans-serif;color:var(--ink);
+      min-height:100vh;position:relative;overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+      background:#36a1b3;
+    }
+
+    /* ── Layered turquoise ocean waves (fixed, behind everything) ───────────── */
+    .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .ocean svg{width:100%;height:100%;display:block}
+    /* Soft wash that calms the waves so the form stays the focus */
+    .ocean::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(18,58,73,.16),rgba(18,58,73,.24))}
+
+    /* ── WebSharke logo, top-left (images/Main-Logo.png masked to navy) ────────────── */
+    .ws-logo{
+      position:fixed;top:20px;left:26px;z-index:20;display:block;
+      width:170px;height:95px;background:var(--ink);
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
+      filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
+      transition:transform .3s ease;
+    }
+    .ws-logo:hover{transform:translateY(-1px)}
+
+    /* "already a client" link, aligned with the logo in the top header row */
+    .ob-signin{
+      position:fixed;top:38px;right:26px;z-index:20;display:inline-flex;align-items:center;
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.1rem;
+      color:#0e2f44;text-decoration:none;
+      padding:.42rem .95rem;border-radius:9px;
+      background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7);
+      box-shadow:0 6px 16px rgba(0,40,55,.14);
+      transition:background .2s,color .2s,box-shadow .2s;
+    }
+    .ob-signin:hover{background:rgba(255,255,255,.78);color:#0c2c40;box-shadow:0 8px 20px rgba(0,40,55,.2)}
+    .ob-signin:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+
+    /* ── Page shell ────────────────────────────────────────────────────────── */
+    .ob-shell{
+      min-height:100vh;display:flex;justify-content:center;
+      padding:clamp(7rem,13vh,8.5rem) clamp(1.1rem,4vw,3rem) 3.5rem;
+    }
+
+    /* ── Translucent light-aqua card holding the whole form ────────────────── */
+    .ob-card{
+      width:100%;max-width:740px;
+      background:var(--card);border:1px solid var(--card-bd);border-radius:16px;
+      padding:clamp(1.8rem,3.4vw,2.8rem) clamp(1.5rem,3.4vw,2.8rem) clamp(2rem,3.4vw,2.8rem);
+      backdrop-filter:blur(5px) saturate(1.05);-webkit-backdrop-filter:blur(5px) saturate(1.05);
+      box-shadow:0 16px 38px rgba(0,40,55,.22);
+    }
+
+    /* ── Header ────────────────────────────────────────────────────────────── */
+    .eyebrow{
+      font-family:'Mulish',sans-serif;font-weight:600;font-size:.74rem;
+      letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);
+    }
+    .ob-title{
+      font-family:'Cormorant Garamond',serif;font-weight:600;
+      font-size:clamp(2.1rem,5vw,3.1rem);color:#0e2f44;line-height:1.08;
+      letter-spacing:.01em;margin:.45rem 0 0;
+    }
+    .ob-title em{font-style:normal;font-weight:600;color:inherit}
+
+    /* Intro callout */
+    .intro{
+      margin:1.4rem 0 1.7rem;padding:1.1rem 1.3rem;line-height:1.7;
+      color:var(--ink-soft);font-size:.98rem;
+      background:var(--inner);border:1px solid var(--inner-bd);
+      border-left:3px solid var(--turq);border-radius:12px;
+    }
+    .intro strong{display:block;color:#0e2f44;font-size:1.02rem;margin-bottom:.45rem;font-weight:700}
+
+    /* ── Sections ──────────────────────────────────────────────────────────── */
+    .section{padding:1.25rem 0;border-top:1px solid rgba(17,54,76,.18)}
+    .section:first-of-type{border-top:none;padding-top:.3rem}
+    .section-head{display:flex;align-items:baseline;margin-bottom:1rem}
+    .section-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.45rem;color:#0e2f44;letter-spacing:.01em}
+
+    /* ── Fields ────────────────────────────────────────────────────────────── */
+    .field{margin-bottom:1.05rem}
+    .field:last-child{margin-bottom:0}
+    .lbl{display:block;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.15rem;color:#0e2f44;margin-bottom:.35rem}
+    .req{color:#c2506a}
+    .hint{display:block;font-size:.82rem;color:var(--ink-soft);margin:-.15rem 0 .55rem;line-height:1.5}
+
+    /* Inputs + textareas — translucent boxes, navy text */
+    .fi{
+      width:100%;background:rgba(255,255,255,.72);
+      border:1px solid rgba(17,54,76,.22);border-radius:9px;
+      color:var(--ink);font-family:'Mulish',sans-serif;font-size:1rem;
+      padding:.7rem .85rem;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;
+    }
+    textarea.fi{min-height:100px;resize:vertical;line-height:1.6}
+    .fi::placeholder{color:rgba(17,54,76,.5)}
+    .fi:focus{border-color:var(--turq);background:rgba(255,255,255,.9);box-shadow:0 0 0 2px rgba(16,182,204,.3)}
+    .fi.invalid{border-color:#c2506a;background:rgba(255,235,238,.5)}
+
+    /* Two-column layout for short fields on desktop */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem}
+    .grid-2 .field{margin-bottom:0}
+
+    /* Preferred-style checkboxes */
+    .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:.5rem}
+    .check{
+      display:flex;align-items:center;gap:.55rem;cursor:pointer;font-size:.92rem;color:var(--ink);
+      background:rgba(255,255,255,.6);border:1px solid rgba(17,54,76,.18);border-radius:8px;
+      padding:.55rem .75rem;transition:border-color .2s,background .2s,color .2s;
+    }
+    .check:hover{border-color:var(--turq);background:rgba(255,255,255,.75)}
+    .check input{accent-color:#15707f;width:1.05rem;height:1.05rem;flex-shrink:0}
+    .check:has(input:checked){border-color:#15707f;background:rgba(16,182,204,.2);color:#0e2f44}
+    .check:has(input:focus-visible){outline:2px solid var(--turq);outline-offset:2px}
+
+    /* ── Submit + status ───────────────────────────────────────────────────── */
+    .submit-row{margin-top:1.4rem}
+    .btn{
+      display:block;width:100%;cursor:pointer;border:none;
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.2rem;
+      color:#eaf6f8;padding:.85rem 1.5rem;border-radius:10px;
+      background:#15707f;
+      box-shadow:0 6px 16px rgba(8,70,84,.28);
+      transition:transform .25s,filter .25s,box-shadow .25s;text-decoration:none;text-align:center;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 10px 22px rgba(8,70,84,.34)}
+    .btn:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none;filter:none}
+
+    .msg{min-height:1.2rem;margin-top:1.1rem;font-size:.95rem;line-height:1.5;color:var(--ink)}
+    .msg.error{color:#7c1d29;background:rgba(255,255,255,.44);
+      border:1px solid rgba(150,40,52,.4);border-radius:9px;padding:.6rem .85rem}
+    .msg.show{display:block}
+
+    /* ── Success screen ────────────────────────────────────────────────────── */
+    .thanks{text-align:center;padding:1rem .5rem}
+    .thanks h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:2rem;color:#0e2f44;margin-bottom:.8rem}
+    .thanks p{color:var(--ink-soft);max-width:460px;margin:0 auto 1.8rem;line-height:1.7}
+    .thanks .btn{max-width:260px;margin:0 auto}
+
+    @media(max-width:600px){
+      .ws-logo{width:120px;height:67px;top:14px;left:16px}
+      .ob-signin{top:20px;right:16px;font-size:.95rem;padding:.36rem .8rem}
+      /* Drop the "Already a client?" prefix so the fixed pill can't collide with the logo on phones */
+      .ob-signin-pre{display:none}
+      .ob-shell{padding:6rem 1.1rem 2.5rem}
+      .ob-card{padding:1.5rem 1.25rem 1.8rem}
+      .grid-2{grid-template-columns:1fr;gap:0}
+      .grid-2 .field{margin-bottom:1.3rem}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Layered turquoise ocean waves ──────────────────────────────────────── -->
+  <div class="ocean" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="900" fill="#39a4b6"/>
+      <path d="M0 96 C240 58 480 134 720 96 C960 58 1200 134 1440 96 L1440 900 L0 900 Z" fill="#5ec3d1"/>
+      <path d="M0 222 C240 184 480 260 720 222 C960 184 1200 260 1440 222 L1440 900 L0 900 Z" fill="#2f9aac"/>
+      <path d="M0 348 C240 388 480 312 720 348 C960 388 1200 312 1440 348 L1440 900 L0 900 Z" fill="#6fcdd9"/>
+      <path d="M0 474 C240 436 480 512 720 474 C960 436 1200 512 1440 474 L1440 900 L0 900 Z" fill="#37a2b4"/>
+      <path d="M0 600 C240 640 480 564 720 600 C960 640 1200 564 1440 600 L1440 900 L0 900 Z" fill="#63c5d3"/>
+      <path d="M0 726 C240 688 480 764 720 726 C960 688 1200 764 1440 726 L1440 900 L0 900 Z" fill="#2c92a4"/>
+      <path d="M0 822 C240 856 480 792 720 822 C960 856 1200 792 1440 822 L1440 900 L0 900 Z" fill="#57bccb"/>
+    </svg>
+  </div>
+
+  <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
+  <a class="ws-logo" href="/" aria-label="WebSharke — home"></a>
+  <a class="ob-signin" href="/login"><span class="ob-signin-pre">Already a client? </span>Sign in →</a>
+
+  <main class="ob-shell">
+    <div class="ob-card">
+
+      <!-- ---------- Header ---------- -->
+      <div class="ob-head">
+        <h1 class="ob-title">Let's build <em>your website</em></h1>
+      </div>
+
+      <!-- ---------- Intro callout (verbatim copy) ---------- -->
+      <div class="intro">
+        <strong>The more detail you provide, the better.</strong>
+        The more I know about your business, goals, and preferences, the less
+        guesswork is involved. Detailed answers help me create a website that
+        accurately represents your business and saves time during the planning
+        process.
+      </div>
+
+      <!-- =============================================================
+           THE INTAKE FORM (also creates the client's account)
+           `novalidate` turns off the browser's built-in bubbles so we can
+           show our own consistent, branded validation messages.
+           ============================================================= -->
+      <form id="onboarding-form" novalidate>
+
+        <!-- ============ SECTION 1 — ACCOUNT INFORMATION ============ -->
+        <!-- These create the client's login. The password is used only to
+             create the Supabase Auth user — it is never stored in our table. -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Account Information</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="email">Email Address <span class="req">*</span></label>
+            <input id="email" class="fi" type="email" autocomplete="email" />
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label class="lbl" for="password">Password <span class="req">*</span></label>
+              <span class="hint">At least 6 characters.</span>
+              <input id="password" class="fi" type="password" autocomplete="new-password" />
+            </div>
+            <div class="field">
+              <label class="lbl" for="confirm_password">Confirm Password <span class="req">*</span></label>
+              <span class="hint">Re-enter your password.</span>
+              <input id="confirm_password" class="fi" type="password" autocomplete="new-password" />
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 2 — CONTACT INFORMATION ============ -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Contact Information</h2>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label class="lbl" for="full_name">Full Name <span class="req">*</span></label>
+              <input id="full_name" class="fi" type="text" autocomplete="name" />
+            </div>
+            <div class="field">
+              <label class="lbl" for="business_name">Business Name <span class="req">*</span></label>
+              <input id="business_name" class="fi" type="text" autocomplete="organization" />
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:1.3rem">
+            <div class="field">
+              <label class="lbl" for="cell_phone">Cell Phone Number <span class="req">*</span></label>
+              <input id="cell_phone" class="fi" type="tel" autocomplete="tel" />
+            </div>
+            <div class="field">
+              <label class="lbl" for="business_address">Business Address</label>
+              <input id="business_address" class="fi" type="text" autocomplete="street-address" />
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 3 — BUSINESS INFORMATION ============ -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Business Information</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="business_description">Tell me about your business</label>
+            <span class="hint">What do you do? Who are your customers? What makes your business different?</span>
+            <textarea id="business_description" class="fi"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="products_services">Products and Services</label>
+            <span class="hint">What products or services do you offer?</span>
+            <textarea id="products_services" class="fi"></textarea>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 4 — WEBSITE GOALS ============ -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Website Goals</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="website_goals">What do you want your website to accomplish?</label>
+            <span class="hint">For example: generate leads, accept bookings, sell products, showcase past work, provide business information, collect contact requests.</span>
+            <textarea id="website_goals" class="fi"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="visitor_actions">What actions do you want visitors to take?</label>
+            <span class="hint">For example: call you, submit a form, request a quote, book an appointment, purchase a product.</span>
+            <textarea id="visitor_actions" class="fi"></textarea>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 5 — DESIGN PREFERENCES ============ -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Design Preferences</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="websites_liked">Websites you like</label>
+            <span class="hint">Include links and explain what you like about them.</span>
+            <textarea id="websites_liked" class="fi"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="lbl">Preferred Style</label>
+            <span class="hint">Select all that apply.</span>
+            <!-- Multi-select checkboxes. JS gathers the checked values into
+                 an array stored in the `preferred_styles` column. -->
+            <div class="checks" id="preferred_styles">
+              <label class="check"><input type="checkbox" value="Modern" /> Modern</label>
+              <label class="check"><input type="checkbox" value="Luxury" /> Luxury</label>
+              <label class="check"><input type="checkbox" value="Minimalist" /> Minimalist</label>
+              <label class="check"><input type="checkbox" value="Professional" /> Professional</label>
+              <label class="check"><input type="checkbox" value="Bold" /> Bold</label>
+              <label class="check"><input type="checkbox" value="Creative" /> Creative</label>
+              <label class="check"><input type="checkbox" value="Industrial" /> Industrial</label>
+              <label class="check"><input type="checkbox" value="Corporate" /> Corporate</label>
+              <label class="check"><input type="checkbox" value="High-End" /> High-End</label>
+              <label class="check"><input type="checkbox" value="Friendly" /> Friendly</label>
+              <label class="check"><input type="checkbox" value="Other" /> Other</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="color_preferences">Color Preferences</label>
+            <input id="color_preferences" class="fi" type="text" placeholder="e.g. navy & gold, earthy tones, bright and colorful" />
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="design_notes">Additional Design Notes</label>
+            <textarea id="design_notes" class="fi"></textarea>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 6 — ADDITIONAL INFORMATION ============ -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Additional Information</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="additional_info">Anything else I should know?</label>
+            <span class="hint">Goals, deadlines, branding, logos, special features, or any other project information.</span>
+            <textarea id="additional_info" class="fi"></textarea>
+          </div>
+        </section>
+
+        <!-- ---------- Submit + status message ---------- -->
+        <div class="submit-row">
+          <button type="submit" id="submit-btn" class="btn">Create Account &amp; Submit</button>
+          <p id="message" class="msg" role="alert" aria-live="assertive"></p>
+        </div>
+      </form>
+
+      <!-- ---------- Success screen (hidden until a successful submit) ---------- -->
+      <div id="thanks" class="thanks" style="display:none">
+        <h2 id="thanks-h">Welcome aboard.</h2>
+        <p id="thanks-p">Your account is set and your project details are saved. Taking you to your dashboard…</p>
+        <a id="thanks-link" href="/dashboard" class="btn">Go to dashboard</a>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- Supabase v2 + shared config (creates the global `db`)             -->
+  <!-- ================================================================= -->
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+
+  <script>
+    // =================================================================
+    // ONBOARDING + SIGNUP LOGIC.
+    //
+    // This form does TWO things on submit:
+    //   1. Creates the client's Supabase Auth account (email + password).
+    //   2. Saves the project intake details into `project_inquiries`,
+    //      linked to that new user's id.
+    // The shared client `db` comes from supabase-config.js.
+    // =================================================================
+
+    const form = document.getElementById("onboarding-form");
+    const submitBtn = document.getElementById("submit-btn");
+    const messageEl = document.getElementById("message");
+    const thanksEl = document.getElementById("thanks");
+    const thanksP = document.getElementById("thanks-p");
+    const thanksLink = document.getElementById("thanks-link");
+
+    // Text fields that must be filled in (password is checked separately).
+    const REQUIRED_FIELDS = ["email", "full_name", "business_name", "cell_phone"];
+
+    // ---- Helpers ----
+    function showMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = "msg show " + type;
+    }
+    function clearMessage() {
+      messageEl.className = "msg";
+    }
+    // Trimmed value from a text/textarea field.
+    function val(id) {
+      return document.getElementById(id).value.trim();
+    }
+    // Checked "Preferred Style" values as an array.
+    function selectedStyles() {
+      const boxes = document.querySelectorAll("#preferred_styles input:checked");
+      return Array.from(boxes).map((b) => b.value);
+    }
+
+    // ---- CLIENT-SIDE VALIDATION (required fields, email, passwords) ----
+    function validate() {
+      // Clear previous error highlights.
+      ["email", "full_name", "business_name", "cell_phone", "password", "confirm_password"]
+        .forEach((id) => document.getElementById(id).classList.remove("invalid"));
+
+      const pw = document.getElementById("password").value;   // not trimmed
+      const cpw = document.getElementById("confirm_password").value;
+
+      let firstInvalid = null;
+      let message = "Please fill in all required fields with valid information.";
+      const mark = (id) => {
+        document.getElementById(id).classList.add("invalid");
+        if (!firstInvalid) firstInvalid = id;
+      };
+
+      // Required text fields.
+      REQUIRED_FIELDS.forEach((id) => { if (!val(id)) mark(id); });
+
+      // Email format.
+      if (val("email") && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val("email"))) {
+        document.getElementById("email").classList.add("invalid");
+        if (!firstInvalid) { firstInvalid = "email"; message = "Please enter a valid email address."; }
+      }
+
+      // Password present + long enough (Supabase requires 6+).
+      if (!pw) {
+        mark("password");
+      } else if (pw.length < 6) {
+        document.getElementById("password").classList.add("invalid");
+        if (!firstInvalid) { firstInvalid = "password"; message = "Password must be at least 6 characters."; }
+      }
+
+      // Confirm present + matching.
+      if (!cpw) {
+        mark("confirm_password");
+      } else if (pw && pw !== cpw) {
+        document.getElementById("confirm_password").classList.add("invalid");
+        if (!firstInvalid) { firstInvalid = "confirm_password"; message = "Passwords do not match."; }
+      }
+
+      // Keep aria-invalid in sync with the visual state so screen readers
+      // announce exactly which fields need fixing.
+      ["email", "full_name", "business_name", "cell_phone", "password", "confirm_password"]
+        .forEach((id) => {
+          const el = document.getElementById(id);
+          el.setAttribute("aria-invalid", el.classList.contains("invalid") ? "true" : "false");
+        });
+
+      if (firstInvalid) {
+        document.getElementById(firstInvalid).focus();
+        showMessage(message, "error");
+        return false;
+      }
+      return true;
+    }
+
+    // ---- SUBMIT — create account, save intake, then route the client. ----
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMessage();
+      if (!validate()) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating your account…";
+
+      // 1. CREATE THE AUTH USER -------------------------------------
+      const { data: auth, error: signUpError } = await db.auth.signUp({
+        email: val("email"),
+        password: document.getElementById("password").value,
+      });
+
+      if (signUpError) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create Account & Submit";
+        showMessage(signUpError.message, "error");
+        return;
+      }
+
+      // Supabase v2 hides "email already in use" by returning a user with
+      // an empty identities array (and no error). Catch that explicitly.
+      if (auth.user && Array.isArray(auth.user.identities) && auth.user.identities.length === 0) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create Account & Submit";
+        showMessage("An account with this email already exists. Please sign in instead.", "error");
+        return;
+      }
+
+      const user = auth.user;
+      const session = auth.session; // present only if email confirmation is OFF
+
+      // 2. SAVE THE INTAKE, LINKED TO THE NEW USER ------------------
+      // `status` ('New Lead') and `created_at` come from DB defaults.
+      const inquiry = {
+        user_id: user ? user.id : null,
+        full_name: val("full_name"),
+        business_name: val("business_name"),
+        email: val("email"),
+        cell_phone: val("cell_phone"),
+        business_address: val("business_address"),
+        business_description: val("business_description"),
+        products_services: val("products_services"),
+        website_goals: val("website_goals"),
+        visitor_actions: val("visitor_actions"),
+        websites_liked: val("websites_liked"),
+        preferred_styles: selectedStyles(),
+        color_preferences: val("color_preferences"),
+        design_notes: val("design_notes"),
+        additional_info: val("additional_info"),
+      };
+
+      const { error: insertError } = await db.from("project_inquiries").insert(inquiry);
+
+      if (insertError) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create Account & Submit";
+        showMessage(
+          "Your account was created, but saving your project details failed: " +
+            insertError.message + " Please sign in and contact me so I can help.",
+          "error"
+        );
+        return;
+      }
+
+      // 3. SUCCESS — show the thank-you screen and route the client. -
+      form.style.display = "none";
+      thanksEl.style.display = "block";
+      thanksEl.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      if (session) {
+        // Email confirmation OFF → already signed in → go to dashboard.
+        setTimeout(() => window.location.replace("/dashboard"), 1500);
+      } else {
+        // Email confirmation ON → must confirm before they can sign in.
+        thanksP.textContent =
+          "Your account was created and your project details are saved. Please check your email to confirm your account, then sign in.";
+        thanksLink.textContent = "Go to sign in";
+        thanksLink.setAttribute("href", "/login");
+      }
+    });
+  </script>
+</body>
+</html>

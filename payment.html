@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
+  <title>Payment — WebSharke</title>
+  <meta name="robots" content="noindex" />
+
+  <style>
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/mulish-700.woff2) format('woff2')}
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --ink:#11364c;
+      --ink-soft:#2c5468;
+      --turq:#10b6cc;
+      --panel:rgba(224,241,243,.82);
+      --panel-soft:rgba(208,238,241,.46);
+      --panel-bd:rgba(255,255,255,.58);
+      --inner:rgba(255,255,255,.52);
+      --inner-bd:rgba(255,255,255,.62);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      min-height:100vh;
+      position:relative;
+      overflow-x:hidden;
+      font-family:"Mulish",system-ui,sans-serif;
+      color:var(--ink);
+      background:#36a1b3;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    a{color:inherit}
+    .hidden{display:none !important}
+    .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .ocean svg{width:100%;height:100%;display:block}
+    .ocean::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(18,58,73,.12),rgba(18,58,73,.22))}
+    .ws-logo{
+      position:fixed;
+      top:20px;
+      left:26px;
+      z-index:20;
+      display:block;
+      width:170px;
+      height:95px;
+      background:var(--ink);
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
+      filter:drop-shadow(0 1px 2px rgba(4,30,40,.14));
+      opacity:.84;
+      transition:transform .3s ease;
+    }
+    .ws-logo:hover{transform:translateY(-1px)}
+    .page{
+      width:min(1180px,100%);
+      margin:0 auto;
+      padding:clamp(7rem,13vh,8.5rem) clamp(1.1rem,4vw,3rem) 3.5rem;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1.4rem;
+      margin-bottom:1.2rem;
+      background:var(--panel);
+      border:1px solid var(--panel-bd);
+      border-radius:16px;
+      padding:clamp(1.5rem,3vw,2.25rem);
+      backdrop-filter:blur(6px) saturate(1.08);
+      -webkit-backdrop-filter:blur(6px) saturate(1.08);
+      box-shadow:0 16px 38px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.42);
+    }
+    .topbar > div{min-width:0}
+    .eyebrow{
+      color:var(--ink-soft);
+      font-size:.75rem;
+      font-weight:700;
+      letter-spacing:.2em;
+      text-transform:uppercase;
+      margin-bottom:.55rem;
+    }
+    h1{
+      font-family:"Cormorant Garamond",serif;
+      font-size:clamp(2.2rem,5vw,3.4rem);
+      line-height:1.06;
+      font-weight:600;
+      letter-spacing:.01em;
+      color:#0e2f44;
+    }
+    .subhead{
+      margin-top:.55rem;
+      max-width:44rem;
+      color:var(--ink-soft);
+      font-size:1rem;
+      line-height:1.6;
+    }
+    .back-link{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:42px;
+      padding:.64rem 1.1rem;
+      border:1.5px solid var(--ink);
+      border-radius:9px;
+      color:var(--ink);
+      background:rgba(255,255,255,.3);
+      font-family:"Cormorant Garamond",serif;
+      font-weight:600;
+      font-size:1.05rem;
+      text-decoration:none;
+      transition:background .25s,transform .25s,border-color .25s;
+    }
+    .back-link:hover{background:rgba(255,255,255,.5);transform:translateY(-1px);border-color:#0e2f44}
+    .back-link:focus-visible,.ws-btn:focus-visible,.pay-close:focus-visible,.pay-cancel:focus-visible{
+      outline:2px solid var(--turq);
+      outline-offset:3px;
+    }
+    .finder{
+      margin-bottom:1.2rem;
+      background:var(--panel);
+      border:1px solid var(--panel-bd);
+      border-radius:16px;
+      padding:clamp(1.35rem,3vw,2rem);
+      backdrop-filter:blur(6px) saturate(1.08);
+      -webkit-backdrop-filter:blur(6px) saturate(1.08);
+      box-shadow:0 16px 38px rgba(0,40,55,.18),inset 0 1px 0 rgba(255,255,255,.42);
+    }
+    .finder-title{
+      font-family:"Cormorant Garamond",serif;
+      font-size:1.75rem;
+      font-weight:600;
+      color:#0e2f44;
+      letter-spacing:.01em;
+      margin-bottom:1rem;
+    }
+    .finder-option{
+      cursor:pointer;
+      border:1px solid rgba(17,54,76,.22);
+      border-radius:8px;
+      background:rgba(255,255,255,.6);
+      color:var(--ink);
+      font-family:"Mulish",system-ui,sans-serif;
+      font-size:.9rem;
+      font-weight:600;
+      line-height:1.25;
+      padding:.64rem .78rem;
+      text-align:left;
+      transition:background .2s,border-color .2s,color .2s,transform .2s;
+    }
+    .finder-option:hover{background:rgba(255,255,255,.78);border-color:var(--turq);transform:translateY(-1px)}
+    .finder-option.active{background:rgba(16,182,204,.2);border-color:#15707f;color:#0e2f44}
+    .finder-tabs{display:flex;gap:.75rem;flex-wrap:wrap}
+    .finder-tabs .finder-option{flex:1 1 0;min-width:140px;text-align:center;font-size:1rem;padding:.85rem 1rem}
+    .shell{
+      background:var(--panel);
+      border:1px solid var(--panel-bd);
+      border-radius:16px;
+      padding:clamp(1.35rem,3vw,2rem);
+      backdrop-filter:blur(6px) saturate(1.08);
+      -webkit-backdrop-filter:blur(6px) saturate(1.08);
+      box-shadow:0 16px 38px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.42);
+    }
+    .plan-section{padding:1.25rem 0;border-top:1px solid rgba(17,54,76,.16)}
+    .plan-section:first-of-type{padding-top:.15rem;border-top:none}
+    .plan-section-head{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:1rem;
+      margin-bottom:.9rem;
+    }
+    .plan-section-title{
+      font-family:"Cormorant Garamond",serif;
+      font-size:1.65rem;
+      font-weight:600;
+      color:#0e2f44;
+      letter-spacing:.01em;
+    }
+    .plans{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:.85rem;
+    }
+    .plan-card{
+      min-height:224px;
+      display:flex;
+      flex-direction:column;
+      gap:.7rem;
+      padding:1.15rem;
+      border:1px solid rgba(255,255,255,.6);
+      border-left:3px solid rgba(16,182,204,.55);
+      border-radius:12px;
+      background:rgba(255,255,255,.54);
+      box-shadow:0 10px 24px rgba(0,40,55,.12);
+      transition:border-color .2s,box-shadow .2s,background .2s,opacity .2s;
+    }
+    .plan-card.recommended{
+      background:rgba(255,255,255,.72);
+      border-color:#15707f;
+      border-left-color:#15707f;
+      box-shadow:0 14px 30px rgba(0,68,82,.18);
+    }
+    .plan-card.filtered-out{display:none}
+    .plan-card.muted{opacity:.62}
+    .plan-card.recommended .ws-btn{
+      background:#15707f;
+      box-shadow:0 8px 18px rgba(8,70,84,.28);
+    }
+    .plan-name{
+      min-height:2.8rem;
+      font-family:"Cormorant Garamond",serif;
+      font-size:1.42rem;
+      font-weight:600;
+      line-height:1.08;
+      color:#0e2f44;
+    }
+    .plan-price{
+      font-size:1.85rem;
+      line-height:1;
+      font-weight:700;
+      color:#0f6f86;
+    }
+    .plan-type{
+      color:var(--ink-soft);
+      line-height:1.45;
+      min-height:2.2rem;
+      font-size:.94rem;
+    }
+    .plan-disclaimer{
+      margin-top:.1rem;
+      color:var(--ink-soft);
+      font-size:.82rem;
+      line-height:1.45;
+      background:rgba(255,255,255,.42);
+      border:1px solid rgba(255,255,255,.55);
+      border-radius:9px;
+      padding:.62rem .7rem;
+    }
+    .plan-addon{
+      display:flex;
+      align-items:flex-start;
+      gap:.55rem;
+      cursor:pointer;
+      font-size:.9rem;
+      line-height:1.4;
+      color:var(--ink);
+      background:rgba(255,255,255,.42);
+      border:1px solid rgba(255,255,255,.55);
+      border-radius:9px;
+      padding:.62rem .7rem;
+    }
+    .plan-addon input{flex:0 0 auto;width:16px;height:16px;margin-top:.12rem;accent-color:#15707f;cursor:pointer}
+    .plan-addon strong{color:#0f6f86;font-weight:700}
+    .ws-btn{
+      margin-top:auto;
+      width:100%;
+      min-height:44px;
+      cursor:pointer;
+      border:none;
+      border-radius:9px;
+      padding:.7rem 1rem;
+      background:linear-gradient(160deg,#1f93a8,#15707f);
+      color:#eaf6f8;
+      font-family:"Mulish",system-ui,sans-serif;
+      font-size:.82rem;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      transition:filter .2s,transform .2s,box-shadow .2s;
+      box-shadow:0 7px 16px rgba(8,70,84,.24),inset 0 1px 0 rgba(255,255,255,.18);
+    }
+    .ws-btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 22px rgba(8,70,84,.32)}
+    .ws-btn[disabled]{
+      cursor:not-allowed;
+      opacity:.58;
+      transform:none;
+      filter:none;
+      box-shadow:none;
+    }
+    .page-msg{
+      display:none;
+      margin:0 0 1rem;
+      padding:.78rem .95rem;
+      border-radius:8px;
+      font-size:.94rem;
+      line-height:1.5;
+    }
+    .page-msg.show{display:block}
+    .page-msg.error{color:#7c1d29;background:rgba(255,255,255,.52);border:1px solid rgba(150,40,52,.4)}
+    .page-msg.success{color:#0c5a40;background:rgba(255,255,255,.52);border:1px solid rgba(30,140,90,.4)}
+    .session-note{
+      margin-top:.9rem;
+      color:var(--ink-soft);
+      font-size:.9rem;
+      line-height:1.5;
+    }
+    .pay-overlay{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:1.2rem;
+      background:rgba(7,30,40,.55);
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+    }
+    .pay-card{
+      width:100%;
+      max-width:460px;
+      max-height:92vh;
+      overflow-y:auto;
+      background:rgba(234,247,249,.97);
+      border:1px solid var(--panel-bd);
+      border-radius:18px;
+      padding:clamp(1.5rem,3vw,2.1rem);
+      box-shadow:0 26px 64px rgba(0,30,45,.45),inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .pay-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:1rem;
+      margin-bottom:1.1rem;
+    }
+    .pay-title{
+      font-family:"Cormorant Garamond",serif;
+      font-size:1.55rem;
+      font-weight:600;
+      line-height:1.15;
+      color:#0e2f44;
+      letter-spacing:.01em;
+    }
+    .pay-plan{
+      margin-top:.32rem;
+      color:var(--ink-soft);
+      font-size:.92rem;
+      line-height:1.4;
+    }
+    .pay-close{
+      appearance:none;
+      -webkit-appearance:none;
+      cursor:pointer;
+      border:none;
+      border-radius:8px;
+      background:none;
+      color:var(--ink-soft);
+      font-size:1.55rem;
+      line-height:1;
+      padding:.16rem .48rem .25rem;
+      transition:background .2s,color .2s;
+    }
+    .pay-close:hover{background:rgba(255,255,255,.5);color:#0c2c40}
+    #payment-element{
+      min-height:44px;
+      margin:.35rem 0 1.1rem;
+    }
+    .pay-actions{
+      display:flex;
+      gap:.7rem;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pay-actions .ws-btn{
+      width:auto;
+      min-width:132px;
+      margin-top:0;
+    }
+    .pay-cancel{
+      min-height:44px;
+      cursor:pointer;
+      border:1px solid rgba(17,54,76,.3);
+      border-radius:9px;
+      background:rgba(255,255,255,.5);
+      color:var(--ink);
+      font-family:"Mulish",system-ui,sans-serif;
+      font-size:.82rem;
+      font-weight:600;
+      letter-spacing:.06em;
+      padding:.7rem 1.4rem;
+      transition:background .2s,border-color .2s;
+    }
+    .pay-cancel:hover{background:rgba(255,255,255,.78);border-color:var(--turq)}
+    .pay-cancel[disabled]{opacity:.55;cursor:not-allowed}
+    .pay-msg{
+      display:none;
+      margin-top:1rem;
+      padding:.78rem .95rem;
+      border-radius:8px;
+      font-size:.94rem;
+      line-height:1.5;
+    }
+    .pay-msg.show{display:block}
+    .pay-msg.error{color:#7c1d29;background:rgba(255,255,255,.6);border:1px solid rgba(150,40,52,.4)}
+    .pay-msg.success{color:#0c5a40;background:rgba(255,255,255,.6);border:1px solid rgba(30,140,90,.4)}
+    @media(max-width:860px){
+      .topbar{align-items:flex-start}
+    }
+    @media(max-width:720px){
+      .ws-logo{width:120px;height:67px;top:14px;left:16px}
+      body::before{top:6px;left:8px;width:146px;height:86px;border-radius:14px}
+      .page{padding:6rem 1.1rem 2.5rem}
+      .topbar{display:block}
+      .back-link{margin-top:1rem}
+      .plans{grid-template-columns:1fr}
+      .plan-name{min-height:auto}
+      .plan-type{min-height:auto}
+      .pay-actions .ws-btn,.pay-cancel{width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div class="ocean" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="900" fill="#39a4b6"/>
+      <path d="M0 96 C240 58 480 134 720 96 C960 58 1200 134 1440 96 L1440 900 L0 900 Z" fill="#5ec3d1"/>
+      <path d="M0 222 C240 184 480 260 720 222 C960 184 1200 260 1440 222 L1440 900 L0 900 Z" fill="#2f9aac"/>
+      <path d="M0 348 C240 388 480 312 720 348 C960 388 1200 312 1440 348 L1440 900 L0 900 Z" fill="#6fcdd9"/>
+      <path d="M0 474 C240 436 480 512 720 474 C960 436 1200 512 1440 474 L1440 900 L0 900 Z" fill="#37a2b4"/>
+      <path d="M0 600 C240 640 480 564 720 600 C960 640 1200 564 1440 600 L1440 900 L0 900 Z" fill="#63c5d3"/>
+      <path d="M0 726 C240 688 480 764 720 726 C960 688 1200 764 1440 726 L1440 900 L0 900 Z" fill="#2c92a4"/>
+      <path d="M0 822 C240 856 480 792 720 822 C960 856 1200 792 1440 822 L1440 900 L0 900 Z" fill="#57bccb"/>
+    </svg>
+  </div>
+
+  <a class="ws-logo" href="/" aria-label="WebSharke home"></a>
+
+  <main class="page hidden" id="payment-page">
+    <div class="topbar">
+      <div>
+        <h1>Choose Your WebSharke Plan</h1>
+      </div>
+      <a class="back-link" href="/dashboard">Back to Dashboard</a>
+    </div>
+
+    <section class="finder" aria-label="Choose what you need">
+      <h2 class="finder-title">Choose what you need</h2>
+      <div class="finder-tabs" role="tablist">
+        <button class="finder-option active" type="button" role="tab" data-category="hosting" aria-selected="true">Hosting</button>
+        <button class="finder-option" type="button" role="tab" data-category="design" aria-selected="false">Design</button>
+      </div>
+    </section>
+
+    <section class="shell" aria-label="WebSharke plans">
+      <p class="page-msg" id="page-msg" role="alert"></p>
+      <div class="plan-sections" id="plans"></div>
+      <p class="session-note" id="session-note"></p>
+    </section>
+  </main>
+
+  <div class="pay-overlay hidden" id="pay-overlay" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+    <div class="pay-card">
+      <div class="pay-head">
+        <div>
+          <h2 class="pay-title" id="pay-title">Complete your payment</h2>
+          <p class="pay-plan" id="pay-plan"></p>
+        </div>
+        <button class="pay-close" id="pay-close" type="button" aria-label="Close payment dialog">&times;</button>
+      </div>
+      <div id="payment-element"></div>
+      <div class="pay-actions">
+        <button class="ws-btn" id="pay-submit" type="button">Pay Now</button>
+        <button class="pay-cancel" id="pay-cancel" type="button">Cancel</button>
+      </div>
+      <p class="pay-msg" id="pay-msg" role="alert"></p>
+    </div>
+  </div>
+
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <script>
+    const STRIPE_PUBLISHABLE_KEY = 'pk_live_51TaqBE5dqO1i8gb8zAUkVeCeQu1OOMeKnnrKEHDUcxpeJXF8rwXBm2B2EMtIaqm87YNr5U1QZG8V2YiWhe1t8R6600LsZqnsXr';
+
+    const plans = [
+      {
+        name: "Frontend Monthly",
+        price: "$25/mo",
+        type: "Hosting",
+        priceId: "price_1Tas6t5dqO1i8gb893TyaGKs",
+        category: "hosting",
+      },
+      {
+        name: "Frontend Annual",
+        price: "$250/yr",
+        type: "Hosting",
+        priceId: "price_1Tas4F5dqO1i8gb84xFztzu6",
+        category: "hosting",
+      },
+      {
+        name: "Full Stack Monthly",
+        price: "$49.99/mo",
+        type: "Hosting",
+        priceId: "price_1Te82R5dqO1i8gb8tug1dYUD",
+        category: "hosting",
+      },
+      {
+        name: "Full Stack Annual",
+        price: "$500/yr",
+        type: "Hosting",
+        priceId: "price_1Te8595dqO1i8gb8nB40CyYe",
+        category: "hosting",
+      },
+      {
+        name: "Website Full Design Frontend",
+        price: "$750",
+        type: "One-time design",
+        priceId: "price_1Tarmd5dqO1i8gb86Z84Tilo",
+        category: "design",
+        baseValue: 750,
+        hostingAddon: {
+          priceId: "price_1Tas1R5dqO1i8gb8vEQL0CKS",
+          bundlePrice: "$800",
+          bundleValue: 800,
+        },
+      },
+      {
+        name: "Website Full Design Full-Stack",
+        price: "$1500",
+        type: "One-time design",
+        priceId: "price_1Te8P25dqO1i8gb8Ko46gihm",
+        category: "design",
+        baseValue: 1500,
+        hostingAddon: {
+          priceId: "price_1Te8RT5dqO1i8gb875YtaV11",
+          bundlePrice: "$1750",
+          bundleValue: 1750,
+        },
+      },
+    ];
+
+    const hostingDisclaimer = "This is a one-time purchase that includes one year of hosting. After the first year, you will need to manually renew hosting at the normal hosting price to keep hosting with WebSharke.";
+
+    const $ = (id) => document.getElementById(id);
+    const page = $("payment-page");
+    const pageMsg = $("page-msg");
+    const plansEl = $("plans");
+    const sessionNote = $("session-note");
+    const payOverlay = $("pay-overlay");
+    const payMsg = $("pay-msg");
+    const paySubmit = $("pay-submit");
+    const payCancel = $("pay-cancel");
+    const payClose = $("pay-close");
+    const payPlan = $("pay-plan");
+
+    const stripePublishableKey =
+      (typeof STRIPE_PUBLISHABLE_KEY !== "undefined" && STRIPE_PUBLISHABLE_KEY) ||
+      "";
+
+    const stripe =
+      (window.Stripe && /^pk_/.test(stripePublishableKey))
+        ? window.Stripe(stripePublishableKey)
+        : null;
+
+    const PAYMENT_RETURN_URL = new URL("/success", window.location.href).href;
+
+    let currentUserId = null;
+    let currentEmail = null;
+    let payElements = null;
+    let payPaymentElement = null;
+    let payBusy = false;
+    let activeCategory = "hosting";
+
+    function setPageMsg(text, type) {
+      pageMsg.textContent = text || "";
+      pageMsg.className = "page-msg" + (text ? " show " + (type || "error") : "");
+    }
+
+    function setPayMsg(text, type) {
+      payMsg.textContent = text || "";
+      payMsg.className = "pay-msg" + (text ? " show " + (type || "error") : "");
+    }
+
+    function renderPlans(category) {
+      plansEl.innerHTML = "";
+
+      const section = document.createElement("section");
+      section.className = "plan-section";
+
+      const sectionHead = document.createElement("div");
+      sectionHead.className = "plan-section-head";
+
+      const heading = document.createElement("h2");
+      heading.className = "plan-section-title";
+      heading.textContent = category === "hosting" ? "Hosting Plans" : "Website Design";
+      sectionHead.appendChild(heading);
+
+      const grid = document.createElement("div");
+      grid.className = "plans";
+
+      plans
+        .filter((plan) => plan.category === category)
+        .forEach((plan) => {
+          const card = document.createElement("article");
+          card.className = "plan-card";
+
+          const title = document.createElement("h3");
+          title.className = "plan-name";
+          title.textContent = plan.name;
+
+          const price = document.createElement("p");
+          price.className = "plan-price";
+          price.textContent = plan.price;
+
+          const type = document.createElement("p");
+          type.className = "plan-type";
+          type.textContent = plan.type;
+
+          card.append(title, price, type);
+
+          let addonCheckbox = null;
+          if (plan.hostingAddon) {
+            const addCost = plan.hostingAddon.bundleValue - plan.baseValue;
+
+            const addon = document.createElement("label");
+            addon.className = "plan-addon";
+
+            addonCheckbox = document.createElement("input");
+            addonCheckbox.type = "checkbox";
+            addonCheckbox.className = "addon-check";
+
+            const addonText = document.createElement("span");
+            addonText.innerHTML = "Add one year of hosting? <strong>+$" + addCost + "</strong>";
+
+            addon.append(addonCheckbox, addonText);
+
+            const disclaimer = document.createElement("p");
+            disclaimer.className = "plan-disclaimer";
+            disclaimer.textContent = hostingDisclaimer;
+
+            addonCheckbox.addEventListener("change", () => {
+              price.textContent = addonCheckbox.checked ? plan.hostingAddon.bundlePrice : plan.price;
+            });
+
+            card.append(addon, disclaimer);
+          }
+
+          const button = document.createElement("button");
+          button.className = "ws-btn plan-btn";
+          button.type = "button";
+          button.textContent = plan.priceId ? "Select Plan" : "Price ID needed";
+          button.disabled = !plan.priceId;
+          if (plan.priceId) {
+            button.dataset.priceId = plan.priceId;
+            button.addEventListener("click", () => {
+              let selection = { name: plan.name, price: plan.price, priceId: plan.priceId };
+              if (plan.hostingAddon && addonCheckbox && addonCheckbox.checked) {
+                selection = {
+                  name: plan.name + " + One Year Hosting",
+                  price: plan.hostingAddon.bundlePrice,
+                  priceId: plan.hostingAddon.priceId,
+                };
+              }
+              handlePlanClick(button, selection);
+            });
+          }
+
+          card.appendChild(button);
+          grid.appendChild(card);
+        });
+
+      section.append(sectionHead, grid);
+      plansEl.appendChild(section);
+    }
+
+    const categoryTabs = Array.from(document.querySelectorAll(".finder-option[data-category]"));
+    categoryTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        activeCategory = tab.dataset.category;
+        categoryTabs.forEach((t) => {
+          const on = t === tab;
+          t.classList.toggle("active", on);
+          t.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        renderPlans(activeCategory);
+      });
+    });
+
+    function openPayModal(plan) {
+      setPayMsg("");
+      payPlan.textContent = plan ? plan.name + " - " + plan.price : "";
+      payOverlay.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closePayModal() {
+      if (payBusy) return;
+      payOverlay.classList.add("hidden");
+      document.body.style.overflow = "";
+      if (payPaymentElement) {
+        try { payPaymentElement.destroy(); } catch (e) {}
+      }
+      payPaymentElement = null;
+      payElements = null;
+      $("payment-element").innerHTML = "";
+      payPlan.textContent = "";
+      setPayMsg("");
+    }
+
+    function mountPayment(clientSecret, plan) {
+      if (payPaymentElement) {
+        try { payPaymentElement.destroy(); } catch (e) {}
+      }
+      payPaymentElement = null;
+      $("payment-element").innerHTML = "";
+
+      payElements = stripe.elements({
+        clientSecret,
+        appearance: {
+          theme: "stripe",
+          variables: {
+            colorPrimary: "#15707f",
+            colorText: "#11364c",
+            fontFamily: "Mulish, system-ui, sans-serif",
+            borderRadius: "9px",
+          },
+        },
+      });
+      payPaymentElement = payElements.create("payment");
+      payPaymentElement.mount("#payment-element");
+      openPayModal(plan);
+    }
+
+    async function handlePlanClick(button, plan) {
+      setPageMsg("");
+
+      if (!stripe) {
+        setPageMsg("Payments are not available right now. Please try again later.", "error");
+        return;
+      }
+      if (!plan.priceId) {
+        setPageMsg("Price ID needed before this plan can be selected.", "error");
+        return;
+      }
+      if (!currentUserId || !currentEmail) {
+        window.location.replace("/login");
+        return;
+      }
+
+      const original = button.textContent;
+      button.disabled = true;
+      button.textContent = "Starting...";
+
+      try {
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) throw new Error("Your session expired. Please sign in again.");
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({
+            priceId: plan.priceId,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Could not start checkout. Please try again.");
+        if (!data.clientSecret) throw new Error("Could not start checkout. Please try again.");
+
+        mountPayment(data.clientSecret, plan);
+      } catch (err) {
+        setPageMsg(err.message || "Could not start checkout. Please try again.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = original;
+      }
+    }
+
+    paySubmit.addEventListener("click", async () => {
+      if (!payElements || payBusy) return;
+      payBusy = true;
+      setPayMsg("");
+
+      const original = paySubmit.textContent;
+      paySubmit.disabled = true;
+      payCancel.disabled = true;
+      paySubmit.textContent = "Processing...";
+
+      try {
+        const { error } = await stripe.confirmPayment({
+          elements: payElements,
+          confirmParams: { return_url: PAYMENT_RETURN_URL },
+          redirect: "if_required",
+        });
+
+        if (error) {
+          setPayMsg(error.message || "Payment could not be completed. Please try again.", "error");
+          paySubmit.disabled = false;
+          payCancel.disabled = false;
+          paySubmit.textContent = original;
+          payBusy = false;
+          return;
+        }
+
+        setPayMsg("Payment successful. Redirecting...", "success");
+        window.location.href = PAYMENT_RETURN_URL;
+      } catch (err) {
+        setPayMsg(err.message || "Payment could not be completed. Please try again.", "error");
+        paySubmit.disabled = false;
+        payCancel.disabled = false;
+        paySubmit.textContent = original;
+        payBusy = false;
+      }
+    });
+
+    payClose.addEventListener("click", closePayModal);
+    payCancel.addEventListener("click", closePayModal);
+    payOverlay.addEventListener("click", (event) => {
+      if (event.target === payOverlay) closePayModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !payOverlay.classList.contains("hidden")) closePayModal();
+    });
+
+    (async () => {
+      const { data: authData, error: authError } = await db.auth.getUser();
+      if (authError || !authData || !authData.user) {
+        window.location.replace("/login");
+        return;
+      }
+
+      const { data } = await db.auth.getSession();
+      if (!data.session) {
+        window.location.replace("/login");
+        return;
+      }
+
+      currentUserId = authData.user.id;
+      currentEmail = authData.user.email;
+      if (!currentEmail) {
+        setPageMsg("Your account is missing an email address. Please contact support before selecting a plan.", "error");
+      }
+
+      renderPlans(activeCategory);
+      sessionNote.textContent = currentEmail ? "Signed in as " + currentEmail + "." : "";
+      page.classList.remove("hidden");
+    })();
+  </script>
+</body>
+</html>
