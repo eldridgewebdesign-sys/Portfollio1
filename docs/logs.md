@@ -6,6 +6,192 @@
 
 ---
 
+## 2026-06-22 17:05 - Efficiency - invoice-system-review
+
+Action:
+Finished
+
+Task:
+Task 7 — Performance / Code Review of the invoice system (Efficiency). Review-only audit of the Phase-1
+custom invoice system for performance, query efficiency, code quality, and maintainability.
+
+Files claimed:
+
+- docs/performance-log.md (findings)
+- docs/logs.md (this entry)
+- docs/taskboard.md (Task 7 status line only — Efficiency may set its own assigned task's status)
+
+Files changed:
+
+- docs/performance-log.md — added the dated "invoice-system-review" entry (1 Medium, 8 Low, ~8
+  Informational findings + the confirmed strengths). No production code touched.
+- docs/logs.md — this entry.
+- docs/taskboard.md — Task 7 → [REVIEW] (recorded my own assigned task status).
+
+NOT touched: any production code (review only — fixes become Developer tasks per the role rules);
+api/admin/invoices.js, dashboard.html, db/invoices-schema.sql, payment/Stripe/Supabase/auth logic, vendor.
+
+Summary:
+Reviewed `api/admin/invoices.js`, `db/invoices-schema.sql`, and the two `dashboard.html` invoice regions
+(client billing read ~1540-1882 + admin builder ~2680-2928), with `api/admin.js` list_users/enrichUsers as
+supporting context. Ran an ultracode 5-dimension fan-out (query efficiency · client-page perf · admin-builder
+quality · API quality · maintainability) and adversarially re-verified every candidate finding against the
+actual source before recording it (28 agents; 22 findings confirmed, 35 positives). Verification corrected two
+things: it downgraded the client-picker over-fetch from Medium→Low (admin-only + cached + small client base),
+and it REFUTED one finding's recommendation — the 500 handler's raw `err.message` is by design (it mirrors
+`api/admin.js`, is admin-only, and "hardening" it would diverge from convention), so no change is recommended
+there. Headline: the system is in good shape (N+1-free, well-indexed, integer-cents with server authority,
+solid double-submit). The one item to fix BEFORE Stripe is the **non-atomic invoice create**
+(`api/admin/invoices.js:309-349`) — move the invoice+items inserts into a single Postgres RPC so a payable
+invoice can never be an items-less orphan. The rest are Low/Informational cheap wins (`.limit(50)` on the
+client query, cap the picker limit, align the fractional-qty estimate, a `centsToUsd` NaN guard, and a few
+sync/clarifying comments).
+
+Testing:
+Static review only — read the source + cross-checked queries against the schema indexes; no code executed.
+Each finding was independently verified against `file:line` by a separate adversarial agent (skeptical/refute
+default). NOT run (needs `vercel dev` + a browser + live Supabase): live load-time / query-timing measurement
+and the admin-builder render — flagged for the Reviewer (Task 8). No `node --check` needed (no code changed).
+
+Risks / Notes:
+- All findings are flagged for the **Manager to triage into Developer fix tasks** — the Efficiency role does
+  not edit production code outside its own assigned fix task, and Task 7 is review-only.
+- **Pre-Stripe gate:** schedule the atomic-create RPC (Medium) ahead of Phase-2 Stripe; it is the only
+  finding tied to correctness once payments attach to invoices.
+- Several findings touch files currently in [REVIEW] from concurrent Developer sessions (Tasks 1/3/5); they
+  remain uncommitted in the working tree. The review reflects the on-disk state at this session.
+- I set only Task 7's board status (allowed for Efficiency); I did not touch any other task or role's log.
+
+## 2026-06-22 16:55 - Developer - styles-swap-bold-demo
+
+Action:
+Finished
+
+Task:
+Owner-direct implementation: in the homepage `#styles` section, replace the **Corporate Site** demo card with
+the new **bold/creative** template, and serve that template. (Applies the Designer direction logged at
+2026-06-22 15:30 "bold-brand-template"; the hard design→build split — Designer specced, Developer builds.)
+→ for the Manager to record board status.
+
+Files claimed / changed:
+
+- `demos/bold/index.html` — NEW served copy of the bold template (production instance of the Designer sandbox
+  `docs/mockups/bold-brand-template.html`). Served at `/demos/bold` exactly like `/demos/corporate`. Only two
+  edits vs the sandbox: `<title>` and the font-path comment. The relative `../../fonts/` paths resolve to the
+  repo `/fonts` both when served (`/demos/bold` → `/fonts`) and via `file://` (it sits 2 levels deep, same as
+  the sandbox). No logos, no CDN, inline CSS/JS.
+- `index.html` — `#styles` only: the second `.style-card` (`feat rv d3`) now points to `/demos/bold` with
+  kicker "Bold · Template", title "Creative Studio", and a matching description + aria-label. The laptop-
+  teardown card (`d2`, `/Animations/laptop-teardown`) is unchanged; the `.style-two` 2-up grid + `.styles-lede`
+  ("…both live below.") are unchanged (still two live demos).
+
+NOT touched: `demos/corporate/index.html` (left in place — just **unlinked** from the homepage, NOT deleted);
+payment/Stripe/Supabase/auth; `api/*`, `db/*`; vendor files; any other section of `index.html`.
+
+Testing:
+- `index.html`: grep confirms exactly one `/demos/bold` link and **zero** `/demos/corporate` refs; the change
+  is scoped to the one `#styles` card (the teardown card + lede untouched).
+- `demos/bold/index.html`: CSS braces balanced (238/238); inline IIFE `node --check` PASS; 0 `<img>` (no
+  logos); 6 `../../fonts/` refs (resolve); 0 stray `/demos/corporate` refs; `demos/corporate/index.html`
+  confirmed still present.
+- **NOT run (non-GUI):** live render of `/demos/bold` via `vercel dev`/preview + the homepage `#styles` card →
+  click-through; and a `file://` eyeball of `demos/bold/index.html`. Recommend a quick check before deploy
+  (same non-GUI limitation prior sessions signed off with).
+
+Risks / Notes:
+- **Routing:** `/demos/bold` resolves via the same Vercel mechanism as `/demos/corporate` (folder + `index.html`,
+  `cleanUrls`). No `vercel.json` change needed.
+- **Duplication:** `demos/bold/index.html` is a near-copy of the Designer sandbox `docs/mockups/bold-brand-
+  template.html` (the sandbox is the "template master"; this is the served instance — mirrors `demos/corporate`
+  being a standalone file). If the owner prefers a single source, say the word and I'll drop the sandbox.
+- **Stale doc reference (for the Manager/Designer):** the 2026-06-22 15:30 `design-guide.md` entry still calls the
+  template "sandbox only / not wired in" — it IS wired in now. I did not edit `design-guide.md` (Developer role
+  rule); Manager may ask the Designer to refresh that note.
+- Owner-direct; the **Manager records board status** (Developer doesn't edit the board).
+
+## 2026-06-22 16:40 - Developer - payment-page-invoices
+
+Action:
+Finished
+
+Task:
+Owner-directed: replace the entire Stripe checkout on `payment.html` with the signed-in client's read-only
+"current invoices" list. → ready for [REVIEW] (Manager to record the board status; the Developer does not edit
+the board).
+
+Files changed:
+
+- `payment.html` — **full page rewrite.** REMOVED: the Stripe publishable key, the `plans` array + all live
+  `price_…` IDs, the hosting/design finder tabs, plan rendering, the Stripe Payment Element modal
+  (`#pay-overlay`/`#payment-element`), the `/api/checkout` POST + `stripe.confirmPayment` flow, and the
+  `https://js.stripe.com/v3/` script. KEPT: the page shell (ocean SVG bg, masked `.ws-logo`, topbar +
+  "Back to Dashboard", vendored `@font-face`), the two Supabase script tags, and the `db.auth.getUser()` +
+  `getSession()` → `/login` session gate. ADDED: a read-only invoices section (`#cinv-list` + loading/empty/
+  error states) and a port of the dashboard's `loadClientInvoices()` / `buildClientInvoiceCard()` + `cinv-*`
+  CSS. Net −616 / +428 lines.
+- `docs/logs.md` — START (16:10) + this FINISH.
+
+NOT touched: `api/*` (the `/api/checkout`, `/api/webhook`, `/api/customer-portal` routes are intact — just no
+longer called by `payment.html`); `dashboard.html`; `db/*`; `js/supabase-config.js`; `js/vendor/*`; vendor.
+
+How invoices are fetched/rendered (the core of the task):
+Reuses the existing global anon `db` client. Query 1: `db.from("invoices").select(<explicit cols>)
+.eq("client_user_id", user.id).in("status", CLIENT_VISIBLE_STATUSES).order("created_at",{ascending:false})` —
+drafts excluded, RLS independently scopes to the caller. Query 2: ONE `db.from("invoice_items")
+.select(...).in("invoice_id", ids)` (no N+1), grouped client-side. 100% `textContent` rendering via `cinvEl()`
+(no `innerHTML` of DB data → XSS-safe). Money: integer cents → `Intl.NumberFormat(USD)`; `due_date` formatted
+component-wise (no TZ shift). Disabled "Pay invoice" placeholder for `issued`/`overdue` only (Stripe not wired
+here). No service-role key, no write/update/delete path.
+
+Review + fixes (ultracode adversarial workflow — 4 lenses: security / schema-correctness / scope-regression /
+copy; 3 high/medium findings each independently re-verified, all fixed):
+- **[HIGH] F1 — wrong column name `line_total_cents`.** My port copied `line_total_cents` from the dashboard,
+  but the authoritative schema (`db/invoices-schema.sql:68`) and the writer (`api/admin/invoices.js:206-210`,
+  comment "do NOT include a per-line total column … total_amount_cents is a STORED GENERATED column") use
+  **`total_amount_cents`** for `invoice_items`; there is NO `line_total_cents`. PostgREST 400s on an unknown
+  column, and since the invoices + items queries share one try/catch, ANY client with ≥1 invoice would have
+  fallen straight into the error state. Fixed: items `.select(...)` and the render now use `total_amount_cents`.
+- **[HIGH] COPY-1 — false promise.** My subhead said "we'll email you a secure link to settle anything
+  outstanding" — a payment mechanism that does not exist and that contradicts the per-card note ("contact us
+  to settle this invoice"). Fixed: subhead now "…to settle anything outstanding, just get in touch."
+- **[MED] A11Y-1 — silent state change.** Wrapped the loading/empty status messages in one
+  `role="status" aria-live="polite"` container so the loading → empty/loaded transition is announced.
+- **[LOW] Heading order** — card title `h4` → `h2` (was an h1→h4 jump; `.cinv-title` styles by class, so the
+  visual is unchanged). **[LOW] a11y** — gave the Pay note a unique id and `aria-describedby` from the inert
+  button.
+- Lenses otherwise PASS: auth double-gate correct (no flash-of-content; page `display:none` until both checks
+  pass); zero Stripe/secret remnants; anon-key only (no service-role); no XSS sink; RLS + `client_user_id`
+  filter; drafts hidden; no dangling references to the removed Stripe DOM ids.
+
+Testing:
+- `node --check` (via `vm.Script`) on the extracted inline `<script>` → **passes** (before + after fixes).
+- Grep: zero `line_total_cents` / `pk_live` / `price_` / `/api/checkout` / "secure link"; item amount now
+  resolves to `total_amount_cents` (schema-correct). `<script>` opens/closes balanced; all 6 JS-referenced ids
+  exist once in markup.
+- `git` scope: only `payment.html` + `docs/logs.md` are this session's changes.
+- **NOT run (needs a browser + `vercel dev` + the migration applied + a signed-in client with seeded
+  invoices):** live render, the loading/empty/error/mobile eyeball, console-clean, and the cross-account
+  "account B can't see account A's invoices" isolation check → Reviewer (Task 8) + Security (Task 6).
+
+Risks / Notes:
+- **Consistent with the concurrent `invoice-line-total-fix` (16:18):** that session fixed the SAME
+  `line_total_cents` → generated-`total_amount_cents` issue in `dashboard.html` + `api/admin/invoices.js` +
+  `db/invoices-schema.sql`. My `payment.html` F1 fix reads the same DB-generated `total_amount_cents`, so the
+  client invoice display is now consistent across `payment.html` and the dashboard. **No file overlap** with
+  that session (it touched dashboard/api/db; I touched only `payment.html`) → no collision; a single commit
+  picks up both. (The minor a11y `aria-describedby`/heading fixes I added here are worth back-porting to the
+  dashboard's `cinv-*` block in a future pass — not done, out of scope.)
+- **Business consequence (owner/Manager):** `payment.html` WAS the real self-serve checkout (the dashboard's
+  embedded Stripe modal is inert), so clients can no longer self-purchase a plan/subscription through the site.
+  This matches the phase goal (admin-issued invoices) but is a real change to the live flow. The dashboard's
+  **"View Plans" button still links to `/payment`**, which now lands on the invoices list → recommend a
+  follow-up to relabel/repoint or remove it.
+- `/api/checkout.js` is now unused by the frontend (left intact; `/api/webhook` + `/api/customer-portal` still
+  serve existing subscribers).
+- Role: this session started as Designer (a template review), switched to **Developer / Implementation** per
+  the owner's explicit instruction for this code change. Did NOT `git commit` or deploy. **Manager: please
+  record `payment.html` → [REVIEW].**
+
 ## 2026-06-22 16:18 - Developer - invoice-line-total-fix
 
 Action:
@@ -771,6 +957,55 @@ Risks / Notes:
   asked to reuse, not replace, the admin auth pattern. Trivial to collapse to 401 if preferred.
 - Manager: please record board status for this owner-directed task; Security review recommended since it
   touches the service-role key + admin gate (already self-reviewed adversarially).
+
+## 2026-06-22 15:00 - Security - invoice-security-review
+
+Action:
+Reviewed
+
+Task:
+Security: Full security review of the custom-invoice system (phase 1, pre-Stripe)
+
+Files claimed:
+
+- read-only: `api/admin/invoices.js`, `db/invoices-schema.sql`, `db/admin-schema.sql`, `dashboard.html`
+  (invoice builder + client billing tab), `payment.html` (client invoices page)
+- write: `docs/security-log.md`, `docs/logs.md`
+
+Files changed:
+
+- `docs/security-log.md` — added the "Invoice system pre-Stripe review — 2026-06-22" subsection with a
+  clean-baseline entry + 4 Low/Informational findings + the IV-GATE verification item.
+- `docs/logs.md` — this entry. **No production code changed** (review only).
+
+Summary:
+Reviewed all 6 requested areas (admin-only access, service-role safety, client access, RLS, money safety, route
+safety). The implementation is well-hardened: server-side admin gate (bearer token → `getUser` → `caller.email
+=== ADMIN_EMAIL`) before any write; service-role key server-only; client reads are anon-key + RLS + explicit
+`.eq(client_user_id)` + `textContent` rendering (both `dashboard.html` and `payment.html`); no client write
+policy and no edit/delete route; money fully recomputed server-side with the per-line total as a Postgres
+GENERATED column; thorough input validation with overflow caps. Ran a 5-agent adversarial red-team (client-write,
+cross-tenant IDOR, money integrity, admin-gate bypass, completeness critic) — **0 exploits found**. All findings
+are Low/Informational. **Verdict: safe to proceed to Stripe, CONDITIONAL on verifying RLS is actually live in the
+Supabase dashboard (IV-GATE).**
+
+Testing:
+Static review + adversarial red-team only. `node --check` not needed (no code changed). **Not run (needs the
+Supabase dashboard / a live session):** confirming `rowsecurity = true` on `public.invoices` +
+`public.invoice_items`, that the 4 policies + `is_admin()` exist, and a live cross-tenant read test (client A
+cannot read client B's invoice over the anon key). This is the one must-do before the verdict is unconditional.
+
+Risks / Notes:
+- **IV-GATE (must verify, Manager/owner):** client isolation rests entirely on RLS, which is unverifiable from the
+  repo — confirm it live before Stripe. Ties to the standing F5 RLS item.
+- Low findings for the Manager to triage into Developer tasks (optional): draft invoices are client-readable via
+  RLS (UI hides them client-side only); non-atomic invoice+items insert (orphan risk → Postgres RPC for atomicity);
+  the `project_inquiries` public-insert → admin-`innerHTML` trust boundary (mitigated today by `esc()`, no CSP
+  backstop).
+- **Pre-Stripe notes:** RLS never checks `account_status` (suspended/banned clients still read/—later—pay
+  invoices); drive `status → paid` from the Stripe webhook, not the manual admin field; the disabled "Pay" buttons
+  are inert placeholders awaiting the payments phase.
+- No code was changed; per the role rules the Manager turns the accepted findings into Developer tasks.
 
 ## 2026-06-22 09:00 - Manager - add-developer-role
 

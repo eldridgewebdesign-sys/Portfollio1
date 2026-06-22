@@ -459,13 +459,21 @@ After Tasks 1/3/5. Read-only. RLS lives in Supabase — verify there, not just i
 
 ---
 
-## [TODO] Task 7 — Performance / Code Review of the invoice system
+## [REVIEW] Task 7 — Performance / Code Review of the invoice system
+
+> **Efficiency — invoice-system-review (2026-06-22 17:05).** Completed the review. Findings in
+> `docs/performance-log.md` (dated entry): **1 Medium, 8 Low, ~8 Informational** + the confirmed strengths.
+> Method: 5-dimension fan-out, every finding adversarially re-verified against source (verification downgraded
+> the picker over-fetch Medium→Low and refuted the 500-`err.message` "fix" — it is by-design, mirrors
+> `api/admin.js`). **Headline:** the system is healthy (N+1-free, indexed, integer-cents w/ server authority);
+> the **one item to fix before Stripe** is the non-atomic invoice create (`api/admin/invoices.js:309-349` →
+> Postgres RPC). The rest are cheap Low/Info wins. **Manager: triage the findings into Developer fix tasks.**
 
 Assigned Role:
 Efficiency
 
 Owner:
-None
+Efficiency · invoice-system-review (2026-06-22)
 
 Risk:
 Low (review)
@@ -496,18 +504,19 @@ Steps:
 
 Completion checklist:
 
-- [ ] Change completed (findings recorded)
-- [ ] Relevant checks run
-- [ ] No unrelated files changed (docs only)
-- [ ] Role-specific log updated (docs/performance-log.md)
-- [ ] docs/logs.md updated
-- [ ] Task moved to [REVIEW] (Efficiency sets its own task status)
+- [x] Change completed (findings recorded — 1 Medium / 8 Low / ~8 Informational, 2026-06-22 17:05)
+- [x] Relevant checks run (static review; queries cross-checked vs schema indexes; each finding adversarially re-verified against source; live timing/render deferred → Reviewer Task 8)
+- [x] No unrelated files changed (docs only — performance-log.md, logs.md, this task's status line)
+- [x] Role-specific log updated (docs/performance-log.md)
+- [x] docs/logs.md updated
+- [x] Task moved to [REVIEW] (Efficiency set its own task status)
 
 Review requirements:
 Manager (triage into Developer fix tasks).
 
 Notes:
-After Tasks 1/3/5. Review only.
+After Tasks 1/3/5. Review only. **Pre-Stripe gate:** the Medium finding (non-atomic invoice create → Postgres
+RPC) should be scheduled as a Developer task ahead of Phase-2 Stripe; the rest are optional cheap wins.
 
 ---
 

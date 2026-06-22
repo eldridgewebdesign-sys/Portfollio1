@@ -250,7 +250,7 @@
       <div>
         <p class="eyebrow">Billing</p>
         <h1>Your Invoices</h1>
-        <p class="subhead">Invoices WebSharke has issued to your account. Review the details below — we'll email you a secure link to settle anything outstanding.</p>
+        <p class="subhead">Invoices WebSharke has issued to your account. Review the details below — to settle anything outstanding, just get in touch.</p>
       </div>
       <a class="back-link" href="/dashboard">Back to Dashboard</a>
     </div>
@@ -259,9 +259,13 @@
       <!-- Shown only if invoices fail to load. -->
       <p class="cinv-error hidden" id="cinv-load-error" role="alert">We couldn’t load your invoices right now. Please refresh the page or try again later.</p>
 
-      <!-- Loading / empty / list states (mutually exclusive). -->
-      <p class="cinv-loading" id="cinv-loading">Loading your invoices…</p>
-      <p class="cinv-empty hidden" id="cinv-empty">You don’t have any invoices yet. When WebSharke bills you for a project, your invoices will appear here.</p>
+      <!-- Loading / empty / list states (mutually exclusive). The short status
+           messages share one live region so the loading → empty/loaded
+           transition is announced to screen readers. -->
+      <div class="cinv-status" role="status" aria-live="polite">
+        <p class="cinv-loading" id="cinv-loading">Loading your invoices…</p>
+        <p class="cinv-empty hidden" id="cinv-empty">You don’t have any invoices yet. When WebSharke bills you for a project, your invoices will appear here.</p>
+      </div>
 
       <!-- Invoice cards are appended here by loadClientInvoices(). -->
       <div class="cinv-list hidden" id="cinv-list" aria-live="polite"></div>
@@ -379,7 +383,7 @@
         const itemsByInvoice = {};
         const { data: items, error: itemErr } = await db
           .from("invoice_items")
-          .select("id,invoice_id,name,description,quantity,unit_amount_cents,line_total_cents,created_at")
+          .select("id,invoice_id,name,description,quantity,unit_amount_cents,total_amount_cents,created_at")
           .in("invoice_id", ids)
           .order("created_at", { ascending: true });
         if (itemErr) throw itemErr;
@@ -411,7 +415,7 @@
       // Head: title + ref, status badge.
       const head = cinvEl("div", "cinv-card-head");
       const titleWrap = cinvEl("div");
-      titleWrap.appendChild(cinvEl("h4", "cinv-title", show(iv.title, "Invoice")));
+      titleWrap.appendChild(cinvEl("h2", "cinv-title", show(iv.title, "Invoice")));
       titleWrap.appendChild(cinvEl("span", "cinv-id", cinvRef(iv.id)));
       head.appendChild(titleWrap);
       head.appendChild(cinvEl("span", "cinv-badge " + status, CLIENT_STATUS_LABEL[status] || (status || "—")));
@@ -456,8 +460,12 @@
         pay.disabled = true;                       // placeholder — Stripe not wired yet
         pay.setAttribute("aria-disabled", "true");
         pay.title = "Online payment is coming soon.";
+        const note = cinvEl("span", "cinv-pay-note", "Online payment coming soon — contact us to settle this invoice.");
+        const noteId = "cinv-paynote-" + String(iv.id);
+        note.id = noteId;
+        pay.setAttribute("aria-describedby", noteId);   // tie the "why" to the inert button
         actions.appendChild(pay);
-        actions.appendChild(cinvEl("span", "cinv-pay-note", "Online payment coming soon — contact us to settle this invoice."));
+        actions.appendChild(note);
         card.appendChild(actions);
       }
       return card;
@@ -493,7 +501,7 @@
         const qty = (it.quantity === null || it.quantity === undefined) ? 1 : it.quantity;
         tr.appendChild(cinvNumCell("Qty", String(qty)));
         tr.appendChild(cinvNumCell("Unit price", cinvMoney(it.unit_amount_cents)));
-        tr.appendChild(cinvNumCell("Amount", cinvMoney(it.line_total_cents)));
+        tr.appendChild(cinvNumCell("Amount", cinvMoney(it.total_amount_cents)));
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);

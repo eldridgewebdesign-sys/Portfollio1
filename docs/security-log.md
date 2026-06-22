@@ -32,6 +32,164 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+### Invoice system pre-Stripe review — 2026-06-22 — Security — invoice-security-review
+
+> Full security review of the custom-invoice system (phase 1, NO Stripe yet) before moving to payments.
+> Reviewed: `api/admin/invoices.js`, `db/invoices-schema.sql`, `db/admin-schema.sql` (`is_admin()`),
+> `dashboard.html` (admin builder + client billing tab), `payment.html` (client invoices page). Method: first-
+> hand reads of every file + a 5-agent adversarial red-team (client-write, cross-tenant IDOR, money integrity,
+> admin-gate bypass, completeness critic) — **0 exploits found**. The build is well-hardened; all findings
+> below are **Low / Informational**. **Verdict: SAFE to proceed to Stripe — CONDITIONAL on IV-GATE.**
+
+## 2026-06-22 15:00 - Security - invoice-clean-baseline
+
+Area Reviewed:
+The 6 requested invoice review areas — admin-only access, service-role key safety, client invoice access, RLS,
+money safety, route safety.
+
+Finding:
+**Verified correct.** (1) Admin-only writes: `POST /api/admin/invoices` verifies a Supabase bearer token with the
+service role then requires `caller.email === ADMIN_EMAIL` before any write; a normal client's token is rejected
+403. (2) Service-role key is server-only (`process.env` in `/api`); no service-role/secret in any frontend file
+(frontend has only the anon JWT + `pk_live_`). (3) Clients read only their own invoices/items (anon key + RLS +
+explicit `.eq("client_user_id", user.id)`); cannot create/edit/delete (no client write policy + no write route).
+(4) RLS on both tables is correctly scoped (owner-SELECT + admin-ALL; items gated through parent-invoice
+ownership). (5) Money is recomputed server-side (subtotal = Σ qty×unit, total = subtotal − discount + tax),
+client-supplied totals ignored, per-line total is a Postgres GENERATED column; negatives/empty/non-integer
+quantities rejected; MAX_CENTS/MAX_QTY caps keep all math inside JS safe-integer range. (6) Route validation is
+thorough; writes go through parameterized supabase-js; CORS scoped to the site origin (the token is the control).
+
+Severity:
+Low (informational baseline).
+
+Evidence:
+`api/admin/invoices.js:263-280` (auth+authZ gate), `:100-240` (validation + server-side recompute), `:201-237`
+(subtotal/total never from body); `db/invoices-schema.sql:68` (GENERATED line total), `:92-117` (RLS, no client
+write policy); `db/admin-schema.sql:29-38` (`is_admin()` = verified JWT email claim, `stable`, not SECURITY
+DEFINER); `dashboard.html:1604-1654` + `payment.html:357-407` (client read: anon `db`, `.eq` + RLS + status
+filter, `textContent` via `cinvEl`); `dashboard.html:2824-2838` (`postInvoice` sends `Authorization: Bearer`).
+
+Status:
+Reviewed / clean.
+
+## 2026-06-22 15:00 - Security - invoice-gate-rls-must-be-live
+
+Area Reviewed:
+The load-bearing precondition for ALL client-isolation guarantees — RLS actually being enabled in the live
+Supabase project.
+
+Finding:
+The invoice tables have **no** client INSERT/UPDATE/DELETE policy and only owner-SELECT, so **RLS is the entire
+control** for anon-key reads, and `is_admin()` is the entire control for the admin policies. None of this is
+verifiable from the repo (RLS lives in the Supabase dashboard). If the migrations were not applied, or RLS is
+disabled on either table, the anon key would silently return **every** client's invoices + line items (financial
+PII) to any logged-in user — a full cross-tenant read break. This is the single highest-impact failure mode in
+the feature and it is invisible from source.
+
+Severity:
+Medium **as a verification gate** (Low if confirmed live; High impact if RLS is not actually on). Not a code
+defect — an operational must-verify.
+
+Evidence:
+`db/invoices-schema.sql:92-93` (`enable row level security`) + `:96-117` (policies) exist in the migration, but
+the repo cannot prove the migration ran. Ties to the standing F5 `rls-not-verifiable-from-repo`.
+
+Recommendation:
+**Before Stripe / before relying on this:** in the Supabase dashboard confirm `rowsecurity = true` on
+`public.invoices` AND `public.invoice_items`, that all four policies + `public.is_admin()` exist, and run a live
+check — signed in as client A, attempt to read client B's invoice id over the anon key and confirm **0 rows**.
+
+Status:
+New (verification item for the Manager / owner — gates the "safe to proceed" verdict).
+
+## 2026-06-22 15:00 - Security - invoice-draft-readable-by-client
+
+Area Reviewed:
+`db/invoices-schema.sql` `inv_owner_select` vs the client UI draft-hiding.
+
+Finding:
+The owner-SELECT policy lets a client read **all** their own invoices, including `status = 'draft'`. The UI hides
+drafts (`CLIENT_VISIBLE_STATUSES`, `SHOW_DRAFTS_TO_CLIENTS=false`), but that filter is **client-side only** — a
+client querying the anon key directly (e.g. browser console) can read their own draft invoices and amounts before
+the admin issues them.
+
+Severity:
+Low (it is the client's own data; matters only if drafts hold not-yet-final figures the admin doesn't want seen).
+
+Evidence:
+`db/invoices-schema.sql:97-98` (`using (auth.uid() = client_user_id or public.is_admin())` — no status filter);
+`dashboard.html:1561-1564,1617` + `payment.html:370` (`.in("status", CLIENT_VISIBLE_STATUSES)` — cosmetic).
+
+Recommendation:
+If drafts must stay admin-only until issued, tighten the SELECT policy to
+`using ((auth.uid() = client_user_id and status <> 'draft') or public.is_admin())`. Otherwise document that
+drafts are intentionally client-visible.
+
+Status:
+New (Developer task — RLS tweak — if drafts should be hidden).
+
+## 2026-06-22 15:00 - Security - invoice-builder-trusts-public-project-inquiries
+
+Area Reviewed:
+The admin invoice builder's client picker ← `project_inquiries` (public-insert) → admin `innerHTML` trust boundary.
+
+Finding:
+The invoice builder's client dropdown is populated from `list_users` → `public.project_inquiries`, which has a
+**public INSERT** policy (`with check (true)`, by design — onboarding is a pre-session lead form). So anonymous
+internet users can inject arbitrary strings (name/business/etc.) that are later rendered into the **admin**
+dashboard via `innerHTML`. **Currently mitigated:** `esc()` is correctly applied at every audited admin render
+site (picker options, drawer, rows), so no stored XSS lands today. But this is a standing untrusted-input →
+admin-`innerHTML` boundary with **no CSP backstop** (`script-src 'unsafe-inline'`), so any single future missed
+`esc()` on an admin-rendered field becomes admin-account stored XSS.
+
+Severity:
+Low (mitigated today; defense-in-depth + a caution for future edits, incl. the upcoming Stripe/admin UI work).
+
+Evidence:
+`db/admin-schema.sql:158-160` (`piq_public_insert ... with check (true)`); `dashboard.html:2895-2907`
+(picker from `list_users`), `esc()` at `:1900-1903`, applied `:2460-2465,2907` (mitigation). Invoice client card
+path is 100% `textContent`, and `invItemRow()` builds static markup with no DB data — no injection there.
+
+Recommendation:
+Keep the strict `esc()`/`textContent` discipline on every admin-rendered DB value; consider a tighter CSP
+(remove `'unsafe-inline'` via hashing/nonces — already a deferred follow-up) as a real XSS backstop.
+
+Status:
+New (defense-in-depth note; ties to the deferred full-CSP follow-up).
+
+## 2026-06-22 15:00 - Security - invoice-minor-notes
+
+Area Reviewed:
+`api/admin/invoices.js` minor items (bundled).
+
+Finding:
+(a) **Non-atomic write:** the invoice row and its items are two separate inserts with a best-effort compensating
+delete; if the item insert AND the rollback both fail, an orphaned invoice with no line items (totals not matching
+its empty items) remains — logged loudly with its id, requires two DB failures, not attacker-controllable.
+(b) **Raw error to admin:** the 500 path returns `err.message` (incl. the orphan invoice UUID) to the caller —
+reachable **only** by the authenticated admin, so acceptable, but keep it admin-only. (c) **Email-based admin
+identity:** admin is one hardcoded email in both the route (`ADMIN_EMAIL`, env-overridable) and the SQL
+`is_admin()` literal — they must stay in sync; a role/`app_metadata` claim would be more robust long-term.
+(d) **No rate limiting** — acceptable, the route is admin-only.
+
+Severity:
+Low / Informational.
+
+Evidence:
+`api/admin/invoices.js:309-349` (two inserts + rollback), `:341-346,376` (raw message), `:61-63,278` +
+`db/admin-schema.sql:37` (email identity, two places). Consistent with the existing `api/admin.js` patterns.
+
+Recommendation:
+(a) For true atomicity, move the invoice+items insert into a single Postgres RPC/transaction. (b) Optionally
+return a generic 500 + log detail. (c) Keep `ADMIN_EMAIL` and the `is_admin()` literal identical; consider a role
+claim later. (d) None needed now. **Pre-Stripe:** RLS keys only on `auth.uid() = client_user_id`, never on
+`account_status`, so a suspended/banned client still reads (and, once Stripe is wired, could pay) their invoices —
+confirm that is intended before checkout goes live, and drive `status → paid` from the webhook, not the manual
+admin field.
+
+Status:
+New (Low / Informational — optional hardening; the account_status + webhook items are pre-Stripe notes).
+
 ### Fix applied — 2026-06-21 — Security — security-headers-vercel-json
 
 ## 2026-06-21 12:10 - Security - F6-security-headers-added
