@@ -1,5 +1,8 @@
 # Reviewer Log
 
+> **Status: ACTIVE** — the Reviewer role was re-activated 2026-06-22. This log is in use. (It was briefly
+> marked deprecated in the 2026-06-19 role migration; that is superseded.)
+
 This file stores user-experience feedback from Reviewer sessions.
 
 The Reviewer writes findings here.
@@ -13,6 +16,10 @@ The Manager manages the status of each finding and decides what becomes a task.
 > **Manager:** you own the status of every finding. Triage `[NEW]` entries, set the **Manager Status**,
 > add **Manager Notes**, and when a finding is accepted, create a task in `docs/taskboard.md` and record
 > its title under **Converted Task** (status → `[CONVERTED]`).
+>
+> **Canonical status = the finding's heading** (`## REVIEW-0001 - [STATUS] Title`). The Reviewer sets it to
+> `[NEW]` once and does not change it again; the Manager owns every later status change there. The
+> `Manager Status:` field is a mirror / notes line — keep it in step with the heading so they never drift.
 
 ---
 

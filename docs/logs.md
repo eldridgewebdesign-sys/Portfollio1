@@ -6,6 +6,589 @@
 
 ---
 
+## 2026-06-22 13:42 - Developer - client-billing-invoices-ui
+
+Action:
+Finished
+
+Task:
+Task 5 — Implement the Client Billing Invoice List (owner-assigned directly as "Developer 3"). Read-only
+client view of admin-created invoices. Phase 1, NO Stripe. → ready for [REVIEW] (Manager to record the
+board status; I do not edit the board).
+
+Files claimed / changed:
+
+- `dashboard.html` — **CLIENT billing region only** (3 disjoint blocks):
+  1. Client inline `<style>`: a namespaced `.cinv-*` style block (invoice cards, status badges, line-item
+     table, totals, notes, disabled Pay button, + a `@media(max-width:560px)` stacked-table mobile layout).
+  2. `#tab-billing` markup: a `#cinv-block` invoices section (heading, load-error line, loading line,
+     empty state, and an `aria-live` `#cinv-list` the cards render into) — inserted after the existing
+     subscription/hosting blocks, before `#tab-domain`. The existing plan/subscribe + Stripe UI is untouched.
+  3. Client inline `<script>`: `loadClientInvoices()` + render helpers (`buildClientInvoiceCard`,
+     `buildClientItemsTable`, `buildClientTotals`, `cinvMetaItem`, `cinvNumCell`, `cinvTotalRow`,
+     `cinvEl`/`cinvMoney`/`cinvDate`/`cinvRef`) and config (`SHOW_DRAFTS_TO_CLIENTS`,
+     `CLIENT_VISIBLE_STATUSES`, `PAYABLE_STATUSES`, `CLIENT_STATUS_LABEL`), plus one `loadClientInvoices(user)`
+     call appended to the existing page-load IIFE (after `renderClientPayBanner(sub)`).
+- `docs/logs.md` — START (13:18) + this FINISH.
+
+NOT touched: the admin `.adm-*` region / admin IIFE (Task 3, the concurrent `admin-invoice-ui` session);
+payment / Stripe / Supabase-auth logic (`/api/checkout`, `/api/customer-portal`, the Payment Element modal,
+`manage-sub`/`cancel-hosting`); `api/*`, `db/*`, `js/supabase-config.js`, `payment.html`, price IDs, vendor.
+
+How invoices are fetched (the core of the task):
+- Reuses the existing global anon Supabase client `db` (`js/supabase-config.js`) — same pattern as the
+  dashboard's `project_inquiries` / `subscriptions` reads. NO service-role key in the browser.
+- Query 1 (invoices): `db.from("invoices").select(<explicit cols>).eq("client_user_id", user.id)
+  .in("status", CLIENT_VISIBLE_STATUSES).order("created_at",{ascending:false})`. `user` is the
+  already-gated signed-in user from the page-load IIFE. `CLIENT_VISIBLE_STATUSES` =
+  issued/paid/overdue/void/canceled (draft EXCLUDED — see RLS note). Newest-first.
+- Query 2 (items): collect the returned invoice ids, then ONE `db.from("invoice_items")
+  .select(<cols>).in("invoice_id", ids)` — no N+1 — grouped client-side by `invoice_id`.
+- Rendering is 100% `textContent` via `cinvEl()` (a `createElement`+`textContent` helper); NO `innerHTML`
+  of any DB value, so admin-entered title/notes/item text cannot inject markup.
+- Money: integer cents → `Intl.NumberFormat(USD)` on `cents/100`, straight from the server-computed
+  `*_amount_cents` columns (never recomputed in the browser). `due_date` (a DATE) is formatted
+  component-wise to avoid a timezone off-by-one.
+- Per invoice: title, short ref from the UUID `id`, status badge, due/created dates, line-item table
+  (name+desc, qty, unit, amount), subtotal/discount/tax/total, notes, and a **disabled** placeholder Pay
+  button shown ONLY for `issued`/`overdue`. Independent error/empty/loading states; a failure here never
+  affects the rest of the dashboard (un-awaited call + internal try/catch).
+
+RLS / permission findings (for Security — Task 6):
+- **Read isolation is sound and defence-in-depth.** The query filters `client_user_id = user.id`, AND RLS
+  `inv_owner_select` (db/invoices-schema.sql:91-92) independently restricts SELECT to `auth.uid() =
+  client_user_id`. Items: `ids` is derived only from the already-owner-scoped invoices, AND
+  `invitem_owner_select` (schema:100-107) independently restricts items to invoices owned by the caller.
+  No cross-client leak path even if one layer were removed.
+- **No write/mutate/delete path** exists from this client code (no insert/update/delete/upsert), and RLS has
+  no client write policy — so requirements 7/8/9 (can't edit / delete / change prices) hold at both the UI
+  and DB layers. The only action is the inert, disabled Pay button.
+- **Draft-hiding is a UI control:** RLS lets a client read their OWN drafts, so the `.in(status,…)` filter
+  (not RLS) is what hides them — flagged by the Designer too. A `SHOW_DRAFTS_TO_CLIENTS` flag documents the
+  opt-in.
+- **Prerequisite:** the `db/invoices-schema.sql` migration (tables + RLS + `public.is_admin()`) must be
+  APPLIED in the live Supabase project, else both queries error → the UI shows its load-error line
+  gracefully (no crash). Same prerequisite the Task 1 route flagged.
+
+Testing:
+- `node --check` on the EXTRACTED on-disk client-invoice JS (post-edit) → passes.
+- Adversarial 5-lens review (ultracode workflow: security/RLS · XSS · schema · requirements ·
+  scope/concurrency). Verdict: **no critical/high/medium defects.** 4 low findings, all actioned:
+  (1+3) "paid date" reads a non-existent `paid_at`/`paid_date` column → kept as a clearly-commented,
+  forward-compatible stub that renders nothing today (never fakes a date) + explicit "to enable, add the
+  column to the schema/admin route AND the SELECT" note; (2) relabelled "Issued" → "Created" because
+  `created_at` is row-creation time, not issuance time; (4) namespaced the generic global helpers
+  (`mkEl`→`cinvEl`, etc.) to remove any same-file collision surface with the concurrent admin builder.
+- Static checks: CSS `.cinv-*` namespaced (0 `.inv-*` collisions; brace balance 881/881); 2/2 `<style>`
+  tags; structural placement confirmed (`#tab-billing` → `#cinv-block` → `#tab-domain`); JS consts/helpers
+  defined before the IIFE that calls them (no TDZ).
+- **NOT run (needs a browser + `vercel dev` + the migration applied + a real signed-in client with seeded
+  invoices):** live render, the disabled-Pay/empty/mobile eyeball, console-clean, and the cross-account
+  "account B cannot see account A's invoices" isolation check. → Reviewer (Task 8) + Security (Task 6).
+
+Risks / Notes:
+- **Concurrency (the shared-`dashboard.html` case the Manager flagged):** I ran the client region (Task 5)
+  CONCURRENTLY with the `admin-invoice-ui` session (Task 3), against the Manager's "T3 first, not
+  concurrent" sequencing — done per the owner's direct assignment. Collision was avoided by construction:
+  disjoint blocks (client `<style>`/`#tab-billing`/client `<script>` vs admin `<style>`/`.adm-*`/admin
+  IIFE) + my CSS/ids namespaced `.cinv-*`/`#cinv-*` vs their `.inv-*`. The working tree now holds BOTH
+  Developers' changes to `dashboard.html` (expected; same pattern as prior concurrent sessions).
+- **Schema gaps for the Manager / Devs 1-2:** (a) no `paid_at`/`paid_date` column → "paid date if paid"
+  can't render until one is added (to BOTH the schema/admin writer AND the client SELECT); (b) no
+  human invoice-number column → the UI shows a short ref from the UUID `id`. Neither blocks this phase.
+- Ran ahead of the Designer's Task 4 spec (still being written in `docs/`); built on the existing client
+  billing design language (the Designer's own stated grounding) so it's forward-compatible. Flag for a
+  Designer review pass once their spec lands.
+- The old plan/subscribe UI + `payment.html` are left intact this phase (per Task 5 notes); whether the
+  invoice list replaces them is a Phase-2 / Manager decision.
+
+## 2026-06-22 13:40 - Developer - admin-invoice-ui
+
+Action:
+Finished
+
+Task:
+Task 3 — Implement the Admin Invoice Builder (owner-assigned as "Developer 2") → ready for [REVIEW].
+
+Files changed:
+
+- `dashboard.html` — **admin region only**, purely additive (no existing logic modified). Added:
+  1. an "Invoices" nav button (`data-view="invoices"`, after Payments) + a `#view-invoices` section
+     (Invoice details: client `<select>`, title, optional notes, optional due date; a Line-items panel with
+     an add/remove repeater; a sticky Summary card with live subtotal/total + Save-as-draft / Issue actions);
+  2. a scoped `.inv-*` `<style>` block (reuses `.adm-panel-box`/`.adm-fld`/`.adm-btn`/`.adm-mini`; ledger-style
+     line-item grid, not a spreadsheet; responsive at 1040/560px);
+  3. a JS module (`const INV`, `centsToUsd`, `dollarsToCents`, `invItemRow`/`addInvItem`, `recomputeInvoice`,
+     `collectInvoice`, `setInvBusy`, `postInvoice`, `runInvoiceSubmit`, `resetInvoiceForm`,
+     `loadInvoiceClients`, `initInvoices`) + one `switchView` branch (`viewId === "invoices"`).
+- `docs/logs.md` — START + this FINISH.
+
+Summary:
+Built the admin create-invoice screen wired to Developer 1's `POST /api/admin/invoices`. The client dropdown
+is populated from the existing `list_users` admin action (uses `user_id` = the auth UUID = `client_user_id`,
+deduped + name-sorted client-side). The form sends the admin's Supabase bearer token to the route and posts
+ONLY: `client_user_id`, `title`, `status` (`draft`|`issued`), optional `notes`/`due_date`, and `items[]`
+(`name`, `description|null`, integer `quantity`, integer `unit_amount_cents`). Dollars → integer cents via
+`Math.round(n*100)`. Client-side guards (defence-in-depth; server is authoritative): require a client + a
+title; ≥1 line item; non-empty item names; integer qty ≥1; non-negative prices; reject >2-decimal/scientific
+prices. The on-screen subtotal/total are a LIVE ESTIMATE only — never sent; on success the screen shows the
+server-computed `total_amount_cents`. Save-as-draft vs Issue (Issue is gated by a confirm modal); success +
+error states via the inline `#inv-msg` region and the existing `toast()`.
+
+Testing:
+- Static: extracted every inline `<script>` and compiled each with Node `vm.Script` → **0 syntax errors**
+  on the COMBINED file (mine + the concurrent Task 5 client-billing module — no redeclaration collision in
+  the shared IIFE; verified no duplicate `function/const` names; `INV` declared once). CSS braces 344/344
+  balanced. All new IDs unique. `git diff` confirms admin-region-only, additive.
+- Contract: re-read `api/admin/invoices.js` — the request body matches `parseInvoiceBody` exactly; `draft`/
+  `issued` are in `ALLOWED_STATUS`; the UI never sends subtotal/total/discount/tax (server owns the total).
+- Adversarial review: ran a 4-lens ultracode review (contract / correctness / security / UX). Security:
+  clean (esc() on all client/server strings; bearer token only; no service-role; no direct browser writes;
+  trust boundary intact; no Stripe/schema/billing-tab changes). Applied all real findings: **[med]** closed a
+  double-submit window (a keyboard action during the Issue confirm could create 2 invoices) by holding the
+  submit lock across validate→confirm→POST (`runInvoiceSubmit`); **[med]** validation errors now also raise a
+  toast so they're visible on stacked/mobile layouts where the summary drops to the bottom; **[low]** reject
+  >2-decimal prices instead of silently rounding; **[low]** fixed success copy, un-clipped the Amount column,
+  and made errors `aria-live=assertive`.
+- **NOT run (needs `vercel dev` + a browser + live Supabase/admin login):** the live e2e — create a draft +
+  an issued invoice, confirm rows land with correct cents, and a clean console. This is the GUI/deploy item
+  for the reviewer (same non-GUI limitation prior sessions signed off with).
+
+Risks / Notes:
+- **Concurrent shared-file edit:** the **Task 5 — Client Billing UI** Developer session is editing
+  `dashboard.html` at the same time (the board said Task 3 and Task 5 should NOT run concurrently). Our edits
+  are in disjoint regions (admin `.adm-*` view vs the client `data-tab="billing"` region) with no ID or
+  function-name collision — verified by re-compiling the combined inline scripts (0 errors) and a duplicate-
+  declaration scan. Both change-sets coexist in the working tree; a commit picks up both. Flagging for the
+  Manager.
+- **Designer spec (Task 2) was not yet published** when this was built (owner assigned the build directly; the
+  Designer `invoice-billing-ux` spec finished right after). Built on the existing admin design language
+  (`.adm-*`) — the Designer's own stated grounding — so it is forward-compatible. **Needs the Designer review
+  pass** to reconcile against the now-published spec.
+- **Backend route notes (Developer 1):** route is solid and matches the task contract. Two small observations
+  for whoever owns it — (a) on a partial DB failure it best-effort-deletes the invoice (no SQL transaction);
+  a Postgres RPC would make create atomic. (b) `client_user_id` is validated against `auth.users`, but the
+  dropdown is sourced from `project_inquiries.user_id`; a client who exists in auth but has no inquiry row
+  won't appear in the picker (acceptable — every onboarded client has an inquiry row).
+- Carry-forward for **Task 5**: the Designer flagged that the client billing page must filter out `draft`
+  invoices (RLS lets a client read their own rows regardless of status). Not this task's file.
+- Did NOT `git commit` or deploy. Developer does not edit the board — **Manager: please record Task 3 →
+  [REVIEW]**.
+
+---
+
+## 2026-06-22 14:00 - Designer - invoice-billing-ux
+
+Action:
+Finished
+
+Task:
+Design the admin invoice builder + client billing page experience → direction/spec delivered.
+
+Files changed:
+
+- `docs/design-guide.md` — added the section "Invoice & Billing system — UX direction & buildable spec
+  (2026-06-22)" (where it lives; shared money/status/draft rules; admin builder layout; client billing
+  layout; UX problems to avoid; full copy/labels; open questions) + a dated decision-log entry.
+- `docs/mockups/invoice-billing-mockup.html` — NEW non-production sandbox prototype (Admin list / Admin
+  builder / Client billing) reusing the real `dashboard.html` tokens + components; file://-safe, no CDN.
+- `docs/logs.md` — START (below) + this FINISH.
+
+Summary:
+Delivered both screens as a buildable Designer spec (NOT production code). Admin Invoice Builder = guided
+single-column sectioned form (Client & details → Line items → Adjustments → Totals) with the total shown
+twice (large Total Due + a sticky bar on `.adm-toolbar`) and draft-vs-issued signaled by badge + status
+sentence + distinct Save/Issue buttons; in a new `view-invoices` admin view with list + KPIs + read-only
+drawer. Client Billing = an "Amount Due" hero (single most-urgent invoice + an honest Pay placeholder) over
+a quiet stacked-card invoice history, inside the existing Billing tab; read-only, drafts never shown, paid
+invoices read as finished receipts. Reuses existing components only (`.adm-table`/`.adm-card`/`.badge`/
+`.adm-drawer`/`.adm-modal`/`.adm-fld`; client `.panel`/`.ws-btn`/`.pay-banner`).
+
+Process:
+ultracode design-panel workflow (6 layout explorers → 2 judges → 2 adversarial UX critics). The spec's "UX
+problems developers must avoid" section is the critique synthesis.
+
+Testing:
+Design artifacts only — no production code touched. Cross-checked the spec against the real components
+(`dashboard.html` admin `.adm-*` shell + client Billing tab + badge palette + forms + drawer/modal) and the
+data model (`db/invoices-schema.sql`, `api/admin/invoices.js`). Mockup is self-contained (inline CSS/JS,
+fonts via relative `../../fonts/`, no CDN/fetch). **Not run (non-GUI):** in-browser eyeball — recommend
+opening `docs/mockups/invoice-billing-mockup.html` (render, line-item live-total math, issue-confirm + pay
+placeholder, mobile reflow).
+
+⚠️ Concurrency discovered at hand-off:
+Two Developer sessions are ALREADY building this in `dashboard.html` — **admin-invoice-ui** (Task 3, admin
+region) and **client-billing-invoices-ui** (Task 5, client region) — both started ~13:17/13:18, before this
+spec published, building on the existing `.adm-*`/client design language (my stated grounding), so they
+should be largely forward-compatible. They both asked for a **Designer review pass once the spec publishes**.
+No code conflict with me (I only touched `docs/`). Next Designer action: once both Dev tasks reach [REVIEW],
+review their build against this spec (esp. the "UX problems to avoid" list — draft-leak server-side filter,
+zero-total handling, derived `overdue`, total visibility, focus/a11y, honest Pay-button copy).
+
+Risks / Notes:
+
+- **Blocking dependency flags for the Manager:** only `POST /api/admin/invoices` (create) exists — the
+  list/KPIs, detail drawer, edit, mark-paid, and the client read endpoint are NOT built; the client read MUST
+  exclude `status='draft'` **server-side** (draft-leak trap; the Dev currently hides drafts in UI only via a
+  flag — confirm a server-side filter too); `'overdue'` must be derived from `due_date` (nothing sets it);
+  the builder must POST only `draft`/`issued` (never `paid`). Also flagged by Task 5 Dev: no `paid_date` and
+  no human invoice-number column in the schema — the spec degrades gracefully (omit paid date; short ref from
+  uuid) but a future schema task could add them.
+- One owner decision in the spec: Pay-button placeholder wording ("Request payment link" recommended).
+- **Direct owner task, not on the board** — the Manager should mirror it and reconcile it with the Task 3/5
+  builds already in flight. The Designer did not edit the board (role rule).
+- No backend, Stripe, payment flow, or unrelated dashboard pages were touched (per the task's "do not" list).
+
+## 2026-06-22 13:18 - Developer - client-billing-invoices-ui
+
+Action:
+Started
+
+Task:
+Task 5 — Implement the Client Billing Invoice List (owner-assigned directly as "Developer 3"). Show the
+signed-in client the invoices an admin created for them: read-only, phase 1, NO Stripe. Owner-direct
+assignment ran ahead of the Manager's T4→T3→T5 sequence — flagged for the Manager to record the board
+status ([IN PROGRESS] · Owner: Developer).
+
+Files claimed:
+
+- `dashboard.html` — the **CLIENT** billing region ONLY: the `#tab-billing` markup (add a read-only
+  invoices block), the **client** inline `<style>` block (the one ending ~`:233`, before the admin theme),
+  and the **client** inline `<script>` IIFE (add `loadClientInvoices()` + render helpers and one call
+  inside the existing page-load IIFE). NOT the admin `.adm-*` region, NOT the admin IIFE.
+- `docs/logs.md` (START + FINISH).
+
+NOT touching: the admin invoice builder region (Task 3); `window.initAdmin` / `.adm-*` UI/styles; payment /
+Stripe / Supabase-auth logic (Payment Element modal, `/api/checkout`, `/api/customer-portal`,
+`manage-sub`/`cancel-hosting`, `payment.html`); `api/*`, `db/*`, `js/supabase-config.js`, price IDs, vendor.
+
+⚠️ Concurrency (the exact shared-file case the Manager flagged): a **Developer - admin-invoice-ui** session
+(Task 3) started 13:17 and is editing the **admin** region of `dashboard.html`; a **Designer -
+invoice-billing-ux** session is writing the Task 4/2 spec into `docs/` (no code). To avoid collision while
+both Devs touch `dashboard.html`:
+- I claim only the **client** region (disjoint blocks from Task 3's admin region — verified `dashboard.html`
+  is unmodified on disk at my start).
+- Task 3 is adding a `.inv-*` `<style>` block → I namespace **all** my client classes/ids as **`.cinv-*` /
+  `#cinv-*`** (never `.inv-*`, no generic class names) so the two CSS sets cannot interfere in either
+  direction. JS does not collide (their `initInvoices` is admin-IIFE-local; mine are client-script globals).
+- I re-read each target region of `dashboard.html` immediately before editing it.
+
+Summary:
+Backend exists (Task 1, [REVIEW]): `db/invoices-schema.sql` (`invoices` + `invoice_items`; RLS owner-read,
+no client write) + `api/admin/invoices.js` (service-role writer). This task is the client READ UI only.
+Fetch the caller's own invoices (`.eq('client_user_id', user.id)` + `.in('status', CLIENT_VISIBLE_STATUSES)`
+— drafts hidden per the cross-session draft-leak flag) and their items (one `.in('invoice_id', ids)` query,
+no N+1), render invoice cards (title, ref, status badge, due/issued dates, line-item breakdown,
+subtotal/discount/tax/total, notes) via DOM `textContent` only (no `innerHTML` of DB data), with a disabled
+placeholder Pay button for `issued`/`overdue` only.
+
+Testing:
+Planned: `node --check` on the extracted new JS; static scope diff (client billing region only); column
+cross-check vs `db/invoices-schema.sql`; adversarial multi-lens review (RLS leakage / XSS / schema / requirements
+/ regression). Live signed-in render with seeded invoices + the cross-account isolation check are the GUI/`vercel
+dev` items a non-GUI session can't run — flagged for Security (Task 6) + Reviewer (Task 8).
+
+Risks / Notes:
+- Schema gaps surfaced for the Manager / Devs 1-2: **no `paid_date`/`paid_at` column** (so a real paid date
+  can't be shown until one is added — UI omits it gracefully) and **no human invoice-number column** (UI shows
+  a short ref derived from the UUID `id`). Detailed in the FINISH entry.
+- Draft-hiding is a UI control (RLS lets a client read their own drafts), via a `SHOW_DRAFTS_TO_CLIENTS` flag.
+
+## 2026-06-22 13:17 - Developer - admin-invoice-ui
+
+Action:
+Started
+
+Task:
+Task 3 — Implement the Admin Invoice Builder (owner-assigned as "Developer 2"). Build the admin invoice
+creation UI in `dashboard.html`, wired to Developer 1's `POST /api/admin/invoices`.
+
+Files claimed:
+
+- `dashboard.html` — the **admin** (`.adm-*`) region ONLY: a new "Invoices" nav button + `#view-invoices`
+  section (details form + line items + live totals + actions), a scoped `.inv-*` `<style>` block, an
+  `initInvoices()` / submit JS module, and one `switchView` branch. NOT the client billing region (Task 5),
+  NOT payment/Stripe/Supabase/auth logic.
+- `docs/logs.md` — this entry.
+
+Files changed:
+
+- (in progress — see the FINISH entry)
+
+Summary:
+Claimed Task 3. Inspected the backend first per the task ("inspect the current implementation before
+wiring"): `api/admin/invoices.js` is done + in `[REVIEW]` (Task 1) — admin-gated, recomputes all money
+server-side, body shape matches the task. Also read `db/invoices-schema.sql` and the existing admin shell
+(`switchView`, `adminApi`, `toast`, `confirmAction`, the `.adm-*` styles, `list_users` for the client
+dropdown). Building a new admin view that reuses those exact patterns.
+
+Coordination:
+- A concurrent **Designer** session (`invoice-billing-ux`) is writing the Task 2 spec into
+  `docs/design-guide.md` + `docs/mockups/` — it did NOT claim `dashboard.html`, so no code conflict.
+- Task 3 nominally depends on Task 2; the owner assigned this build directly before the spec landed. Built
+  on the existing `.adm-*` design language (the Designer's own stated grounding) so it is forward-compatible
+  — flag for a Designer review pass once their spec publishes.
+
+Testing:
+None yet (START).
+
+Risks / Notes:
+- Posts to the SEPARATE endpoint `/api/admin/invoices` (not the `adminApi` `/api/admin` `{action,payload}`
+  helper); reuses the same Supabase bearer-token auth pattern.
+- Out of scope per the task: no Stripe checkout / pay buttons, no DB schema change, no direct browser writes
+  to Supabase. The browser sends only line items in cents; the server owns the authoritative total.
+- Designer flag noted: the client *billing page* (Task 5, not this task) must filter out `draft` invoices —
+  carried forward for whoever builds Task 5.
+
+---
+
+## 2026-06-22 - Designer - invoice-billing-ux
+
+Action:
+Started
+
+Task:
+Design the admin invoice builder + client billing page experience (owner-assigned direct task — not
+yet on the board). Direction/spec only; no production code.
+
+Files claimed:
+
+- `docs/design-guide.md` (new Designer decision entry + invoice/billing component spec)
+- `docs/mockups/` (NEW — clearly non-production sandbox prototype; `docs/` is in `.vercelignore`, never deployed)
+- `docs/logs.md` (this entry)
+
+Files NOT touched (out of scope per the task + Designer role):
+
+- `dashboard.html` and all production HTML/CSS/JS (Developer applies the spec later)
+- `api/admin/invoices.js`, `db/invoices-schema.sql`, payment/Stripe/Supabase/auth logic (no backend change; no Stripe flow yet)
+
+Summary:
+Owner asked for the design of two screens for the custom-invoice system: (1) Admin Invoice Builder and
+(2) Client Billing Page. Grounded the design in the EXISTING system: read `db/invoices-schema.sql` +
+`api/admin/invoices.js` (data model: cents money; statuses draft/issued/paid/overdue/void/canceled;
+server recomputes all totals; only a create endpoint exists — save-draft vs issue = status on POST) and
+the `dashboard.html` design language (admin `.adm-*` app shell + the client dashboard's existing
+**Billing** tab, `.badge` status pills, `.adm-table`, `.adm-card`, `.adm-drawer`, `.pay-banner`). The
+invoice screens reuse these so they feel native, not bolted on. Executing via an ultracode design-panel
+workflow (explore divergent layouts → judge vs. requirements → adversarial UX critique), then writing the
+spec + a sandbox mockup.
+
+Testing:
+None yet (START).
+
+Risks / Notes:
+- **Draft-leak trap (flag for Developer):** RLS `inv_owner_select` lets a client read their OWN invoices
+  regardless of status, so a `draft` would appear on the client page unless the client query filters
+  `status <> 'draft'`. Design assumes drafts are admin-only.
+- Money is stored in **cents**; admin enters dollars → the Developer must convert (×100, integer) and the
+  client page must format cents → `$x.xx`. Server is the source of truth for subtotal/total.
+- This is a direct owner task; the Manager should mirror it onto the board (Developer implementation task
+  to follow from this spec).
+
+## 2026-06-22 13:10 - Manager - invoice-phase-tasks
+
+Action:
+Planned
+
+Task:
+Create the "Custom invoice / payment system" phase (8 tasks); record Task 1's board status from the concurrent
+Developer FINISH
+
+Files claimed:
+
+- docs/taskboard.md
+- docs/logs.md
+
+Files changed:
+
+- docs/taskboard.md — added a "🧾 PHASE — Custom invoice / payment system (started 2026-06-22) — CURRENT
+  FOCUS" section near the top: grounding (authoritative schema/columns, the admin-auth pattern to reuse, RLS,
+  where the UIs live), a sequence/dependency map, the 8 owner-requested tasks in the CLAUDE.md format, and a
+  DEFERRED Phase-2 (Stripe) note. **Recorded Task 1 → [REVIEW]** (Owner: the Developer admin-invoices-route
+  session) per its FINISH below.
+- docs/logs.md — this entry.
+
+Summary:
+Per the owner: replace the old fixed-payment (plan/subscribe) setup with an **admin-issued invoice system** —
+clients can only pay invoices an admin creates/assigns. Authored 8 tasks across the 6 current roles (Manager
+orchestrates; Designer ×2 specs, Developer ×3 builds, Security/Efficiency/Reviewer review). Grounded every task
+in the real codebase:
+- **Schema is in the repo** (`db/invoices-schema.sql`) — used its EXACT columns (`client_user_id`,
+  `subtotal_amount_cents`, `unit_amount_cents`, `line_total_cents`, `total_amount_cents`, status enum incl.
+  `canceled`). Route `api/admin/invoices.js` → `/api/admin/invoices`, the only writer.
+- **Admin auth**: reuse the `api/admin.js` Bearer→getUser→admin-email gate (`:79-101`, service-role `:44`).
+- **Both billing UIs live in `dashboard.html`** (client `data-tab="billing"` ~`:639`; admin `.adm-*` views
+  ~`:702-710`) → Task 3 (admin) + Task 5 (client) edit the same file → sequenced (T3 first), claim regions.
+- **No-Stripe gate** in every task + a deferred Phase-2 note; the live Stripe flow is do-not-touch this phase.
+
+Board sync (new Manager duty): a Developer session finished the Task 1 work concurrently (see the 13:03 FINISH
+below) — `api/admin/invoices.js` + `db/invoices-schema.sql`, matching the Task 1 spec (reused admin gate,
+server-side totals, client-exists check, no Stripe, `node --check` + self-adversarial-reviewed). Recorded
+**Task 1 → [REVIEW]** with that session as Owner. Pending before [DONE]: Security review (Task 6), live e2e
+(`vercel dev`), and confirming the migration is applied in Supabase.
+
+Testing:
+Docs only — no website code changed by the Manager. Specs self-verified against `db/invoices-schema.sql`,
+`api/admin.js`, and `dashboard.html` (greps + reads). Did not run a separate multi-agent review of the task
+specs (Task 1 was already implemented + adversarially self-reviewed by the Developer; the remaining specs are
+standard and grounded).
+
+Risks / Notes:
+- **Prerequisite (Manager/owner):** confirm `db/invoices-schema.sql` (tables + RLS + `public.is_admin()`) is
+  actually APPLIED in the live Supabase project, not just committed. Tasks 1, 5, 6 depend on it; the Developer
+  flagged a live insert could 500 until the columns line up.
+- **Security review of the new route is recommended** (it touches the service-role key + admin gate) — that is
+  Task 6 in this phase.
+- "6 of 8 roles": the system currently defines exactly six roles; this phase uses all six.
+- The old plan/subscribe UI is left intact this phase; replacing it is a Phase-2 / Manager decision.
+- Concurrency: the Developer + my Manager edits touched different files (api/db vs docs) — no conflict.
+
+## 2026-06-22 13:03 - Developer / Implementation - admin-invoices-route
+
+Action:
+Finished
+
+Task:
+Add an admin-only API route to create client invoices + line items (owner-directed; no
+pre-existing board task — Manager to record board status).
+
+Files claimed:
+
+- api/admin/invoices.js (new)
+- db/invoices-schema.sql (new)
+
+Files changed:
+
+- api/admin/invoices.js — new serverless route `POST /api/admin/invoices`. Reuses the EXACT admin
+  auth gate from `api/admin.js` (Bearer token → `supa.auth.getUser` → `caller.email === ADMIN_EMAIL`,
+  service-role key only; 401 missing/invalid token, 403 non-admin). Validates the body, verifies
+  `client_user_id` exists via `supa.auth.admin.getUserById` (404 if missing), recomputes
+  subtotal/line-totals/total server-side (never trusts client amounts), defaults discount/tax to 0,
+  inserts `invoices` + `invoice_items`, best-effort rollback of the invoice if items fail, writes an
+  `admin_activity_log` audit row, returns `{ invoice, items }` (201).
+- db/invoices-schema.sql — new idempotent migration creating `public.invoices` + `public.invoice_items`
+  with the exact columns the route writes, indexes, and RLS (client reads own; admin all; no client
+  insert/update — only the service-role route writes). Mirrors `db/admin-schema.sql` and reuses
+  `public.is_admin()`.
+
+Summary:
+Owner asked for the next step of the custom invoice system: an admin-only route the admin dashboard
+calls to create invoices. Built `/api/admin/invoices` reusing the established admin pattern rather than
+inventing new auth. Payment/Stripe flow untouched (no Checkout added). Because the live `invoices` /
+`invoice_items` column names are not in the repo, the route is written against a conventional schema and
+the matching migration is shipped so the columns are guaranteed to line up (run it, or rename live
+columns to match).
+
+Testing:
+- `node --check api/admin/invoices.js` → passes (twice: before and after review fixes).
+- Adversarial multi-agent review (security / spec-compliance / data-integrity lenses, each finding
+  independently verified): 3 confirmed findings, all fixed —
+  (1) rollback delete result now checked + orphan logged with id + actionable admin message;
+  (2) `getUserById` transient errors now propagate to 500 instead of masquerading as 404;
+  (3) `discount_amount_cents > subtotal` now rejected (400).
+- `git status` scope check: only `api/admin/` + `db/invoices-schema.sql` added; no payment/auth/Stripe/
+  vendor file touched. (Pre-existing uncommitted docs edits were already present at session start.)
+- NOT run: live `vercel dev` / real Supabase call (needs deploy-preview + env vars) — see Risks.
+
+Risks / Notes:
+- **Schema must match.** The route writes exactly the columns in `db/invoices-schema.sql`. If the live
+  tables differ (e.g. `user_id` vs `client_user_id`), run the migration (additive/idempotent) or rename
+  columns. Until then an insert could 500 (the route surfaces the real DB error to the admin to make
+  this obvious).
+- **No DB transaction.** Invoice + items are two inserts with a compensating delete; true atomicity
+  would need a Postgres RPC (noted in code + schema). Orphan only on a double failure, now logged.
+- **Env vars:** reuses `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (already set); optional `ADMIN_EMAIL`.
+  Nothing new required.
+- Auth uses the existing 401/403 split (not the spec's literal "401 for non-admin") because the owner
+  asked to reuse, not replace, the admin auth pattern. Trivial to collapse to 401 if preferred.
+- Manager: please record board status for this owner-directed task; Security review recommended since it
+  touches the service-role key + admin gate (already self-reviewed adversarially).
+
+## 2026-06-22 09:00 - Manager - add-developer-role
+
+Action:
+Planned
+
+Task:
+Add a dedicated Developer / Implementation role + re-activate Reviewer; update the workflow docs
+
+Files claimed:
+
+- CLAUDE.md
+- docs/taskboard.md
+- docs/reviewer-log.md
+- docs/logs.md
+
+Files changed:
+
+- CLAUDE.md — added "Developer / Implementation" + "Reviewer" to Allowed roles; added a "Workflow order"
+  section (the 7-step Manager→Designer→Developer→Efficiency→Security→Reviewer→Manager pipeline); added a
+  Global Rule that design and implementation stay separate; added a File-Claiming exception (Developer
+  claims via a logs.md START entry, Reviewer files findings, the Manager records board status); rewrote the
+  **Designer** role to direction-only (no production code — owns docs/design-guide.md specs); added the full
+  **Developer / Implementation** role section; added the **Reviewer** role section; updated the task-format
+  "Assigned Role" line + a design-vs-implementation task-writing note; expanded the Role Review Flow
+  (Developer + Reviewer); updated the End-Of-Session rule (Developer/Reviewer don't edit the board).
+- docs/taskboard.md — updated the intro to the six-role system; added a "Role-system update — 2026-06-22"
+  section (Designer is direction-only, Developer owns implementation, Reviewer is active, design/impl is a
+  hard split when writing tasks); marked the 2026-06-19 "Reviewer retired / reviewer-log deprecated" banner
+  as superseded.
+- docs/reviewer-log.md — added a "Status: ACTIVE (re-activated 2026-06-22)" note.
+- docs/logs.md — this entry.
+
+Summary:
+Per the owner: the Designer was doing too much (design + coding + cleanup mixed together). Split the
+workflow so the Designer defines visual/UX direction only and a new **Developer / Implementation** role
+applies the actual code changes after the Manager's task and the Designer's spec. Also **re-activated the
+Reviewer** role (tests the live site like a customer, logs findings) per the owner's stated 7-step
+workflow — reversing the 2026-06-19 retirement. Owner-confirmed decisions: re-activate Reviewer, and a
+**strict** Designer/Developer split (the Designer no longer edits production HTML/CSS/JS). The Developer
+reports in docs/logs.md and does **not** edit the task board (owner rule); the Manager records its status.
+
+Testing:
+Docs/workflow only — no website code touched. Cross-checked that the six roles are consistent across
+CLAUDE.md (Allowed roles, per-role sections, reading lists, review flow, end-of-session rule), the
+taskboard intro + 2026-06-22 section, and the reviewer log. `git status` scope check: only CLAUDE.md
+(gitignored) + the three docs changed; no production / payment / auth / vendor file touched.
+
+Risks / Notes:
+- **CLAUDE.md is gitignored** — the role system is live on disk for local sessions but will not commit /
+  won't survive a fresh clone. Flagged before; say the word to mirror it into a tracked `docs/ROLES.md`.
+- **Coordination:** because the Developer doesn't edit the board, a Developer session needs a Manager to
+  mark [IN PROGRESS]/[REVIEW] around its work — keep a Manager in the loop when a Developer is active.
+- Existing open tasks keep their owners; the Manager re-cuts any still-open "design + build" task into a
+  Designer spec task + a Developer implementation task when it is picked up.
+- **Out-of-scope items noticed during ground-truth checks** (NOT part of this task — flagged for later
+  Manager triage): `node_modules/` is committed to git (HEAD `4369bb2` "restore: recover all files");
+  a new `middleware.js` server-side auth gate exists that no role log documents; docs are tracked as
+  `docs/TASKBOARD.md` (capital) while the role system references `docs/taskboard.md` (case mismatch — a risk
+  on case-sensitive hosting like Vercel/Linux); the four Mulish woff2 weights are byte-identical (md5
+  `50220d0057de…`, confirmed) so no Mulish weight renders distinctly. Each wants its own task.
+
+Adversarial review + fixes (ultracode workflow — appended after the edits above):
+- Reviewed the new role docs with 3 independent lenses (faithfulness · internal consistency · completeness/
+  edge cases). **Faithfulness: PASS.** Consistency + completeness surfaced real gaps my first pass
+  introduced; all high/medium findings fixed:
+  - **Claim/status deadlock (high):** the Developer can't edit the board, but [IN PROGRESS] only lived on the
+    board → double-claim risk. Fixed: the **Manager assigns + marks [IN PROGRESS] before the Developer
+    starts**; the Developer then adds a START log entry. Documented in File Claiming Rules + the Developer
+    role + Manager responsibilities.
+  - **BLOCKED path impossible for Developer/Reviewer (high):** they now record the blocker in their log
+    (`Action: Blocked` / reviewer-log) and the Manager flips the board to [BLOCKED] for them.
+  - **Code-ownership overlap (high):** softened the Developer "only role" wording and stated once that
+    Efficiency/Security edit code for their **own** assigned fixes; anything else they find becomes a
+    Developer task (added to both role intros).
+  - **Board-sync trigger + mapping (medium):** the Manager must each session scan docs/logs.md + reviewer-log
+    and sync the board, using `Started→[IN PROGRESS]`, `Finished→[REVIEW]`, `Blocked→[BLOCKED]`.
+  - **Reviewer loop (medium):** spelled out the full status set + the [NEEDS RECHECK]→Reviewer re-test→
+    Manager [RESOLVED] path; made the reviewer-log heading the canonical status (no dual-source drift).
+  - Low/cheap: Designer review block reworded + given a defect channel (`Developer bug:` note); Developer
+    conventions note (no npm build/dev/test → `node --check` / `vercel dev`; capital-A `Animations/`);
+    Reviewer live-env caveat (needs a browser/preview, else defer).
+- Re-verified clean: grep finds no stale "four-role" / 4-only role lists outside historical log entries.
+
+---
+
 ## 2026-06-21 12:30 - Designer - corporate-demo
 
 Action:

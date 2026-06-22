@@ -128,6 +128,165 @@ https://vervaunt.com/examples-of-luxury-brand-led-ecommerce-websites-premium-eco
 
 ---
 
+## Invoice & Billing system — UX direction & buildable spec (2026-06-22)
+
+> Owner-assigned Designer task: design the **Admin Invoice Builder** and **Client Billing Page** for the
+> custom-invoice system. **Direction/spec only** — the Developer implements it in `dashboard.html`.
+> Visual reference: `docs/mockups/invoice-billing-mockup.html` (non-production sandbox; `docs/` is excluded
+> from deploy). Grounded in `db/invoices-schema.sql` + `api/admin/invoices.js` + existing `dashboard.html`.
+
+### Where it lives (reuse, don't reinvent)
+
+- **Admin builder + list** → a NEW `Invoices` item in the admin sidebar (`.adm-nav`) opening a new
+  `<section class="adm-view" id="view-invoices">` with two JS-toggled states: **LIST** (default) + **BUILDER**.
+- **Client billing** → the EXISTING **Billing** tab (`#tab-billing`); add an "Invoices" block BELOW the
+  current subscription controls (`#bill-none` / `#bill-active`) — do not replace them.
+
+### Shared rules (both screens)
+
+- **Money is cents.** Read/store `*_amount_cents` (bigint). Admin enters dollars → convert to integer cents
+  **once, at blur** (round half-up); never keep float money in state. Format everywhere with ONE shared
+  helper: `Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100)` → `$1,250.00`.
+- **Server is authoritative.** `total = subtotal − discount + tax`, recomputed server-side; the UI total is
+  a preview computed with the *identical integer-cents algorithm*, reconciled to the 201 response. If it
+  differs, say so (toast) — never swap the number silently.
+- **Status → client-facing label map (single source of truth):** draft→(never shown to client) ·
+  issued→"Awaiting payment" · paid→"Paid" · overdue→"Overdue" · void/canceled→"Canceled — no payment due".
+  Badge map: draft `.b-none` · issued `.b-in_progress` · paid `.b-complete` · overdue `.b-past_due` ·
+  void/canceled `.b-canceled`. **Status text always inside the pill** (never color-only).
+- **"Overdue" is derived, not stored.** Nothing flips `issued`→`overdue` today. Compute urgency at render:
+  `overdue = status in (issued,overdue) && due_date && due_date < today`, and drive the red badge/banner off
+  that — not off raw stored status.
+- **Drafts are admin-only (the draft-leak trap).** `inv_owner_select` RLS scopes by owner only, so a draft IS
+  readable by its own client once any read path exists. The client read MUST exclude `status='draft'`
+  **server-side** (in the GET route, or as an added RLS condition) — not just in JS.
+
+### Admin Invoice Builder — recommended layout (winner: guided single-column + sticky total bar)
+
+**LIST state:** `.adm-view-head` (`.adm-h1` "Invoices" + `.adm-sub`) with a right-aligned `+ New invoice`
+`.adm-btn.primary`; `.adm-cards` KPIs (Outstanding / Overdue / Paid (30 days) / Drafts); a `table.adm-table`
+(Invoice · Client · Total · Status · Due · actions) with status `.badge`; `.adm-empty` when zero. Row click →
+read-only `.adm-drawer` detail.
+
+**BUILDER state:** header with `‹ Back to invoices`, `.adm-h1`, a status `.badge` AND a plain-language
+`.adm-sub` sentence ("Draft — not yet sent" / "Issued — awaiting payment"), then four `.adm-panel-box`
+sections using `.adm-fld` fields:
+
+1. **Client & details** — Client (searchable `<select>` → `client_user_id`)*, Title*, Due date, Notes.
+2. **Line items** — editable `.adm-table` rows: Item name*, Description, Qty (≥1), Unit price ($), Line total
+   (read-only), delete. `+ Add line item` appends a row.
+3. **Adjustments** — collapsed disclosure ("+ Add discount or tax") → Discount, Tax. Kept off the simple path.
+4. **Totals** — right-aligned Subtotal / Discount− / Tax+ (zero rows hidden) / **TOTAL DUE** (largest type on
+   the page) + "recomputed by the server" note + a collapsed "Preview what your client sees".
+
+**TOTAL hard to miss:** shown twice — the big TOTAL DUE in §4 AND the live total in a **sticky action bar**
+(built from the `.adm-toolbar` flex primitive) that never scrolls away. **Draft vs issued obvious:** badge +
+status sentence + two distinct buttons (ghost **Save as draft** vs `.primary` **Issue invoice**). Issue is
+gated behind an `.adm-modal` confirm that **echoes client + total** and states it can't be edited/canceled yet.
+
+**Flow:** Save draft → POST `status:'draft'` (no confirm) → toast "Draft saved". Issue → confirm → POST
+`status:'issued'` → toast "Invoice issued". The builder POSTs **only** draft or issued — never paid/void.
+
+### Client Billing Page — recommended layout (winner: Amount-Due hero over quiet history)
+
+Inside `#tab-billing`, below the subscription block: a divider + "Invoices" sub-heading, then:
+
+- **Account banner** (reuse `.pay-banner` classes; see banner-ownership question) — names the total owed +
+  overdue count; hidden when nothing's due; `role="status"`.
+- **Amount-Due hero** (an inset block inside `.panel`, not a new card style) for the ONE most-urgent invoice
+  (oldest overdue, else oldest issued): title, issued date, status badge, **big AMOUNT DUE figure** (largest
+  text), due date (+ relative "8 days ago" for overdue), in-place "View line items" expand, an "also due" line
+  when more than one is unpaid, and the **Pay placeholder**.
+- **All-caught-up** block when nothing's due; **empty** block when the client has zero non-draft invoices.
+- **Invoice history** — stacked glass cards (phone-native, no table), sorted overdue → issued → paid/closed.
+  Paid cards = "Paid on …" + green badge + **no Pay button** (a finished receipt). Each card expands the
+  shared breakdown.
+- **Shared breakdown** — item rows ("2 × $250.00 … $500.00", optional description), then Subtotal /
+  Discount− / Tax+ (zero rows hidden) / Total (paid → "Total paid").
+- **Read-only always:** zero edit/void/status controls; only expanders, the anchor, and the inert Pay button.
+- **Error state:** reuse `.bill-error`; on load failure suppress hero + history and the banner's invoice
+  contribution (never show "you owe $X" with no invoice rendered below).
+
+### UX problems developers must avoid (from the adversarial review)
+
+**High:**
+
+- **Draft leak** — filter `status='draft'` server-side (route or RLS), never client-only.
+- **Zero-total invoices are valid + issuable** (server only rejects total < 0) — admin: disable Issue when
+  total ≤ 0; client: a $0 invoice never enters the hero, shows no Pay button, isn't counted as "due".
+- **"Overdue" never auto-sets** — derive urgency from `due_date` at render, or a late issued invoice shows a
+  calm "Awaiting payment".
+- **Issue is irreversible today** (no edit/void/PATCH) — confirm copy must say so + echo client/total; flag to
+  the Manager that void/edit/mark-paid endpoints are needed before Issue is production-safe.
+- **Sticky bar overlaps content** — reserve bottom padding = bar height; keep the focused field clear of it
+  (and clear of the mobile keyboard).
+- **Focus & traps** — move focus into the new row on Add and to the previous row on Delete; the
+  drawer/confirm/pay modals need focus-in, Escape-to-close, and focus-return to the trigger; confirm modal
+  focuses **Cancel**, not the destructive primary.
+- **Status by color alone** — every pill carries text; verify 4.5:1 contrast over the *actual glass*, not
+  white; don't rely on `.b-none` faint grey — lean on the builder's status sentence.
+- **44px touch target + `:focus-visible` on the line-item delete** (`.adm-mini` is ~28px and has no focus
+  ring); label it "Remove" on mobile; real `disabled` on the last remaining row.
+
+**Medium / low:** integer-cents math every keystroke (no float drift); don't silently clamp discount — show an
+inline error and block Issue when discount > subtotal; per-row `aria-label`s + announce the computed line total
+and total changes via a live region; unique ids per breakdown disclosure for `aria-controls`; in-page anchor
+must move focus (not just scroll); toasts in an `aria-live` region, errors don't auto-dismiss; the line-item
+grid has a ~600–760px dead zone — reflow to cards earlier (~720px); avoid native number-spinner pitfalls
+(`inputmode` + JS validation, not just `min`); "Closed" alone is ambiguous → "Canceled — no payment due";
+compute the "payable" set ONCE so the banner total always equals the sum of visible amounts; for create-only
+ship, show a success panel echoing the 201 instead of dropping to a permanently-empty list (prevents duplicate
+re-creation).
+
+### Pay-button copy (a deliberate Designer decision)
+
+The two critics disagreed: keep it an active blue "Pay invoice" (don't look broken) vs. relabel/demote (don't
+mislead — there's no checkout yet). **Decision:** keep it visible and active (not greyed) but label it
+honestly — **"Request payment link"** — with a visible plain-text line ("Online payment isn't available yet —
+WebSharke will email you a secure link to settle this invoice"), and keep it from reading as a dominant
+store-style CTA. Swap to a prominent "Pay invoice" only when Stripe is actually wired. (Owner may override the
+wording — see open questions.)
+
+### Copy / labels
+
+**Admin:** "Invoices" · "Create and track client invoices." · "+ New invoice" · KPIs "Outstanding / Overdue /
+Paid (30 days) / Drafts" · "No invoices yet" / "Create your first invoice to bill a client." · table "Invoice /
+Client / Total / Status / Due" · "‹ Back to invoices" · "Select a client…" · "e.g. Website build — Phase 1" ·
+"Due date (optional)" · "Notes (optional)" · "Item name / Description (optional) / Qty / Unit price / Line
+total" · "+ Add line item" · "+ Add discount or tax" · "Discount can't exceed the subtotal." · "Total due" ·
+"Totals are recomputed and confirmed by the server when you save." · "Preview what your client sees" · "Save as
+draft" · "Issue invoice" · confirm "Issue this invoice to {client}? They'll see it immediately, and it can't be
+edited or canceled from the dashboard yet." · toasts "Draft saved" / "Invoice issued" · badges "Draft / Issued
+/ Paid / Overdue / Canceled".
+
+**Client:** "Invoices" · "Invoices billed to you by WebSharke." · "Invoice history" · "Amount due" / "Total
+paid" · labels "Awaiting payment / Overdue / Paid / Canceled — no payment due" · "Due {Mon D, YYYY}" / "Paid on
+{Mon D, YYYY}" / "No due date" · "View line items" / "View {N} items" · breakdown "Subtotal / Discount / Tax /
+Total" · banner "You have $X due across N invoices. M is overdue. View below ↓" (single: "1 invoice needs your
+attention — $X due.") · "You also have 1 other invoice due — see below." · "Request payment link" + "Online
+payment isn't available yet — WebSharke will email you a secure link to settle this invoice." · "You're all
+caught up" / "No invoices need payment right now." · "No invoices yet" / "When WebSharke bills you for a
+project, your invoices will appear here." · error "We couldn't load your invoices right now. Please refresh the
+page or try again later."
+
+### Open questions / dependency flags (Manager / owner to resolve before the Developer task)
+
+1. **Endpoints.** Only POST create exists. The list, KPIs, detail drawer, edit, mark-paid, and the client read
+   all need new routes. Ship create-only first (builder + a success panel echoing the 201, no misleading empty
+   list), or scope the read/update routes now?
+2. **Client read path.** New `GET /api/invoices` (server filters drafts) vs. anon RLS SELECT (add a
+   `status<>'draft'` policy). Determines the Developer task shape.
+3. **Banner ownership.** `#client-pay-banner` is account-global + subscription-driven (above all tabs). Extend
+   it to factor in invoices, or add a separate invoice-scoped banner inside `#tab-billing`? (Recommend the
+   latter — isolates an invoice load failure.)
+4. **"Overdue" source** — derive at read time (recommended) or a future scheduled job?
+5. **Pay-button wording** — "Request payment link" (recommended) vs. a disabled "Pay" vs. keep "Pay invoice".
+6. **Invoice number** — schema has only a uuid; omit a human "#INV-####" (recommended) or add a column later?
+7. **Status writer guard** — builder must POST only draft/issued; "paid" must only come from a future
+   webhook/mark-paid path, never the form (a "Paid" badge must always mean real settlement).
+
+---
+
 ## Open design follow-ups (proposed tasks — Manager to triage)
 
 Found during the 2026-06-20 homepage baseline. **None applied this pass** (each is a visual/behaviour change
@@ -177,6 +336,37 @@ What design direction should be followed
 Notes:
 Anything the Manager or future Designer should know
 ```
+
+## 2026-06-22 13:30 - Designer - invoice-billing-ux
+
+Area Reviewed:
+New custom-invoice feature — Admin Invoice Builder + Client Billing Page (owner-assigned task).
+
+Finding:
+The invoice system needs to feel like a polished business tool (admin) and a trustworthy account statement
+(client) — not a spreadsheet, and not a store checkout. The data model (cents money, the status set,
+create-only API) and the existing dashboard component system already fix most visual choices; the open work
+was information architecture, the build/issue flow, and the money/status/edge-case rules.
+
+Decision:
+Documented the full buildable direction in "Invoice & Billing system — UX direction & buildable spec
+(2026-06-22)" above, with a visual sandbox mockup at `docs/mockups/invoice-billing-mockup.html`. Admin = a
+guided single-column sectioned builder (Client & details → Line items → Adjustments → Totals) with the TOTAL
+shown twice (big Total Due + a sticky bar) and draft-vs-issued signaled three ways (badge + status sentence +
+distinct Save/Issue buttons), inside a new `view-invoices` admin view with a list + read-only drawer. Client =
+an "Amount Due" hero (the one most-urgent invoice + an honest Pay placeholder) over a quiet stacked-card
+invoice history, inside the existing Billing tab; read-only, drafts never shown, paid invoices read as finished
+receipts. Reuses `.adm-*` (table / cards / badge / drawer / modal / fld) and the client
+`.panel`/`.ws-btn`/`.badge`/`.pay-banner` — nothing new invented.
+
+Notes:
+- Arrived at via an ultracode design-panel workflow (6 layout explorers → 2 judges → 2 adversarial UX
+  critics); the spec's "UX problems to avoid" section is the critique synthesis.
+- Spec only — the Developer implements it in `dashboard.html`. Key dependency flags for the Manager: only a
+  POST-create endpoint exists (list/read/edit/mark-paid are not built); the client read MUST exclude drafts
+  server-side (the draft-leak trap); and "overdue" must be derived from `due_date` (nothing sets it today).
+- One genuine design judgment for the owner: the Pay button is a placeholder labeled "Request payment link"
+  (honest) rather than a misleading active "Pay invoice" or a broken-looking greyed button.
 
 ## 2026-06-21 12:30 - Designer - corporate-demo
 

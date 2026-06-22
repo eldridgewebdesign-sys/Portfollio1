@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>WebSharke — Invoice &amp; Billing DESIGN MOCKUP (non-production)</title>
+
+<!-- ===================================================================== -->
+<!-- DESIGNER SANDBOX MOCKUP — NOT production. Lives in docs/ (excluded by   -->
+<!-- .vercelignore, never deployed). Static prototype of the invoice builder -->
+<!-- + client billing page so the owner can SEE the spec in design-guide.md. -->
+<!-- It reuses the REAL dashboard.html tokens + components so the look is      -->
+<!-- faithful. No backend, no Stripe, no real data — placeholder only.        -->
+<!-- A Developer implements the real thing in dashboard.html from the spec.   -->
+<!-- ===================================================================== -->
+
+<style>
+  /* Brand fonts (vendored, same files dashboard.html uses; relative from docs/mockups/). */
+  @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/cormorantgaramond-600.woff2) format('woff2')}
+  @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/cormorantgaramond-700.woff2) format('woff2')}
+  @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(../../fonts/mulish-400.woff2) format('woff2')}
+  @font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(../../fonts/mulish-500.woff2) format('woff2')}
+  @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/mulish-600.woff2) format('woff2')}
+  @font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/mulish-700.woff2) format('woff2')}
+
+  :root{
+    /* client dashboard tokens (from dashboard.html) */
+    --ink:#11364c; --ink-soft:#2c5468; --turq:#10b6cc;
+    --panel:rgba(208,238,241,.34); --panel-bd:rgba(255,255,255,.5);
+    /* admin tokens (from dashboard.html) */
+    --adm-bg:#36a1b3; --adm-panel:rgba(255,255,255,.58); --adm-panel-2:rgba(244,252,253,.95);
+    --adm-input:rgba(255,255,255,.72); --adm-bd:rgba(255,255,255,.55); --adm-bd-2:rgba(17,54,76,.18);
+    --adm-text:#11364c; --adm-muted:#2c5468; --adm-faint:#5a7e8c;
+    --adm-turq:#10b6cc; --adm-turq-deep:#15707f; --adm-danger:#c0392f;
+    --adm-warn:#b5740a; --adm-good:#1f8c63; --adm-blue:#2d6fc7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:'Mulish',system-ui,sans-serif;color:var(--adm-text);background:var(--adm-bg);
+    -webkit-font-smoothing:antialiased}
+
+  /* sandbox chrome */
+  .sb-bar{position:sticky;top:0;z-index:90;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+    padding:.7rem 1rem;background:#0c2c40;color:#dff2f5;font-size:.82rem}
+  .sb-bar strong{font-weight:800;letter-spacing:.02em}
+  .sb-bar .sb-note{color:#9fc6cf}
+  .sb-switch{margin-left:auto;display:flex;gap:.4rem;flex-wrap:wrap}
+  .sb-switch button{cursor:pointer;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);
+    color:#dff2f5;font:inherit;font-weight:700;font-size:.78rem;padding:.4rem .8rem;border-radius:8px}
+  .sb-switch button.on{background:linear-gradient(160deg,var(--adm-turq),var(--adm-turq-deep));border-color:transparent;color:#06141b}
+  .sb-stage{padding:1.3rem;max-width:1180px;margin:0 auto}
+  .m-screen{display:none}
+  .m-screen.on{display:block}
+  .m-caption{font-size:.8rem;color:#063;background:rgba(255,255,255,.6);border:1px solid var(--adm-bd-2);
+    border-radius:9px;padding:.55rem .8rem;margin-bottom:1rem;color:var(--adm-muted)}
+  .m-caption b{color:var(--adm-turq-deep)}
+
+  /* ---- admin components (faithful subset of dashboard.html .adm-*) ---- */
+  .adm-h1{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.95rem;letter-spacing:.01em;margin:0}
+  .adm-h1 .adm-sub{display:block;font-family:'Mulish',sans-serif;font-size:.85rem;font-weight:500;color:var(--adm-muted);margin-top:.2rem}
+  .adm-view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
+  .adm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem;margin-bottom:1.4rem}
+  .adm-card{background:var(--adm-panel);border:1px solid var(--adm-bd);border-radius:13px;padding:1rem 1.1rem;
+    box-shadow:0 16px 40px rgba(0,40,55,.16),inset 0 1px 0 rgba(255,255,255,.4)}
+  .adm-card .lbl{font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--adm-muted)}
+  .adm-card .val{font-size:1.85rem;font-weight:800;margin-top:.35rem;line-height:1}
+  .adm-card .val.danger{color:var(--adm-danger)} .adm-card .val.warn{color:var(--adm-warn)}
+  .adm-card .val.good{color:var(--adm-good)} .adm-card .val.turq{color:var(--adm-turq-deep)}
+
+  .adm-btn{cursor:pointer;border:1px solid var(--adm-bd-2);background:rgba(255,255,255,.5);color:var(--adm-text);
+    border-radius:9px;padding:.5rem .9rem;font:inherit;font-size:.82rem;font-weight:700;letter-spacing:.02em;
+    transition:border-color .15s,background .15s;white-space:nowrap}
+  .adm-btn:hover{border-color:var(--adm-turq);background:rgba(16,182,204,.12)}
+  .adm-btn:focus-visible{outline:2px solid var(--adm-turq);outline-offset:2px}
+  .adm-btn.primary{background:linear-gradient(160deg,var(--adm-turq),var(--adm-turq-deep));border-color:transparent;color:#06141b}
+  .adm-btn.danger{border-color:rgba(192,57,47,.5);color:var(--adm-danger)}
+  .adm-btn[disabled]{opacity:.5;cursor:not-allowed}
+
+  .adm-panel-box{background:var(--adm-panel);border:1px solid var(--adm-bd);border-radius:13px;padding:1.1rem 1.2rem;margin-bottom:1.1rem;
+    box-shadow:0 16px 40px rgba(0,40,55,.16),inset 0 1px 0 rgba(255,255,255,.4)}
+  .adm-panel-box>h3{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.3rem;margin:0 0 .85rem}
+  .adm-section-k{font-size:.74rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--adm-turq-deep);
+    margin:0 0 .8rem;padding-bottom:.4rem;border-bottom:1px solid var(--adm-bd-2)}
+
+  .adm-fld{margin-bottom:.8rem}
+  .adm-fld label{display:block;font-size:.74rem;font-weight:700;color:var(--adm-muted);margin-bottom:.28rem;letter-spacing:.02em}
+  .adm-fld input,.adm-fld select,.adm-fld textarea{width:100%;background:var(--adm-input);border:1px solid var(--adm-bd-2);
+    color:var(--adm-text);border-radius:8px;padding:.55rem .7rem;font:inherit;font-size:16px;outline:none}
+  .adm-fld textarea{min-height:74px;resize:vertical;line-height:1.55}
+  .adm-fld input:focus,.adm-fld select:focus,.adm-fld textarea:focus{border-color:var(--adm-turq);box-shadow:0 0 0 3px rgba(16,182,204,.18)}
+  .adm-fld input[readonly]{opacity:.75;cursor:not-allowed;background:rgba(255,255,255,.4)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:.2rem .9rem}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+
+  .adm-table-wrap{background:var(--adm-panel);border:1px solid var(--adm-bd);border-radius:13px;overflow:auto;
+    box-shadow:0 16px 40px rgba(0,40,55,.16),inset 0 1px 0 rgba(255,255,255,.4)}
+  table.adm-table{width:100%;border-collapse:collapse;font-size:.84rem}
+  table.adm-table thead th{position:sticky;top:0;z-index:2;background:#cfe9ec;text-align:left;padding:.7rem .85rem;
+    font-size:.71rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--adm-muted);
+    border-bottom:1px solid var(--adm-bd-2);white-space:nowrap}
+  table.adm-table thead th.r,table.adm-table td.r{text-align:right}
+  table.adm-table tbody td{padding:.65rem .85rem;border-bottom:1px solid var(--adm-bd);vertical-align:middle;color:var(--adm-text)}
+  table.adm-table tbody tr.click{cursor:pointer}
+  table.adm-table tbody tr.click:hover{background:rgba(16,182,204,.09)}
+
+  /* badges (exact dashboard.html palette) */
+  .badge{display:inline-block;padding:.2rem .55rem;border-radius:20px;font-size:.7rem;font-weight:800;letter-spacing:.03em;white-space:nowrap;border:1px solid transparent}
+  .badge.b-complete{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
+  .badge.b-unpaid{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
+  .badge.b-past_due{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
+  .badge.b-canceled{background:rgba(44,84,104,.12);color:#2c5468;border-color:rgba(44,84,104,.32)}
+  .badge.b-in_progress{background:rgba(45,111,199,.16);color:#2d6fc7;border-color:rgba(45,111,199,.42)}
+  .badge.b-none{background:rgba(44,84,104,.12);color:#2c5468;border-color:var(--adm-bd-2)}
+
+  .adm-empty{text-align:center;padding:2.6rem 1.5rem;color:var(--adm-muted);background:var(--adm-panel);
+    border:1px solid var(--adm-bd);border-radius:13px}
+  .adm-empty h4{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--adm-text);margin:0 0 .3rem}
+
+  /* line-item editor row delete: 44px touch target + visible focus (a11y fix) */
+  .li-del{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;cursor:pointer;
+    border:1px solid var(--adm-bd-2);background:rgba(255,255,255,.5);color:var(--adm-muted);border-radius:8px;font:inherit;font-weight:700}
+  .li-del:hover{color:var(--adm-danger);border-color:var(--adm-danger);background:rgba(192,57,47,.1)}
+  .li-del:focus-visible{outline:2px solid var(--adm-turq);outline-offset:2px}
+  .li-del[disabled]{opacity:.4;cursor:not-allowed}
+
+  /* totals block */
+  .tot-kv{display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0;font-size:.92rem}
+  .tot-kv .k{color:var(--adm-muted)}
+  .tot-rule{height:1px;background:var(--adm-bd-2);margin:.5rem 0}
+  .tot-total{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-top:.3rem}
+  .tot-total .k{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.3rem}
+  .tot-total .v{font-family:'Mulish',sans-serif;font-weight:800;font-size:2.1rem;line-height:1;color:var(--adm-text)}
+  .tot-help{font-size:.76rem;color:var(--adm-muted);margin-top:.5rem}
+  .disclosure{margin-top:.6rem}
+  .disclosure>summary{cursor:pointer;font-size:.82rem;font-weight:700;color:var(--adm-turq-deep);list-style:none}
+  .disclosure>summary::-webkit-details-marker{display:none}
+  .disclosure[open]>summary{margin-bottom:.7rem}
+
+  /* sticky action bar (built on the .adm-toolbar flex primitive) */
+  .builder-scroll{padding-bottom:84px} /* reserve space so sticky bar never hides content (a11y fix) */
+  .stick-bar{position:sticky;bottom:0;z-index:20;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+    margin-top:1rem;padding:.7rem .9rem;background:var(--adm-panel-2);border:1px solid var(--adm-bd-2);border-radius:12px;
+    box-shadow:0 -10px 30px rgba(0,30,45,.18)}
+  .stick-bar .live{font-weight:800}
+  .stick-bar .live b{font-size:1.15rem}
+  .stick-bar .spacer{flex:1}
+  @media(max-width:560px){.stick-bar .adm-btn{flex:1;text-align:center}}
+
+  .inline-note{font-size:.78rem;color:var(--adm-warn);margin-top:.35rem;font-weight:600}
+
+  /* ---- client billing components (faithful subset) ---- */
+  .panel{background:var(--panel);border:1px solid var(--panel-bd);border-radius:18px;padding:1.9rem 2rem;max-width:760px;margin:0 auto;
+    box-shadow:0 20px 54px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.45);
+    -webkit-backdrop-filter:blur(11px) saturate(1.18);backdrop-filter:blur(11px) saturate(1.18)}
+  .tab-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.7rem;color:#0e2f44;margin:0 0 1.2rem;letter-spacing:.01em}
+  .sub-h{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.35rem;color:#0e2f44;margin:0 0 .2rem}
+  .f-sub{display:block;font-size:.9rem;color:var(--ink-soft);margin-bottom:1rem}
+  .c-divider{height:1px;background:rgba(255,255,255,.5);margin:1.6rem 0}
+  .sub-block{background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.5);border-radius:14px;padding:1rem 1.1rem;color:var(--ink-soft);font-size:.95rem}
+
+  .ws-btn{display:inline-block;cursor:pointer;border:none;font-family:'Mulish',sans-serif;font-weight:600;font-size:.82rem;
+    letter-spacing:.06em;color:#eaf6f8;padding:.7rem 1.5rem;border-radius:9px;text-decoration:none;
+    background:linear-gradient(160deg,#1f93a8,#15707f);box-shadow:0 8px 20px rgba(8,70,84,.3),inset 0 1px 0 rgba(255,255,255,.22)}
+  .ws-btn:hover{filter:brightness(1.07)}
+  .ws-btn:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+  .ws-btn.secondary{background:none;color:#0f6f86;border:1px solid rgba(15,111,134,.55);box-shadow:none;font-weight:700}
+
+  .pay-banner{display:block;margin:0 0 1.3rem;padding:.9rem 1.1rem;border-radius:11px;font-size:.96rem;line-height:1.55;font-weight:600}
+  .pay-banner.unpaid{color:#7c1d29;background:rgba(255,255,255,.5);border:1px solid rgba(190,50,60,.5)}
+  .pay-banner.warn{color:#7a4a05;background:rgba(255,255,255,.5);border:1px solid rgba(210,150,30,.5)}
+  .pay-banner a{color:inherit;text-decoration:underline;font-weight:700}
+
+  /* amount-due hero (an inset block inside .panel — not a new card visual) */
+  .hero{background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.6);border-radius:16px;padding:1.4rem 1.5rem;margin-bottom:1.4rem;
+    box-shadow:0 12px 30px rgba(0,40,55,.14)}
+  .hero .h-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.5rem;color:#0e2f44;margin:0}
+  .hero .h-meta{font-size:.86rem;color:var(--ink-soft);margin:.25rem 0 .8rem}
+  .hero .h-due-lbl{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  .hero .h-amount{font-family:'Mulish',sans-serif;font-weight:800;font-size:2.6rem;line-height:1;color:#0e2f44;margin:.15rem 0 .3rem}
+  .hero .h-when{font-size:.92rem;font-weight:700}
+  .hero .h-when.due-warn{color:#9a6406} .hero .h-when.due-late{color:#b3322a}
+  .hero .h-actions{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-top:1rem}
+  .pay-hint{font-size:.82rem;color:var(--ink-soft);margin-top:.5rem}
+
+  .invcard{background:rgba(255,255,255,.32);border:1px solid rgba(255,255,255,.55);border-radius:14px;padding:1rem 1.1rem;margin-bottom:.8rem}
+  .invcard .ic-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:space-between}
+  .invcard .ic-date{font-size:.84rem;color:var(--ink-soft)}
+  .invcard .ic-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.2rem;color:#0e2f44;margin:.35rem 0 .15rem}
+  .invcard .ic-amt{font-size:.95rem;color:var(--ink-soft)}
+  .invcard .ic-amt b{color:#0e2f44}
+
+  .breakdown{margin-top:.7rem;border-top:1px dashed rgba(17,54,76,.25);padding-top:.7rem}
+  .bd-row{display:flex;justify-content:space-between;gap:1rem;font-size:.9rem;padding:.25rem 0}
+  .bd-row .bd-name b{font-weight:700;color:#0e2f44}
+  .bd-row .bd-name span{display:block;font-size:.8rem;color:var(--ink-soft)}
+  .bd-tot{display:flex;justify-content:space-between;gap:1rem;font-size:.92rem;padding:.2rem 0}
+  .bd-tot.grand{font-weight:800;border-top:1px solid rgba(17,54,76,.3);margin-top:.35rem;padding-top:.45rem}
+  .expand{margin-top:.6rem}
+  .expand>summary{cursor:pointer;list-style:none;font-size:.84rem;font-weight:700;color:#0f6f86}
+  .expand>summary::-webkit-details-marker{display:none}
+  .caughtup{text-align:center;padding:1.6rem;color:var(--ink-soft)}
+  .caughtup .cu-mark{font-size:1.8rem;color:#177a55}
+  .caughtup h4{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.4rem;color:#0e2f44;margin:.2rem 0}
+
+  /* modal (shared mockup) */
+  .ov{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:1.2rem;background:rgba(7,30,40,.5)}
+  .ov.show{display:flex}
+  .mdl{width:100%;max-width:430px;background:var(--adm-panel-2);border:1px solid var(--adm-bd-2);border-radius:14px;padding:1.3rem 1.4rem;
+    box-shadow:0 26px 64px rgba(0,30,45,.45)}
+  .mdl h3{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.45rem;margin:0 0 .5rem}
+  .mdl p{color:var(--adm-muted);font-size:.92rem;line-height:1.55;margin:0 0 1.2rem}
+  .mdl .echo{background:rgba(16,182,204,.1);border:1px solid var(--adm-bd-2);border-radius:9px;padding:.6rem .8rem;margin:0 0 1.2rem;font-size:.9rem}
+  .mdl .echo b{color:#0e2f44}
+  .mdl-actions{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<div class="sb-bar">
+  <strong>DESIGN MOCKUP</strong>
+  <span class="sb-note">non-production · docs/mockups/ · not deployed · placeholder data</span>
+  <div class="sb-switch">
+    <button data-screen="admin-list" class="on">Admin · Invoices</button>
+    <button data-screen="admin-builder">Admin · New invoice</button>
+    <button data-screen="client">Client · Billing</button>
+  </div>
+</div>
+
+<div class="sb-stage">
+
+  <!-- ============================ ADMIN · LIST ============================ -->
+  <section class="m-screen on" id="screen-admin-list">
+    <div class="m-caption">Admin app › new <b>Invoices</b> nav item › <b>view-invoices</b> (list state). Reuses <b>.adm-cards</b>, <b>.adm-table</b>, <b>.badge</b>, <b>.adm-empty</b>.</div>
+    <div class="adm-view-head">
+      <h1 class="adm-h1">Invoices<span class="adm-sub">Create and track client invoices.</span></h1>
+      <button class="adm-btn primary" data-goto="admin-builder">+ New invoice</button>
+    </div>
+    <div class="adm-cards">
+      <div class="adm-card"><div class="lbl">Outstanding</div><div class="val warn">$3,150.00</div></div>
+      <div class="adm-card"><div class="lbl">Overdue</div><div class="val danger">$750.00</div></div>
+      <div class="adm-card"><div class="lbl">Paid (30 days)</div><div class="val good">$5,400.00</div></div>
+      <div class="adm-card"><div class="lbl">Drafts</div><div class="val turq">2</div></div>
+    </div>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead><tr><th>Invoice</th><th>Client</th><th class="r">Total</th><th>Status</th><th>Due</th><th></th></tr></thead>
+        <tbody>
+          <tr class="click"><td>Website build — Phase 2</td><td>Acme Co.</td><td class="r">$750.00</td><td><span class="badge b-past_due">Overdue</span></td><td>Jun 14, 2026</td><td><button class="adm-btn" style="padding:.3rem .6rem;font-size:.74rem">View</button></td></tr>
+          <tr class="click"><td>Brand &amp; logo package</td><td>Riverside Dental</td><td class="r">$2,400.00</td><td><span class="badge b-in_progress">Issued</span></td><td>Jul 01, 2026</td><td><button class="adm-btn" style="padding:.3rem .6rem;font-size:.74rem">View</button></td></tr>
+          <tr class="click"><td>Maintenance — May</td><td>Northwind LLC</td><td class="r">$300.00</td><td><span class="badge b-complete">Paid</span></td><td>—</td><td><button class="adm-btn" style="padding:.3rem .6rem;font-size:.74rem">View</button></td></tr>
+          <tr class="click"><td>Landing page (draft)</td><td>Acme Co.</td><td class="r">$1,200.00</td><td><span class="badge b-none">Draft</span></td><td>—</td><td><button class="adm-btn" style="padding:.3rem .6rem;font-size:.74rem">Edit</button></td></tr>
+          <tr class="click"><td>Duplicate charge</td><td>Northwind LLC</td><td class="r">$0.00</td><td><span class="badge b-canceled">Canceled</span></td><td>—</td><td><button class="adm-btn" style="padding:.3rem .6rem;font-size:.74rem">View</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="m-caption" style="margin-top:1rem">Note: the list/KPIs need a <b>GET</b> endpoint that doesn't exist yet (only POST create). For a create-only first ship, show a success panel echoing the created invoice instead of an empty list.</p>
+  </section>
+
+  <!-- ============================ ADMIN · BUILDER ============================ -->
+  <section class="m-screen" id="screen-admin-builder">
+    <div class="m-caption">Admin <b>view-invoices</b> (builder state) — guided single-column form + sticky total bar. Reuses <b>.adm-panel-box</b>, <b>.adm-fld</b>, <b>.adm-table</b>, <b>.adm-toolbar</b>.</div>
+    <div class="builder-scroll">
+      <div class="adm-view-head">
+        <h1 class="adm-h1">
+          <button class="adm-btn" style="padding:.3rem .7rem;font-size:.76rem;margin-bottom:.4rem" data-goto="admin-list">‹ Back to invoices</button><br>
+          New invoice <span class="badge b-none" id="bld-badge" style="vertical-align:middle">Draft</span>
+          <span class="adm-sub" id="bld-status">Draft — not yet sent</span>
+        </h1>
+      </div>
+
+      <!-- Section 1 -->
+      <div class="adm-panel-box">
+        <div class="adm-section-k">1 · Client &amp; details</div>
+        <div class="grid2">
+          <div class="adm-fld"><label>Client *</label>
+            <select><option value="">Select a client…</option><option selected>Acme Co.</option><option>Riverside Dental</option><option>Northwind LLC</option></select></div>
+          <div class="adm-fld"><label>Due date (optional)</label><input type="date" value="2026-07-01"></div>
+        </div>
+        <div class="adm-fld"><label>Title *</label><input type="text" value="Website build — Phase 2" placeholder="e.g. Website build — Phase 1"></div>
+        <div class="adm-fld"><label>Notes (optional)</label><textarea placeholder="Anything the client should know about this invoice…">Thanks for your business — payment due within 14 days.</textarea></div>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="adm-panel-box">
+        <div class="adm-section-k">2 · Line items</div>
+        <div class="adm-table-wrap" style="overflow:visible">
+          <table class="adm-table" id="li-table">
+            <thead><tr><th style="min-width:160px">Item name *</th><th>Description</th><th class="r" style="width:70px">Qty</th><th class="r" style="width:120px">Unit price</th><th class="r" style="width:110px">Line total</th><th style="width:56px"></th></tr></thead>
+            <tbody id="li-body"><!-- rows injected --></tbody>
+          </table>
+        </div>
+        <button class="adm-btn" id="li-add" style="margin-top:.7rem">+ Add line item</button>
+      </div>
+
+      <!-- Section 3 -->
+      <div class="adm-panel-box">
+        <div class="adm-section-k">3 · Adjustments</div>
+        <details class="disclosure" id="adj">
+          <summary>+ Add discount or tax</summary>
+          <div class="grid2">
+            <div class="adm-fld"><label>Discount ($)</label><input type="text" inputmode="decimal" id="f-disc" value="0"><div class="inline-note" id="disc-warn" style="display:none">Discount can’t exceed the subtotal.</div></div>
+            <div class="adm-fld"><label>Tax ($)</label><input type="text" inputmode="decimal" id="f-tax" value="0"></div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Section 4 -->
+      <div class="adm-panel-box">
+        <div class="adm-section-k">4 · Totals</div>
+        <div style="max-width:340px;margin-left:auto">
+          <div class="tot-kv"><span class="k">Subtotal</span><span id="t-sub">$0.00</span></div>
+          <div class="tot-kv" id="t-disc-row" style="display:none"><span class="k">Discount</span><span id="t-disc">−$0.00</span></div>
+          <div class="tot-kv" id="t-tax-row" style="display:none"><span class="k">Tax</span><span id="t-tax">+$0.00</span></div>
+          <div class="tot-rule"></div>
+          <div class="tot-total"><span class="k">Total due</span><span class="v" id="t-total">$0.00</span></div>
+          <div class="tot-help">Totals are recomputed and confirmed by the server when you save.</div>
+        </div>
+        <details class="disclosure" style="margin-top:1rem">
+          <summary>Preview what your client sees</summary>
+          <div class="sub-block" style="margin-top:.4rem">A read-only render of the invoice exactly as it appears on the client’s Billing page (same breakdown component). Shown collapsed so the builder stays a tool, not a document.</div>
+        </details>
+      </div>
+
+      <!-- sticky action bar -->
+      <div class="stick-bar">
+        <span class="live">Total <b id="bar-total">$0.00</b></span>
+        <span class="spacer"></span>
+        <button class="adm-btn" id="btn-draft">Save as draft</button>
+        <button class="adm-btn primary" id="btn-issue">Issue invoice</button>
+      </div>
+      <p class="inline-note" id="issue-block" style="display:none">Total is $0.00 — add a billable line item before issuing.</p>
+    </div>
+  </section>
+
+  <!-- ============================ CLIENT · BILLING ============================ -->
+  <section class="m-screen" id="screen-client">
+    <div class="m-caption" style="max-width:760px;margin:0 auto 1rem">Client dashboard › existing <b>Billing</b> tab. Invoices are ADDED below the existing subscription block. Reuses <b>.panel</b>, <b>.ws-btn</b>, <b>.badge</b>, <b>.pay-banner</b>, inert pay modal.</div>
+    <div class="panel">
+      <h2 class="tab-title">Billing</h2>
+
+      <!-- existing subscription block (left untouched) -->
+      <div class="sub-block">
+        <b style="color:#0e2f44">Hosting &amp; subscription</b> — your existing plan controls (View Plans / Manage Subscription) stay here, unchanged.
+      </div>
+
+      <div class="c-divider"></div>
+
+      <h3 class="sub-h">Invoices</h3>
+      <span class="f-sub">Invoices billed to you by WebSharke.</span>
+
+      <!-- account-level invoice banner -->
+      <div class="pay-banner unpaid" role="status">You have $1,150.00 due across 2 invoices. 1 is overdue. <a href="#client-hero">View below ↓</a></div>
+
+      <!-- amount-due hero -->
+      <div class="hero" id="client-hero" tabindex="-1">
+        <p class="h-title">Website build — Phase 2</p>
+        <p class="h-meta">Issued Jun 1, 2026 &nbsp;·&nbsp; <span class="badge b-past_due">Overdue</span></p>
+        <div class="h-due-lbl">Amount due</div>
+        <div class="h-amount">$750.00</div>
+        <div class="h-when due-late">Due Jun 14, 2026 (8 days ago)</div>
+        <details class="expand"><summary>▸ View line items</summary>
+          <div class="breakdown">
+            <div class="bd-row"><div class="bd-name"><b>Design revisions</b><span>Round 2 — homepage + 3 inner pages</span></div><div>3 × $150.00 &nbsp; $450.00</div></div>
+            <div class="bd-row"><div class="bd-name"><b>CMS setup</b></div><div>1 × $300.00 &nbsp; $300.00</div></div>
+            <div class="bd-tot"><span>Subtotal</span><span>$750.00</span></div>
+            <div class="bd-tot grand"><span>Total</span><span>$750.00</span></div>
+          </div>
+        </details>
+        <div class="h-actions">
+          <button class="ws-btn" id="pay-btn">Request payment link</button>
+        </div>
+        <p class="pay-hint">Online payment isn’t available yet — WebSharke will email you a secure link to settle this invoice.</p>
+        <p class="pay-hint" style="font-weight:700;color:#7a4a05">You also have 1 other invoice due — see below.</p>
+      </div>
+
+      <h3 class="sub-h" style="font-size:1.2rem;margin-top:1.6rem">Invoice history</h3>
+
+      <div class="invcard">
+        <div class="ic-head"><span class="badge b-in_progress">Awaiting payment</span><span class="ic-date">Due Jul 1, 2026</span></div>
+        <p class="ic-title">Brand &amp; logo package</p>
+        <p class="ic-amt">Amount due <b>$400.00</b></p>
+        <details class="expand"><summary>▸ View 1 item</summary>
+          <div class="breakdown">
+            <div class="bd-row"><div class="bd-name"><b>Logo concepts</b></div><div>1 × $400.00 &nbsp; $400.00</div></div>
+            <div class="bd-tot grand"><span>Total</span><span>$400.00</span></div>
+          </div>
+        </details>
+        <div class="h-actions"><button class="ws-btn secondary pay-btn-2">Request payment link</button></div>
+      </div>
+
+      <div class="invcard">
+        <div class="ic-head"><span class="badge b-complete">Paid</span><span class="ic-date">Paid on May 30, 2026</span></div>
+        <p class="ic-title">Maintenance — May</p>
+        <p class="ic-amt">Total paid <b>$300.00</b></p>
+        <details class="expand"><summary>▸ View 1 item</summary>
+          <div class="breakdown">
+            <div class="bd-row"><div class="bd-name"><b>Monthly maintenance</b></div><div>1 × $300.00 &nbsp; $300.00</div></div>
+            <div class="bd-tot grand"><span>Total paid</span><span>$300.00</span></div>
+          </div>
+        </details>
+        <!-- paid card: NO pay button; reads as a finished receipt -->
+      </div>
+
+      <div class="invcard">
+        <div class="ic-head"><span class="badge b-canceled">Canceled — no payment due</span><span class="ic-date">May 12, 2026</span></div>
+        <p class="ic-title">Duplicate charge</p>
+        <p class="ic-amt" style="color:var(--ink-soft)">This invoice was canceled. Nothing is owed.</p>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<!-- Issue confirm modal (echoes client + total; states irreversibility for today's scope) -->
+<div class="ov" id="ov-issue">
+  <div class="mdl">
+    <h3>Issue this invoice?</h3>
+    <p>Once issued, the client can view it immediately — and it can’t be edited or canceled from the dashboard yet.</p>
+    <div class="echo">Billing <b id="echo-client">Acme Co.</b> for <b id="echo-total">$0.00</b></div>
+    <div class="mdl-actions">
+      <button class="adm-btn" id="issue-cancel">Cancel</button>
+      <button class="adm-btn primary" id="issue-go">Issue invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pay placeholder modal (inert) -->
+<div class="ov" id="ov-pay">
+  <div class="mdl">
+    <h3>Payment link coming soon</h3>
+    <p>Online payment isn’t wired up yet. WebSharke will email you a secure link to settle this invoice. (This is a design placeholder — no charge is made.)</p>
+    <div class="mdl-actions"><button class="adm-btn primary" id="pay-close">Got it</button></div>
+  </div>
+</div>
+
+<script>
+/* Mockup-only JS: view switching, line-item editing with integer-cents math,
+   adjustments, issue/pay placeholders. Demonstrates the spec; not production code. */
+(function(){
+  // ---- view switch ----
+  var btns = document.querySelectorAll('.sb-switch button');
+  function show(name){
+    document.querySelectorAll('.m-screen').forEach(function(s){ s.classList.toggle('on', s.id==='screen-'+name); });
+    btns.forEach(function(b){ b.classList.toggle('on', b.dataset.screen===name); });
+    window.scrollTo(0,0);
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.screen); }); });
+  document.querySelectorAll('[data-goto]').forEach(function(el){ el.addEventListener('click', function(){ show(el.dataset.goto); }); });
+
+  // ---- money helpers: integer cents, single shared formatter (trust-critic fix) ----
+  var fmt = new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' });
+  function money(cents){ return fmt.format(cents/100); }
+  function toCents(v){ var n = Math.round(parseFloat(String(v).replace(/[^0-9.]/g,''))*100); return isNaN(n)?0:Math.max(0,n); }
+
+  // ---- line items ----
+  var body = document.getElementById('li-body');
+  var seed = [
+    {name:'Design revisions', desc:'Round 2 — homepage + 3 inner pages', qty:3, unit:150},
+    {name:'CMS setup', desc:'', qty:1, unit:300}
+  ];
+  function rowHTML(it){
+    return '<tr>'+
+      '<td><input class="li-name" value="'+(it.name||'')+'" aria-label="Item name" style="width:100%;background:var(--adm-input);border:1px solid var(--adm-bd-2);border-radius:7px;padding:.45rem .55rem;font:inherit;font-size:16px"></td>'+
+      '<td><input class="li-desc" value="'+(it.desc||'')+'" aria-label="Description" style="width:100%;background:var(--adm-input);border:1px solid var(--adm-bd-2);border-radius:7px;padding:.45rem .55rem;font:inherit;font-size:16px"></td>'+
+      '<td class="r"><input class="li-qty" inputmode="numeric" value="'+it.qty+'" aria-label="Quantity" style="width:60px;text-align:right;background:var(--adm-input);border:1px solid var(--adm-bd-2);border-radius:7px;padding:.45rem .4rem;font:inherit;font-size:16px"></td>'+
+      '<td class="r"><input class="li-unit" inputmode="decimal" value="'+it.unit.toFixed(2)+'" aria-label="Unit price in dollars" style="width:108px;text-align:right;background:var(--adm-input);border:1px solid var(--adm-bd-2);border-radius:7px;padding:.45rem .5rem;font:inherit;font-size:16px"></td>'+
+      '<td class="r li-amt">$0.00</td>'+
+      '<td><button class="li-del" aria-label="Remove line item">✕</button></td>'+
+    '</tr>';
+  }
+  function render(){ body.innerHTML = seed.map(rowHTML).join(''); recompute(); }
+  function readRows(){
+    var rows = body.querySelectorAll('tr'); var out=[];
+    rows.forEach(function(r){
+      out.push({
+        qty: Math.max(1, parseInt(r.querySelector('.li-qty').value,10)||0),
+        unit: toCents(r.querySelector('.li-unit').value)
+      });
+    });
+    return out;
+  }
+  function recompute(){
+    var rows = readRows(); var subtotal=0;
+    body.querySelectorAll('tr').forEach(function(r,i){
+      var line = rows[i].qty * rows[i].unit; subtotal += line;
+      r.querySelector('.li-amt').textContent = money(line);
+    });
+    var disc = toCents(document.getElementById('f-disc').value);
+    var tax  = toCents(document.getElementById('f-tax').value);
+    var discWarn = document.getElementById('disc-warn');
+    var over = disc > subtotal;
+    discWarn.style.display = over ? 'block' : 'none';
+    var total = subtotal - Math.min(disc,subtotal) + tax;
+    document.getElementById('t-sub').textContent = money(subtotal);
+    document.getElementById('t-disc-row').style.display = disc>0 ? 'flex':'none';
+    document.getElementById('t-tax-row').style.display = tax>0 ? 'flex':'none';
+    document.getElementById('t-disc').textContent = '−'+money(Math.min(disc,subtotal));
+    document.getElementById('t-tax').textContent = '+'+money(tax);
+    document.getElementById('t-total').textContent = money(total);
+    document.getElementById('bar-total').textContent = money(total);
+    // gates: >=1 item with unit>0, discount<=subtotal, total>0 to issue
+    var hasBillable = rows.some(function(x){ return x.unit>0; });
+    var canIssue = hasBillable && total>0 && !over;
+    document.getElementById('btn-issue').disabled = !canIssue;
+    document.getElementById('issue-block').style.display = (!hasBillable||total<=0) ? 'block':'none';
+    // disable delete when one row remains
+    var dels = body.querySelectorAll('.li-del');
+    dels.forEach(function(d){ d.disabled = dels.length<=1; });
+    document.getElementById('echo-total').textContent = money(total);
+    var sel = document.querySelector('#screen-admin-builder select');
+    document.getElementById('echo-client').textContent = sel && sel.value ? sel.options[sel.selectedIndex].text : '(no client)';
+  }
+  body.addEventListener('input', recompute);
+  document.getElementById('li-add').addEventListener('click', function(){
+    body.insertAdjacentHTML('beforeend', rowHTML({name:'',desc:'',qty:1,unit:0}));
+    recompute();
+    var last = body.querySelector('tr:last-child .li-name'); if(last) last.focus(); // focus mgmt (a11y fix)
+  });
+  body.addEventListener('click', function(e){
+    var del = e.target.closest('.li-del'); if(!del||del.disabled) return;
+    var tr = del.closest('tr'); var prev = tr.previousElementSibling;
+    tr.remove();
+    (prev ? prev.querySelector('.li-name') : document.getElementById('li-add')).focus(); // move focus, don't drop to body
+    recompute();
+  });
+  document.getElementById('f-disc').addEventListener('input', recompute);
+  document.getElementById('f-tax').addEventListener('input', recompute);
+
+  // ---- issue flow ----
+  function openOv(id){ document.getElementById(id).classList.add('show'); }
+  function closeOv(id){ document.getElementById(id).classList.remove('show'); }
+  document.getElementById('btn-issue').addEventListener('click', function(){ if(this.disabled) return; openOv('ov-issue'); });
+  document.getElementById('issue-cancel').addEventListener('click', function(){ closeOv('ov-issue'); });
+  document.getElementById('issue-go').addEventListener('click', function(){
+    closeOv('ov-issue');
+    var b=document.getElementById('bld-badge'); b.className='badge b-in_progress'; b.textContent='Issued';
+    document.getElementById('bld-status').textContent='Issued — awaiting payment';
+    alert('(mockup) Invoice issued — toast “Invoice issued”, then back to the list.');
+  });
+  document.getElementById('btn-draft').addEventListener('click', function(){
+    alert('(mockup) Draft saved — toast “Draft saved”. Drafts are admin-only and never shown to the client.');
+  });
+
+  // ---- pay placeholder ----
+  function payClick(){ openOv('ov-pay'); }
+  document.getElementById('pay-btn').addEventListener('click', payClick);
+  document.querySelectorAll('.pay-btn-2').forEach(function(b){ b.addEventListener('click', payClick); });
+  document.getElementById('pay-close').addEventListener('click', function(){ closeOv('ov-pay'); document.getElementById('pay-btn').focus(); });
+
+  // Escape closes modals (a11y)
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeOv('ov-issue'); closeOv('ov-pay'); } });
+
+  render();
+})();
+</script>
+</body>
+</html>

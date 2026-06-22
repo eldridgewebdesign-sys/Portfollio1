@@ -230,6 +230,58 @@
     .pay-banner.unpaid{color:#7c1d29;background:rgba(255,255,255,.5);border:1px solid rgba(190,50,60,.5)}
     .pay-banner.warn{color:#7a4a05;background:rgba(255,255,255,.5);border:1px solid rgba(210,150,30,.5)}
     .pay-banner a{color:inherit;text-decoration:underline;font-weight:700}
+
+    /* ── Invoices (client billing tab, READ-ONLY) ──────────────────────────────
+       Namespaced `cinv-*` so it can never collide with the admin invoice
+       builder's `.inv-*` block (Task 3) in this same file. */
+    .cinv-block{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--panel-bd)}
+    .cinv-heading{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.4rem;color:#0e2f44;margin-bottom:1.1rem;letter-spacing:.01em}
+    .cinv-loading{color:var(--ink-soft)}
+    .cinv-list{display:flex;flex-direction:column;gap:1.1rem}
+    .cinv-card{
+      background:rgba(255,255,255,.42);border:1px solid var(--panel-bd);border-radius:14px;
+      padding:1.2rem 1.25rem;box-shadow:0 10px 26px rgba(0,40,55,.12),inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .cinv-card-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.5rem .9rem}
+    .cinv-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;color:#0e2f44;line-height:1.2;margin:0}
+    .cinv-id{display:block;margin-top:.2rem;font-size:.74rem;letter-spacing:.05em;color:#5a7e8c;font-variant-numeric:tabular-nums}
+    .cinv-badge{
+      flex:0 0 auto;font-family:'Mulish',sans-serif;font-weight:700;font-size:.66rem;letter-spacing:.1em;
+      text-transform:uppercase;padding:.34rem .72rem;border-radius:999px;white-space:nowrap;border:1px solid transparent;
+    }
+    .cinv-badge.issued{color:#1f4f8a;background:rgba(45,111,199,.14);border-color:rgba(45,111,199,.42)}
+    .cinv-badge.paid{color:#0c5a40;background:rgba(31,140,99,.16);border-color:rgba(31,140,99,.45)}
+    .cinv-badge.overdue{color:#7c1d29;background:rgba(192,57,47,.14);border-color:rgba(192,57,47,.48)}
+    .cinv-badge.void,.cinv-badge.canceled,.cinv-badge.draft{color:#41606e;background:rgba(90,126,140,.15);border-color:rgba(90,126,140,.4)}
+    .cinv-meta{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem;margin-top:.9rem;font-size:.92rem;color:var(--ink-soft)}
+    .cinv-meta .f-label{font-size:1rem}
+    .cinv-items{width:100%;border-collapse:collapse;margin:1rem 0 .2rem;font-size:.92rem}
+    .cinv-items th,.cinv-items td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid rgba(17,54,76,.12);color:var(--ink);vertical-align:top}
+    .cinv-items th{font-family:'Mulish',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:#41606e}
+    .cinv-items th.cinv-num,.cinv-items td.cinv-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .cinv-item-title{font-weight:600;color:#13405a}
+    .cinv-item-desc{display:block;margin-top:.15rem;font-size:.82rem;color:#5a7e8c}
+    .cinv-totals{margin-top:.9rem;margin-left:auto;width:fit-content;min-width:min(260px,100%)}
+    .cinv-total-row{display:flex;justify-content:space-between;gap:1.6rem;padding:.26rem 0;font-size:.92rem;color:var(--ink-soft)}
+    .cinv-total-row.grand{margin-top:.3rem;padding-top:.5rem;border-top:1px solid rgba(17,54,76,.22);font-weight:800;font-size:1.02rem;color:#0e2f44}
+    .cinv-total-row .cinv-num{font-variant-numeric:tabular-nums}
+    .cinv-notes{margin-top:1rem;padding:.75rem .95rem;border-radius:10px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.6);font-size:.9rem;line-height:1.55;color:var(--ink)}
+    .cinv-notes .f-label{display:block;margin-bottom:.2rem;font-size:1rem}
+    .cinv-actions{margin-top:1.1rem;display:flex;align-items:center;gap:.85rem;flex-wrap:wrap}
+    .cinv-pay{margin-top:0}
+    .cinv-pay-note{font-size:.82rem;color:#5a7e8c}
+    @media(max-width:560px){
+      .cinv-items thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+      .cinv-items,.cinv-items tbody,.cinv-items tr,.cinv-items td{display:block;width:100%}
+      .cinv-items tr{padding:.55rem 0;border-bottom:1px solid rgba(17,54,76,.12)}
+      .cinv-items tr:last-child{border-bottom:none}
+      .cinv-items td{border:none;padding:.12rem 0}
+      .cinv-items td.cinv-item-name{margin-bottom:.3rem}
+      .cinv-items td.cinv-num{display:flex;justify-content:space-between;gap:1rem;text-align:right}
+      .cinv-items td.cinv-num::before{content:attr(data-label);font-weight:700;color:#41606e;font-size:.78rem;letter-spacing:.02em}
+      .cinv-totals{width:100%;min-width:0}
+      .cinv-actions .cinv-pay{width:100%;text-align:center}
+    }
   </style>
 
   <!-- ===================================================================== -->
@@ -472,6 +524,60 @@
     .adm-fld textarea{min-height:84px;resize:vertical;line-height:1.55}
     .adm-fld input:focus,.adm-fld select:focus,.adm-fld textarea:focus{border-color:var(--adm-turq)}
     .adm-fld input[readonly]{opacity:.7;cursor:not-allowed}
+
+    /* ── Invoices (admin invoice builder) ─────────────────────────────────── */
+    .inv-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1rem;align-items:start}
+    .inv-main{display:flex;flex-direction:column;gap:1rem;min-width:0}
+    .inv-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+    .inv-opt{font-weight:600;color:var(--adm-faint);text-transform:none;letter-spacing:0}
+    /* Line-item header + rows share one grid so columns line up like a ledger,
+       not a free-form spreadsheet. */
+    .inv-items-head,.inv-item{display:grid;
+      grid-template-columns:minmax(0,1fr) 66px 132px minmax(92px,auto) 34px;gap:.55rem;align-items:center}
+    .inv-items-head{padding:0 .1rem .5rem;font-size:.7rem;font-weight:800;letter-spacing:.05em;
+      text-transform:uppercase;color:var(--adm-muted)}
+    .inv-items-head span:nth-child(2),.inv-items-head span:nth-child(3),
+    .inv-items-head span:nth-child(4){text-align:right}
+    .inv-item{padding:.6rem 0;border-bottom:1px solid var(--adm-bd)}
+    .inv-item-main{display:flex;flex-direction:column;gap:.4rem;min-width:0}
+    .inv-item input{width:100%;background:var(--adm-input);border:1px solid var(--adm-bd-2);
+      color:var(--adm-text);border-radius:8px;padding:.5rem .6rem;font-size:.86rem;
+      font-family:'Mulish',sans-serif;outline:none}
+    .inv-item input:focus{border-color:var(--adm-turq)}
+    .inv-item .inv-desc{font-size:.8rem;color:var(--adm-muted)}
+    .inv-qty{text-align:right}
+    .inv-price-wrap{position:relative;display:flex;align-items:center}
+    .inv-price-wrap .inv-cur{position:absolute;left:.6rem;color:var(--adm-faint);font-size:.85rem;pointer-events:none}
+    .inv-price{padding-left:1.35rem !important;text-align:right}
+    .inv-amount{text-align:right;font-weight:800;font-size:.86rem;color:var(--adm-text);white-space:nowrap}
+    #view-invoices .flagged{border-color:var(--adm-danger) !important;background:rgba(192,57,47,.06)}
+    .inv-del{justify-self:center;line-height:1}
+    #inv-add{margin-top:.95rem}
+    .inv-summary{position:sticky;top:1.4rem}
+    .inv-srow{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+      padding:.5rem 0;font-size:.9rem;color:var(--adm-muted)}
+    .inv-srow b{font-family:'Mulish',sans-serif;font-weight:800;color:var(--adm-text);font-size:1rem}
+    .inv-total{border-top:1px solid var(--adm-bd-2);margin-top:.2rem;padding-top:.7rem}
+    .inv-total span{font-weight:800;color:var(--adm-text)}
+    .inv-total b{font-size:1.35rem;color:var(--adm-turq-deep)}
+    .inv-note{font-size:.76rem;color:var(--adm-faint);line-height:1.5;margin:.65rem 0 1rem}
+    .inv-actions{display:flex;flex-direction:column;gap:.55rem}
+    .inv-actions .adm-btn{width:100%;text-align:center;padding:.62rem .9rem}
+    .inv-msg{margin-top:.95rem;font-size:.82rem;line-height:1.5;display:none}
+    .inv-msg.show{display:block}
+    .inv-msg.ok{color:var(--adm-good)}
+    .inv-msg.err{color:var(--adm-danger)}
+    @media(max-width:1040px){
+      .inv-layout{grid-template-columns:1fr}
+      .inv-summary{position:static}
+    }
+    @media(max-width:560px){
+      .inv-grid-2{grid-template-columns:1fr}
+      .inv-items-head{display:none}
+      .inv-item{grid-template-columns:1fr 1fr;gap:.5rem .6rem;padding:.8rem 0}
+      .inv-item-main{grid-column:1 / -1}
+      .inv-del{grid-column:2;justify-self:end}
+    }
     .adm-kv{display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0;
       border-bottom:1px solid var(--adm-bd);font-size:.86rem}
     .adm-kv .k{color:var(--adm-muted)}
@@ -660,6 +766,32 @@
 
         <!-- Shared, always-in-DOM error line for billing actions. -->
         <p class="bill-error hidden" id="bill-error" role="alert"></p>
+
+        <!-- ── Invoices (client, READ-ONLY) ──────────────────────────────────
+             Invoices an admin created/issued for THIS client. Read-only by
+             design: RLS (db/invoices-schema.sql) grants the anon key SELECT on
+             the caller's OWN rows only and NO insert/update/delete, and there
+             are no editable controls here — a client can never create, edit,
+             delete, or reprice an invoice. Stripe is NOT wired this phase: the
+             Pay button is a disabled placeholder. Classes/ids are namespaced
+             `cinv-*` so they never collide with the admin builder's `.inv-*`
+             (Task 3, same file). Populated by loadClientInvoices(); independent
+             of the subscription/hosting states above. -->
+        <div class="cinv-block" id="cinv-block">
+          <h3 class="cinv-heading">Invoices</h3>
+
+          <!-- Shown only if invoices fail to load. -->
+          <p class="bill-error hidden" id="cinv-load-error" role="alert">We couldn’t load your invoices right now. Please refresh the page or try again later.</p>
+
+          <!-- Replaced by the list or the empty state once loaded. -->
+          <p class="field cinv-loading" id="cinv-loading">Loading your invoices…</p>
+
+          <!-- Shown when the client has no visible (non-draft) invoices. -->
+          <p class="field hidden" id="cinv-empty">You don’t have any invoices yet.</p>
+
+          <!-- Invoice cards are appended here by loadClientInvoices(). -->
+          <div class="cinv-list hidden" id="cinv-list" aria-live="polite"></div>
+        </div>
       </div>
 
       <!-- 4 ── Domain -->
@@ -703,6 +835,7 @@
         <button data-view="users"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg><span class="adm-nav-label">Users</span></button>
         <button data-view="onboarding"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg><span class="adm-nav-label">Onboarding Forms</span></button>
         <button data-view="payments"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="adm-nav-label">Payments</span></button>
+        <button data-view="invoices"><svg viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span class="adm-nav-label">Invoices</span></button>
         <button data-view="websites"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span class="adm-nav-label">Websites</span></button>
         <button data-view="domains"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span class="adm-nav-label">Domains</span></button>
         <button data-view="alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="adm-nav-label">Alerts</span><span class="adm-nav-badge" id="admAlertBadge" style="display:none">0</span></button>
@@ -755,6 +888,59 @@
         <section class="adm-view" id="view-domains"></section>
         <section class="adm-view" id="view-alerts"></section>
         <section class="adm-view" id="view-activity"></section>
+
+        <!-- INVOICES — create a draft or issued invoice for a client. -->
+        <!-- The form sends only line items (in cents) to POST /api/admin/invoices; -->
+        <!-- the server recomputes + stores the authoritative subtotal/total. -->
+        <section class="adm-view" id="view-invoices">
+          <div class="adm-view-head"><h1 class="adm-h1">Invoices<span class="adm-sub">Create a draft or issued invoice for a client</span></h1></div>
+          <div class="inv-layout">
+            <div class="inv-main">
+              <div class="adm-panel-box">
+                <h3>Invoice details</h3>
+                <div class="inv-grid-2">
+                  <div class="adm-fld">
+                    <label for="inv-client">Client</label>
+                    <select id="inv-client"><option value="">Loading clients…</option></select>
+                  </div>
+                  <div class="adm-fld">
+                    <label for="inv-due">Due date <span class="inv-opt">(optional)</span></label>
+                    <input id="inv-due" type="date" />
+                  </div>
+                </div>
+                <div class="adm-fld">
+                  <label for="inv-title">Invoice title</label>
+                  <input id="inv-title" maxlength="200" placeholder="e.g. Website build — Phase 1" />
+                </div>
+                <div class="adm-fld">
+                  <label for="inv-notes">Notes <span class="inv-opt">(optional)</span></label>
+                  <textarea id="inv-notes" maxlength="5000" placeholder="Payment terms, scope notes, a thank-you message…"></textarea>
+                </div>
+              </div>
+
+              <div class="adm-panel-box">
+                <h3>Line items</h3>
+                <div class="inv-items-head" aria-hidden="true"><span>Item</span><span>Qty</span><span>Unit price</span><span>Amount</span><span></span></div>
+                <div id="inv-items"></div>
+                <button class="adm-btn" id="inv-add" type="button">+ Add line item</button>
+              </div>
+            </div>
+
+            <aside class="inv-summary">
+              <div class="adm-panel-box">
+                <h3>Summary</h3>
+                <div class="inv-srow"><span>Subtotal</span><b id="inv-subtotal">$0.00</b></div>
+                <div class="inv-srow inv-total"><span>Total</span><b id="inv-total">$0.00</b></div>
+                <p class="inv-note">Live estimate. The server calculates and stores the authoritative total from the line items.</p>
+                <div class="inv-actions">
+                  <button class="adm-btn" id="inv-draft" type="button">Save as draft</button>
+                  <button class="adm-btn primary" id="inv-issue" type="button">Issue invoice</button>
+                </div>
+                <div class="inv-msg" id="inv-msg" role="status" aria-live="polite"></div>
+              </div>
+            </aside>
+          </div>
+        </section>
 
         <!-- SETTINGS -->
         <section class="adm-view" id="view-settings">
@@ -1354,6 +1540,239 @@
       noneEl.classList.remove("hidden");
     }
 
+    // ====================================================================
+    // INVOICES (client, READ-ONLY) — phase 1, NO Stripe.
+    //
+    // Shows the invoices an admin created for THIS signed-in client.
+    // Read-only by design:
+    //   • RLS (db/invoices-schema.sql) grants the anon key SELECT on the
+    //     caller's OWN invoice / item rows only, and NO insert/update/delete,
+    //     so a client can never create, edit, delete, or reprice an invoice.
+    //     We ALSO scope the query to user.id as defence in depth.
+    //   • The UI renders values only (no inputs); the Pay button is a
+    //     disabled placeholder (Stripe is a later phase).
+    // Every dynamic value is written via textContent (never innerHTML of DB
+    // data), so admin-entered invoice text can't inject markup. Classes/ids
+    // are `cinv-*` to avoid colliding with the admin builder's `.inv-*`.
+    // ====================================================================
+
+    // Statuses a client may SEE. Draft is admin-only work-in-progress and is
+    // hidden unless the project explicitly opts in.
+    const SHOW_DRAFTS_TO_CLIENTS = false;
+    const CLIENT_VISIBLE_STATUSES =
+      ["issued", "paid", "overdue", "void", "canceled"]
+        .concat(SHOW_DRAFTS_TO_CLIENTS ? ["draft"] : []);
+    // Unpaid + actionable → gets the (disabled) Pay placeholder.
+    const PAYABLE_STATUSES = ["issued", "overdue"];
+    const CLIENT_STATUS_LABEL = {
+      draft: "Draft", issued: "Issued", paid: "Paid",
+      overdue: "Overdue", void: "Void", canceled: "Canceled",
+    };
+
+    const clientMoneyFmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+    // Amounts are stored as integer cents; format defensively.
+    function cinvMoney(cents) {
+      const n = Number(cents);
+      return clientMoneyFmt.format((Number.isFinite(n) ? n : 0) / 100);
+    }
+    // Format a date-only value ("YYYY-MM-DD") with no timezone shift.
+    function cinvDate(ymd) {
+      if (!ymd) return null;
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd));
+      if (!m) return fmtDate(ymd);
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      return isNaN(d.getTime())
+        ? null
+        : d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    }
+    // Short human reference from the UUID (no invoice_number column exists yet).
+    function cinvRef(id) {
+      const s = String(id || "");
+      return s ? "#" + s.slice(0, 8).toUpperCase() : "";
+    }
+    // DOM builder — keeps every value as text (no innerHTML of DB data).
+    function cinvEl(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined && text !== null) n.textContent = text;
+      return n;
+    }
+
+    // Fetch + render the signed-in client's invoices. Self-contained: own
+    // loading / error / empty / list states; a failure here never affects the
+    // rest of the dashboard.
+    async function loadClientInvoices(user) {
+      const loadingEl = $("cinv-loading");
+      const errEl = $("cinv-load-error");
+      const emptyEl = $("cinv-empty");
+      const listEl = $("cinv-list");
+      if (!listEl || !user) return;
+      try {
+        // 1) The caller's own invoices, newest first. Scoped to user.id (RLS
+        //    also enforces this) and to client-visible statuses (drafts hidden).
+        const { data: invoices, error: invErr } = await db
+          .from("invoices")
+          .select("id,title,notes,due_date,status,subtotal_amount_cents,discount_amount_cents,tax_amount_cents,total_amount_cents,created_at")
+          .eq("client_user_id", user.id)
+          .in("status", CLIENT_VISIBLE_STATUSES)
+          .order("created_at", { ascending: false });
+        if (invErr) throw invErr;
+
+        loadingEl.classList.add("hidden");
+        if (!invoices || invoices.length === 0) {
+          emptyEl.classList.remove("hidden");
+          return;
+        }
+
+        // 2) All line items for those invoices in ONE query (no N+1). RLS only
+        //    returns items whose parent invoice belongs to the caller.
+        const ids = invoices.map((iv) => iv.id);
+        const itemsByInvoice = {};
+        const { data: items, error: itemErr } = await db
+          .from("invoice_items")
+          .select("id,invoice_id,name,description,quantity,unit_amount_cents,line_total_cents,created_at")
+          .in("invoice_id", ids)
+          .order("created_at", { ascending: true });
+        if (itemErr) throw itemErr;
+        (items || []).forEach((it) => {
+          (itemsByInvoice[it.invoice_id] || (itemsByInvoice[it.invoice_id] = [])).push(it);
+        });
+
+        // 3) Build the cards.
+        const frag = document.createDocumentFragment();
+        invoices.forEach((iv) => frag.appendChild(buildClientInvoiceCard(iv, itemsByInvoice[iv.id] || [])));
+        listEl.textContent = "";
+        listEl.appendChild(frag);
+        listEl.classList.remove("hidden");
+      } catch (e) {
+        console.error("Could not load invoices:", e && e.message);
+        loadingEl.classList.add("hidden");
+        listEl.classList.add("hidden");
+        emptyEl.classList.add("hidden");
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    // Build one read-only invoice card (all text via cinvEl/textContent).
+    function buildClientInvoiceCard(iv, items) {
+      const status = String(iv.status || "").toLowerCase();
+      const card = cinvEl("article", "cinv-card");
+      card.setAttribute("aria-label", "Invoice " + cinvRef(iv.id));
+
+      // Head: title + ref, status badge.
+      const head = cinvEl("div", "cinv-card-head");
+      const titleWrap = cinvEl("div");
+      titleWrap.appendChild(cinvEl("h4", "cinv-title", show(iv.title, "Invoice")));
+      titleWrap.appendChild(cinvEl("span", "cinv-id", cinvRef(iv.id)));
+      head.appendChild(titleWrap);
+      head.appendChild(cinvEl("span", "cinv-badge " + status, CLIENT_STATUS_LABEL[status] || (status || "—")));
+      card.appendChild(head);
+
+      // Meta: due date, created date, and (when available) a paid date.
+      const meta = cinvEl("div", "cinv-meta");
+      meta.appendChild(cinvMetaItem("Due date", cinvDate(iv.due_date) || NA));
+      // `created_at` is when the row was created, not necessarily when it was
+      // issued — labelled "Created" so it can never misreport an issue date.
+      const created = fmtDate(iv.created_at);
+      if (created) meta.appendChild(cinvMetaItem("Created", created));
+      // "Paid on": the schema has NO paid_at/paid_date column yet, so this is a
+      // forward-compatible stub that renders nothing today (we never fake a
+      // paid date from created_at). To enable it: add `paid_at timestamptz` to
+      // db/invoices-schema.sql (set by the admin route when status → paid) AND
+      // add `paid_at` to the invoices .select() above — then it shows here.
+      const paid = fmtDate(iv.paid_at || iv.paid_date);
+      if (status === "paid" && paid) meta.appendChild(cinvMetaItem("Paid on", paid));
+      card.appendChild(meta);
+
+      // Line items.
+      if (items.length) card.appendChild(buildClientItemsTable(items));
+
+      // Totals.
+      card.appendChild(buildClientTotals(iv));
+
+      // Notes (optional).
+      const notes = show(iv.notes, "");
+      if (notes) {
+        const box = cinvEl("div", "cinv-notes");
+        box.appendChild(cinvEl("span", "f-label", "Notes"));
+        box.appendChild(cinvEl("span", null, notes));
+        card.appendChild(box);
+      }
+
+      // Actions: disabled Pay placeholder for unpaid, actionable invoices only.
+      if (PAYABLE_STATUSES.indexOf(status) !== -1) {
+        const actions = cinvEl("div", "cinv-actions");
+        const pay = cinvEl("button", "ws-btn cinv-pay", "Pay invoice");
+        pay.type = "button";
+        pay.disabled = true;                       // placeholder — Stripe not wired yet
+        pay.setAttribute("aria-disabled", "true");
+        pay.title = "Online payment is coming soon.";
+        actions.appendChild(pay);
+        actions.appendChild(cinvEl("span", "cinv-pay-note", "Online payment coming soon — contact us to settle this invoice."));
+        card.appendChild(actions);
+      }
+      return card;
+    }
+
+    function cinvMetaItem(label, value) {
+      const wrap = cinvEl("span", "cinv-meta-item");
+      wrap.appendChild(cinvEl("span", "f-label", label + ": "));
+      wrap.appendChild(cinvEl("span", null, value));
+      return wrap;
+    }
+
+    function buildClientItemsTable(items) {
+      const table = cinvEl("table", "cinv-items");
+      const thead = cinvEl("thead");
+      const hr = cinvEl("tr");
+      hr.appendChild(cinvEl("th", null, "Item"));
+      hr.appendChild(cinvEl("th", "cinv-num", "Qty"));
+      hr.appendChild(cinvEl("th", "cinv-num", "Unit price"));
+      hr.appendChild(cinvEl("th", "cinv-num", "Amount"));
+      thead.appendChild(hr);
+      table.appendChild(thead);
+
+      const tbody = cinvEl("tbody");
+      items.forEach((it) => {
+        const tr = cinvEl("tr");
+        const nameTd = cinvEl("td", "cinv-item-name");
+        nameTd.appendChild(cinvEl("span", "cinv-item-title", show(it.name, "Item")));
+        const desc = show(it.description, "");
+        if (desc) nameTd.appendChild(cinvEl("span", "cinv-item-desc", desc));
+        tr.appendChild(nameTd);
+
+        const qty = (it.quantity === null || it.quantity === undefined) ? 1 : it.quantity;
+        tr.appendChild(cinvNumCell("Qty", String(qty)));
+        tr.appendChild(cinvNumCell("Unit price", cinvMoney(it.unit_amount_cents)));
+        tr.appendChild(cinvNumCell("Amount", cinvMoney(it.line_total_cents)));
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      return table;
+    }
+    function cinvNumCell(label, value) {
+      const td = cinvEl("td", "cinv-num", value);
+      td.setAttribute("data-label", label);
+      return td;
+    }
+
+    function buildClientTotals(iv) {
+      const wrap = cinvEl("div", "cinv-totals");
+      const disc = Number(iv.discount_amount_cents) || 0;
+      const tax = Number(iv.tax_amount_cents) || 0;
+      wrap.appendChild(cinvTotalRow("Subtotal", cinvMoney(iv.subtotal_amount_cents), false));
+      if (disc > 0) wrap.appendChild(cinvTotalRow("Discount", "−" + cinvMoney(disc), false));
+      if (tax > 0) wrap.appendChild(cinvTotalRow("Tax", cinvMoney(tax), false));
+      wrap.appendChild(cinvTotalRow("Total", cinvMoney(iv.total_amount_cents), true));
+      return wrap;
+    }
+    function cinvTotalRow(label, value, grand) {
+      const row = cinvEl("div", "cinv-total-row" + (grand ? " grand" : ""));
+      row.appendChild(cinvEl("span", null, label));
+      row.appendChild(cinvEl("span", "cinv-num", value));
+      return row;
+    }
+
     // ---- Page load: gate on a session, then load + render ---------------
     (async () => {
       // First, verify a real logged-in user before any dashboard data is
@@ -1436,6 +1855,8 @@
       renderProject(project, projectError);
       renderBilling(sub, hasService, billingError);
       renderClientPayBanner(sub);
+      // Invoices load independently (own states) and never block the dashboard.
+      loadClientInvoices(user);
     })();
 
     // ---- Client-facing payment-status banner ----------------------------
@@ -2257,6 +2678,256 @@
     }
 
     // =====================================================================
+    // INVOICES — create a draft or issued invoice for a client.
+    //
+    // Posts to the admin-only POST /api/admin/invoices route (separate from the
+    // adminApi /api/admin {action,payload} helper). The browser sends ONLY the
+    // line items (name/description/quantity + unit price in CENTS) plus the
+    // title/client/notes/due/status; the server recomputes and stores the
+    // authoritative subtotal + total. The on-screen total is a live estimate.
+    // =====================================================================
+    const INV = { built: false, clientsLoaded: false, submitting: false, seq: 0 };
+
+    // Integer cents -> "$x.xx" for display only.
+    function centsToUsd(c) {
+      return "$" + (Number(c) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    // Dollars (raw input string) -> integer cents. Returns null for blank or any
+    // value that is not a finite number >= 0 (negative prices are rejected here).
+    function dollarsToCents(str) {
+      if (str == null) return null;
+      const s = String(str).trim();
+      if (s === "") return null;
+      // Only a plain non-negative amount with at most 2 decimals. This rejects
+      // negatives, scientific notation, and >2-decimal input (e.g. "19.999") so
+      // it gets flagged with an inline error instead of being silently rounded.
+      if (!/^\d*\.?\d{0,2}$/.test(s)) return null;
+      const n = Number(s);
+      if (!isFinite(n) || n < 0) return null;
+      return Math.round(n * 100);
+    }
+
+    function showInvMsg(kind, text) {
+      const el = aq("inv-msg");
+      el.className = "inv-msg show " + kind;
+      // Errors block the save, so announce them assertively; success stays polite.
+      el.setAttribute("role", kind === "err" ? "alert" : "status");
+      el.setAttribute("aria-live", kind === "err" ? "assertive" : "polite");
+      el.textContent = text;
+    }
+    function clearInvFlags() {
+      aq("view-invoices").querySelectorAll(".flagged").forEach((e) => e.classList.remove("flagged"));
+      const msg = aq("inv-msg"); msg.className = "inv-msg"; msg.textContent = "";
+    }
+    // Show an inline error, highlight + focus the offending field, and stop.
+    // Also raise a toast: on a stacked layout the inline #inv-msg lives in the
+    // summary at the bottom, so the toast guarantees the reason is always visible.
+    function invFail(msg, el) {
+      showInvMsg("err", msg);
+      toast("Can’t save this invoice yet", msg, true);
+      if (el) {
+        el.classList.add("flagged");
+        try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e2) {} }
+        try { el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
+      }
+      return { ok: false };
+    }
+
+    function invItemRow() {
+      const row = ce("div", "inv-item");
+      row.dataset.i = INV.seq++;
+      row.innerHTML =
+        '<div class="inv-item-main">' +
+          '<input class="inv-name" maxlength="200" placeholder="Item name (e.g. Stripe integration)" aria-label="Item name" />' +
+          '<input class="inv-desc" maxlength="2000" placeholder="Description (optional)" aria-label="Item description" />' +
+        "</div>" +
+        '<input class="inv-qty" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Quantity" />' +
+        '<div class="inv-price-wrap"><span class="inv-cur">$</span>' +
+          '<input class="inv-price" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal" aria-label="Unit price in dollars" /></div>' +
+        '<div class="inv-amount" data-amount>$0.00</div>' +
+        '<button class="adm-mini danger inv-del" type="button" aria-label="Remove line item" title="Remove line item">&times;</button>';
+      row.querySelector(".inv-del").addEventListener("click", () => {
+        row.remove();
+        if (!aq("inv-items").children.length) addInvItem(); // never leave zero rows
+        recomputeInvoice();
+      });
+      row.addEventListener("input", recomputeInvoice);
+      return row;
+    }
+    function addInvItem() { aq("inv-items").appendChild(invItemRow()); }
+
+    // Live estimate only — invalid/blank prices count as 0 here; strict
+    // validation runs on submit and the server owns the real total.
+    function recomputeInvoice() {
+      let subtotal = 0;
+      aq("inv-items").querySelectorAll(".inv-item").forEach((row) => {
+        const qty = Math.max(1, Math.floor(Number(row.querySelector(".inv-qty").value) || 0));
+        const cents = dollarsToCents(row.querySelector(".inv-price").value);
+        const line = cents == null ? 0 : qty * cents;
+        row.querySelector("[data-amount]").textContent = centsToUsd(line);
+        subtotal += line;
+      });
+      aq("inv-subtotal").textContent = centsToUsd(subtotal);
+      aq("inv-total").textContent = centsToUsd(subtotal);
+    }
+
+    // Validate the form + build the request body. Returns {ok:true, body} or
+    // {ok:false} (after showing an inline error on the first bad field).
+    function collectInvoice(status) {
+      clearInvFlags();
+      const clientEl = aq("inv-client");
+      if (!clientEl.value) return invFail("Select a client for this invoice.", clientEl);
+
+      const titleEl = aq("inv-title");
+      const title = titleEl.value.trim();
+      if (!title) return invFail("Enter an invoice title.", titleEl);
+
+      const rows = Array.from(aq("inv-items").querySelectorAll(".inv-item"));
+      const items = [];
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const human = "Line " + (i + 1);
+        const nameEl = row.querySelector(".inv-name");
+        const name = nameEl.value.trim();
+        if (!name) return invFail(human + ": enter an item name.", nameEl);
+        const qtyEl = row.querySelector(".inv-qty");
+        const qty = Number(qtyEl.value);
+        if (!Number.isInteger(qty) || qty < 1) return invFail(human + ": quantity must be a whole number of 1 or more.", qtyEl);
+        const priceEl = row.querySelector(".inv-price");
+        const cents = dollarsToCents(priceEl.value);
+        if (cents == null) return invFail(human + ": enter a unit price of $0.00 or more (no negatives).", priceEl);
+        const desc = row.querySelector(".inv-desc").value.trim();
+        items.push({ name: name, description: desc || null, quantity: qty, unit_amount_cents: cents });
+      }
+      if (!items.length) return invFail("Add at least one line item before saving.", aq("inv-add"));
+
+      const body = { client_user_id: clientEl.value, title: title, status: status, items: items };
+      const notes = aq("inv-notes").value.trim();
+      if (notes) body.notes = notes;
+      const due = aq("inv-due").value; // type=date → "YYYY-MM-DD" (or "")
+      if (due) body.due_date = due;
+      return { ok: true, body: body };
+    }
+
+    function setInvBusy(busy, status) {
+      ["inv-draft", "inv-issue", "inv-add"].forEach((id) => { const b = aq(id); if (b) b.disabled = busy; });
+      const d = aq("inv-draft"), s = aq("inv-issue");
+      if (busy) {
+        if (status === "issued") { s.dataset.lbl = s.textContent; s.textContent = "Issuing…"; }
+        else { d.dataset.lbl = d.textContent; d.textContent = "Saving…"; }
+      } else {
+        if (d.dataset.lbl) { d.textContent = d.dataset.lbl; delete d.dataset.lbl; }
+        if (s.dataset.lbl) { s.textContent = s.dataset.lbl; delete s.dataset.lbl; }
+      }
+    }
+
+    // POST to the admin invoices route with the caller's Supabase access token.
+    async function postInvoice(body) {
+      const { data: sess } = await db.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) throw new Error("Your session expired. Please sign in again.");
+      const res = await fetch("/api/admin/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify(body),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")."));
+      return data;
+    }
+
+    // Single entry point for both buttons. Holds INV.submitting + the disabled
+    // button state across the WHOLE validate → (confirm) → POST sequence, so a
+    // second click or keypress (e.g. tabbing to "Save as draft" while the Issue
+    // confirm modal is open) can never start a duplicate invoice.
+    async function runInvoiceSubmit(status) {
+      if (INV.submitting) return;
+      const r = collectInvoice(status);
+      if (!r.ok) return;
+      INV.submitting = true;
+      setInvBusy(true, status);
+      try {
+        if (status === "issued") {
+          const ok = await confirmAction(
+            "Issue this invoice?",
+            "Issued invoices are client-facing: the client will be able to see this invoice on their billing page. (No email or charge is sent yet.)",
+            "Issue invoice"
+          );
+          if (!ok) return; // the finally below clears the lock + busy state
+        }
+        const data = await postInvoice(r.body);
+        const inv = (data && data.invoice) || {};
+        const total = typeof inv.total_amount_cents === "number" ? centsToUsd(inv.total_amount_cents) : "";
+        const label = inv.status === "issued" ? "issued" : "saved as draft";
+        const idText = inv.id ? " (#" + String(inv.id).slice(0, 8) + ")" : "";
+        showInvMsg("ok", "Invoice " + label + (total ? " — server total " + total : "") + idText + ". The form has been cleared for the next invoice.");
+        toast("Invoice " + label, (inv.title || "") + (total ? " · " + total : ""), false);
+        resetInvoiceForm();
+      } catch (e) {
+        showInvMsg("err", e.message || "Could not create the invoice.");
+        toast("Couldn’t create invoice", e.message, true);
+      } finally {
+        INV.submitting = false;
+        setInvBusy(false);
+      }
+    }
+
+    function resetInvoiceForm() {
+      aq("inv-client").value = "";
+      aq("inv-title").value = "";
+      aq("inv-notes").value = "";
+      aq("inv-due").value = "";
+      aq("inv-items").innerHTML = "";
+      addInvItem();
+      recomputeInvoice();
+      // The success message in #inv-msg is left visible until the next attempt.
+    }
+
+    async function loadInvoiceClients(force) {
+      const sel = aq("inv-client");
+      if (INV.clientsLoaded && !force) return;
+      sel.innerHTML = '<option value="">Loading clients…</option>';
+      sel.disabled = true;
+      try {
+        // sortBy omitted on purpose — applyListOpts() defaults to created_at and
+        // there is no server-side column whitelist; we sort by name client-side.
+        const data = await adminApi("list_users", { search: "", filters: {}, limit: 100000, offset: 0 });
+        const seen = {}, list = [];
+        (data.rows || []).forEach((r) => {
+          if (!r.user_id || seen[r.user_id]) return;
+          seen[r.user_id] = 1;
+          const name = r.full_name || r.business_name || r.email || "Unnamed client";
+          const sub = r.email && name !== r.email ? " · " + r.email : "";
+          list.push({ id: r.user_id, label: name + sub });
+        });
+        list.sort((a, b) => a.label.localeCompare(b.label));
+        if (!list.length) { sel.innerHTML = '<option value="">No clients found</option>'; sel.disabled = true; INV.clientsLoaded = true; return; }
+        sel.innerHTML = '<option value="">Select a client…</option>' +
+          list.map((o) => '<option value="' + esc(o.id) + '">' + esc(o.label) + "</option>").join("");
+        sel.disabled = false;
+        INV.clientsLoaded = true;
+      } catch (e) {
+        sel.innerHTML = '<option value="">Couldn’t load clients — reopen to retry</option>';
+        sel.disabled = true;
+        INV.clientsLoaded = false; // allow a retry next time the view opens
+        showInvMsg("err", "Couldn’t load the client list: " + e.message);
+      }
+    }
+
+    function initInvoices() {
+      if (!INV.built) {
+        addInvItem();
+        recomputeInvoice();
+        aq("inv-add").addEventListener("click", () => { addInvItem(); recomputeInvoice(); });
+        aq("inv-draft").addEventListener("click", () => runInvoiceSubmit("draft"));
+        aq("inv-issue").addEventListener("click", () => runInvoiceSubmit("issued"));
+        INV.built = true;
+      }
+      loadInvoiceClients(false);
+    }
+
+    // =====================================================================
     // OVERVIEW + CHARTS
     // =====================================================================
     let overviewData = null;
@@ -2386,6 +3057,7 @@
       document.querySelectorAll(".adm-nav button").forEach((b) => b.classList.toggle("active", b.dataset.view === viewId));
       document.querySelectorAll(".adm-view").forEach((v) => v.classList.toggle("active", v.id === "view-" + viewId));
       if (viewId === "overview") { loadOverview(); return; }
+      if (viewId === "invoices") { initInvoices(); return; }
       if (viewId === "settings") { return; }
       if (VIEWS[viewId]) {
         if (!state[viewId] || !state[viewId].built) buildView(viewId);
