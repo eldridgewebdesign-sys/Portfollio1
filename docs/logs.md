@@ -6,6 +6,119 @@
 
 ---
 
+## 2026-06-22 16:18 - Developer - invoice-line-total-fix
+
+Action:
+Finished
+
+Task:
+Fix the invoice-issuing error: `Could not find the 'line_total_cents' column of 'invoice_items' in the
+schema cache.` (Owner-assigned bug fix — no board task existed; Manager to record board status.)
+
+Files claimed:
+
+- `api/admin/invoices.js`
+- `dashboard.html` (the client invoice **read/display** lines only)
+- `db/invoices-schema.sql`
+- `docs/logs.md`
+
+Files changed:
+
+- `api/admin/invoices.js` — `parseInvoiceBody` no longer returns a per-line total, so the `invoice_items`
+  insert payload is now exactly `{ invoice_id, name, description, quantity, unit_amount_cents }`. `lineTotal`
+  (`quantity * unit`) is still computed locally for the cap checks + the server-side `subtotal`, but is never
+  written as a column. Updated the header doc-comments (line-item total is a generated column; Tables list).
+- `dashboard.html` — the client billing view read `it.line_total_cents`; switched both the `invoice_items`
+  `.select(...)` and the "Amount" cell to `total_amount_cents` (read the DB-generated value). No auth / Stripe
+  / Supabase-auth logic touched — only the two invoice read/display lines.
+- `db/invoices-schema.sql` — redefined the per-line total as a STORED GENERATED column
+  (`total_amount_cents bigint generated always as (quantity * unit_amount_cents) stored`) in both the
+  `create table` and the idempotent `alter ... add column if not exists`, matching the real DB. (File/doc
+  change only — nothing was run against the live database.)
+
+Summary:
+Root cause: the route inserted `line_total_cents`, but the real `public.invoice_items` table has no such
+column — the per-line total is a generated column named `total_amount_cents` that Postgres computes from
+`quantity * unit_amount_cents`. PostgREST rejected the unknown column ("schema cache") before any row was
+written, so issuing/creating an invoice failed. Fix: stop writing the per-line total entirely (let the DB
+generate it), and read `total_amount_cents` wherever the per-line amount is displayed. The `invoices`-table
+totals (`subtotal_amount_cents` / `total_amount_cents`) are unchanged — those are real columns the server
+computes (they involve discount/tax, so they are not generated).
+
+Testing:
+- `node --check api/admin/invoices.js` → OK.
+- Repo grep: **zero** `line_total_cents` remaining in `api/` / `db/` / `dashboard.html` (only historical
+  `docs/**` mentions remain, intentionally untouched).
+- Static trace: `invoice_items` insert = the 5 allowed fields only; `.insert(...).select()` returns the
+  generated `total_amount_cents` for the 201 response and the client display.
+- **NOT run (needs `vercel dev` + live `SUPABASE_*` env + a real admin access token, which also writes to the
+  live DB):** the live create-draft / issue / confirm-rows end-to-end. Repro for the owner is in the session
+  report. This is the standing non-GUI/live-keys limitation noted across prior sessions.
+
+Risks / Notes:
+- **Concurrent session collision risk:** a `Developer - payment-page-invoices` session started 16:10 and may
+  also edit `dashboard.html` / `api/admin/invoices.js`. My edits here are tightly scoped (the `line_total_cents`
+  → generated-`total_amount_cents` rename only); whoever commits should re-check the diff for overlap.
+- The real DB may still carry a now-unused legacy `line_total_cents` column from an earlier migration. Harmless
+  (it has a default and is never written), so I did **not** add a destructive `DROP COLUMN`. Drop it later only
+  if desired.
+- Files remain **uncommitted** (the route + schema were already untracked). I did not commit or deploy.
+- Per role rules I did not edit `docs/taskboard.md`; the Manager should reflect status. Historical
+  `line_total_cents` mentions in `docs/taskboard.md` + earlier `docs/logs.md` entries were left as-is (history).
+
+---
+
+## 2026-06-22 16:10 - Developer - payment-page-invoices
+
+Action:
+Started
+
+Task:
+Owner-directed (direct, not a pre-existing board task): **replace the entire Stripe checkout on
+`payment.html` with the signed-in client's read-only "current invoices" list.** Owner answered three
+clarifying questions: target = the standalone **`payment.html`** checkout page (not the dashboard Billing
+tab / admin Payments view); scope = **remove ALL of it** (plans + Payment Element + checkout), show invoices
+only; role = **switch this session to Developer / Implementation** (it was a Designer review session). Manager
+to record the board status — the Developer does not edit the board.
+
+Files claimed:
+
+- `payment.html` — full page rewrite of the body + inline `<script>` (remove Stripe publishable key, the
+  `plans` array + live `price_…` IDs, the finder tabs, the plan rendering, the Stripe Payment Element modal,
+  and the `/api/checkout` flow; add a read-only invoice list). Keep the page shell (ocean bg, `.ws-logo`,
+  topbar, vendored fonts) and the Supabase session gate.
+- `docs/logs.md` (this START + a FINISH).
+
+NOT touching: `api/*` (the `/api/checkout`, `/api/webhook`, `/api/customer-portal` routes are left intact —
+just no longer called by `payment.html`); `dashboard.html` (its own Billing tab + "View Plans → /payment"
+link are out of the chosen scope — flagged for the owner in FINISH); `db/*`, `js/supabase-config.js`,
+`js/vendor/*`, Stripe price IDs in any other file, vendor.
+
+Approach / grounding:
+Reusing the ALREADY-SHIPPED read-only client-invoice implementation from `dashboard.html` (`#cinv-block` /
+`loadClientInvoices()`, FINISH 2026-06-22 13:42) verbatim where possible: same anon `db` client, same
+RLS-scoped query (`invoices` filtered to `client_user_id = user.id` + `CLIENT_VISIBLE_STATUSES`, drafts
+hidden; one `invoice_items .in(invoice_id, ids)` query, no N+1), same `cinvEl()` `textContent`-only rendering
+(no `innerHTML` of DB data → XSS-safe), same cents→USD + timezone-safe date formatting, same disabled "Pay
+invoice" placeholder for issued/overdue (Stripe is not wired here). No service-role key in the browser; the
+page keeps its `db.auth.getUser()` + `getSession()` gate (→ `/login` if signed out).
+
+Testing:
+None yet (START). Planned: extract the new inline `<script>` and `node --check` it; static scope diff
+(`payment.html` + `docs/logs.md` only); confirm no `pk_live`/`price_`/`stripe`/`/api/checkout` strings remain;
+adversarial multi-lens ultracode review (security / correctness-vs-schema / scope / copy). Live signed-in
+render + the cross-account isolation eyeball need a browser + `vercel dev` → flag for Reviewer/Security.
+
+Risks / Notes:
+- **Business consequence (flag for the owner/Manager):** `payment.html` WAS the real self-serve checkout
+  (the dashboard's own embedded Stripe modal is inert). Removing it means clients can no longer self-purchase
+  a plan/subscription through the site — consistent with the phase goal ("replace the plan/subscribe setup
+  with an admin-issued invoice system") but it is a real change to the live flow. The dashboard still shows a
+  "View Plans" button linking to `/payment`, which will now land on the invoices list — recommend the Manager
+  open a follow-up to relabel/repoint or remove it.
+- `/api/checkout.js` becomes unused by the frontend (left intact; not deleted — out of scope, and the
+  webhook/customer-portal still function for existing subscribers).
+
 ## 2026-06-22 15:30 - Designer - bold-brand-template
 
 Action:

@@ -29,8 +29,10 @@
 //     ]
 //   }
 //
-// The server computes subtotal_amount_cents (sum of quantity * unit_amount_cents),
-// each item's line_total_cents, and total_amount_cents (subtotal - discount + tax).
+// The server computes the invoice's subtotal_amount_cents (sum of
+// quantity * unit_amount_cents) and total_amount_cents (subtotal - discount + tax).
+// Each line item's own total_amount_cents is a STORED GENERATED column in
+// Postgres, so the database computes it and the route must NOT insert it.
 // Amounts from the client body are NEVER trusted for the subtotal/total — they
 // are recomputed here.
 //
@@ -50,7 +52,8 @@
 //                          subtotal_amount_cents, discount_amount_cents,
 //                          tax_amount_cents, total_amount_cents, created_at)
 //   public.invoice_items  (id, invoice_id, name, description, quantity,
-//                          unit_amount_cents, line_total_cents, created_at)
+//                          unit_amount_cents, total_amount_cents [GENERATED],
+//                          created_at)
 // =====================================================================
 
 const { createClient } = require("@supabase/supabase-js");
@@ -200,7 +203,11 @@ function parseInvoiceBody(body) {
     subtotal += lineTotal;
     if (subtotal > MAX_CENTS) throw new HttpError(400, "Invoice subtotal exceeds the maximum allowed amount.");
 
-    return { name, description, quantity, unit_amount_cents: unit, line_total_cents: lineTotal };
+    // NB: do NOT include a per-line total column here. invoice_items.total_amount_cents
+    // is a STORED GENERATED column (quantity * unit_amount_cents); Postgres computes
+    // it, and trying to insert it errors. We compute lineTotal above only to validate
+    // the caps and accumulate the server-side subtotal — it is never written.
+    return { name, description, quantity, unit_amount_cents: unit };
   });
 
   // A discount applies to the goods, so it can never exceed the subtotal.

@@ -1630,7 +1630,7 @@
         const itemsByInvoice = {};
         const { data: items, error: itemErr } = await db
           .from("invoice_items")
-          .select("id,invoice_id,name,description,quantity,unit_amount_cents,line_total_cents,created_at")
+          .select("id,invoice_id,name,description,quantity,unit_amount_cents,total_amount_cents,created_at")
           .in("invoice_id", ids)
           .order("created_at", { ascending: true });
         if (itemErr) throw itemErr;
@@ -1744,7 +1744,7 @@
         const qty = (it.quantity === null || it.quantity === undefined) ? 1 : it.quantity;
         tr.appendChild(cinvNumCell("Qty", String(qty)));
         tr.appendChild(cinvNumCell("Unit price", cinvMoney(it.unit_amount_cents)));
-        tr.appendChild(cinvNumCell("Amount", cinvMoney(it.line_total_cents)));
+        tr.appendChild(cinvNumCell("Amount", cinvMoney(it.total_amount_cents)));
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);

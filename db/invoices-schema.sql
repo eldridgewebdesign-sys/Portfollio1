@@ -61,7 +61,11 @@ create table if not exists public.invoice_items (
   description text,
   quantity integer not null default 1 check (quantity >= 1),
   unit_amount_cents bigint not null default 0 check (unit_amount_cents >= 0),
-  line_total_cents  bigint not null default 0 check (line_total_cents >= 0),
+  -- Per-line total is DERIVED, never written: a STORED GENERATED column the
+  -- database computes from quantity * unit_amount_cents. The /api/admin/invoices
+  -- route inserts only quantity + unit_amount_cents and Postgres fills this in,
+  -- so it can never drift from the inputs.
+  total_amount_cents bigint generated always as (quantity * unit_amount_cents) stored,
   created_at timestamptz not null default now()
 );
 
@@ -70,7 +74,9 @@ alter table public.invoice_items add column if not exists name text;
 alter table public.invoice_items add column if not exists description text;
 alter table public.invoice_items add column if not exists quantity integer default 1;
 alter table public.invoice_items add column if not exists unit_amount_cents bigint default 0;
-alter table public.invoice_items add column if not exists line_total_cents bigint default 0;
+-- Idempotent guard for the generated per-line total (see the create table above).
+alter table public.invoice_items add column if not exists total_amount_cents
+  bigint generated always as (quantity * unit_amount_cents) stored;
 alter table public.invoice_items add column if not exists created_at timestamptz default now();
 
 create index if not exists invoice_items_invoice_id_idx on public.invoice_items (invoice_id);
