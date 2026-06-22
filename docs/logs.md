@@ -6,6 +6,161 @@
 
 ---
 
+## 2026-06-22 15:30 - Designer - bold-brand-template
+
+Action:
+Finished
+
+Task:
+Owner-direct task (not on the board): design + deliver a bold, colorful, personality-filled, REUSABLE website
+TEMPLATE — explicitly "no logos" and "feels like a template". Direction + a self-contained sandbox prototype.
+→ for the Manager to mirror onto the board + review.
+
+Files claimed / changed:
+
+- `docs/mockups/bold-brand-template.html` — NEW non-production sandbox prototype ("LOUDHAUS" neo-brutalist-pop
+  template). Self-contained (inline CSS/JS), NO CDN/network; fonts via relative `../../fonts`. Sections: hero,
+  brand-personality/manifesto, services (auto-numbered, flexes 3–6), social proof (count-up stats +
+  testimonials), final CTA, footer. NO raster logo anywhere — brand = CSS/SVG monogram + `[Brand Name]` text
+  slot + an inline data-URI SVG favicon. Every editable region marked `SWAP:`; re-skins from one `:root` block.
+- `docs/design-guide.md` — added a dated Designer decision entry.
+- `docs/logs.md` — this entry.
+
+NOT touched: any production page (index/dashboard/payment/onboarding/login), payment/Stripe/Supabase/auth,
+`api/*`, `db/*`, vendor files. (Designer role = direction + sandbox only; `docs/` is `.vercelignore`'d.)
+
+Process (ultracode):
+- Concept-panel workflow: 5 explorers across distinct bold directions (neo-brutalist / retro / editorial-
+  maximalist / memphis / electric-gradient) → 2 judges. **Unanimous winner: neo-brutalist pop** ("LOUDHAUS";
+  de-AI 10/10, scannable 9–10). Folded in judge grafts: engineer display mass in CSS (no Arial-Black gamble)
+  so it survives any OS; `:root` token re-skin; CSS `counter()` card numbering; per-card shape motif (meaning
+  not by colour alone); `currentColor` SVG (dodges the `var()`-in-SVG trap); reused grain + `.rv` + focus-ring
+  primitives; count-up stats; brick-stagger cards.
+- Adversarial-review workflow: 4 critics (de-AI/brand, frontend-QA, a11y/contrast, template/no-logo). The
+  **template/no-logo critic PASSED clean** (all 5 hard constraints verified). Fixed every confirmed defect.
+
+Testing:
+- CSS braces balanced (238/238); inline IIFE `node --check` PASS; 0 `<img>`; 5 sections; no `fill="var(...)"`
+  in any SVG; no magic-number positions left.
+- Contrast (computed from real hex): fixed paper-on-cobalt body text (4.11/3.73:1 → that tile moved to
+  paper-on-Ink ≈18:1, cobalt kept as the top cap); fixed small siren-on-paper text (3.05:1 → new
+  `--pop1-text #C8341F` ≈5.2:1 for eyebrow numbers + rating stars); final-CTA headline switched from
+  paper+`-webkit-text-stroke` (3.05:1, stroke-dependent) to Ink-on-Siren (≈6:1) + paper hard-shadow. Added a
+  `forced-colors` focus fallback (the box-shadow ring is dropped in Windows high-contrast).
+- Robustness: marquees rebuilt as two equal `.mgroup` halves (gap-proof −50% loop on wide screens); CTA
+  sticker re-anchored to the button (was a viewport magic number that broke on label swap); stat marker made
+  consistent; "Work" nav/footer label → "Proof"; 380px hero headroom; footer touch targets.
+- **NOT run (non-GUI):** live in-browser eyeball (open `docs/mockups/bold-brand-template.html` via `file://`)
+  — desktop hover/press, marquee loop, mobile reflow at 320/375px, reduced-motion, console-clean. ~1-min look
+  recommended before any reuse.
+
+Risks / Notes:
+- **Sandbox only — NOT wired into any production page.** If the owner wants it served (like `demos/corporate/`),
+  that's a follow-up **Developer** task: move under `demos/`, switch fonts to root-absolute `/fonts/`, and
+  optionally wire it into the homepage `#styles` section as a third demo.
+- Owner-direct task, not on the board — **Manager to mirror it** (Designer didn't edit the board, role rule).
+- Reusable by find-and-replace: swap `[Brand Name]`/`[Industry]`/`[Year]`, the monogram letter, copy, and
+  re-skin the whole thing from the `:root` token block (palette + border/shadow/radius).
+
+## 2026-06-22 14:45 - Developer - fix-onboarding-access
+
+Action:
+Finished
+
+Task:
+Fix the site so onboarding works (owner-direct task — not on the board; Manager to record board status).
+New clients could not onboard at all. → ready for [REVIEW].
+
+Files claimed / changed:
+
+- `middleware.js` — removed `/onboarding` from the server-side auth gate: dropped it from both
+  `protectedRoutes` (now `["/dashboard"]`) and the edge `config.matcher` (now `["/dashboard"]`), and added a
+  comment explaining onboarding is the public signup page and must never be gated.
+- `onboarding.html` — **client signup success path only** (the `if (session)` branch of the submit handler):
+  set the `ws_session=1` cookie (mirroring `login.html`'s `goToDashboard()` exactly — `path=/; SameSite=Lax;
+  Secure; max-age=604800`) immediately before `window.location.replace("/dashboard")`. No other logic touched.
+- `login.html` — comment-only accuracy fix: the `goToDashboard()` comment said the cookie gates
+  "/dashboard and /onboarding"; corrected to "/dashboard" to match the middleware change. No code change.
+- `docs/logs.md` — START (below) + this FINISH.
+
+NOT touched: Stripe / payment logic, `payment.html`, price IDs, `api/*`, `js/supabase-config.js`, the
+Supabase anon config, vendor files, the admin/client invoice work, or any other page.
+
+Root cause (two bugs, both from the recently-added server-side auth gate — commit `06795b6`
+"add server-side auth gate"):
+1. **Onboarding was unreachable.** `middleware.js` listed `/onboarding` as a protected route requiring the
+   `ws_session=1` cookie. A first-time visitor (the only kind of person who uses onboarding) has no session,
+   so the edge middleware 302-redirected every prospective client from `/onboarding` → `/login` before the
+   intake form ever rendered. Onboarding is the public signup entry point (it calls `db.auth.signUp`), like
+   `/login`, and must not be gated.
+2. **Successful signup bounced to /login.** Only `login.html:189` sets `ws_session=1`; onboarding never did.
+   With email confirmation OFF, a successful `signUp` returns a session and onboarding does
+   `window.location.replace("/dashboard")` — but `/dashboard` is still gated, so the brand-new (and actually
+   signed-in) client was redirected to `/login` instead of landing on their dashboard. Fixed by setting the
+   same cookie login sets before the redirect.
+
+Testing:
+- `node --check` on `middleware.js` as an ES module (it uses `export default` — copied to a `.mjs` so node
+  parses it as ESM, the way Vercel runs it) → passes.
+- Extracted + `vm.Script`-compiled every inline `<script>` in `onboarding.html` and `login.html` → 0 syntax
+  errors.
+- `git diff` scope check: only the 3 files above; +14/−3 lines; no payment/Stripe/auth-config/vendor file
+  touched; the onboarding edit is confined to the `if (session)` success branch.
+- Traced the full flow by reading the code: visit `/onboarding` (now passes middleware) → loads
+  `js/vendor/supabase.min.js` + `js/supabase-config.js` (both present; CSP allows `script-src 'self'
+  'unsafe-inline'` and `connect-src https://*.supabase.co`) → `signUp` → set cookie → `/dashboard` passes
+  the gate.
+- **NOT run (needs a browser + a real deploy/preview, since `ws_session` is `Secure` so it only works over
+  HTTPS, not `vercel dev` on http):** the live click-through — load `/onboarding` unauthenticated, submit a
+  real signup, confirm it lands on `/dashboard`. → Reviewer (live) + Security (the gate change).
+
+Risks / Notes:
+- **Security review wanted (touches the auth gate).** Removing `/onboarding` from the gate is *restoring*
+  intended behavior, not a regression: onboarding serves only a blank intake form (no per-user data), exactly
+  like the already-ungated `/login`. The client-side and (for `/dashboard`) server-side gates are unchanged.
+  Flagging for Security + Manager per the role rules since `middleware.js` is a security-sensitive file.
+- **Pre-existing, NOT fixed here (Supabase-dashboard config, not in the repo — flag for the Manager/owner):**
+  if Supabase "Confirm email" is ON, `signUp` returns no session, so the `project_inquiries` insert runs with
+  `auth.uid()` null and will fail unless RLS allows it (see the open task "Verify Supabase RLS policies",
+  taskboard ~`:1055`, and `CLAUDE.md`'s onboarding note). The page already surfaces that insert error
+  gracefully. This code change does not affect that path; it only fixes page access + the
+  email-confirmation-OFF redirect. Confirm the email-confirmation setting + RLS in the Supabase dashboard.
+- Did NOT `git commit` or deploy. Developer does not edit the board — **Manager: please record this
+  owner-direct task → [REVIEW]** (Security to confirm the gate change, Reviewer to click through live).
+
+## 2026-06-22 14:40 - Developer - fix-onboarding-access
+
+Action:
+Started
+
+Task:
+Fix the site so onboarding works (owner-direct task). Symptom: new clients cannot complete onboarding.
+
+Files claimed:
+
+- `middleware.js` (the server-side auth gate)
+- `onboarding.html` — the client signup `<script>` success branch only
+- `login.html` — a comment only (documents the middleware behavior being changed)
+- `docs/logs.md` (START + FINISH)
+
+NOT touching: Stripe/payment logic, `payment.html`, price IDs, `api/*`, `js/supabase-config.js`, the
+Supabase anon config, vendor files, or the in-flight invoice work in `dashboard.html`.
+
+Summary:
+Diagnosed two breakages introduced by the recent server-side auth gate: (1) `middleware.js` gates
+`/onboarding`, so first-time visitors (no session cookie) are redirected to `/login` and never see the
+signup form; (2) onboarding redirects to the gated `/dashboard` on success without setting the `ws_session=1`
+cookie that `login.html` sets, bouncing the new client back to `/login`. Fixing both.
+
+Testing:
+None yet (START).
+
+Risks / Notes:
+`middleware.js` is security-sensitive — flag for Security review. The Supabase email-confirmation/RLS insert
+path is a separate, pre-existing dashboard-config concern (not changed here).
+
+---
+
 ## 2026-06-22 13:42 - Developer - client-billing-invoices-ui
 
 Action:

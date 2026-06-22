@@ -562,6 +562,12 @@
 
       if (session) {
         // Email confirmation OFF → already signed in → go to dashboard.
+        // Set the same lightweight session-hint cookie login.html sets, so the
+        // server-side middleware (middleware.js) lets this brand-new client
+        // through to the protected /dashboard instead of bouncing them to
+        // /login. Mirror login.html's goToDashboard() exactly (7-day expiry).
+        document.cookie =
+          "ws_session=1; path=/; SameSite=Lax; Secure; max-age=604800";
         setTimeout(() => window.location.replace("/dashboard"), 1500);
       } else {
         // Email confirmation ON → must confirm before they can sign in.

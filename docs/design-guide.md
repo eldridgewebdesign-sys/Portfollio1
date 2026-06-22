@@ -337,6 +337,62 @@ Notes:
 Anything the Manager or future Designer should know
 ```
 
+## 2026-06-22 15:30 - Designer - bold-brand-template
+
+Area Reviewed:
+New owner-requested deliverable — a bold, colorful, personality-filled REUSABLE website template (no logos,
+"feels like a template"). Sandbox prototype: `docs/mockups/bold-brand-template.html`.
+
+Finding:
+The brief wanted energetic / memorable / creative with strong contrast and a playful layout, but ALSO polished
+(not childish/messy), scannable, accessible, and — per the owner — logo-free and template-like. The trap in
+"bold + colorful" is sliding into generic-AI/SaaS vocabulary (gradient-clip headlines, glassy blobs, soft
+glows) or into messy/childish. A concept panel scored five divergent bold directions; the neo-brutalist-pop
+direction won decisively on de-AI and scannability because its personality lives in pure CSS (thick ink
+borders, hard zero-blur offset shadows, exposed structure, rotated stickers, marker swipes, an editorial serif
+clash) — which renders identically everywhere and degrades gracefully.
+
+Decision (standing direction for bold/colorful demo templates):
+- **"LOUDHAUS" neo-brutalist-pop.** Warm off-white paper `#FFFCF2` + warm near-black ink `#14110A` (never pure
+  `#000`) + a rationed 4-pop palette: siren `#FF5747` (shout/CTA), cobalt `#2D7DD2` (accent/large text), yolk
+  `#FFD23F` (badges/marker swipes), mint `#1FAE8C` (social-proof band) + a sand surface `#EDE6D4`. Cap at ~5
+  colours; **Ink carries small light text** (not the pops). For SMALL siren-coloured text on paper use
+  `--pop1-text #C8341F` (bright siren fails 4.5:1).
+- **Type:** display MASS is engineered in CSS (`system-ui` 900 + tight tracking + hard shadow), NOT a gambled
+  display font, so it survives any OS; body = vendored **Mulish**; editorial accent = vendored **Cormorant
+  Garamond** (oversized section numbers + one pull-quote). The serif-vs-brutalist clash is the
+  "polished, not childish" lever.
+- **Components:** hard offset block-shadows at a fixed angle; a "press" hover (card/button translates into its
+  shadow); exposed-but-disciplined layout (8px grid, consistent shadow angle, rationed rotations); brick-
+  staggered cards; rotated sticker badges; CSS marquee ribbons; Highlighter-Yolk marker swipes. Decoration is
+  structural, never a random glow.
+- **No-logo brand system (reusable):** brand = a CSS/SVG single-letter monogram + a bracketed `[Brand Name]`
+  text slot + an inline data-URI SVG favicon — zero raster assets. Cards auto-number (CSS `counter()`) and
+  auto-cycle accents (`nth-child`) so the set flexes 3–6 unbroken. Re-skin the entire template from one `:root`
+  token block.
+- **Reuse existing project primitives** (grain data-URI, `.rv` reveal, two-layer focus ring) for cohesion.
+
+Technical rules recorded (reusable):
+- Personality must come from CSS, not an installed display font (engineer the mass; don't depend on Arial
+  Black / Cooper Black).
+- Enforce contrast in CODE, not by eye: Ink on Siren/Yolk/Mint; light text only on Ink or Cobalt-at-large;
+  small siren text uses the darker `--pop1-text`.
+- Reaffirms the project gotcha: **CSS `var()` does NOT resolve in SVG presentation attributes** — colour inline
+  SVG via `fill="currentColor"` (+ a per-element `color`) or a literal hex, never `fill="var(--token)"`.
+- Bleeding/rotated elements: `overflow-x:clip` on the section (not `body{overflow:hidden}`, to keep sticky),
+  collapse shadows + drop rotations at the smallest breakpoints; marquees freeze under `prefers-reduced-motion`
+  and pause on hover/`focus-within`, with `aria-hidden` duplicate halves.
+
+Notes:
+- Sandbox / direction only — NOT production code, NOT wired into any live page (`docs/` is `.vercelignore`'d).
+  Pairs with a future **Developer** task IF the owner wants it served (move under `demos/`, root-absolute
+  `/fonts/`, optional homepage `#styles` wiring as a third demo).
+- Built + adversarially reviewed via ultracode workflows (5-concept panel + 2 judges; then 4 critics). The
+  template/no-logo critic passed all hard constraints clean; contrast + a couple of swap-robustness fixes were
+  applied.
+- Owner-direct task; the **Manager should mirror it onto the board**. The Designer did not edit the board
+  (role rule).
+
 ## 2026-06-22 13:30 - Designer - invoice-billing-ux
 
 Area Reviewed:

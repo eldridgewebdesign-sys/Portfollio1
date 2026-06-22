@@ -183,7 +183,7 @@
     // replace() keeps the login page out of the browser's back history.
     function goToDashboard() {
       // Set a lightweight session-hint cookie so the server-side middleware
-      // (middleware.js) can gate /dashboard and /onboarding before serving HTML.
+      // (middleware.js) can gate /dashboard before serving HTML.
       // 7-day expiry; SameSite=Lax prevents cross-site request forgery.
       document.cookie =
         "ws_session=1; path=/; SameSite=Lax; Secure; max-age=604800";

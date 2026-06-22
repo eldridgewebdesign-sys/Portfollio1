@@ -17,7 +17,12 @@ export default function middleware(request) {
   const { pathname } = new URL(request.url);
 
   // Routes that require a logged-in session.
-  const protectedRoutes = ["/dashboard", "/onboarding"];
+  //
+  // NOTE: /onboarding is intentionally NOT here. It is the public new-client
+  // signup page (like /login) — a first-time visitor has no session yet, so
+  // gating it would redirect every prospective client to /login and make
+  // signup impossible. Only the logged-in area (/dashboard) is gated.
+  const protectedRoutes = ["/dashboard"];
 
   if (protectedRoutes.includes(pathname)) {
     const cookies = request.headers.get("cookie") || "";
@@ -34,5 +39,5 @@ export default function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/dashboard", "/onboarding"],
+  matcher: ["/dashboard"],
 };
