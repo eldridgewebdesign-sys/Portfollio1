@@ -6,6 +6,170 @@
 
 ---
 
+## 2026-06-22 18:30 - Reviewer - invoice-source-review
+
+Action:
+Reviewed
+
+Task:
+Reviewer: test the custom invoice system end-to-end (admin + client + access + mobile) and create a reviewer log
+
+Files claimed:
+
+- docs/reviewer-log.md (findings)
+- docs/logs.md (this entry)
+
+Files changed:
+
+- docs/reviewer-log.md — added the first reviewer session report (REVIEW-0001 … REVIEW-0013, all [NEW]) with a
+  coverage table for the full 28-point admin/client/access/mobile checklist, a "what worked" list, and a
+  Go/No-Go.
+- docs/logs.md — this entry.
+
+Summary:
+Reviewed the Phase-1 custom invoice system (`api/admin/invoices.js`, `db/invoices-schema.sql`, the admin builder
++ client billing in `dashboard.html`, and the `payment.html` client invoices page). **Could NOT run a live
+end-to-end test** — no browser/extension is connected, no preview deploy, no `vercel dev`/live Supabase — so per
+the `CLAUDE.md` Reviewer rule I did not fabricate live results. Instead I did a **source-level pre-review**: first-
+hand reads of every invoice file plus a 6-dimension adversarial source pass (37 agents → 31 candidate findings →
+18 confirmed-in-source, 16 needs-live, 4 refuted). The build is genuinely solid — no blocking code defect; my
+findings line up with and extend Security's (0 exploits, IV-GATE) and Efficiency's (atomicity, fractional-qty,
+unbounded queries) prior passes. Logged 13 findings (1 gating-needs-live, 2 Medium, 5 Low, 5 Info). New (not in
+prior logs): the client "Created" date can show the previous calendar day in US timezones (REVIEW-0004), and the
+admin builder loses visible line-item labels on mobile ≤560px (REVIEW-0001).
+
+Testing:
+**No live/GUI test was run** (none available this session). All verdicts are from static code review + adversarial
+source verification; every item needing a running system is tagged [NEEDS LIVE] in the reviewer log. The
+admin/client flows and mobile rendering were NOT exercised in a browser; the cross-tenant RLS isolation test was
+NOT run.
+
+Risks / Notes:
+- **Go/No-Go = NO-GO (conditional)** for the Stripe phase on this pass — not because the code is broken, but
+  because the mandatory live end-to-end test wasn't run and the cross-tenant RLS isolation (REVIEW-0013 / Security
+  IV-GATE) must be verified live before money flows. Path to GO is in the reviewer log §8.
+- Per role rules I did NOT edit `docs/taskboard.md` — Manager: please sync the board, triage the [NEW] findings,
+  and (the recommended pre-Stripe fix) cut REVIEW-0002 (non-atomic create → client-visible itemless invoice) to a
+  Developer task (one Postgres RPC); it duplicates the existing Efficiency/Security atomicity finding.
+- REVIEW-0002/0003/0009/0013 are duplicates/corroborations of already-logged Efficiency/Security items — group,
+  don't double-count.
+- A real live Reviewer pass is still owed once a browser/preview is available (admin builder + client billing on
+  desktop AND phone, the console, and the cross-account RLS read test).
+
+---
+
+## 2026-06-22 17:30 - Designer - retro-vintage-template
+
+Action:
+Finished
+
+Task:
+Owner-direct task (not on the board): design + deliver a vintage/retro-inspired REUSABLE website TEMPLATE —
+explicitly "no logos and no name for website". Direction + a self-contained sandbox prototype. → for the
+Manager to mirror onto the board + review.
+
+Files claimed / changed:
+
+- `docs/mockups/retro-template.html` — NEW non-production sandbox prototype ("HARVEST PRESS" — a 1970s
+  editorial / magazine-spread template). Self-contained (inline CSS/JS), NO CDN/network; fonts via relative
+  `../../fonts` (Mulish + Cormorant Garamond). Sections: sticky masthead/nav → hero (framed-photo placeholder
+  + CTAs) → story (editorial spread) → services (ticket/menu list with a desktop dotted-leader price bar) →
+  trust (press-clipping / old-label callouts + stats) → rust final-CTA band → footer. NO raster logo anywhere
+  — brand = CSS/SVG seal + `[Brand Name]` text slot + inline data-URI SVG favicon. Every editable region
+  marked `SWAP:`; re-skins from one `:root` block.
+- `docs/design-guide.md` — added a dated Designer decision entry (standing direction for retro/vintage demo
+  templates).
+- `docs/logs.md` — this entry.
+
+NOT touched: any production page (index/dashboard/payment/onboarding/login/success/cancel), payment/Stripe/
+Supabase/auth, `api/*`, `db/*`, vendor files, `demos/*`, `index.html` `#styles`. (Designer role = direction +
+sandbox only; `docs/` is `.vercelignore`'d.)
+
+Process (ultracode):
+- Concept-panel workflow: 6 era explorers (70s editorial / classic newspaper / vintage print ad / 80s
+  synthwave / 90s web / diner) → 2 judges. **Winner: 1970s editorial ("HARVEST PRESS")** — chosen for de-AI
+  authenticity + readability and because it survives the no-CDN font constraint (CG + Mulish + system-ui)
+  without a gambled display font, where synthwave/diner/90s would not.
+- Adversarial-review workflow: 4 critics (retro/de-AI · frontend-QA · a11y/contrast · no-logo/template-
+  conventions) → fix. 9 findings (6 high/med) applied.
+
+Testing:
+- Inline JS compiles (`vm.Script`) → PASS. CSS braces balanced 201/201. Self-contained: no CDN/network, no
+  external `<img>`; fonts resolve to `../../fonts` faces that exist. Favicon = data-URI SVG. Single `:root`;
+  24 `SWAP:` markers; `[Brand Name]`/`[YEAR]`/`[CITY]` placeholders (no baked business name).
+- a11y: skip link, `:focus-visible` ring + `forced-colors` fallback, `prefers-reduced-motion`, semantic
+  landmarks, 40 `aria-` attributes. Contrast fixes verified from real hex: desktop menu-row grid (4-child /
+  3-track bug) → 4-track grid; `.cta-sub` on rust → full `--paper` (5.58:1); figcaption `.fc-no` on
+  `--surface` → `--mustard-deep` (4.9:1).
+- **NOT run (non-GUI):** live in-browser eyeball — open `docs/mockups/retro-template.html` via `file://`
+  (desktop render/hover, mobile reflow at 320/375px, the dotted-leader price bar at the 761px breakpoint,
+  reduced-motion, console-clean). ~1-min look recommended before any reuse.
+
+Risks / Notes:
+- **Sandbox only — NOT wired into any production page.** If the owner wants it served (like `demos/corporate/`
+  and `demos/bold/`), that's a follow-up **Developer** task: move under `demos/<name>/` (the `../../fonts`
+  paths already work there) and optionally wire it into the homepage `#styles` section as a THIRD live demo
+  (the section currently shows teardown + bold).
+- Owner-direct task, not on the board — **Manager to mirror it** (the Designer didn't edit the board, role
+  rule).
+- Reusable by find-and-replace: swap `[Brand Name]`/`[Industry]`/`[Year]`/`[City]`, the seal letter, copy, and
+  re-skin from the `:root` token block.
+
+## 2026-06-22 17:15 - Designer - bold-demo-nologo
+
+Action:
+Finished
+
+Task:
+Owner-direct: make the bold demo template (now the 2nd live sample in the homepage `#styles` tab) have **no
+logo and no brand name**, and finish its placeholder copy. (Direction documented in `docs/design-guide.md`
+→ "2026-06-22 17:10 - Designer - bold-demo-nologo".)
+
+Files claimed:
+
+- `demos/bold/index.html` (untracked; nothing else touching it)
+- `docs/design-guide.md`, `docs/logs.md` (my own role logs)
+
+Files changed:
+
+- `demos/bold/index.html` — removed ALL brand identity: the "A" monogram (nav + footer + favicon + hero
+  collage), the `[Brand Name]` wordmark + its aria labels + copyright, and the now-dead `.brand`/`.mono`/
+  `.name` CSS. Favicon → neutral geometric data-URI (no letter). Hero-collage glyph `A` → `✦`. Nav re-balanced
+  (links left, pop CTA right via `margin-left:auto`, no brand slot). Replaced visible `[Industry]`/`[Year]`/
+  `[Client Name]` brackets with realistic neutral copy (eyebrow "Creative studio · Est. 2019"; real-sounding
+  client testimonial names) + kept `SWAP:` comments. `<title>`/meta de-named (dropped "LOUDHAUS" + "[Brand
+  Name]"). One contrast fix from the verify pass: `.quote .q` bright `--pop1` text → `--pop1-text` token.
+- `docs/design-guide.md` — dated Designer decision entry (standing direction for logo-free/name-free demos).
+- `docs/logs.md` — this entry.
+
+NOT touched: `index.html` (the `#styles` → `/demos/bold` wiring was already in the working tree); `demos/
+corporate/`; any payment/Stripe/Supabase/auth/api code; vendor; the board (Manager mirrors — see Notes).
+
+Summary:
+Refined the already-promoted bold neo-brutalist-pop template so it ships with zero logo / monogram / wordmark /
+brand name (the owner's hard requirement) and reads as a finished example rather than a bracket skeleton.
+Personality stays in the type/colour/shapes, not an identity mark.
+
+Testing:
+- grep: zero residual brand/monogram/`[bracket]` tokens; zero dead `.brand`/`.mono`/`.name` refs; zero
+  network/CDN calls (only relative `../../fonts` + inline data-URIs; the lone `http` strings are SVG xmlns
+  namespaces, not requests).
+- `node --check` on the extracted inline `<script>` → passes. HTML tag balance OK (the "6th" `<article>` is
+  text inside a `SWAP:` comment, not an open tag).
+- Adversarial verification workflow (3 critics, ultracode): **no-logo-completeness 0 findings**, **structure/
+  self-contained 0 findings**, **a11y/contrast 1 low** (pre-existing pull-quote siren-text 2.52:1 → fixed to
+  `--pop1-text` 4.25:1).
+- NOT run (non-GUI): live in-browser render / hover / mobile nav / console eyeball — advised before sign-off.
+
+Risks / Notes:
+- **Board:** owner-direct task; I did **not** edit the taskboard — the **Manager should mirror this** (and note
+  it alongside the existing "2026-06-22 15:30 bold-brand-template" design entry).
+- **Open decision for Manager/owner:** `#styles` now shows **2** samples (teardown + bold); the working-tree
+  edit **replaced** the corporate demo rather than adding a 3rd. Keep corporate as a 3rd card (3-up) or leave it
+  swapped out? I did not change `index.html` (out of scope for "make the bold demo logo/name-free").
+- `demos/bold/` is still **untracked** — it needs to be committed for the `/demos/bold` styles link to resolve
+  on deploy.
+
 ## 2026-06-22 17:05 - Efficiency - invoice-system-review
 
 Action:

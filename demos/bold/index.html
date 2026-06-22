@@ -219,7 +219,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
   line-height:.95;font-size:clamp(2rem,1.3rem + 3.4vw,3.6rem);position:relative;z-index:1}
 .quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
   font-size:clamp(1.6rem,1.2rem + 2.4vw,2.9rem);line-height:1.18;max-width:20ch;margin:0}
-.quote .q{color:var(--pop1)}
+.quote .q{color:var(--pop1-text)}  /* deeper tomato: 4.25:1 on --surface; bright --pop1 as text is only 2.52:1 (fails AA large) */
 .why-grid{margin-top:clamp(2rem,4vw,3rem);display:grid;grid-template-columns:repeat(12,1fr);
   gap:clamp(1.1rem,2.5vw,1.8rem);align-items:start}
 .tile{border:var(--bw) solid var(--ink);background:var(--paper);box-shadow:var(--shadow);
@@ -380,11 +380,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
 <!-- ════════ HEADER / NAV ════════ -->
 <header class="head" id="top">
   <nav class="nav" aria-label="Primary">
-    <!-- SWAP: monogram letter + brand name -->
-    <a class="brand" href="#top" aria-label="[Brand Name] — home">
-      <span class="mono" aria-hidden="true">A</span>
-      <span class="name">[Brand&nbsp;Name]</span>
-    </a>
+    <!-- No logo / no brand name by design — nav opens straight into the links. -->
     <ul class="nav-links">
       <li><a href="#why">Why us</a></li>
       <li><a href="#services">Services</a></li>
@@ -411,7 +407,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
       <div class="hero-grid">
         <div class="hero-main">
           <!-- SWAP: eyebrow (industry + est. year) -->
-          <span class="eyebrow rv">↳ [Industry] studio · EST. [Year]</span>
+          <span class="eyebrow rv">↳ Creative studio · Est. 2019</span>
           <!-- SWAP: headline. Keep line 2 short — it's the boxed "sticker word". -->
           <h1 class="hero-h1 rv d1" id="hero-h1">
             <span class="ln">We make</span>
@@ -430,7 +426,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
         <!-- Brand-shape collage (pure CSS/SVG — no photo, no logo) -->
         <div class="collage rv d2" aria-hidden="true">
           <span class="sticker round siren">No<br>beige.</span>
-          <div class="shape sq"><span class="ch">A</span></div><!-- SWAP: monogram letter -->
+          <div class="shape sq"><span class="ch">✦</span></div><!-- decorative shape, not a monogram -->
           <div class="shape ci"></div>
           <div class="tri"></div>
         </div>
@@ -488,7 +484,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
           <span class="eyebrow rv"><span class="n">02</span> — What we do</span>
           <h2 class="svc-title rv d1" id="svc-title">Pick your<br>weapon.</h2>
         </div>
-        <p class="lead muted rv d2">Five ways we help [your business] stop blending in. Mix and match — or take the lot.</p>
+        <p class="lead muted rv d2">Five ways we help your brand stop blending in. Mix and match — or take the lot.</p>
       </div>
 
       <!-- Cards auto-number (CSS counter) and auto-cycle accents; add/remove freely (3–6).
@@ -566,17 +562,17 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
         <blockquote class="voice feature rv">
           <div class="stars" aria-label="5 out of 5">★★★★★</div>
           <p>"They took a brand nobody noticed and made it impossible to ignore. Sales doubled in a quarter — but honestly, we'd have hired them again just for the work."</p>
-          <footer><div class="who">— [Client Name]</div><div class="role">[Role], [Company]</div></footer>
+          <footer><div class="who">— Maya Okafor</div><div class="role">Founder, Field Day Coffee</div></footer>
         </blockquote>
         <blockquote class="voice rv d1">
           <div class="stars" aria-label="5 out of 5">★★★★★</div>
           <p>"The most fun we've ever had signing off a website. And the easiest decision."</p>
-          <footer><div class="who">— [Client Name]</div><div class="role">[Role], [Company]</div></footer>
+          <footer><div class="who">— Daniel Reyes</div><div class="role">Head of Brand, Northbeam</div></footer>
         </blockquote>
         <blockquote class="voice rv d2">
           <div class="stars" aria-label="5 out of 5">★★★★★</div>
           <p>"Bold without being reckless. They get the difference, and it shows everywhere."</p>
-          <footer><div class="who">— [Client Name]</div><div class="role">[Role], [Company]</div></footer>
+          <footer><div class="who">— Priya Anand</div><div class="role">Owner, Studio Mube</div></footer>
         </blockquote>
       </div>
     </div>
@@ -619,12 +615,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
   <div class="wrap">
     <div class="foot-inner">
       <div>
-        <a class="brand" href="#top" aria-label="[Brand Name] — home">
-          <span class="mono" aria-hidden="true">A</span>
-          <span class="name">[Brand&nbsp;Name]</span>
-        </a>
-        <!-- SWAP: footer tagline -->
-        <p class="foot-tag">A [Industry] studio for brands that would rather be loved than ignored.</p>
+        <!-- SWAP: footer tagline (the template ships with no logo / no brand name). -->
+        <p class="foot-tag">An independent creative studio for brands that would rather be loved than ignored.</p>
       </div>
       <ul class="foot-nav" aria-label="Footer">
         <li><a href="#why">Why us</a></li>
@@ -634,8 +626,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
       </ul>
     </div>
     <div class="foot-bottom">
-      <span>© [Year] [Brand Name]. Swap everything in [brackets].</span>
-      <span>Demo template · placeholder content</span>
+      <span>© 2019–2026 · Bold demo template.</span>
+      <span>No fixed logo or brand name — built to re-skin.</span>
     </div>
   </div>
 </footer>

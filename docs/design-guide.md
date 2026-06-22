@@ -337,6 +337,114 @@ Notes:
 Anything the Manager or future Designer should know
 ```
 
+## 2026-06-22 17:30 - Designer - retro-vintage-template
+
+Area Reviewed:
+New owner-requested deliverable — a vintage/retro-inspired REUSABLE website template, explicitly "no logos
+and no name for website". Sandbox prototype: `docs/mockups/retro-template.html`.
+
+Finding:
+The brief offered six retro directions (70s editorial, 80s synthwave, 90s web, old diner, classic newspaper,
+vintage print ad) and asked to "pick one era and commit" while staying modern, readable, professional, and
+NOT a messy costume — and explicitly avoiding generic-AI vintage posters and filter/glow overload. The hard
+project constraint (only the vendored Cormorant Garamond + Mulish + system-ui; no CDN; no new display font)
+drives the choice: synthwave / diner / 90s all want display faces we can't load and slide toward
+costume/cliché, while the print-era directions are exactly the ones a warm serif + clean sans can carry
+honestly. A concept panel scored all six; **1970s editorial / magazine ("HARVEST PRESS") won decisively** on
+de-AI authenticity + readability because its personality is structural — warm earth ink-on-cream palette, big
+Cormorant display, multi-column spread, hairline rules, framed-photo blocks, a dotted-leader "contents/menu"
+price bar — not a filter or a gambled font.
+
+Decision (standing direction for retro/vintage demo templates):
+- **Era: 1970s editorial print.** Warm cream paper `#F3E8D2` + warm chocolate ink `#2A1E12` (never pure
+  `#000`/`#fff`) + rust `#9E3B1F` primary accent/CTA + rationed mustard/surface tones. Re-skin the whole
+  template from one `:root` token block.
+- **Type:** display mass = Cormorant Garamond 700 at large sizes with tight tracking (the era's magazine
+  serif); body/UI = Mulish; editorial accents = CG 500 italic. No installed display font is gambled — the
+  look survives any OS (same project rule as the bold template: engineer the look, don't depend on a font).
+- **Components:** hairline + bold ink rules, kicker/eyebrow labels, framed-photo placeholder blocks (CSS/SVG
+  mat, no raster), a ticket/menu services list with a desktop dotted-leader price bar, press-clipping /
+  old-label trust callouts, a high-contrast rust final-CTA band. Decoration is structural, never a glow.
+- **No-logo / no-name system (the owner constraint):** brand = a TEXT wordmark in a bracketed `[Brand Name]`
+  slot + a CSS/SVG seal/monogram + an inline data-URI SVG favicon — zero raster assets, no baked business
+  name. Every editable region marked `SWAP:`. (Same no-logo/no-name direction as the bold demo below.)
+- **Texture restraint:** one low-opacity paper grain (data-URI), never under body copy at a level that hurts
+  legibility. No heavy filters / fake distressing / AI-poster clichés.
+
+Technical rules recorded (reusable):
+- Enforce contrast in CODE, not by eye: small mustard words use a darkened `--mustard-text` (`#7E5410` ≈5.3:1
+  on paper) and an even deeper `--mustard-deep` (`#6F4A0E` ≈4.9:1) when they sit on the deeper `--surface`
+  mat; cream body copy on the rust band must be full-strength `--paper` (5.58:1), not softened cream
+  (.82 ≈4.29:1 fails).
+- A 4-child menu row (number / body / dotted-leader / price) needs a **4-track** grid on desktop
+  (`auto auto 1fr auto`) with the leader as the elastic column; the leader is `display:none` below the
+  breakpoint so the 3-track base grid stays correct (the classic grid child/column-count mismatch — caught
+  and fixed in review).
+- Reaffirms the project gotchas: CSS `var()` does NOT resolve in SVG presentation attributes (use
+  `currentColor` / literal hex); the `../../fonts` paths are relative to the file and resolve to the repo
+  `/fonts` from BOTH `docs/mockups/` and `demos/<name>/` (both 2 levels deep), so promotion needs no path
+  change.
+
+Notes:
+- Sandbox / direction only — NOT production code, NOT wired into any live page (`docs/` is `.vercelignore`'d).
+  Pairs with a future **Developer** task IF the owner wants it served (like `demos/corporate/` and
+  `demos/bold/`): move under `demos/<name>/`, keep the `../../fonts` paths, and optionally wire it into the
+  homepage `#styles` section as a THIRD live demo (the section currently shows teardown + bold).
+- Built + adversarially reviewed via an ultracode workflow (6-era concept panel → 2 judges → builder → 4
+  critics: retro/de-AI · frontend-QA · a11y/contrast · no-logo/template-conventions → fix). 9 findings
+  (6 high/med) applied — the broken desktop menu-row grid + the two contrast misses among them. Inline JS
+  compiles, CSS braces balance 201/201, and self-contained / no-CDN / no-raster-logo were verified statically.
+- **In-browser eyeball still advised** (render / hover / mobile reflow / console) per the usual non-GUI caveat.
+- Owner-direct task, not on the board — the **Manager should mirror it** (the Designer did not edit the board).
+
+## 2026-06-22 17:10 - Designer - bold-demo-nologo
+
+Area Reviewed:
+The bold neo-brutalist-pop demo template (`demos/bold/index.html`) — now promoted into the live homepage
+`#styles` tab as the second live sample — refined to the owner's hard direction: **no logo and no brand
+name anywhere.**
+
+Finding:
+The bold "LOUDHAUS" template had been promoted from the sandbox into `demos/bold/` and wired into `#styles`
+(the working-tree edit swapped it in where the corporate card was). But it still shipped a brand IDENTITY that
+contradicts a logo-free / name-free template and read as unfinished in a live demo: a single-letter **"A"
+monogram** in the nav, footer, favicon and hero collage; a **`[Brand Name]`** wordmark in the nav/footer/aria
+labels/copyright; and visible `[Industry]` / `[Year]` / `[Client Name]` **bracket placeholders**.
+
+Decision (standing direction for logo-free / name-free demo templates):
+- **Ship NO logo, NO monogram, NO wordmark, NO brand name** — none in the nav, footer, `<title>`, meta, aria
+  labels or copyright. The template is deliberately identity-less so a brand drops in. Personality is carried
+  by **type, colour and shapes**, never a logo.
+- **Nav opens straight into the links** (links left, the pop CTA pushed right via `margin-left:auto`,
+  hamburger last); the brand slot and its `.brand`/`.mono`/`.name` CSS are removed, not left as dead rules.
+  A lone right-aligned hamburger on mobile is acceptable.
+- **Favicon = a neutral geometric data-URI mark** (yolk tile + offset siren/cobalt squares) — **no letter, no
+  wordmark.** A required browser icon that carries no identity is the compliant way to avoid a `/favicon.ico`
+  network request while honouring "no logo."
+- **Replace a monogram GLYPH with a decorative shape** — the hero-collage square now shows a `✦` (matching the
+  marquee stars), not an "A".
+- **Replace visible `[brackets]` with realistic, neutral copy + keep `SWAP:` comments** (matches the
+  corporate-demo convention: a finished-looking example, not a bracket-filled skeleton). Eyebrow → "Creative
+  studio · Est. 2019"; testimonials use realistic **client** names (Maya Okafor / Daniel Reyes / Priya Anand —
+  clients are fine; they are not the site's own brand); footer tagline + copyright carry no name.
+
+Notes:
+- `#styles` now shows **two** live samples: the 3D laptop teardown + this bold demo. The working-tree edit
+  **replaced** the corporate card rather than adding a third — **Manager/owner to decide** whether to keep
+  corporate as a third card (3-up grid) or leave it swapped out. I did not make that call (it's an `index.html`
+  scope/IA decision beyond "make the bold demo logo/name-free").
+- Verified: grep (zero residual brand/monogram/`[bracket]` tokens, zero dead `.brand`/`.mono`/`.name` refs,
+  zero network/CDN calls — only relative `../../fonts` + inline data-URIs), `node --check` on the inline JS
+  (passes), tag-balance, and a 3-critic adversarial verification workflow (no-logo completeness / a11y +
+  contrast / structure + self-contained). The pass confirmed the template **fully logo/name-free + self-
+  contained** (0 findings on those two lenses) and surfaced **one pre-existing contrast nit**: the manifesto
+  pull-quote emphasis (`.quote .q`) used bright `--pop1` as TEXT on the sand `--surface` band — 2.52:1, failing
+  AA large-text (3:1). Fixed by switching it to the **`--pop1-text`** token (4.25:1) — the exact small/coloured-
+  siren-text case that token exists for. That is the only colour change; no other palette values were touched.
+- **Live in-browser eyeball still advised** (render / hover / mobile nav / console) per the usual non-GUI
+  caveat. **Role note:** owner-direct task — I edited `demos/bold/index.html` + this guide + `docs/logs.md`,
+  **not** the taskboard; the **Manager should mirror this onto the board.**
+
 ## 2026-06-22 15:30 - Designer - bold-brand-template
 
 Area Reviewed:
