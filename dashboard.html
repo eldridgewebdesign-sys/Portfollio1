@@ -873,6 +873,9 @@
     // ---- Sign out -------------------------------------------------------
     $("signout").addEventListener("click", async () => {
       try { await db.auth.signOut(); } catch (e) { /* ignore */ }
+      // Clear the server-side session hint cookie set by login.html.
+      document.cookie =
+        "ws_session=; path=/; SameSite=Lax; Secure; max-age=0";
       window.location.replace("/login");
     });
 
@@ -2407,7 +2410,7 @@
       aq("admDrawerClose").addEventListener("click", closeDrawer);
       aq("admDrawerOv").addEventListener("click", closeDrawer);
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
-      aq("admSignout").addEventListener("click", async () => { try { await db.auth.signOut(); } catch (e) {} window.location.replace("/login"); });
+      aq("admSignout").addEventListener("click", async () => { try { await db.auth.signOut(); } catch (e) {} document.cookie = "ws_session=; path=/; SameSite=Lax; Secure; max-age=0"; window.location.replace("/login"); });
       aq("ovTimeframe").addEventListener("change", () => renderSitesChart(Number(aq("ovTimeframe").value) || 0));
       aq("setDensity").addEventListener("change", (e) => {
         document.querySelectorAll("table.adm-table").forEach((t) => t.style.fontSize = e.target.value === "compact" ? ".78rem" : ".84rem");
