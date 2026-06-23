@@ -173,6 +173,61 @@ const handler = async (req, res) => {
         break;
       }
 
+      case "payment_intent.succeeded": {
+        // Custom-invoice payments (api/invoices/pay) tag the PaymentIntent with
+        // metadata.invoice_id. Subscription / plan PaymentIntents do NOT, so they
+        // fall through and are ignored here — the subscription cases above own them.
+        const pi = event.data.object;
+        const invoiceId = pi.metadata && pi.metadata.invoice_id;
+        if (!invoiceId) break;
+
+        const { data: inv, error: loadErr } = await supabaseAdmin
+          .from("invoices")
+          .select("id, status, currency, total_amount_cents")
+          .eq("id", invoiceId)
+          .maybeSingle();
+        if (loadErr) { console.error("invoice load failed for PI", pi.id, loadErr.message); break; }
+        if (!inv) { console.error("payment_intent.succeeded: no invoice for id", invoiceId, "PI", pi.id); break; }
+
+        // Idempotent: a duplicate delivery (or already-paid invoice) is a no-op.
+        if (inv.status === "paid") break;
+
+        // Defence in depth: only mark paid when the captured amount + currency
+        // match the invoice exactly. A mismatch is logged loudly and NOT paid.
+        const invCurrency = (inv.currency || "usd").toLowerCase();
+        if (pi.amount !== Number(inv.total_amount_cents) || String(pi.currency || "").toLowerCase() !== invCurrency) {
+          console.error(
+            "payment_intent.succeeded amount/currency mismatch — NOT marking paid:",
+            "invoice", invoiceId, "PI", pi.id,
+            "| pi.amount", pi.amount, "inv.total", inv.total_amount_cents,
+            "| pi.currency", pi.currency, "inv.currency", invCurrency
+          );
+          break;
+        }
+
+        const { error: updErr } = await supabaseAdmin
+          .from("invoices")
+          .update({ status: "paid", paid_at: new Date().toISOString(), stripe_payment_intent_id: pi.id })
+          .eq("id", invoiceId)
+          .neq("status", "paid"); // race guard: never double-apply if two deliveries overlap
+        if (updErr) console.error("Could not mark invoice paid:", invoiceId, updErr.message);
+        break;
+      }
+
+      case "payment_intent.payment_failed": {
+        // Custom-invoice payment failed. Log only — there is no failure column on
+        // invoices and we will not invent schema; the invoice stays issued/overdue
+        // so the client can retry. (Subscription PIs lack invoice_id → ignored.)
+        const pi = event.data.object;
+        const invoiceId = pi.metadata && pi.metadata.invoice_id;
+        if (!invoiceId) break;
+        console.error(
+          "Invoice payment failed — invoice", invoiceId, "PI", pi.id,
+          "|", pi.last_payment_error && pi.last_payment_error.message
+        );
+        break;
+      }
+
       default:
         // Ignore everything else — still 200 so Stripe stops retrying.
         break;

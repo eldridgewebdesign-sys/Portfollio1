@@ -28,10 +28,15 @@ create table if not exists public.invoices (
   due_date date,
   status text not null default 'draft'
     check (status in ('draft','issued','paid','overdue','void','canceled')),
+  currency text not null default 'usd',
   subtotal_amount_cents bigint not null default 0 check (subtotal_amount_cents >= 0),
   discount_amount_cents bigint not null default 0 check (discount_amount_cents >= 0),
   tax_amount_cents      bigint not null default 0 check (tax_amount_cents >= 0),
   total_amount_cents    bigint not null default 0 check (total_amount_cents >= 0),
+  -- Stripe payment state (written by api/webhook.js on payment_intent.succeeded;
+  -- the PaymentIntent id is also saved by api/invoices/pay when the intent opens).
+  paid_at timestamptz,
+  stripe_payment_intent_id text,
   created_at timestamptz not null default now()
 );
 
@@ -41,10 +46,13 @@ alter table public.invoices add column if not exists title text;
 alter table public.invoices add column if not exists notes text;
 alter table public.invoices add column if not exists due_date date;
 alter table public.invoices add column if not exists status text default 'draft';
+alter table public.invoices add column if not exists currency text not null default 'usd';
 alter table public.invoices add column if not exists subtotal_amount_cents bigint default 0;
 alter table public.invoices add column if not exists discount_amount_cents bigint default 0;
 alter table public.invoices add column if not exists tax_amount_cents bigint default 0;
 alter table public.invoices add column if not exists total_amount_cents bigint default 0;
+alter table public.invoices add column if not exists paid_at timestamptz;
+alter table public.invoices add column if not exists stripe_payment_intent_id text;
 alter table public.invoices add column if not exists created_at timestamptz default now();
 
 create index if not exists invoices_client_user_id_idx on public.invoices (client_user_id);

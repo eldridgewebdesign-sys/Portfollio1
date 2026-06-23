@@ -28,6 +28,114 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+## 2026-06-22 21:30 - Efficiency - invoice-stripe-payment-review
+
+Area Reviewed:
+The Stripe invoice-**payment** implementation (Task S8) — `api/invoices/pay.js` (NEW pay endpoint),
+`api/webhook.js` (added `payment_intent.succeeded` + `payment_intent.payment_failed`),
+`db/invoices-schema.sql` (`currency`/`paid_at`/`stripe_payment_intent_id` columns + the G1 atomic-create RPC),
+and `dashboard.html` (the client billing pay flow: `let stripe` lazy-init, `payInvoice()`, the reused Payment
+Element modal + shared `confirmPayment`), with `api/checkout.js`/`api/admin.js` as the comparison baseline.
+**Review only — no code changed.** Method: a 5-area fan-out (endpoint quality · Payment Element integration ·
+webhook quality · DB usage · future maintainability) with every finding adversarially re-verified against
+source (23 agents; 18 findings confirmed, 32 positives). Per-area verdict: **Endpoint PASS-with-nits ·
+Payment Element FAIL (one concurrency bug) · Webhook PASS · DB PASS-with-nits · Future-maintainability PASS.**
+
+Finding:
+**Overall: PASS on code quality / performance / maintainability — and READY for Reviewer live testing (test
+mode), with ONE bug to fix before switching to live keys.** Confirmed strengths (do not regress): the amount +
+currency are read ONLY from the DB row, never the client (`pay.js:122-136`); the webhook is the SOLE authority
+for "paid" and re-verifies `pi.amount`+`currency` against the invoice before flipping it (`webhook.js:197-206`),
+with two-layer idempotency (`status==='paid'` early break `:193` + `.neq('status','paid')` race guard `:212`);
+subscription/portal flow is intact and uncollided (plan PIs carry no `metadata.invoice_id`, so they fall
+through — confirmed in `checkout.js`); DB usage is tight (PK `.eq("id")` + `.maybeSingle()` + explicit columns,
+**`invoice_items` correctly NOT fetched** on the pay path, 1 SELECT +(conditional)1 UPDATE); the Payment
+Element modal is reused cleanly (one modal, one teardown path, `let stripe` lazy-init doesn't disturb the plan
+flow); loading/error states are handled; and my earlier Phase-1 Medium (atomic create) was implemented as the
+`create_invoice_with_items` RPC.
+
+Confirmed issues, by impact:
+
+- **[Medium — BUG] Concurrent double-charge: no idempotency key on PaymentIntent create**
+  (`api/invoices/pay.js:160-176`). On a first-ever pay, `invoice.stripe_payment_intent_id` is null so the
+  reuse branch (`:140`) is skipped and `stripe.paymentIntents.create()` runs with **no `idempotencyKey`**; the
+  follow-up UPDATE (`:173-176`) is scoped only by `id` (no `IS NULL` guard). Two **concurrent** requests (two
+  tabs / two page loads) both see null, both create a distinct PI, the second overwrites the row's PI id, and
+  if the user confirms card entry in **both** Element sessions Stripe captures **both** → a real double charge.
+  The webhook's invoice-row idempotency keeps the *data* correct (paid once) but **cannot refund the second
+  charge**, and the status enum has no `refunded` state to even represent it. *Verification narrowed the
+  scope:* the single-tab vector is neutralised (button disables in-flight at `dashboard.html:1284`; the shared
+  modal tears down prior mounts at `:1244-1256`), so this needs the deliberate two-tab + double-confirm path —
+  hence **Medium, and NOT a Reviewer-blocker** (a normal one-browser customer can't hit it). → **One-line fix:**
+  pass a deterministic key — `stripe.paymentIntents.create({...}, { idempotencyKey: "inv_" + invoice.id })`
+  (`pay.js:161`); Stripe then returns the SAME PI for concurrent first-pay requests. Optionally also scope the
+  UPDATE with `.is("stripe_payment_intent_id", null)`. No new deps, no schema, no UI change. **Do this before
+  going live with real cards.**
+- **[Low] Auth/CORS/env/service-role boilerplate duplicated across ~5 `/api` routes** (`pay.js:46-85`,
+  `checkout.js:17-61`, `customer-portal.js`, `admin.js`, `admin/invoices.js`; `adminClient()` is byte-identical
+  in two of them). → Extract a small **CommonJS** `api/_lib/` helper (`applyCors`, `adminClient`,
+  `requireUser`/`requireEnv([...])`) — `require()` needs no build step; migrate one route at a time, no behavior
+  change. **Caveat (from verification):** preserve per-route differences — `admin.js` CORS is `*` (not the site
+  origin) and the 401 messages differ per route — so the helper must parameterise, not flatten.
+- **[Low] `currency` is written/enforced server-side but never read by the client display** — `pay.js:127-136`
+  refuses non-USD and `webhook.js:197-206` cross-checks it, but the dashboard `.select()` (`:1678`) omits it and
+  the formatter hardcodes USD (`:1635`). Safe **today** (no non-USD invoice can ever be paid), but a latent
+  coupling. → Add a one-line comment noting the USD assumption mirrors the `pay.js` guard; if multi-currency is
+  ever enabled, select + read `invoice.currency`.
+- **[Low] Status vocabulary duplicated in 4+ places** (schema CHECK `:30`, `ALLOWED_STATUS`
+  `admin/invoices.js:66`, two `PAYABLE_STATUSES`, `CLIENT_VISIBLE_STATUSES`/`CLIENT_STATUS_LABEL`) with no
+  `refunded`. Same root cause flagged in the Phase-1 review. → Adding refunds later means a coordinated CHECK +
+  allow-list edit; the CHECK is the real enforcement, the JS lists are display/gating. Reciprocal "keep in sync"
+  comments.
+- **[Informational]** (record, no action this phase): a dead `|| iv.paid_date` fallback in the client render
+  (`dashboard.html:1745` — `paid_date` is never selected and no such column exists; also present at
+  `payment.html:436`) → drop the term, `paid_at` already covers it; the **"no `metadata.invoice_id` ⇒ not an
+  invoice PI"** routing contract is documented only at the webhook consumer → add a mirror comment at
+  `checkout.js:101` + `pay.js:164` so a future edit can't silently cross the flows; a reused PI is abandoned
+  (not cancelled) only if an invoice amount ever changed after the intent opened — **can't happen today**
+  (amounts are immutable post-create); no Stripe event-id dedup ledger, but the amount/currency re-verify +
+  status guard make a stale-PI success harmless; the webhook pre-SELECT is partly redundant with the `.neq`
+  guard but **justified** (it supplies the amount/currency for the defence-in-depth check) — keep both, and a
+  future editor must NOT delete the `.neq('status','paid')`; `stripe_payment_intent_id` is client-write-only by
+  design.
+
+Future maintainability (Area 5 — all PASS; "name the path, do NOT build now"):
+- **deposits / partial payments / payment history** want a child **`public.invoice_payments`** table keyed by
+  the PaymentIntent id (FK + cascade, mirroring `invoice_items`), instead of the single
+  `invoices.stripe_payment_intent_id` column (one-payment-per-invoice today). The `metadata.invoice_id` join key
+  already exists end-to-end, so it's purely additive; nothing in the current code blocks it.
+- **refunds** need a NEW `case "charge.refunded"` + a `refunded` status — the webhook switch is additive-safe.
+  (Verification note: a `charge.refunded` event's object is a **Charge**, not a PaymentIntent, so the handler
+  must resolve the invoice via `charge.payment_intent` / a DB lookup, not read `metadata.invoice_id` off the
+  charge.)
+- **failed-payment display**: `payment_intent.payment_failed` is intentionally log-only (no invented column);
+  the failure event is already received + parsed (`pi.last_payment_error`), so a future column/table is the
+  only addition needed.
+- **status transitions** (issued→overdue, void, manual mark-paid) have no route yet (only writers are create +
+  webhook) — a future admin `case` in `api/admin.js` reusing `logActivity` is the clean path.
+- The total migration surface for all of the above is tiny — **2 server PI-writes (`pay.js:175`,
+  `webhook.js:210`) + 1 client read** — which is a positive: the structure does not paint the project into a
+  corner.
+
+Impact:
+**1 Medium bug** (concurrent double-charge — fix before live keys) / **3 Low** (boilerplate dedup, currency
+display coupling, status duplication) / Informational (the rest). **0 Reviewer-blockers.** No High.
+
+Recommendation:
+**Fix before live cards:** the `idempotencyKey` one-liner in `pay.js` (closes both the two-tab and any
+fast-double-submit race via Stripe's native dedupe). **Good cheap wins:** drop the dead `paid_date` fallback;
+add the cross-flow `invoice_id` comment; the `_lib/` auth-helper extraction; the currency-display + status-sync
+comments. All respect the project constraints (CommonJS `require()`, inline-per-page, no new deps, no Stripe
+feature-creep, no UI redesign, subscription/portal flow untouched). **Flagged to the Manager to triage into
+Developer fix tasks** — the idempotencyKey is the one to schedule before flipping to live keys.
+
+Status:
+New (findings recorded; Task S8 → [REVIEW]; **ready for Reviewer live test S9 in TEST MODE** — the double-charge
+bug is not reproducible by a single normal customer; Manager to cut the idempotencyKey Developer fix before
+production/live keys).
+
+---
+
 ## 2026-06-22 17:05 - Efficiency - invoice-system-review
 
 Area Reviewed:

@@ -1207,7 +1207,9 @@
       (typeof STRIPE_PUBLISHABLE_KEY !== "undefined" && STRIPE_PUBLISHABLE_KEY) || "";
 
     // Initialise Stripe once (only if the library loaded and a key is set).
-    const stripe =
+    // `let` (not const): when no page-level publishable key is configured, the
+    // invoice payment flow creates this from the key returned by /api/invoices/pay.
+    let stripe =
       (window.Stripe && /^pk_/.test(stripePublishableKey))
         ? window.Stripe(stripePublishableKey)
         : null;
@@ -1268,6 +1270,53 @@
       payPaymentElement = payElements.create("payment");
       payPaymentElement.mount("#payment-element");
       openPayModal();
+    }
+
+    // Invoice "Pay invoice" click: verify the session, ask /api/invoices/pay for a
+    // PaymentIntent client secret (the SERVER reads the amount from the DB — the
+    // client never sends it), then reuse the same Payment Element modal. The Stripe
+    // instance is built from the server-returned publishable key so it always
+    // matches the server key's mode (test/live). The webhook — NOT this click —
+    // is what marks the invoice paid.
+    async function payInvoice(invoiceId, btn) {
+      if (typeof billError !== "undefined" && billError) billError.classList.add("hidden");
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
+      btn.textContent = "Starting…";
+      try {
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) { showBillError("You must be signed in to pay an invoice."); return; }
+
+        const res = await fetch("/api/invoices/pay", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ invoice_id: invoiceId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Could not start payment. Please try again.");
+        if (!data.clientSecret) throw new Error("Could not start payment. Please try again.");
+
+        // Build a Stripe instance from the server-provided publishable key if we
+        // don't already have one (the key mode always matches the secret key).
+        if (!stripe && data.publishableKey && window.Stripe && /^pk_/.test(data.publishableKey)) {
+          stripe = window.Stripe(data.publishableKey);
+        }
+        if (!stripe) throw new Error("Payments aren’t available right now. Please contact " + SUPPORT_EMAIL + ".");
+
+        // Title the modal with the amount (display only — server is the source of truth).
+        if (data.invoice && data.invoice.total_amount_cents != null) {
+          $("pay-title").textContent = "Pay invoice — " + cinvMoney(data.invoice.total_amount_cents);
+        }
+        mountPayment(data.clientSecret);
+      } catch (err) {
+        showBillError(err.message || "Could not start payment. Please try again.");
+      } finally {
+        btn.disabled = false;
+        btn.removeAttribute("aria-busy");
+        btn.textContent = original;
+      }
     }
 
     // Plan button click: verify user, call /api/checkout, then open the modal.
@@ -1576,7 +1625,7 @@
     const CLIENT_VISIBLE_STATUSES =
       ["issued", "paid", "overdue", "void", "canceled"]
         .concat(SHOW_DRAFTS_TO_CLIENTS ? ["draft"] : []);
-    // Unpaid + actionable → gets the (disabled) Pay placeholder.
+    // Unpaid + actionable (issued/overdue) → gets the live "Pay invoice" button.
     const PAYABLE_STATUSES = ["issued", "overdue"];
     const CLIENT_STATUS_LABEL = {
       draft: "Draft", issued: "Issued", paid: "Paid",
@@ -1626,7 +1675,7 @@
         //    also enforces this) and to client-visible statuses (drafts hidden).
         const { data: invoices, error: invErr } = await db
           .from("invoices")
-          .select("id,title,notes,due_date,status,subtotal_amount_cents,discount_amount_cents,tax_amount_cents,total_amount_cents,created_at")
+          .select("id,title,notes,due_date,status,subtotal_amount_cents,discount_amount_cents,tax_amount_cents,total_amount_cents,paid_at,created_at")
           .eq("client_user_id", user.id)
           .in("status", CLIENT_VISIBLE_STATUSES)
           .order("created_at", { ascending: false });
@@ -1690,11 +1739,9 @@
       // issued — labelled "Created" so it can never misreport an issue date.
       const created = fmtDate(iv.created_at);
       if (created) meta.appendChild(cinvMetaItem("Created", created));
-      // "Paid on": the schema has NO paid_at/paid_date column yet, so this is a
-      // forward-compatible stub that renders nothing today (we never fake a
-      // paid date from created_at). To enable it: add `paid_at timestamptz` to
-      // db/invoices-schema.sql (set by the admin route when status → paid) AND
-      // add `paid_at` to the invoices .select() above — then it shows here.
+      // "Paid on": `paid_at` is now a real column (set by api/webhook.js on
+      // payment_intent.succeeded) and is fetched in the .select() above, so it
+      // renders for paid invoices. We never fake a paid date from created_at.
       const paid = fmtDate(iv.paid_at || iv.paid_date);
       if (status === "paid" && paid) meta.appendChild(cinvMetaItem("Paid on", paid));
       card.appendChild(meta);
@@ -1714,16 +1761,16 @@
         card.appendChild(box);
       }
 
-      // Actions: disabled Pay placeholder for unpaid, actionable invoices only.
+      // Actions: a real "Pay invoice" button for unpaid, actionable invoices.
+      // It opens the Stripe Payment Element (server-created PaymentIntent for the
+      // DB amount); the webhook — not this click — is what marks the invoice paid.
       if (PAYABLE_STATUSES.indexOf(status) !== -1) {
         const actions = cinvEl("div", "cinv-actions");
         const pay = cinvEl("button", "ws-btn cinv-pay", "Pay invoice");
         pay.type = "button";
-        pay.disabled = true;                       // placeholder — Stripe not wired yet
-        pay.setAttribute("aria-disabled", "true");
-        pay.title = "Online payment is coming soon.";
+        pay.addEventListener("click", () => payInvoice(iv.id, pay));
         actions.appendChild(pay);
-        actions.appendChild(cinvEl("span", "cinv-pay-note", "Online payment coming soon — contact us to settle this invoice."));
+        actions.appendChild(cinvEl("span", "cinv-pay-note", "Secure card payment, processed by Stripe."));
         card.appendChild(actions);
       }
       return card;

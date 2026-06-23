@@ -32,6 +32,76 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+## 2026-06-22 21:10 - Security - stripe-invoice-payment-flow-review
+
+Area Reviewed:
+The Stripe custom-invoice **payment** flow (Developer's "connect invoices to Stripe" work), before Reviewer.
+Files: `api/invoices/pay.js` (new pay route), `api/webhook.js` (payment_intent handling), `db/invoices-schema.sql`
+(new `currency` / `paid_at` / `stripe_payment_intent_id` cols + atomic RPC), `dashboard.html` (Pay-invoice
+wiring), `payment.html` (read-only invoices page). Method: full first-hand reads + `node --check` on the 3 API
+files + repo-wide secret/grep sweep. **Working-tree code (not yet committed/deployed).**
+
+Finding:
+**PASS — the payment flow is secure.** Amount integrity, ownership, status rules, secret handling, and webhook
+safety are all correctly implemented; no High/Medium issues. Only minor/informational notes (below).
+
+Severity:
+Pass (informational notes only).
+
+Evidence (mapped to the 6 review points):
+1. **Client amount control — PASS.** Frontend POSTs ONLY `{ invoice_id }` + bearer token (`dashboard.html:1295`);
+   no amount is ever sent. The server reads the amount solely from the DB (`api/invoices/pay.js:103,122-126`,
+   `const amount = Number(invoice.total_amount_cents)`), and the webhook re-checks `pi.amount ===
+   inv.total_amount_cents` before marking paid (`api/webhook.js:198`).
+2. **Invoice ownership — PASS.** `api/invoices/pay.js:110-112` rejects `invoice.client_user_id !== caller.id`
+   with 403, so changing `invoice_id` to another client's invoice (paid or unpaid) is blocked. Caller identity
+   comes from the verified Supabase token (`:80-85`), not the body.
+3. **Status rules — PASS.** Only `issued`/`overdue` are payable (`:39,118-120` → 400 otherwise), so
+   draft/void/canceled are refused; `paid` → 409 (`:115-117`); an existing **succeeded** PaymentIntent → 409
+   (`:143-146`); the webhook is idempotent so a paid invoice is never re-flipped — no double-pay.
+4. **Secret safety — PASS.** `STRIPE_SECRET_KEY` (`pay.js:33`, webhook:15), `STRIPE_WEBHOOK_SECRET`
+   (webhook:88), and `SUPABASE_SERVICE_ROLE_KEY` (pay.js:67-71, webhook:23-26) are all `process.env`-only.
+   Repo-wide grep: NO `sk_*`/`whsec_`/`service_role` in any `*.html`/`*.js`; the browser only ever receives the
+   **publishable** key (returned dynamically by `pay.js:183`) + the Supabase anon key. `.env`/`.env.*` are
+   gitignored and untracked; nothing secret committed. API "is not set" logs print the var NAME, never a value.
+5. **Webhook safety — PASS.** Signature verified via `constructEvent` on the RAW body with `bodyParser:false`
+   (`api/webhook.js:20,83-89`). `paid` is set ONLY by the webhook (`:208-212`) — `pay.js` never marks paid and
+   the frontend success handler only redirects (`dashboard.html:1397-1399`), no DB write. `payment_intent.
+   succeeded` requires `metadata.invoice_id` (`:181-182`), verifies amount **and** currency match (`:197-206`,
+   logs + skips on mismatch), and is idempotent: early-out if already `paid` (`:193`) + `.neq("status","paid")`
+   race guard on the update (`:212`).
+6. **Stripe CLI / local-testing safety — PASS (with operational reminders).** Code is mode-agnostic and returns
+   the publishable key that matches the secret key's mode, so test keys stay self-consistent. No secret values
+   are printed. Webhook secret is read from env (never committed). Reminders below.
+
+Notes / non-blocking (for Manager triage; none gate Reviewer/Efficiency):
+- **INFO-1 (UX, not security):** `payment.html` still renders a DISABLED "Pay invoice" placeholder
+  (`payment.html:458-461`) while the dashboard billing tab is the live pay surface. Two client invoice surfaces,
+  only one wired — a Reviewer will notice. Decide: wire `payment.html` the same way, or route clients to the
+  dashboard. No security impact (the disabled button can't initiate payment).
+- **INFO-2 (defense-in-depth, optional):** the webhook locates the invoice by `metadata.invoice_id` and relies
+  on PaymentIntent provenance (only the ownership-gated `pay.js` can mint a PI with that metadata) + the
+  amount/currency match — it does not *additionally* assert `metadata.supabase_user_id === invoice.client_user_id`.
+  Safe as-is (a client cannot create arbitrary PIs); adding the owner-match is a cheap belt-and-suspenders.
+- **INFO-3 (operational, point 6):** confirm the Vercel **test/preview** env uses `sk_test`/`pk_test` + the
+  **test-mode** webhook signing secret (`whsec_…` from `stripe listen`/the test endpoint), and switch to live
+  keys only at production go-live. When running `stripe listen`, put the printed `whsec_` in `.env.local`
+  (gitignored) — never commit it.
+- **INFO-4 (pre-Stripe note still open):** `pay.js` does not check `account_status`, so a suspended/banned
+  client could still pay their own issued invoice. Allowing payment is likely intended — confirm.
+- Idempotency is by invoice status (sufficient for this single transition); if more PI-driven mutations are
+  added later, consider deduping on Stripe `event.id`.
+
+Recommendation:
+**Safe for Efficiency and Reviewer.** Reviewer should run the live pass in **TEST MODE** after deploy: pay route
+401 (no token) / 403 (non-owner invoice_id) / 400 (draft/void/canceled) / 409 (already paid); pay a test card and
+confirm the invoice flips to `paid` ONLY after the Stripe `payment_intent.succeeded` webhook (with matching
+amount), and that replaying the event / re-clicking Pay does not double-charge or double-apply. Address INFO-1
+(the disabled `payment.html` button) so the Reviewer isn't blocked on a dead button.
+
+Status:
+Reviewed / PASS (working tree; confirm with a test-mode live pass post-deploy).
+
 ## 2026-06-22 15:35 - Security - G3-live-rls-isolation-verified
 
 Area Reviewed:

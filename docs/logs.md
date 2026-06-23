@@ -6,6 +6,250 @@
 
 ---
 
+## 2026-06-22 21:30 - Efficiency - invoice-stripe-payment-review
+
+Action:
+Finished
+
+Task:
+Task S8 — Efficiency / code review of the Stripe invoice-payment implementation (S4/S5/S6). Review-only audit
+for code quality, performance, and maintainability.
+
+Files claimed:
+
+- docs/performance-log.md (findings)
+- docs/logs.md (this entry)
+- docs/taskboard.md (Task S8 status line only — Efficiency may set its own assigned task's status)
+
+Files changed:
+
+- docs/performance-log.md — added the dated "invoice-stripe-payment-review" entry (1 Medium bug, 3 Low, several
+  Informational + the future-maintainability map + confirmed strengths). No production code touched.
+- docs/logs.md — this entry.
+- docs/taskboard.md — Task S8 → [REVIEW] (recorded my own assigned task status).
+
+NOT touched: any production code (review only — fixes become Developer tasks); api/invoices/pay.js,
+api/webhook.js, dashboard.html, db/invoices-schema.sql, the subscription/customer-portal flow, vendor.
+
+Summary:
+Reviewed `api/invoices/pay.js`, the `api/webhook.js` additions (`payment_intent.succeeded` /
+`payment_intent.payment_failed`), the schema columns + the G1 atomic-create RPC, and the `dashboard.html` pay
+flow, against `api/checkout.js`/`api/admin.js` as the baseline. Ran an ultracode 5-area fan-out (endpoint ·
+Payment Element · webhook · DB · future-maintainability) and adversarially re-verified every finding against
+source (23 agents; 18 confirmed, 32 positives). **Overall PASS** on code quality/performance/maintainability,
+and **ready for Reviewer live testing in TEST MODE** — with **one bug to fix before live keys**: a concurrent
+double-charge. `api/invoices/pay.js` creates the PaymentIntent with **no `idempotencyKey`** (`:161`), and the
+reuse decision reads a DB column written only after create, so two concurrent Element sessions (two tabs) can
+create two PIs and, if both are confirmed, double-charge the card; the webhook keeps the invoice row correct
+(paid once) but can't refund the second charge. **Verification narrowed it:** the single-tab path is safe
+(in-flight button disable + shared-modal teardown), so it's **Medium, not a Reviewer-blocker**. Fix is a
+one-liner: a deterministic `idempotencyKey: "inv_" + invoice.id` so Stripe natively dedupes. Everything else is
+Low/Informational cleanup (auth-boilerplate dedup into a CommonJS `_lib/` helper; a dead `paid_date` fallback;
+currency-display coupling; status-vocabulary duplication; a cross-flow `invoice_id` comment). Strengths
+confirmed: amount/currency from the DB only, webhook is the sole "paid" authority with amount/currency
+re-verify + two-layer idempotency, subscription/portal flow intact + uncollided, efficient PK lookups,
+`invoice_items` correctly not fetched on the pay path, clean modal reuse + loading/error states.
+
+Testing:
+Static review only — read the source + traced the pay/webhook/DB flow + the concurrency race; no code executed.
+Each finding independently verified against `file:line` by a separate adversarial agent (skeptical/refute
+default). NOT run (needs Stripe CLI + `vercel dev` + a browser + test-mode keys): the live e2e pay → webhook →
+mark-paid, and an actual two-tab double-charge repro — that's the Reviewer's S9 (test mode). No `node --check`
+needed (no code changed; the Developer already ran it on pay.js/webhook.js).
+
+Risks / Notes:
+- **For the Manager:** triage the findings into Developer fix tasks. The **idempotencyKey one-liner is the one
+  to schedule before flipping to live keys** — it's the only money-correctness item. The rest are optional.
+- **Reviewer readiness (S9):** READY in **test mode** — the double-charge is not reproducible by a single normal
+  customer in one browser. If the Reviewer wants to exercise it, the repro is: two tabs, both Pay on the same
+  unpaid invoice before either resolves, then confirm a (test) card in both.
+- This phase's work resolved my Phase-1 Medium (atomic create) via the `create_invoice_with_items` RPC — good.
+- Security (S7) reviewed this same flow at 21:10 (entry below); I set only Task S8's board status (allowed for
+  Efficiency) and touched no other task or role's log.
+
+## 2026-06-22 21:10 - Security - stripe-invoice-payment-flow-review
+
+Action:
+Reviewed
+
+Task:
+Security: Review the Stripe custom-invoice payment flow before Reviewer (Developer's "connect invoices to
+Stripe" work)
+
+Files claimed:
+
+- read-only: `api/invoices/pay.js`, `api/webhook.js`, `db/invoices-schema.sql`, `dashboard.html`, `payment.html`
+- write: `docs/security-log.md`, `docs/logs.md`
+
+Files changed:
+
+- `docs/security-log.md` — added the `stripe-invoice-payment-flow-review` entry (PASS + evidence per the 6
+  review points + 4 informational notes).
+- `docs/logs.md` — this entry. **No production code changed** (review only).
+
+Summary:
+**PASS — the Stripe invoice payment flow is secure.** Verified all six requested points against the working-tree
+code: (1) the frontend sends ONLY `{ invoice_id }` + the bearer token — never an amount; the server reads
+`total_amount_cents` from the DB and the webhook re-checks `pi.amount === inv.total_amount_cents` before paying.
+(2) Ownership is enforced (`pay.js:110-112` → 403 if `client_user_id !== caller.id`), so a swapped `invoice_id`
+can't pay another client's invoice. (3) Only `issued`/`overdue` are payable; `paid` → 409; succeeded PI → 409;
+webhook idempotent → no double-pay. (4) `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and the Supabase
+service-role key are `process.env`-only; repo-wide grep found no secret in any frontend file; the browser gets
+only the publishable key (dynamically from `pay.js`) + the anon key; `.env` gitignored/untracked. (5) Webhook
+verifies signatures via `constructEvent` on the raw body, marks `paid` ONLY itself (frontend success just
+redirects), requires `metadata.invoice_id`, matches amount+currency, and is idempotent (status check +
+`.neq("status","paid")` race guard). (6) Mode-agnostic code, no secret values logged, webhook secret from env —
+test-mode reminders recorded. `node --check` passes on all three API files.
+
+Testing:
+Static review + `node --check api/invoices/pay.js api/webhook.js api/admin/invoices.js` (all OK) + repo-wide
+secret/grep sweep (clean). **Not run (the code is uncommitted/undeployed):** a live test-mode pass — that is the
+Reviewer's job post-deploy (pay route 401/403/400/409 negative cases; pay a test card → invoice flips to `paid`
+only after the `payment_intent.succeeded` webhook with matching amount; event replay / double-click does not
+double-apply).
+
+Risks / Notes:
+- **Verdict: safe for Efficiency and Reviewer.** No High/Medium issues; no required code changes.
+- **INFO-1 (flag for Manager/Developer):** `payment.html` still has a DISABLED "Pay invoice" placeholder while
+  the dashboard billing tab is the live pay surface — fix so the Reviewer isn't blocked on a dead button (UX,
+  not security).
+- INFO-2 (optional): webhook could also assert `metadata.supabase_user_id === invoice.client_user_id` as
+  belt-and-suspenders (safe without it — clients can't mint PIs). INFO-3: ensure the preview/test env uses
+  `sk_test`/`pk_test` + the test webhook secret; never commit `whsec_`. INFO-4: `pay.js` doesn't check
+  `account_status` (suspended client can pay their own issued invoice) — confirm intended.
+- Builds on the prior reviews: the invoice RLS isolation was live-verified last session (G3 PASS); the schema RLS
+  is unchanged (still no client UPDATE policy), so the webhook/service-role remains the only writer of `paid`.
+
+## 2026-06-22 20:50 - Developer - invoice-stripe-payments
+
+Action:
+Finished
+
+Task:
+Connect custom invoices to Stripe payments (Pay Now → PaymentIntent → Payment Element → webhook marks paid).
+Owner-assigned; Manager to record board status.
+
+Files claimed / changed:
+
+- **NEW `api/invoices/pay.js`** — `POST /api/invoices/pay {invoice_id}`. Bearer-token auth (mirrors
+  `api/checkout.js`) → `caller`; loads invoice via service role; 403 if not the caller's, 404 not found,
+  409 already paid, 400 non-payable status or total ≤ 0. Creates a Stripe PaymentIntent for
+  `invoice.total_amount_cents` **read from the DB** (never the client), `metadata.invoice_id` +
+  `metadata.supabase_user_id`, `automatic_payment_methods`, `receipt_email`. Reuses an open PI on re-click.
+  USD-only guard. Returns `{ clientSecret, publishableKey, invoice:{safe fields} }`.
+- `api/webhook.js` — added `payment_intent.succeeded` (gated on `metadata.invoice_id`, so subscription/plan
+  PIs are ignored) → verifies `amount`+`currency` vs the DB, then sets `status='paid'`, `paid_at`,
+  `stripe_payment_intent_id`; idempotent (`status==='paid'` short-circuit + `.neq('status','paid')` race
+  guard). Added `payment_intent.payment_failed` (log-only — no failure column invented). Signature
+  verification / `bodyParser:false` unchanged.
+- `db/invoices-schema.sql` — `invoices` gained `currency` (default 'usd'), `paid_at`, `stripe_payment_intent_id`
+  (create table + idempotent `add column if not exists`); migration still ends with `notify pgrst`.
+- `dashboard.html` — Billing tab: the inert "Pay invoice" placeholder is now a live button → `payInvoice()`
+  POSTs `/api/invoices/pay`, builds Stripe from the server-returned publishable key, and reuses the existing
+  Payment Element modal (`mountPayment` + the shared `confirmPayment` handler, `redirect:'if_required'` →
+  `/success`). `const stripe`→`let stripe` (lazy-init from the server key; inert plan flow unaffected). Added
+  `paid_at` to the client invoice `.select()` so "Paid on" renders. The frontend NEVER marks paid — the
+  webhook is the sole authority; the Pay button only renders for issued/overdue, so it disappears once paid.
+- `docs/logs.md` — this entry.
+
+NOT touched: `api/checkout.js`, `api/customer-portal.js` (subscription/portal flow intact), `payment.html`
+(the concurrent `payment-page-invoices` session owns it), pricing pages, vendor.
+
+Adversarial review (ultracode workflow, 4 lenses — authz/IDOR · webhook idempotency · Stripe/money semantics ·
+scope/regression): **all 4 → ship.** No security/IDOR/webhook/idempotency/scope defects. Two minor items
+applied: **[low/latent]** display was hardcoded USD while the charge used `invoice.currency` → added a
+server-side USD-only guard in `pay.js` so the confirmed amount can never diverge from the charge;
+**[info]** fixed a stale "disabled placeholder" comment. Reviewer non-defect note: a charged-but-mismatched
+PI (only reachable via a direct DB edit, not the admin flow) is logged but not auto-reconciled — alerting gap
+for Security/ops, not a code bug.
+
+Testing:
+- `node --check api/invoices/pay.js` + `api/webhook.js` → OK. Dashboard inline `<script>`s compile (vm) with
+  0 syntax errors. grep: schema columns present; webhook cases gated on `metadata.invoice_id`; dashboard
+  wiring (`let stripe`, `payInvoice`, `/api/invoices/pay`, `paid_at` in select, active Pay button) present.
+- `git status` scope: only `api/invoices/pay.js` (new) + `api/webhook.js` + `dashboard.html` +
+  `db/invoices-schema.sql` (+ docs). `payment.html` / `api/checkout.js` / `api/customer-portal.js` untouched.
+- **NOT run — Stripe CLI + live e2e:** the Stripe CLI is **not installed / not on PATH** here and there is no
+  `.env.local`, so `stripe listen` / `stripe trigger` + `vercel dev` could not be executed. Dev port for that
+  flow is `vercel dev` → **3000**. Owner test procedure is in the session report.
+
+Risks / Notes (for Security + the owner):
+- **Owner must apply `db/invoices-schema.sql`** (idempotent) so `currency`/`paid_at`/`stripe_payment_intent_id`
+  exist — until then the pay endpoint + webhook error.
+- **New env var `STRIPE_PUBLISHABLE_KEY`** (the matching *test* key for test mode) must be set so the endpoint
+  can return it to the Element; if unset, the UI degrades to a "contact support" message (no crash).
+- **Webhook event `payment_intent.succeeded`** (and optionally `payment_intent.payment_failed`) must be enabled
+  on the Stripe webhook endpoint in the dashboard.
+- Use **Stripe test mode** keys for testing. Files uncommitted; not deployed.
+- Concurrent sessions: `payment-page-invoices` (payment.html) — no overlap with my files.
+
+---
+
+## 2026-06-22 20:30 - Manager - stripe-phase-tasks
+
+Action:
+Planned
+
+Task:
+Create the Stripe invoice-payment phase (S4–S9); sync G1/G2 board status
+
+Files claimed:
+
+- docs/taskboard.md
+- docs/logs.md
+
+Files changed:
+
+- docs/taskboard.md — replaced the deferred "Phase 2 — Stripe" placeholder with a real **"💳 PHASE — Stripe
+  invoice payments (S4–S9)"** section (phase rules, gate, grounding, sequence, and six tasks S4–S9 in the
+  CLAUDE.md format with owner acceptance criteria). Also **synced the Round-2 gate**: **G1 → [REVIEW]** (atomic
+  RPC built) and **G2 → [REVIEW]** (mobile labels built) per their concurrent FINISH entries below.
+- docs/logs.md — this entry.
+
+Summary (Stripe phase):
+Per the owner (Stripe inspection done; project already uses Elements/PaymentIntents/Portal/webhooks): created
+S4 `POST /api/invoices/pay` (auth'd, `invoice_id`-only, owner-checked, issued/overdue only, amount from the DB,
+PaymentIntent + `{invoice_id,supabase_user_id}` metadata, saves `stripe_payment_intent_id`, returns
+`client_secret`), S5 (wire the client Pay Now button to S4 + the existing Payment Element), S6 (webhook
+`payment_intent.succeeded` → mark paid, `paid_at`, idempotent), S7 (Security), S8 (Efficiency), S9 (Reviewer
+live test, test mode → final GO/NO-GO).
+
+Grounding baked in:
+- **Schema gap:** no `stripe_payment_intent_id` / `paid_at` columns yet → S4/S6 add them (additive; apply in the
+  TEST Supabase project).
+- **Reuse:** S4 mirrors `api/checkout.js` (auth :50-56, paymentIntents.create :97-110); S6 extends
+  `api/webhook.js` (`bodyParser:false` :20, `constructEvent` :85, switch :97).
+- **⚠ Collision:** `webhook.js` already has a Stripe `invoice.paid` case (:153) for SUBSCRIPTION invoices — NOT
+  our `public.invoices`; S6 keys off `metadata.invoice_id` and must not touch it.
+
+Phase rules recorded: test mode only; never print/expose Stripe secret / webhook / service-role keys; Stripe CLI
++ Supabase CLI + npm + `vercel dev` allowed; ask before destructive DB changes (the two new columns are additive).
+
+Gate reconciliation:
+- Build/test S4–S6 in TEST MODE may proceed now (additive; no live keys / no prod deploy).
+- Owner's completion rule: S4+S5+S6 done + S7 + S8 + S9 pass.
+- **Manager safety flag:** land **G1** before **S5** (no payable phantom invoice) and confirm **G3 + G4** before
+  flipping to live keys/production. **G1 is now built (→ [REVIEW]); G2 built (→ [REVIEW]); G3 + G4 still open**
+  (need owner Supabase access + a browser).
+
+Board sync (Manager duty — concurrent gate work):
+- **G1** (Developer `g1-atomic-invoice-rpc`, 19:25) → **[REVIEW]**; PENDING: owner applies the migration to
+  Supabase (RPC + `sort_order`) + Security re-review + e2e.
+- **G2** (Designer 19:10 + Developer 19:55) → **[REVIEW]**; PENDING: Designer GUI-verify the likely `$`/label
+  overlap (a small `.inv-cur` fix is proposed) + the live ≤560px render.
+
+Testing:
+Docs/board only — no website code changed by the Manager. Grounded against `api/checkout.js`, `api/webhook.js`,
+`db/invoices-schema.sql`, and a glob of `api/**` (no `pay.js` yet).
+
+Risks / Notes:
+- **Owner actions:** apply `db/invoices-schema.sql` to the TEST Supabase project (G1 RPC + `sort_order`, and the
+  S4/S6 columns when those land); provide Supabase access + a 2nd client for **G3**; provide a browser/preview for
+  **G4** and **S9**. Locally there's no Docker/psql, so migrations mean a cloud DB change — deferred to the owner.
+- **Open decision for the owner:** start **S4 + S6** build in test mode now (parallel; G1 is already built), do
+  **S5** next, and hold **S9 / go-live** for **G3 + G4**? Awaiting the go-ahead before marking anything [IN PROGRESS].
+- Test mode only; no secret keys printed/committed.
+
 ## 2026-06-22 19:55 - Developer - g2-mobile-line-item-labels-build
 
 Action:
