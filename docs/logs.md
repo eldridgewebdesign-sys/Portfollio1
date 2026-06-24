@@ -6,6 +6,449 @@
 
 ---
 
+## 2026-06-23 21:52 - Efficiency - premature-payment-success-fix
+
+Action:
+Finished
+
+Task:
+Owner-directed (assigned to the Efficiency role): fix the premature payment "success" message — the embedded
+Stripe Payment Element could show success / redirect to /success even when the customer (e.g. Cash App Pay)
+exited without completing payment. Show success ONLY after Stripe/the webhook-backed DB verifies it.
+**Role note:** this is payment/Stripe code, which the role system normally routes to the Developer; done here
+under explicit owner override (the global rule allows touching payment logic when the task requires it). Kept
+the change surgical and efficient. **Manager to record board status** (not a board task; Efficiency did not edit
+the taskboard).
+
+Files claimed:
+
+- `dashboard.html` — the SHARED Payment Element pay flow only (paySubmit handler, handlePlanClick, payInvoice
+  entry, closePayModal, the new pollSubscriptionActive helper + paySubscriptionId/payCheckoutMode/payUserId
+  state, markPayVerified).
+- `success.html` — the post-redirect landing page (it unconditionally claimed success).
+- `docs/logs.md`, `docs/performance-log.md`.
+
+Files changed:
+
+- `dashboard.html` — **Root cause:** the plan/subscription branch of the shared `paySubmit` handler declared
+  success the instant `stripe.confirmPayment({redirect:'if_required'})` resolved without an `error`, ignoring
+  `paymentIntent.status` (`if (!payInvoiceId){ setPayMsg("Payment successful! Redirecting…"); location.href=
+  "/success" }`). Async methods (Cash App Pay) resolve there with the PI still `processing`/`requires_action`,
+  or `requires_payment_method` if the customer backed out — so the UI lied. (The invoice branch right below was
+  already fixed in the 2026-06-22 22:10 session; the plan branch was explicitly left "unchanged".)
+  **Fix (plan branch only):** destructure `{error, paymentIntent}`; if PI status is
+  `requires_payment_method`/`canceled` → neutral "Payment was not completed. You can try again when ready." and
+  re-enable (no redirect); one-time plan price (no subscriptionId) → success ONLY if PI status `succeeded`, else
+  a non-committal "we'll confirm on your dashboard" pending state; subscription → show "waiting for
+  confirmation…" and **poll the `subscriptions` table** until the webhook flips it to `active`/`trialing`
+  (`pollSubscriptionActive`, ~2s×15≈30s) before ever showing success, else "not confirmed yet — refresh / check
+  your dashboard." Added a persistent flow discriminator (`payCheckoutMode` + `paySubscriptionId` + `payUserId`)
+  reset on every modal-open path (handlePlanClick start, payInvoice entry, closePayModal) so a stale plan click
+  can never misroute a later invoice payment. `markPayVerified()` sets a one-shot `sessionStorage` flag right
+  before a verified redirect to /success.
+- `success.html` — it statically showed "Payment successful! Your plan is now active." with **zero
+  verification** (it is the plan flow's `return_url`, reached by redirect-based methods, and by any direct
+  visit). **Fix:** default the page to a NEUTRAL "Finishing up…" state; promote to the success wording ONLY when
+  verified — Stripe's `?redirect_status=succeeded`, or the in-page `ws_pay_verified` one-shot flag. `processing`
+  → "Payment processing"; `failed`/`requires_payment_method`/etc. → "Payment not completed"; a param-less direct
+  visit stays neutral. Always continues to /dashboard (the RLS-scoped, webhook-written source of truth). Bumped
+  the no-JS meta-refresh to 6s so the non-success copy is readable.
+
+Design decisions (Efficiency):
+- **No new `/api/payment-status` endpoint** — unnecessary. The webhook (service-role, server-only) is already
+  the sole writer of paid/active status into `invoices`/`subscriptions`, and the browser reads its own rows via
+  the anon key + RLS. Polling the DB is cheaper than a new Stripe round-trip and directly satisfies "verify with
+  the backend DB after the webhook updates it." No new endpoint, no new dependency, no new network surface.
+- Reused the existing `pollInvoicePaid` pattern (now mirrored by `pollSubscriptionActive`). Capped retry (~30s),
+  no busy-loops, no full-page reload on the in-page path.
+
+Method / verification:
+- Two adversarial ultracode workflows. (1) Pre-implementation plan verification (5 verifiers + synth) →
+  returned NO-GO with 7 must-fix corrections, all of which were folded in BEFORE coding: subscription must poll
+  (not trust); the poll MUST filter by `user_id` (RLS `auth.uid()=user_id`) AND `stripe_subscription_id` (which
+  is not guaranteed unique → read rows, not `.maybeSingle()`); tolerate the webhook race (row-absent = keep
+  waiting; timeout = pending, never false success/negative); persistent flow discriminator; reset state on every
+  entry path; one-time requires PI `succeeded`; success.html must gate on `redirect_status`.
+  (2) Post-implementation review (4 lenses + synth) → invoice flow confirmed intact (plan branch guarded by
+  `if(!payInvoiceId)` and always returns; state fully reset; no `piStatus` redeclare clash); flagged a residual
+  success.html no-param false-success window and an ambiguous "any active sub" poll match — **both fixed** in a
+  second pass (neutral default + verified-only promotion via the sessionStorage handshake; poll now requires the
+  specific subscription id). The review's "scope violation" flag was a false alarm — it listed other sessions'
+  pre-existing uncommitted working-tree changes (api/admin.js, index.html, demos/brutalist, docs, retro-cookies
+  mockup), not mine.
+
+Testing:
+- Inline `<script>` syntax: extracted + compiled via `vm.Script` → dashboard.html (2 blocks) + success.html
+  (1 block) = **0 errors** (both before and after the second-pass fixes).
+- Scope: `git diff --stat -- api/checkout.js api/webhook.js api/customer-portal.js api/invoices/pay.js
+  payment.html` → **empty** (untouched). Only `dashboard.html` + `success.html` carry my edits. No `price_` IDs
+  in dashboard.html/payment.html touched; no secret keys added; no new CDN/dependency.
+- **NOT run (no Stripe CLI / `vercel dev` / browser headless):** the live e2e — card `4242…` → success only
+  after webhook; Cash App Pay opened then dismissed → NO success; PI `requires_payment_method` → no success;
+  subscription stays pending until `customer.subscription.updated`/`invoice.paid` marks it active; reload after
+  incomplete → no fake success; `/success` direct visit → neutral, not "active". → hand to Reviewer (test mode).
+
+Risks / Notes (for the Manager + owner):
+- **The plan/subscription purchase flow is currently DORMANT:** `dashboard.html` renders no `[data-price-id]`
+  buttons and `STRIPE_PUBLISHABLE_KEY` is undefined, so `handlePlanClick`/the plan branch aren't reachable
+  today; the invoice Pay flow IS live (and was already fixed). My fix is therefore mostly **latent-bug
+  hardening** that takes effect the moment plans are re-wired, plus the always-relevant `success.html` landing.
+- **Separate UX gap (not in my scope, flag for Manager):** "View Plans" / "Reactivate a plan" link to
+  `/payment`, but `payment.html` is now the read-only **invoices** page (no plans) — the plan purchase surface
+  needs a home before subscriptions can be bought again.
+- My diff sits on top of other sessions' uncommitted working-tree changes (api/admin.js domain-sync,
+  dashboard.html invoice/pay + domain work, index.html, demos/brutalist deletion, retro-cookies mockup) — I did
+  not touch those; do not attribute them to this fix.
+- No Stripe/Supabase/auth/price-ID/webhook/checkout logic changed; files uncommitted, not deployed.
+
+Action:
+Reviewed
+
+Task:
+Owner-directed Efficiency-role review (not a board task — the Demo Cleanup Round assigns no Efficiency task).
+Performance / load / code-cleanliness pass over the six style-demo pages, which had never had an Efficiency
+review.
+
+Files claimed:
+
+- read-only: `demos/bold/index.html`, `demos/cards/index.html`, `demos/corporate/index.html`,
+  `demos/dark/index.html`, `demos/photo/index.html`, `demos/vintage/index.html`, `fonts/`
+- write: `docs/performance-log.md`, `docs/logs.md`
+
+Files changed:
+
+- `docs/performance-log.md` — added the dated `style-demos-perf-review` entry (PASS; 0 High/Medium, 1 Low
+  rendering nit → Designer, + Informational, + confirmed strengths).
+- `docs/logs.md` — this entry. **No production code changed** (review only — Efficiency fixes only its own
+  assigned task, and this was a review).
+
+Summary:
+The six demos are efficiency-healthy. Verified across all six: fully **CDN-free** (zero external scripts/CDN,
+zero `<img>` — only tiny inline data-URI favicons), **no Three.js/GSAP** (animation payload stays on
+`/Animations/laptop-teardown`), fonts **vendored** from `../../fonts/` with `font-display:swap`, the single
+`scroll` listener per page is `{passive:true}` and only toggles one class (no layout work in the scroll path),
+reveals use `IntersectionObserver`, count-ups use `requestAnimationFrame`, and there are **no `setInterval`/
+`setTimeout` loops**. One concrete Low item: `demos/dark` applies Cormorant Garamond at `font-weight:700` but
+only declares CG 600 + 500i, so its bold serif headings render with **faux-bold synthesis** — the 700 woff2
+already exists in `/fonts` and every other demo declares it, so it's a one-line `@font-face` add. That's a
+rendering-quality nit (→ Designer/Developer via Manager), not an efficiency cost. Declared-but-unused font faces
+elsewhere are harmless (lazy per-glyph fetch) — left as-is.
+
+Testing:
+Static review only — no code executed, no GUI/browser run (none available headless). Audited external requests,
+`@font-face` declarations vs `font-weight`/`font-style` usage, inline-JS handlers (scroll/resize, observers,
+timers), and data-URI weight per demo via grep/awk. A live in-browser render eyeball (type rendering, reveal
+smoothness, console) is the remaining GUI check → Reviewer.
+
+Risks / Notes:
+- **For the Manager:** this was an owner-directed review, not a board task, so I did **not** edit
+  `docs/taskboard.md`. Please triage the one Low finding (dark CG-700 not vendored → faux-bold) — it could fold
+  cleanly into the existing **Demo Cleanup Round** since `demos/dark/index.html` is already in scope there
+  (Worker 2 · Dark).
+- Did not touch any demo page, the landing page, payment/Stripe/Supabase/auth, `api/*`, `db/*`, or vendor files.
+- The open Efficiency board task "Prune unused CG/Mulish woff2" stays **blocked** — it depends on Task F
+  (Designer: Distillery + Playfair typography), which is still `[TODO]` and has not landed.
+
+---
+
+## 2026-06-23 - Developer - domain-flow-verify
+
+Action:
+Reviewed
+
+Task:
+Verify that an admin-assigned domain appears correctly on the client dashboard (field mapping + refresh).
+Read-only investigation requested directly by the owner — no product code changed.
+
+Files claimed:
+
+- (none — read-only review)
+
+Files changed:
+
+- docs/logs.md — this entry only.
+
+Summary:
+Traced the full domain flow and adversarially verified it with a 5-agent review (write-path, read-path,
+refresh, side-effects, hygiene). The domain field-mapping and refresh logic are CORRECT — the
+already-present (uncommitted) fix in `api/admin.js` + `dashboard.html` works:
+
+- **Storage / source of truth:** `domain` exists on `project_inquiries`, `websites`, AND `subscriptions`
+  (db/admin-schema.sql:59/92/108). The client dashboard's source of truth is **`subscriptions.domain`**.
+- **Write (assign):** `assignDomain()` (api/admin.js:702–777) now writes the domain into `subscriptions`
+  keyed on the auth `user_id` — UPDATE existing rows, else INSERT a placeholder `{user_id, domain,
+  status:'inactive'}`. Both writes throw on error (no silent success). It also stamps
+  `project_inquiries.domain` and `websites.domain` (admin-side copies).
+- **Read (display):** client Domain tab reads only `sub.domain` (dashboard.html:1546); subscriptions load
+  uses `select('*')` ordered newest-first and surfaces the domain from whichever row has one
+  (dashboard.html:1995–2008). Field name matches the column.
+- **Refresh:** fresh fetch on every client page load (no cache, no realtime → an open client tab needs a
+  reload); admin UI re-fetches immediately after assign via `openUserDrawer()` + `refreshCurrent()`.
+- **Placeholder side-effect:** `status:'inactive'` is gated out of `hasService` (active/trialing only), so a
+  project-only client still renders the empty "no services" Billing state — no false "active hosting".
+
+Open items found (NOT field-mapping/refresh bugs — these are for the Manager to triage into tasks):
+
+1. **[high — hygiene] Remove TEMP debug logs before production.** dashboard.html:2009 logs the full
+   `subscriptions` `select('*')` rows (incl. `stripe_customer_id`/billing) to the browser console; plus
+   debug logs at dashboard.html:1955/2775/2777 and api/admin.js:740/750/756. (Author already noted these as
+   "remove once verified in production.")
+2. **[medium] Non-atomic 3-table write** in `assignDomain` — `project_inquiries`/`websites` are written
+   before `subscriptions`; if the `subscriptions` write 500s, columns diverge. Consider writing
+   subscriptions first or a single transactional RPC.
+3. **[medium] Placeholder-row proliferation** — the subscriptions UPDATE has no `.limit`, so it stamps every
+   row; the INSERT can leave a placeholder alongside a later Stripe row. Client tolerates it, but it inflates
+   admin Payments/Overview counts (plan "Unknown" / status "other").
+4. **[low] `websites` update swallows its error** (api/admin.js:722) unlike the other writes.
+5. **[low] `'inactive'` status** isn't in the documented set (active/unpaid/past_due/canceled); fine today
+   but undocumented.
+
+Testing:
+`node --check api/admin.js` → OK. 5-agent adversarial static verification (write/read/refresh/side-effects =
+CONFIRMED; hygiene = REFUTED). No browser/`vercel dev` run performed — recommend the manual test workflow
+below (assign domain → reload client dashboard → confirm display) on a deploy preview before closing.
+
+Risks / Notes:
+The same working tree also contains an UNRELATED invoice-payment-flow change (poll-until-webhook-confirmed)
+in dashboard.html — separate concern; flagged so a domain-only commit isn't bundled with it. Suggest the
+Manager open a small **Developer cleanup task** for items #1–#5 (item #1 first).
+
+---
+
+## 2026-06-22 22:45 - Manager - demo-cleanup-round
+
+Action:
+Planned
+
+Task:
+Create the demo cleanup round on the taskboard (organize work only — no product code changed)
+
+Files claimed:
+
+- docs/taskboard.md
+- docs/logs.md
+
+Files changed:
+
+- docs/taskboard.md — added a new top section **"🎨 DEMO CLEANUP ROUND — CURRENT FOCUS"** with a file-ownership
+  table and **7 scoped worker tasks** (Bold, Dark, Vintage, Photo, Cards, Landing/New-Demo, Reviewer). Each task
+  has the owner-specified fields: Worker · Allowed files · Forbidden files · Exact checklist · Verification
+  checklist · Status (`not started`). The existing invoice/Stripe phases below are untouched.
+- docs/logs.md — this entry.
+
+Summary:
+Owner asked the Manager to organize a demo-cleanup round only (no code edits). Before writing the board I ran a
+parallel recon (8 agents — one per demo + the landing page) to ground every scope in verified, line-referenced
+facts rather than echoing the brief. Key findings folded into the tasks:
+
+- **Locked, non-overlapping scopes.** Each of the 5 demo workers owns exactly one file (`demos/<slug>/index.html`);
+  the Landing worker owns `index.html` + `demos/brutalist/**` (delete) + `demos/local-service/**` (new). No two
+  workers share a file. `docs/logs.md` is the only shared file (append-only). `docs/taskboard.md` stays
+  Manager-only.
+- **Landing/brutalist:** the ONLY `brutalist` references in `index.html` are lines 324–325 (the "Raw Grid" card,
+  full card 324–329) — no nav link, no JS route array, no import/preload. So "remove dead route refs" = delete
+  that one card + the `demos/brutalist/` folder; the worker greps to confirm zero remaining hits. New
+  local-service demo + a cloned styles-grid card; preserve the `d1/d2/d3` stagger cascade.
+- **Bold:** nameless by design → brand `Loudhouse`; service cards auto-number via a CSS counter (not literal
+  numbers); `Priya Anand` at ~575 → `Tomas Reuben`; styled accents are boxed `bold`/`loud.` + `riskiest`
+  pull-quote → keep `no beige` as the single allowed accent.
+- **Cards:** recon found **no** numbered section labels and **no** duplicate reviewer names (only Maya Okafor) —
+  so those two sub-goals are written as "verify none exist, do not invent."
+- **Photo:** the two listed placeholder-ish items outside its 4 goals (feature-card metas, gallery captions) are
+  flagged as out-of-scope for that worker, not silently bundled.
+- Guarded the capital-A `Animations/laptop-teardown` teardown card and `demos/corporate/` as untouched this round.
+
+Testing:
+Docs/board only — no website code changed by the Manager. Scopes/line numbers grounded against a parallel read of
+all 7 `demos/*/index.html` + the landing `index.html`. The taskboard insert preserved the existing
+invoice/Stripe phase sections (added above them, below the board header).
+
+Risks / Notes:
+- **Recommended launch order:** Wave 1 — Bold, Dark, Vintage, Photo, Cards, and Landing/New-Demo can all run
+  **in parallel** (zero file overlap). Wave 2 — Reviewer runs **after** all six finish (read-only verification).
+- Workers must **not** edit `docs/taskboard.md`; the Manager records status from their `docs/logs.md` entries.
+- Line numbers in the tasks are guidance (from recon) — they shift as files are edited; workers match by content.
+- After Wave 2, the Manager triages Reviewer findings into any follow-up tasks (e.g. Photo's deferred
+  placeholder cleanup) and flips statuses to `done`.
+
+---
+
+## 2026-06-22 22:40 - Developer - domain-sync-fix
+
+Action:
+Finished
+
+Task:
+Bug fix (owner-direct; Manager to record board status) — domain added from the admin dashboard did not
+appear on the client dashboard's Domain tab. Make both sides use ONE source of truth: `subscriptions.domain`,
+keyed on the client's Supabase auth `user_id`.
+
+Files claimed:
+
+- `api/admin.js` — `assignDomain()` only.
+- `dashboard.html` — client data-load (`subscriptions` fetch + logged-in-user log), the Domain section of
+  `render()`, and the admin user-drawer `assign-domain` button handler only.
+- `docs/logs.md` (this entry).
+
+Files changed:
+
+- `api/admin.js` (`assignDomain`): now writes the domain to `subscriptions.domain` for the target auth
+  `user_id` (resolved from `p.user_id`, or off the inquiry row when only `inquiry_id` is given). Updates the
+  existing subscription row(s); if the client has none yet, inserts a minimal placeholder
+  `{ user_id, domain, status:'inactive' }` so the domain has a home (status `inactive` keeps the dashboard
+  from showing fake "active hosting"). Returns `{ domain, user_id, hasAccount, subscriptionUpdated,
+  subscriptionCreated, message }` so the UI can show a clear result and never silently no-op. Still also
+  updates `project_inquiries.domain` + `websites.domain` so the admin's existing list/search/aggregate
+  views stay consistent. Added TEMP debug `console.log`s (update/insert result; no-account warning).
+- `dashboard.html` (client): Domain tab now reads `sub.domain` (was `inquiry.domain || meta.domain`); shows
+  "No domain on file yet." when empty. Subscription fetch reordered `created_at desc` (fresh on every load,
+  Supabase client doesn't cache), and surfaces the domain from whichever of the user's rows has one (robust
+  to a placeholder + later Stripe row). Admin `assign-domain` handler now surfaces the server's result
+  message / no-account warning instead of a generic toast. Added TEMP debug `console.log`s (logged-in user
+  id; subscription/domain query result; selected user id + assign result).
+
+Source of truth:
+Table `public.subscriptions`, column `domain`, row keyed on `user_id` (= the client's Supabase auth id).
+
+RLS:
+No change needed and none made. `db/admin-schema.sql` already has `sub_owner_select` (SELECT using
+`auth.uid() = user_id or public.is_admin()`) so a client can read its OWN subscriptions row, and `sub_admin_all`
+for admin; admin writes go through `/api/admin` on the **service-role** key (bypasses RLS). Security not
+weakened — no "read/update all" policy added.
+
+Testing:
+- `node --check api/admin.js` → OK.
+- Compiled both inline `<script>` blocks in `dashboard.html` via `vm.Script` → 0 syntax errors.
+- `git diff` scope check: only `api/admin.js` (`assignDomain`) and the three intended `dashboard.html`
+  regions changed by me. (The rest of the `dashboard.html` working-tree diff is the concurrent
+  `invoice-pay-webhook-confirm` session's pay-flow work — left untouched.)
+- NOT run: live admin→client end-to-end (needs `vercel dev` + Supabase). Manual test steps handed to user.
+
+Risks / Notes:
+- `subscriptions.user_id` is not unique and the webhook upserts on `stripe_subscription_id`, so a
+  placeholder domain row + a later Stripe row can coexist for one user. Handled on the client by reading the
+  domain from whichever row has one; billing still uses the newest row. If a single canonical row per user is
+  wanted later, that's a schema/webhook decision (out of scope, payment-adjacent).
+- TEMP debug logs are tagged `// TEMP debug`; remove once verified in production.
+- Did not touch payment/Stripe logic, price IDs, invoice tables, or the concurrent pay-flow work.
+
+## 2026-06-22 22:10 - Developer - invoice-pay-webhook-confirm
+
+Action:
+Finished
+
+Task:
+Bug fix (owner-direct; Manager to record board status) — the client invoice Pay flow could show a
+success / "you're all set" state when the customer chose Cash App Pay (or another async method) and exited
+or did not actually complete payment. Make the dashboard show success ONLY after the webhook marks the
+invoice paid in the DB. Webhook stays the sole authority.
+
+Files claimed:
+
+- `dashboard.html` — client billing **pay flow only** (the shared Payment Element `paySubmit` handler,
+  `payInvoice` / `handlePlanClick` mount calls, `closePayModal`, `loadClientInvoices`, the `.pay-msg` CSS).
+- `docs/logs.md` (this entry).
+
+Files changed:
+
+- `dashboard.html` (client pay flow only, +110/−15):
+  - **Root cause:** the shared `paySubmit` handler checked only `error` from `stripe.confirmPayment({redirect:'if_required'})`.
+    ANY non-error resolution → `setPayMsg("Payment successful! Redirecting…")` + `window.location.href = "/success"`.
+    Cash App Pay (and other async methods) resolve there with the PaymentIntent in `processing`/`requires_action`
+    — not `succeeded` — so the UI declared success even when the customer never paid. The returned
+    `paymentIntent` was ignored and nothing waited for the webhook-confirmed DB status.
+  - **Fix (invoice flow only):** destructure `{ error, paymentIntent }`; if `requires_payment_method`/`canceled`
+    → keep unpaid + "try again"; otherwise (`succeeded`/`processing`/`requires_action`/unknown) show a
+    **"Payment received — waiting for confirmation…"** pending state and **poll the invoice row every 2s up to
+    ~30s** (`pollInvoicePaid()` → `db.from('invoices').select('status').eq('id',…)`), showing success ONLY when
+    `status === 'paid'`, then `closePayModal()` + `loadClientInvoices()` so the paid invoice loses its Pay button
+    and shows the Paid badge / "Paid on". If it doesn't flip in the window →
+    **"Payment not confirmed yet. You can refresh the page or try again."** (stays unpaid).
+  - Added `payInvoiceId` (set in `payInvoice`, cleared in `handlePlanClick` + `closePayModal`) to branch invoice
+    vs plan; `clientUser` (captured in `loadClientInvoices`) to refresh the list post-confirmation.
+  - Invoice flow `return_url` now points at `/dashboard` (DB-truthful) instead of the generic `/success` page,
+    so a redirect-based method (e.g. Cash App on mobile) can't imply paid on its own. Added a `.pay-msg.pending`
+    style. **The frontend never marks an invoice paid.**
+  - **Plan / subscription flow is unchanged** — it still shows "Payment successful! Redirecting…" → `/success`
+    (its source of truth is the `customer.subscription.updated` webhook; out of scope).
+
+Not touched: `api/webhook.js` — already handles `payment_intent.succeeded`, requires `metadata.invoice_id`,
+re-verifies `pi.amount` + `pi.currency` vs the invoice, sets `status='paid'` + `paid_at`, idempotent
+(`status==='paid'` early-out + `.neq('status','paid')` race guard). Requirement #4 was already satisfied, so
+no webhook change was needed/made. Also untouched: `api/invoices/pay.js`, `api/checkout.js`,
+`api/customer-portal.js`, price IDs, the admin region of `dashboard.html`, `payment.html`, Supabase/auth.
+
+Testing:
+- Inline-script syntax: extracted both `dashboard.html` inline `<script>` blocks and compiled each with
+  `vm.Script` → **0 syntax errors** (47k + 67k chars).
+- Scope: `git diff --stat` → only `dashboard.html` (+110/−15) + `docs/logs.md`; `git diff -- api/` → empty
+  (no API change). The full `dashboard.html` diff was re-read — every hunk is inside the pay flow; the
+  plan-button path keeps its original behavior.
+- **NOT run (needs Stripe CLI + `vercel dev` + a browser + test-mode keys — not available headless):** the live
+  e2e — card test card `4242…` → invoice flips to paid only after the `payment_intent.succeeded` webhook; Cash
+  App Pay QR shown then dismissed → invoice stays unpaid; failed payment → unpaid; reload after incomplete →
+  still unpaid; paid invoice no longer shows the Pay button. → Reviewer S9 (test mode). The owner must have
+  `stripe listen` forwarding `payment_intent.succeeded` for the poll to confirm.
+
+Risks / Notes:
+- During the ~30s poll the modal stays locked (`payBusy`), matching the existing "never close mid-submit"
+  rule; it re-enables on confirm/timeout. In test mode the webhook typically lands in 1–2s.
+- `redirect:'if_required'` rarely actually redirects for the Element; when it does (e.g. mobile wallet),
+  the invoice flow now lands on `/dashboard`, which reflects real DB status — not a static "all set".
+- Test mode only; no live keys; no secrets touched. Pairs with the open Stripe phase (S5/S6) — Manager to
+  record board status (Developer doesn't edit the board).
+
+---
+
+## 2026-06-22 21:45 - Designer - retro-cookies-instance
+
+Action:
+Finished
+
+Task:
+Owner-direct follow-up to the retro template: fill it with the owner's cookie business and remove the
+business name. Owner inputs — "no name for website / remove Business name"; description "I make cookies, my
+customers buy the cookies"; "I offer cookies (from dashboard → project details)". Sandbox only. → for the
+Manager to mirror onto the board + review.
+
+Files claimed / changed:
+
+- `docs/mockups/retro-cookies.html` — NEW. A copy of `docs/mockups/retro-template.html` populated as a
+  small-batch cookie shop, with the **business name removed everywhere**. Changes vs the template:
+  - **No name / no logo:** nav + footer wordmark replaced with a nameless chocolate-chip **cookie emblem**
+    (inline SVG, `currentColor`) + a descriptor line ("Fresh-baked cookies · by the dozen"); favicon swapped
+    from the "H" monogram to a cookie; hero plate + trust seal monograms ("H" / "[BRAND NAME] STUDIO")
+    replaced with cookie marks + nameless stamp text ("FRESH · BAKED · DAILY" / "BY THE DOZEN — TO ORDER").
+  - **Copy:** hero echoes the owner's words ("We make the cookies. You buy the cookies."); story = a
+    nostalgic cookie origin; services = a per-dozen **cookie menu** (Chocolate Chip / Oatmeal Raisin / Peanut
+    Butter / Snickerdoodle / Baker's Mixed Box — prices are PLACEHOLDERS); trust = customer-review clippings +
+    cookie stats; CTA "Hungry yet? Order a batch."; nav/footer/dateline relabelled to bakery furniture.
+  - Header comment + meta/title rewritten to describe the nameless cookie page; `.brand` CSS changed to a
+    horizontal emblem+descriptor lockup (added `.brand-mark`/`.brand-txt`).
+- `docs/logs.md` — this entry.
+
+NOT touched: `docs/mockups/retro-template.html` (kept as the clean reusable template); any production page,
+payment/Stripe/Supabase/auth, `api/*`, `db/*`, `demos/*`, vendor.
+
+Testing:
+- Inline JS compiles (`vm.Script`) → PASS. CSS braces balanced 204/204. Self-contained: no CDN/network, no
+  external `<img>`; fonts only `../../fonts`; favicon = data-URI cookie SVG.
+- Name removal verified by grep: zero rendered "[Brand Name]" / "HARVEST PRESS" / "STUDIO" / "H" monogram in
+  markup (the only "monogram letter" hit is the header comment's "favicon is a cookie, NOT a monogram
+  letter"). Remaining bracket placeholders are intentional and clearly editable: `[City]`, `[Year]`,
+  `[Customer Name]`, `[Neighbourhood]`. Inherits the template's a11y/contrast fixes.
+- **NOT run (non-GUI):** live in-browser eyeball (render / mobile reflow / the cookie menu's dotted-leader
+  price bar / console). ~1-min look recommended.
+
+Risks / Notes:
+- **Cookie flavours + per-dozen prices are placeholders.** The owner pointed to "dashboard → project details"
+  for the real list; that's live, auth-gated client data the Designer can't read from a sandbox — swap the
+  real cookie list/prices into the `.menu` rows (marked with a SWAP comment). Same for `[City]` and the
+  review names.
+- Sandbox only — NOT wired into production. If the owner wants it served, that's a **Developer** task (move
+  under `demos/<name>/`; the `../../fonts` paths already work there).
+- Owner-direct task, not on the board — **Manager to mirror it** (Designer didn't edit the board).
+
 ## 2026-06-22 21:30 - Efficiency - invoice-stripe-payment-review
 
 Action:

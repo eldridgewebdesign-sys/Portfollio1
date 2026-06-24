@@ -28,6 +28,95 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+## 2026-06-23 21:52 - Efficiency - premature-payment-success-fix (efficiency rationale)
+
+Area Reviewed:
+The payment-success verification fix in `dashboard.html` (shared Payment Element flow) + `success.html`. (Full
+change record is in `docs/logs.md` 2026-06-23 21:52 — this entry only captures the Efficiency-relevant design
+choice. The fix itself was owner-directed code work, normally a Developer task.)
+
+Finding:
+The "verify before showing success" requirement could have been met by adding a new `/api/payment-status`
+serverless route that calls Stripe. That would add network surface (a new endpoint + extra Stripe API calls per
+payment) for no benefit, because the Stripe **webhook** (service-role, server-only) already writes the
+authoritative paid/active status into `invoices`/`subscriptions`, and the browser can read its own rows via the
+anon key + RLS.
+
+Impact:
+Low (efficiency/maintainability — avoided unnecessary work).
+
+Recommendation:
+**Done** — no new endpoint. Verification reuses the existing `pollInvoicePaid` DB-poll pattern (mirrored as
+`pollSubscriptionActive`): one indexed PK/`user_id`-scoped read per ~2s tick, capped at ~30s, no busy-loop, no
+full-page reload on the in-page path, no new dependency/CDN. Net new network cost is a few small Supabase reads
+only while a payment is settling — strictly cheaper than per-payment Stripe calls from a new route.
+
+Status:
+Fixed (code change logged in docs/logs.md; Manager to record board status — not a board task).
+
+---
+
+## 2026-06-23 21:28 - Efficiency - style-demos-perf-review
+
+Area Reviewed:
+The six style-demo pages (`demos/bold|cards|corporate|dark|photo|vintage/index.html`, 46–61 KB each,
+self-contained) — the current "Demo Cleanup Round" focus, which had **never had an Efficiency pass**. Owner
+directed an Efficiency-role review this session; it is **not** a board-assigned task (the cleanup round assigns
+no Efficiency task), so per role rules I logged findings here and did **not** touch the taskboard — Manager to
+triage. **Review only — no code changed.** Method: per-demo static audit of external requests, font loading,
+inline JS behavior (scroll/resize handlers, observers, timers), and data-URI weight.
+
+Finding:
+**The demos are in good efficiency shape — PASS, no High/Medium.** Confirmed strengths (do not regress):
+
+- **Fully CDN-free.** Zero external `<script>`/CDN/`googleapis`/`jsdelivr`/`unpkg` references and **zero
+  `<img>`** across all six (only tiny inline `data:` SVG favicons). No Three.js / GSAP — the ~1.6 MB animation
+  payload stays confined to `/Animations/laptop-teardown` (baseline preserved). Matches the project's
+  vendor-locally / CDN-blocked constraint.
+- **Fonts vendored + lazy.** All faces load from `../../fonts/` with `font-display:swap`; `--mono` resolves to
+  the system monospace stack (no woff2). Browsers fetch each woff2 only when a glyph uses it.
+- **Cheap runtime.** Each page has exactly one `scroll` listener, all registered `{passive:true}`, and each
+  `onScroll` does only a single `classList.toggle('scrolled', scrollY > N)` — no `getBoundingClientRect` or
+  layout work in the scroll path. Reveals use `IntersectionObserver` (not scroll-driven); count-ups use
+  `requestAnimationFrame`. **No `setInterval`/`setTimeout` polling loops** anywhere. `corporate` is the leanest
+  (~2 KB inline JS); the others 31–51 KB inline JS, all gzipped by Vercel and loaded only when that demo is
+  opened.
+
+Confirmed issues, by impact:
+
+- **[Low — rendering quality, flag to Designer] `demos/dark` uses Cormorant Garamond at `font-weight:700`
+  (KPI values, stat figures, testimonial author names — 4 CSS sites) but only declares the CG **600** + **500i**
+  `@font-face`s — it never vendors `cormorantgaramond-700.woff2`.** So those bold serif headings render with
+  browser **faux-bold synthesis** of the 600 face. The 700 woff2 already exists in `/fonts` and **every other
+  demo declares it**, so the fix is a one-line `@font-face` add (no new asset, no new download burden — if
+  anything it's a quality fix, not a weight cost). This is a visual-quality nit more than an efficiency cost, so
+  it's a **Designer/Developer** item — flagged for Manager triage, not an Efficiency fix.
+- **[Informational] Per-demo CG `@font-face` sets are inconsistent.** `bold` declares exactly the two it uses
+  (500i + 700 — the ideal minimal set); `dark` declares 600 + 500i (missing 700, above); the other four declare
+  all three (500i/600/700). Because woff2 are lazy-fetched per glyph, a *declared-but-unused* face costs only a
+  few bytes of CSS parse and **no download** — so this is not worth churning files over; recorded only so a
+  future maintainer knows the variance is harmless, not a bug.
+- **[Informational] No `<link rel="preload">` for the serif faces.** With `font-display:swap` this is fine
+  (text paints immediately in the fallback, swaps in CG when ready). These are click-through demo pages, not
+  LCP-critical production, so preload is optional polish — do **not** add it speculatively.
+
+Impact:
+**0 High / 0 Medium / 1 Low (rendering quality, → Designer) / Informational (the rest).** Nothing blocks the
+demos; they are CDN-free, library-free, and have a near-zero continuous runtime cost.
+
+Recommendation:
+**Optional, low priority:** add the missing `cormorantgaramond-700` `@font-face` to `demos/dark/index.html`
+(file already in `/fonts`) so its bold serif headings stop synthesizing — a **Designer/Developer** task, not an
+Efficiency one. Otherwise **no action**: do not "optimize" the font declarations (lazy-loaded, harmless) and do
+not add font preloads to these demo pages. **Flagged to the Manager** to triage the dark-CG-700 item (and, if
+desired, fold it into the existing "Demo Cleanup Round" since dark is already being edited there).
+
+Status:
+New (findings recorded; review-only, owner-directed — not a board task, so no taskboard edit made; Manager to
+triage the one Low item into the Demo Cleanup Round / a Designer task).
+
+---
+
 ## 2026-06-22 21:30 - Efficiency - invoice-stripe-payment-review
 
 Area Reviewed:

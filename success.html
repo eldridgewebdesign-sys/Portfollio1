@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
-  <title>Payment Successful — WebSharke</title>
+  <title>Finishing up — WebSharke</title>
   <meta name="robots" content="noindex" />
 
-  <!-- Auto-redirect fallback if JavaScript is disabled -->
-  <meta http-equiv="refresh" content="3;url=/dashboard" />
+  <!-- Auto-redirect fallback if JavaScript is disabled. The dashboard is the real
+       source of truth for billing status, so landing there is always correct. -->
+  <meta http-equiv="refresh" content="6;url=/dashboard" />
 
   <style>
     /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
@@ -91,18 +92,75 @@
   <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
   <a class="ws-logo" href="/" aria-label="WebSharke — home"></a>
 
+  <!-- Default to a NEUTRAL state. The script promotes this to "Payment successful"
+       ONLY when the payment is verified (Stripe redirect_status=succeeded, or the
+       in-page flow's one-shot "verified" flag). A direct/bookmarked visit to
+       /success therefore never shows a false "your plan is now active". -->
   <main class="card" role="status">
-    <div class="icon" aria-hidden="true">&#10003;</div>
-    <h1>Payment successful!</h1>
-    <p>Your plan is now active. You&rsquo;ll be redirected to your dashboard in a few seconds.</p>
-    <div class="dots">Redirecting&hellip; or <a href="/dashboard">go now</a>.</div>
+    <div class="icon" id="sx-icon" aria-hidden="true">&hellip;</div>
+    <h1 id="sx-title">Finishing up&hellip;</h1>
+    <p id="sx-msg">We&rsquo;re taking you to your dashboard, where your latest billing status is shown.</p>
+    <div class="dots" id="sx-dots">Redirecting&hellip; or <a href="/dashboard">go now</a>.</div>
   </main>
 
   <script>
-    // Auto-redirect to the dashboard after 3 seconds.
-    setTimeout(function () {
-      window.location.href = "/dashboard";
-    }, 3000);
+    // This page is the post-redirect landing for payment methods that navigate
+    // away (e.g. Cash App Pay on mobile). Stripe appends ?redirect_status=… to the
+    // return_url. A redirect landing is NOT proof of payment, so we only keep the
+    // "successful" wording when Stripe reports success; otherwise we show a truthful
+    // state. Either way the DASHBOARD (RLS-scoped subscription read, written only by
+    // the Stripe webhook) is the real source of truth, and we send the user there —
+    // so this page never grants anything, it only reports.
+    (function () {
+      var delay = 3500; // happy path: brief confirmation, then on to the dashboard
+      var titleEl = document.getElementById("sx-title");
+      var msgEl = document.getElementById("sx-msg");
+      var iconEl = document.getElementById("sx-icon");
+
+      function showSuccess() {
+        document.title = "Payment successful — WebSharke";
+        if (iconEl) iconEl.innerHTML = "&#10003;";
+        if (titleEl) titleEl.textContent = "Payment successful!";
+        if (msgEl) msgEl.textContent = "Your plan is now active. You’ll be redirected to your dashboard in a few seconds.";
+      }
+      function showProcessing() {
+        document.title = "Payment processing — WebSharke";
+        if (titleEl) titleEl.textContent = "Payment processing";
+        if (msgEl) msgEl.textContent = "Your payment is processing. We’ll confirm it on your dashboard once it clears — no need to pay again.";
+      }
+      function showIncomplete() {
+        document.title = "Payment not completed — WebSharke";
+        if (iconEl) iconEl.textContent = "!"; // not a success check
+        if (titleEl) titleEl.textContent = "Payment not completed";
+        if (msgEl) msgEl.textContent = "Payment was not completed. You can try again when ready from your dashboard.";
+      }
+
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var status = params.get("redirect_status"); // succeeded | processing | failed | requires_payment_method | ...
+
+        // One-shot "verified in-page" flag, set by the dashboard pay flow right
+        // before it redirects here — ONLY after it confirmed the PaymentIntent
+        // succeeded (one-time) or the subscription went active/trialing in the DB.
+        var verifiedInPage = false;
+        try { verifiedInPage = sessionStorage.getItem("ws_pay_verified") === "1"; } catch (e) {}
+        try { sessionStorage.removeItem("ws_pay_verified"); } catch (e) {}
+
+        if (status === "succeeded" || verifiedInPage) {
+          showSuccess();                       // verified → safe to celebrate
+        } else if (status === "processing") {
+          showProcessing(); delay = 6000;
+        } else if (status) {
+          showIncomplete(); delay = 6000;      // failed / requires_payment_method / canceled / unknown
+        }
+        // else: no Stripe redirect_status AND no in-page flag (direct visit /
+        // bookmark) → keep the neutral "Finishing up…" default; the dashboard
+        // shows the real billing status. We never assert success unverified.
+      } catch (e) { /* never block the redirect on a parsing error */ }
+
+      // Always continue to the dashboard, which reflects the real billing status.
+      setTimeout(function () { window.location.href = "/dashboard"; }, delay);
+    })();
   </script>
 </body>
 </html>

@@ -10,6 +10,355 @@
 
 ---
 
+## 🎨 DEMO CLEANUP ROUND — created 2026-06-22 — CURRENT FOCUS
+
+> **Owner-directed Manager round.** Clean up the style demos for showing to people: give each demo a real
+> (fictional) brand, strip scaffolding/placeholder wording and numbered labels, fix reviewer names, tame
+> over-styled headlines, retire the brutalist demo, and add a new local-service demo. **The Manager owns this
+> board.** Workers must **not** edit `docs/taskboard.md` (the Manager records status). Each worker has a
+> **locked file scope** below; no two workers touch the same file.
+>
+> **Format note (owner-specified for this round):** these seven worker tasks use the owner's simplified format
+> — **Worker · Allowed · Forbidden · Checklist · Verification · Status** — with status values
+> `not started` / `in progress` / `blocked` / `done` (distinct from the role-system `[TODO]…[DONE]` labels used
+> elsewhere on this board). Line numbers are from the recon read at creation time — **use them as a guide and
+> match by content**, since lines shift as a file is edited.
+>
+> **Global forbidden for every worker this round** (unless their task explicitly says otherwise): payment /
+> Stripe / Supabase / auth / login logic, `api/**`, `db/**`, `dashboard.html`, `payment.html`,
+> `js/supabase-config.js`, vendor files, `fonts/**`, `vercel.json`/routing, and `docs/taskboard.md`.
+> **`docs/logs.md` is the one shared file** — all workers append a START/FINISH entry at the top (newest first);
+> keep entries small to avoid collisions; the Manager reconciles.
+
+### File ownership — no two workers share a file
+
+| Worker | Owns (may edit) | Status |
+|---|---|---|
+| 1 · Bold | `demos/bold/index.html` | `not started` |
+| 2 · Dark | `demos/dark/index.html` | `not started` |
+| 3 · Vintage | `demos/vintage/index.html` | `not started` |
+| 4 · Photo | `demos/photo/index.html` | `not started` |
+| 5 · Cards | `demos/cards/index.html` | `not started` |
+| 6 · Landing / New Demo | `index.html` (landing + nav), `demos/brutalist/**` (delete), `demos/local-service/**` (new) | `not started` |
+| 7 · Reviewer | read-only (write only `docs/logs.md`; may note findings) | `not started` |
+
+> **Untouched this round:** `demos/corporate/index.html` (no task assigned, no styles-grid card) and the
+> `3D Laptop Teardown` card → `/Animations/laptop-teardown` (capital-A `Animations/` path convention — do not
+> change). No worker may edit these.
+
+---
+
+### Task 1 — Bold Worker
+
+**Status:** `not started`
+
+**Allowed files/folders:**
+
+- `demos/bold/index.html` (the only production file)
+- `docs/logs.md` (START/FINISH entry)
+
+**Forbidden files/folders:**
+
+- the landing page `index.html`, landing nav, the brutalist demo, the new local-service demo
+- every other demo: `demos/dark/`, `demos/vintage/`, `demos/photo/`, `demos/cards/`, `demos/corporate/`
+- everything in the round-wide **Global forbidden** list above
+
+**Exact checklist:**
+
+- [ ] Brand the demo as **`Loudhouse`** — it is currently nameless by design. Add the name to the nav wordmark,
+      the `<title>` (line ~9), and the footer/copyright (line ~629). Keep it logo-free (text wordmark only;
+      do not add a raster logo).
+- [ ] Remove the **numbered eyebrow labels** — drop the leading `01–04` + dash, keep the words: `01 — Why us`
+      (~448), `02 — What we do` (~484), `03 — Receipts` (~550), `04 — Let's go` (~591). Also remove the
+      decorative oversized `why-num` `01` in the Why-us head (~451).
+- [ ] **Replace service-card numbers with service names.** Service cards auto-number via a CSS counter on empty
+      `<span class="card-num">` (markup ~494/504/514/524/534; `decimal-leading-zero` counter in CSS). Remove the
+      numeric counter and surface each card's **service name** in its place (use each card's existing title).
+- [ ] Rename **`Priya Anand` → `Tomas Reuben`** in the testimonials (line ~575; role "Owner, Studio Mube" may
+      stay). Leave the other two testimonial names (Maya Okafor, Daniel Reyes) as-is.
+- [ ] Add subtle **`Sample content`** notes near the **stats** block (`#proof` stats ~554–558) and near the
+      **testimonials** (`.voices` ~561–577) — small, muted, clearly a demo caption (not a heading).
+- [ ] **Keep only one styled headline fragment, with `no beige` as the allowed accent.** De-style the boxed
+      `bold` in the hero H1 (~414) and the boxed `loud.` in the CTA H2 (~593), and the `riskiest` accent in the
+      Why pull-quote (~457) — render those words as plain text. Leave the `<span class="mark">no beige.</span>`
+      accent (~418) as the single remaining styled fragment.
+
+**Verification checklist:**
+
+- [ ] `git diff --stat` shows **only** `demos/bold/index.html` (+ `docs/logs.md`) changed — no other file.
+- [ ] grep: zero `Priya Anand`; `Tomas Reuben` present; service cards show names not numbers; eyebrows have no
+      leading `01–04`; only the `no beige` accent remains styled (no boxed `bold`/`loud.`, no `riskiest` accent).
+- [ ] Inline `<script>` still compiles (`node --check` on the extracted script / `vm.Script`); page is
+      self-contained (no new CDN/asset).
+- [ ] `Sample content` notes are present near stats + testimonials and read as captions.
+
+---
+
+### Task 2 — Dark Worker
+
+**Status:** `not started`
+
+**Allowed files/folders:**
+
+- `demos/dark/index.html`
+- `docs/logs.md`
+
+**Forbidden files/folders:**
+
+- the landing page, landing nav, brutalist demo, local-service demo
+- every other demo: `demos/bold/`, `demos/vintage/`, `demos/photo/`, `demos/cards/`, `demos/corporate/`
+- the round-wide **Global forbidden** list
+
+**Exact checklist:**
+
+- [ ] Brand the demo as **`Tracelane`** — replace every **`[Company Name]`** placeholder: header wordmark (~426)
+      + aria-label (~420), solution "after" card "With [Company Name]" (~576), footer wordmark (~757) + aria
+      (~751), footer legal "© [2026] [Company Name]. A demonstration site by [Studio]." (~793 — also resolve
+      `[2026]` → a year and `[Studio]` → clean text or remove).
+- [ ] **Remove placeholder wording** throughout: the `(placeholder)` parentheticals on the testimonial role
+      "VP Engineering, Northpeak (placeholder)" (~660), the integrations h3 "(placeholder)" (~666), the six
+      integration-cell `(placeholder)` aria-labels (~668–673), the integrations note "swap these marks for real
+      ones" (~675), the footer demo-flag "Demo template — placeholder content" (~794), and the social
+      `(placeholder)` aria-labels (~796–803). Keep the content; remove the "placeholder" scaffolding wording.
+- [ ] **Clean the trust row** — keep the five client names **Northpeak, Halcyon, Quanta Labs, Vellum, Driftwood**
+      (~534–546) but remove `(placeholder logos)` from the eyebrow "Trusted by teams at (placeholder logos)"
+      (~530) and strip `(placeholder client)` from each logo aria-label (~533–545).
+
+**Verification checklist:**
+
+- [ ] `git diff --stat` shows **only** `demos/dark/index.html` (+ `docs/logs.md`).
+- [ ] grep: zero `[Company Name]`, zero `(placeholder`, zero `placeholder logos`, zero `[Studio]`/`[2026]`;
+      `Tracelane` present; the five trust-row names still present and intact.
+- [ ] Inline `<script>` compiles; page stays self-contained (no new CDN/asset); contact form stays inert.
+- [ ] Hero/CTA gradient accents untouched (no over-styling introduced); layout still renders.
+
+---
+
+### Task 3 — Vintage Worker
+
+**Status:** `not started`
+
+**Allowed files/folders:**
+
+- `demos/vintage/index.html`
+- `docs/logs.md`
+
+**Forbidden files/folders:**
+
+- the landing page, landing nav, brutalist demo, local-service demo
+- every other demo: `demos/bold/`, `demos/dark/`, `demos/photo/`, `demos/cards/`, `demos/corporate/`
+- the round-wide **Global forbidden** list
+
+**Exact checklist:**
+
+- [ ] Brand the demo as **`Marlowe & Sons`** — replace **`[Company Name]`** at the masthead (~393) + aria (~392),
+      footer colophon (~695), and footer legal "© [1974–2026] [Company Name]." (~729; keep the `1974–2026` era
+      range, drop the brackets).
+- [ ] **Remove numbered section labels** — the bracketed eyebrow indices `[01]` Our story (~480), `[02]` The
+      catalogue (~501), `[03]` By the numbers (~578), `[04]` In the press (~593), `[05]` Write to us (~641). Keep
+      the label words.
+- [ ] **Remove feature-block numbers** — the hero-foot pillar numbers `01`/`02`/`03` (~469–471: Built by hand /
+      Plain dealing / Made to last). If the catalogue "No." counter (CSS `.dish-no::before`, ~230) reads as a
+      numbered label, remove that numbering too so the catalogue lists by name.
+- [ ] **Remove placeholder wording from the press section** — `(placeholder clippings)` caption (~593) and the
+      `(placeholder)` on the three attributions: "The Maker's Review (placeholder)" (~602), "Columnist
+      (placeholder)" (~609), "Local correspondent (placeholder)" (~616).
+- [ ] Rename **`Priya Anand` → `Sofia Marsh`** (~616). Leave Eleanor Hartwell and Marcus Ovie.
+- [ ] Add subtle **`Sample content`** notes near the **stats** (`#figures` ~582–586) and near the **press quotes**
+      (`#press` clippings ~591–620).
+- [ ] **Replace bracketed contact placeholders with clean fictional details** — address `[14 Tannery Row, Old
+      Quarter, Portland]` (~674), phone `[+1 (555) 010-1974]` (~675), email `[hello@company.example]` (~676),
+      hours `[Tue–Sat · 9 to 5]` / `[Closed Sun & Mon]` (~680). Remove the brackets; keep believable fictional
+      values (use `@marloweandsons.example` style for the email so it stays obviously non-live).
+
+**Verification checklist:**
+
+- [ ] `git diff --stat` shows **only** `demos/vintage/index.html` (+ `docs/logs.md`).
+- [ ] grep: zero `Priya Anand`; `Sofia Marsh` present; zero `[01]`–`[05]`, no hero pillar `01/02/03`; zero
+      `(placeholder`; zero bracketed `[…]` contact fields; `Marlowe & Sons` present.
+- [ ] `Sample content` notes present near stats + press quotes.
+- [ ] Inline `<script>` compiles; contact form stays inert; page self-contained.
+
+---
+
+### Task 4 — Photo Worker
+
+**Status:** `not started`
+
+**Allowed files/folders:**
+
+- `demos/photo/index.html`
+- `docs/logs.md`
+
+**Forbidden files/folders:**
+
+- the landing page, landing nav, brutalist demo, local-service demo
+- every other demo: `demos/bold/`, `demos/dark/`, `demos/vintage/`, `demos/cards/`, `demos/corporate/`
+- the round-wide **Global forbidden** list
+
+**Exact checklist:**
+
+- [ ] Brand the demo as **`Marenne House`** — replace **`[Company Name]`** in the header wordmark (~444), footer
+      wordmark (~798), and footer legal "© [2026] [Company Name]. A demonstration site by [Studio]." (~822).
+      (The fictional location is already "Cape Marenne", so the name fits.)
+- [ ] **Remove the numbered section eyebrow labels** — the `.n` numbers in the kicker eyebrows: `01 — The place`
+      (~495), `02 — The spaces` (~590), `03 — Gallery` (~647), `04 — Visit` (~747). Keep the label words.
+- [ ] **Keep `noise outside` as the single gold-italic headline accent** — the intro statement `<em>noise
+      outside</em>` (brass/gold, ~499) stays as the one gold accent. Do not add new accent spans.
+- [ ] **Make sure no headline has more than one styled fragment** — verify the hero H1 keeps only its single
+      `<em>stays</em>` (~478, bone-colored, not gold) and the intro statement keeps only `noise outside`. If any
+      headline has a second styled fragment, reduce it to one. (Currently compliant — confirm and preserve.)
+
+**Verification checklist:**
+
+- [ ] `git diff --stat` shows **only** `demos/photo/index.html` (+ `docs/logs.md`).
+- [ ] grep: zero `[Company Name]`; `Marenne House` present; eyebrows have no leading `01–04`; `noise outside` is
+      the only gold-italic accent; each headline has ≤1 styled fragment.
+- [ ] Inline `<script>` compiles; gallery/feature placeholder image slots may remain (they are intentional demo
+      art) but no `[bracketed]` brand text remains in the wordmarks; page self-contained.
+
+> **Note (out of this worker's required scope):** the feature-card metas "01 · Stay (placeholder)" etc.
+> (~607/621/635), gallery `· placeholder` figcaptions, and social `(placeholder)` aria-labels still exist. They
+> are **not** in Photo's four listed goals — the worker may leave them. If the owner wants them cleaned, the
+> Manager will add a follow-up.
+
+---
+
+### Task 5 — Cards Worker
+
+**Status:** `not started`
+
+**Allowed files/folders:**
+
+- `demos/cards/index.html`
+- `docs/logs.md`
+
+**Forbidden files/folders:**
+
+- the landing page, landing nav, brutalist demo, local-service demo
+- every other demo: `demos/bold/`, `demos/dark/`, `demos/vintage/`, `demos/photo/`, `demos/corporate/`
+- the round-wide **Global forbidden** list
+
+**Exact checklist:**
+
+- [ ] Brand the demo as **`Gridwise`** — replace **`[Company Name]`** in `<title>` (~9), nav wordmark (~384) +
+      aria (~380), footer wordmark (~726) + aria (~722), and footer legal "© [2026] [Company Name]. A
+      demonstration site by [Studio]." (~762). Keep the header + footer wordmarks in sync.
+- [ ] **Remove placeholder wording** — the chip "Case study · (placeholder)" (~555), the testimonial role "Head
+      of Operations, Field Day (placeholder)" (~628), the footer demo-flag "Demo template — placeholder content"
+      (~763), the social `(placeholder)` aria-labels (~765–772), and the bracketed contact fields
+      `[hello@company.example]` (~704) / `[+1 (555) 010-0000]` (~705) / `[221 Harbor Street, Suite 4, Portland]`
+      (~706) — replace the contacts with clean fictional details (no brackets).
+- [ ] **Remove numbered section labels** — recon found **none** in this demo. **Verify** there are no numbered
+      eyebrows/labels; if confirmed none, record "none present" in the log (do not invent or add).
+- [ ] **Remove duplicated reviewer names** — recon found only **one** reviewer (Maya Okafor, ~628) and **no
+      duplicates**. **Verify**; if confirmed no duplicates, record "no duplicate reviewer names" in the log (do
+      not invent a second reviewer).
+
+**Verification checklist:**
+
+- [ ] `git diff --stat` shows **only** `demos/cards/index.html` (+ `docs/logs.md`).
+- [ ] grep: zero `[Company Name]`, zero `(placeholder`, zero bracketed `[…]` contact fields; `Gridwise` present
+      in title + nav + footer; header/footer wordmarks match.
+- [ ] Log explicitly records that **no numbered section labels** and **no duplicate reviewer names** existed (so
+      the Manager/Reviewer know those sub-goals were verified, not skipped).
+- [ ] Inline `<script>` (incl. the data-count count-up) compiles; contact form stays inert; page self-contained.
+
+---
+
+### Task 6 — Landing / New Demo Worker
+
+**Status:** `not started`
+
+**Allowed files/folders:**
+
+- `index.html` (the landing page **and** its nav)
+- `demos/brutalist/**` — to **delete** the demo
+- `demos/local-service/**` — **new files only** (create the new demo here)
+- `docs/logs.md`
+
+**Forbidden files/folders:**
+
+- **must not edit any existing demo page:** `demos/bold/`, `demos/dark/`, `demos/vintage/`, `demos/photo/`,
+  `demos/cards/` (and do not touch `demos/corporate/`)
+- the `3D Laptop Teardown` card / `/Animations/laptop-teardown` route (leave it exactly as-is)
+- the round-wide **Global forbidden** list
+
+**Exact checklist:**
+
+- [ ] **Remove `/demos/brutalist`** — delete the `demos/brutalist/` folder (`demos/brutalist/index.html`).
+- [ ] **Remove the Raw Grid card** from the landing Styles grid — delete the brutalist card at `index.html`
+      **lines ~324–329** (`<a … href="/demos/brutalist" …>` … `<h3 class="sc-title">Raw Grid</h3>` … `</a>`).
+- [ ] **Remove dead imports / nav links / route references** — recon confirms the **only** brutalist references
+      in `index.html` are lines 324–325 (the card itself); there is **no** nav link, JS route array, preload, or
+      import to remove. **Verify** this with a case-insensitive grep for `brutalist` after deleting the card
+      (expect **zero** hits) and record it in the log.
+- [ ] **Add a new local-service business demo at `/demos/local-service`** — create
+      `demos/local-service/index.html` following the established `demos/` contract: self-contained (inline
+      CSS/JS), fonts vendored from `../../fonts/`, neutral data-URI favicon (no raster logo), `meta robots
+      noindex`, a footer demo-flag, an inert `preventDefault` contact form, skip link + reduced-motion +
+      noscript fallbacks, no CDN, no `<base>`. Give it a real fictional local-service brand and content (e.g. a
+      plumber / electrician / landscaper / cleaning company) — **finished copy, not `[bracket]` placeholders**.
+- [ ] **Add its card to the landing Styles grid** — clone the existing `.style-card` anchor pattern inside
+      `<div class="style-grid">` (~299) with `href="/demos/local-service"`, a `sc-kicker` (e.g. "Local Service ·
+      Template"), an `sc-title`, an `sc-desc`, and the standard `sc-foot` "View demo" arrow.
+- [ ] **Preserve the `d1/d2/d3` stagger cascade** — after removing brutalist (was `d2`) and inserting the new
+      card, adjust the `rv d1/d2/d3` stagger classes on the grid cards so the cascade stays consistent down the
+      grid. (Stagger classes live on the landing cards — in-scope — **do not** open any demo page to do this.)
+
+**Verification checklist:**
+
+- [ ] `git status` shows: `demos/brutalist/` **deleted**, `demos/local-service/index.html` **added**,
+      `index.html` modified, `docs/logs.md` modified — **and no other demo file changed**.
+- [ ] grep `brutalist` across the repo's `index.html` → **zero** hits; grep `/demos/local-service` → present
+      (one card link) and resolves to the new file.
+- [ ] The new `/demos/local-service` page is self-contained: zero CDN domains, zero raster `<img>`, favicon is
+      `data:`, all `@font-face` srcs are `../../fonts/…`, no `<base>`; inline `<script>` passes `node --check`.
+- [ ] Styles grid still renders all intended cards (teardown + bold + dark + vintage + photo + cards +
+      local-service = 7, brutalist gone); stagger cascade is consistent.
+- [ ] Teardown card → `/Animations/laptop-teardown` untouched; no existing demo page edited.
+
+---
+
+### Task 7 — Reviewer
+
+**Status:** `not started`
+
+**Allowed files/folders:**
+
+- **read-only** review of all changed files
+- `docs/logs.md` (record the review + findings) — **and only that** unless the Manager explicitly says to fix
+
+**Forbidden files/folders:**
+
+- any production code, CSS, JS, or demo file (no fixes this round unless explicitly told)
+- `docs/taskboard.md` (the Manager turns findings into follow-ups)
+
+**Exact checklist:**
+
+- [ ] **Verify all completed work** — for each of Tasks 1–6, confirm its Exact checklist actually landed (brands
+      applied, numbered labels/placeholder wording removed, reviewer names fixed, headline accents tamed,
+      brutalist gone, local-service added + carded).
+- [ ] **Confirm no worker edited outside their allowed scope** — cross-check `git diff --stat` / file ownership:
+      each demo worker changed **only** its own `demos/<slug>/index.html`; the Landing worker changed only
+      `index.html` + `demos/brutalist/**` (deleted) + `demos/local-service/**` (new). Flag any cross-file edit.
+- [ ] **Confirm all routes work and no dead imports remain** — `/demos/bold`, `/demos/dark`, `/demos/vintage`,
+      `/demos/photo`, `/demos/cards`, `/demos/local-service` all resolve; `/demos/brutalist` is gone; the Styles
+      grid links match the live demos; grep confirms **zero** `brutalist` references anywhere.
+- [ ] If a browser/preview (`vercel dev`) is available, eyeball each demo + the landing grid (desktop + mobile)
+      and the console; if **not** available, say so and review at source level (do not report a "live" test that
+      was not run).
+
+**Verification checklist:**
+
+- [ ] Every Task 1–6 goal is checked off with evidence (file + grep/line), or flagged as incomplete.
+- [ ] No scope violation found (or the violation is named with file + worker).
+- [ ] Route + dead-import check recorded (zero `brutalist`; local-service resolves).
+- [ ] Findings logged for the Manager to triage into follow-up tasks; the Reviewer did **not** edit code or the
+      taskboard.
+
+---
+
 ## ⚙️ Role-system update — 2026-06-22
 
 Added a dedicated **Developer / Implementation** role and **re-activated the Reviewer** role. The system is

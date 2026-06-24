@@ -703,27 +703,77 @@ async function assignDomain(supa, caller, p) {
   if (!p.domain) throw new Error("A domain is required.");
   if (!p.user_id && !p.inquiry_id) throw new Error("A target user is required.");
 
-  // Update the client's inquiry row and any website row they have.
+  // Resolve the target auth user id. Prefer the explicit user_id; otherwise
+  // pull it off the inquiry row so the subscriptions write (the client
+  // dashboard's source of truth) can be keyed on the auth user id.
   let beforeDomain = null;
+  let targetUserId = p.user_id || null;
   if (p.inquiry_id) {
     const { data: before } = await supa.from("project_inquiries").select("domain, user_id").eq("id", p.inquiry_id).maybeSingle();
     beforeDomain = before && before.domain;
+    if (!targetUserId) targetUserId = (before && before.user_id) || null;
     const { error } = await supa.from("project_inquiries").update({ domain: p.domain }).eq("id", p.inquiry_id);
     if (error) throw new Error(error.message);
-  } else if (p.user_id) {
-    const { error } = await supa.from("project_inquiries").update({ domain: p.domain }).eq("user_id", p.user_id);
+  } else if (targetUserId) {
+    const { error } = await supa.from("project_inquiries").update({ domain: p.domain }).eq("user_id", targetUserId);
     if (error) throw new Error(error.message);
   }
-  if (p.user_id) {
-    await supa.from("websites").update({ domain: p.domain, updated_at: new Date().toISOString() }).eq("user_id", p.user_id);
+  if (targetUserId) {
+    await supa.from("websites").update({ domain: p.domain, updated_at: new Date().toISOString() }).eq("user_id", targetUserId);
+  }
+
+  // --- Source of truth: subscriptions.domain, keyed on the auth user id. ----
+  // The client dashboard reads the domain from this table, so the assignment
+  // MUST land here. Update the user's existing subscription row(s); if they
+  // have none yet (e.g. a project-only client who never subscribed), create a
+  // minimal placeholder so the domain has a home. status:'inactive' keeps the
+  // dashboard from treating this as active hosting. Never a silent no-op.
+  let subscriptionUpdated = false;
+  let subscriptionCreated = false;
+  if (targetUserId) {
+    const { data: updatedRows, error: updErr } = await supa
+      .from("subscriptions")
+      .update({ domain: p.domain })
+      .eq("user_id", targetUserId)
+      .select("id");
+    if (updErr) throw new Error(updErr.message);
+    console.log("[admin] assign_domain → subscriptions update", { user_id: targetUserId, domain: p.domain, updated: updatedRows ? updatedRows.length : 0 }); // TEMP debug
+    if (updatedRows && updatedRows.length) {
+      subscriptionUpdated = true;
+    } else {
+      const { data: created, error: insErr } = await supa
+        .from("subscriptions")
+        .insert({ user_id: targetUserId, domain: p.domain, status: "inactive" })
+        .select("id");
+      if (insErr) throw new Error(insErr.message);
+      subscriptionCreated = !!(created && created.length);
+      console.log("[admin] assign_domain → subscriptions insert", { user_id: targetUserId, domain: p.domain, created: subscriptionCreated }); // TEMP debug
+    }
+  } else {
+    // No auth user is linked to this inquiry yet, so the domain can't be stored
+    // in subscriptions (the client dashboard's source of truth). Tell the admin
+    // rather than silently leaving it off the client's account.
+    console.warn("[admin] assign_domain: inquiry has no linked auth user; saved to inquiry only", { inquiry_id: p.inquiry_id }); // TEMP debug
   }
 
   await logActivity(supa, {
     admin_email: caller.email, action: "domain_assigned", entity_type: "domain",
-    entity_id: p.inquiry_id ? String(p.inquiry_id) : null, affected_user_id: p.user_id || null,
+    entity_id: p.inquiry_id ? String(p.inquiry_id) : null, affected_user_id: targetUserId || null,
     changed_field: "domain", old_value: beforeDomain || "", new_value: p.domain,
   });
-  return { domain: p.domain };
+
+  return {
+    domain: p.domain,
+    user_id: targetUserId || null,
+    hasAccount: !!targetUserId,
+    subscriptionUpdated,
+    subscriptionCreated,
+    message: targetUserId
+      ? (subscriptionCreated
+          ? "Domain saved. A billing row was created to hold it (this client had none yet)."
+          : "Domain saved to the client's account.")
+      : "Domain saved to the inquiry, but this client has no linked account yet — it won't appear on a client dashboard until they finish signing up.",
+  };
 }
 
 // Resolve which subscription row to act on (by id, else by user_id).
