@@ -6,6 +6,60 @@
 
 ---
 
+## 2026-06-23 - Designer - testing-disclaimer-gate
+
+Action:
+Finished
+
+Task:
+Owner-direct: add an entry popup to `index.html` that, before the visitor enters the site, states the site is
+in testing, that purchases are real, and that by continuing they agree WebSharke is not required to refund any
+money spent and is not responsible for issues that occur on the site. Owner asked to improve the wording and
+push to production. **Role note:** this is production HTML/CSS/JS, which the role system routes to the
+Developer; done here under explicit owner override (same "owner-direct" pattern as the prior
+`style-demos-grid` / demo-card edits to `index.html`). **Manager to mirror onto the board.** The legal
+substance of the waiver is the owner's call — I improved clarity/grammar/tone only and preserved intent.
+
+Files claimed / changed:
+
+- `index.html` — added a testing-disclaimer entry gate. Four additive pieces, no existing logic altered:
+  1. CSS (before `</style>`): `#disclaimer` overlay at `z-index:10001` (above the `#loader`'s 10000),
+     mirroring the loader's deep-water backdrop; a glass `.dlg` card on the documented tokens (Cormorant
+     Garamond heading, Mulish body, `--foam`/`--aqua`, `.btn-sand` CTA); `body.gate-open{overflow:hidden}`
+     to hold scroll; reduced-motion + ≤680px (full-width button) handling.
+  2. `<noscript>` safety: `#disclaimer{display:none!important}` so JS-disabled visitors are never trapped.
+  3. Markup after `#loader`: `role="dialog" aria-modal` gate with kicker + `h2` + intro + two acknowledgement
+     bullets (non-refundable; use at own risk) + an "I Understand & Continue" `.btn-sand`.
+  4. JS at the top of the page script (before the preloader): shows the gate + adds `gate-open` only if not
+     previously acknowledged (`localStorage ws_testing_ack_v1`), focuses the button, keeps Tab focus inside
+     the gate, and on click stores the ack + removes the gate/lock. Returning (acked) visitors see nothing.
+- `docs/logs.md` — this entry.
+
+Copy improvement (owner intent preserved): heading "This site is in testing"; intro "WebSharke is still in
+testing. Payments made on this site are **real and will be processed** — we are not building client websites
+yet. By continuing, you acknowledge and agree that:"; bullet 1 "Purchases are non-refundable. WebSharke is not
+responsible for, and is not required to refund, any money spent on this site."; bullet 2 "You continue at your
+own risk. Because the site is in testing mode, WebSharke is not responsible for any issues, errors, or loss
+that occur here by any means."
+
+Testing:
+- Inline `<script>` syntax: extracted all three blocks, compiled via `vm.Script` → **0 errors**.
+- CSS braces balanced (148/148). grep confirms the gate wiring (22 `disclaimer`/`dlg-`/`gate-open`/
+  `ws_testing_ack` refs).
+- Scope: committed **only** `index.html` (+ this log) — did **not** bundle other sessions' uncommitted
+  working-tree changes (api/admin.js, dashboard.html, demos/brutalist deletion, retro-cookies mockup, etc.).
+- **NOT run (non-GUI):** live in-browser eyeball — gate appears on first visit, button focus/Tab trap, ack
+  persists across reload, no-JS path, mobile full-width button, reduced-motion. → Reviewer.
+
+Risks / Notes:
+- The disclaimer is informational/UX. **The waiver text's legal sufficiency is the owner's responsibility** —
+  have a lawyer review if it matters. Acknowledgement is remembered per browser via `localStorage`; clearing
+  storage (or a new browser) re-shows it. If a per-visit (not per-browser) prompt is wanted for stronger legal
+  footing, switch `localStorage` → `sessionStorage` or remove the persistence.
+- Pushed to production per the owner's instruction (scoped commit on `main`). Other roles' in-progress
+  uncommitted work was deliberately left unstaged.
+- Owner-direct task, not on the board — **Manager to mirror it** (Designer did not edit the taskboard).
+
 ## 2026-06-23 21:52 - Efficiency - premature-payment-success-fix
 
 Action:
