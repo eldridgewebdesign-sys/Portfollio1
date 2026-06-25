@@ -28,6 +28,11 @@ create table if not exists public.invoices (
   due_date date,
   status text not null default 'draft'
     check (status in ('draft','issued','paid','overdue','void','canceled')),
+  -- How the client is billed for this invoice. 'one_time' is paid via a single
+  -- Stripe PaymentIntent; 'monthly' / 'annual' start a recurring Stripe
+  -- subscription when the client pays (api/invoices/pay branches on this).
+  billing_type text not null default 'one_time'
+    check (billing_type in ('one_time','monthly','annual')),
   currency text not null default 'usd',
   subtotal_amount_cents bigint not null default 0 check (subtotal_amount_cents >= 0),
   discount_amount_cents bigint not null default 0 check (discount_amount_cents >= 0),
@@ -37,6 +42,17 @@ create table if not exists public.invoices (
   -- the PaymentIntent id is also saved by api/invoices/pay when the intent opens).
   paid_at timestamptz,
   stripe_payment_intent_id text,
+  -- Stripe subscription linkage for 'monthly' / 'annual' invoices: set by
+  -- api/invoices/pay when it starts the subscription; api/webhook.js marks the
+  -- invoice paid on the Stripe `invoice.paid` event keyed on stripe_subscription_id.
+  -- (One-time invoices leave these null.)
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  -- Recurring billing tracking: the Stripe Invoice id of the first paid charge,
+  -- and the next scheduled renewal time — both set by api/webhook.js as the
+  -- subscription's periods are billed. (One-time invoices leave these null.)
+  stripe_invoice_id text,
+  next_payment_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -46,6 +62,7 @@ alter table public.invoices add column if not exists title text;
 alter table public.invoices add column if not exists notes text;
 alter table public.invoices add column if not exists due_date date;
 alter table public.invoices add column if not exists status text default 'draft';
+alter table public.invoices add column if not exists billing_type text not null default 'one_time';
 alter table public.invoices add column if not exists currency text not null default 'usd';
 alter table public.invoices add column if not exists subtotal_amount_cents bigint default 0;
 alter table public.invoices add column if not exists discount_amount_cents bigint default 0;
@@ -53,11 +70,36 @@ alter table public.invoices add column if not exists tax_amount_cents bigint def
 alter table public.invoices add column if not exists total_amount_cents bigint default 0;
 alter table public.invoices add column if not exists paid_at timestamptz;
 alter table public.invoices add column if not exists stripe_payment_intent_id text;
+alter table public.invoices add column if not exists stripe_customer_id text;
+alter table public.invoices add column if not exists stripe_subscription_id text;
+alter table public.invoices add column if not exists stripe_invoice_id text;
+alter table public.invoices add column if not exists next_payment_at timestamptz;
 alter table public.invoices add column if not exists created_at timestamptz default now();
+
+-- On a table that ALREADY had a nullable billing_type column, the
+-- `add column if not exists ... not null` above is a no-op (Postgres skips the
+-- whole clause when the column exists), so the NOT NULL would never be enforced.
+-- Backfill any nulls and enforce default + NOT NULL explicitly (idempotent).
+update public.invoices set billing_type = 'one_time' where billing_type is null;
+alter table public.invoices alter column billing_type set default 'one_time';
+alter table public.invoices alter column billing_type set not null;
+
+-- For a pre-existing invoices table the `add column if not exists` above adds
+-- billing_type without its CHECK, so add the constraint separately (only if it
+-- is not already there — a fresh create table above already named it this).
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'invoices_billing_type_check') then
+    alter table public.invoices
+      add constraint invoices_billing_type_check
+      check (billing_type in ('one_time','monthly','annual'));
+  end if;
+end $$;
 
 create index if not exists invoices_client_user_id_idx on public.invoices (client_user_id);
 create index if not exists invoices_status_idx on public.invoices (status);
 create index if not exists invoices_created_idx on public.invoices (created_at desc);
+-- The webhook marks a subscription invoice paid by looking it up on this id.
+create index if not exists invoices_stripe_subscription_idx on public.invoices (stripe_subscription_id);
 
 -- ---------------------------------------------------------------------
 -- 2. invoice_items — line items, each linked to one invoice.
@@ -95,6 +137,60 @@ alter table public.invoice_items add column if not exists created_at timestamptz
 create index if not exists invoice_items_invoice_id_idx on public.invoice_items (invoice_id);
 
 -- ---------------------------------------------------------------------
+-- 2b. invoice_payments — one row per RECURRING charge (renewal history).
+--     A monthly/annual invoice keeps billing every period; each Stripe
+--     `invoice.paid` / `invoice.payment_failed` for its subscription is
+--     recorded here so renewals are TRACKED, not ignored. One-time invoices
+--     do not use this table (their single charge lives on the invoice row).
+--     Written ONLY by api/webhook.js (service role); clients read their own.
+-- ---------------------------------------------------------------------
+create table if not exists public.invoice_payments (
+  id uuid primary key default gen_random_uuid(),
+  invoice_id uuid not null references public.invoices (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  stripe_subscription_id text,
+  -- The Stripe Invoice for this billing period. UNIQUE so a webhook redelivery —
+  -- or a failed→paid retry of the same period — UPSERTS the existing row instead
+  -- of duplicating it.
+  stripe_invoice_id text unique,
+  stripe_payment_intent_id text,
+  amount_cents bigint not null default 0 check (amount_cents >= 0),
+  currency text not null default 'usd',
+  status text not null default 'paid' check (status in ('paid','failed')),
+  period_start timestamptz,
+  period_end timestamptz,
+  paid_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- Idempotent guards: add any column missing from a pre-existing table.
+alter table public.invoice_payments add column if not exists invoice_id uuid;
+alter table public.invoice_payments add column if not exists user_id uuid;
+alter table public.invoice_payments add column if not exists stripe_subscription_id text;
+alter table public.invoice_payments add column if not exists stripe_invoice_id text;
+alter table public.invoice_payments add column if not exists stripe_payment_intent_id text;
+alter table public.invoice_payments add column if not exists amount_cents bigint default 0;
+alter table public.invoice_payments add column if not exists currency text default 'usd';
+alter table public.invoice_payments add column if not exists status text default 'paid';
+alter table public.invoice_payments add column if not exists period_start timestamptz;
+alter table public.invoice_payments add column if not exists period_end timestamptz;
+alter table public.invoice_payments add column if not exists paid_at timestamptz;
+alter table public.invoice_payments add column if not exists created_at timestamptz default now();
+
+-- The webhook upserts on stripe_invoice_id — ensure the unique key exists even on
+-- a pre-existing table (the inline UNIQUE above only runs on a fresh create).
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'invoice_payments_stripe_invoice_id_key') then
+    alter table public.invoice_payments
+      add constraint invoice_payments_stripe_invoice_id_key unique (stripe_invoice_id);
+  end if;
+end $$;
+
+create index if not exists invoice_payments_invoice_id_idx on public.invoice_payments (invoice_id);
+create index if not exists invoice_payments_user_id_idx on public.invoice_payments (user_id);
+create index if not exists invoice_payments_subscription_idx on public.invoice_payments (stripe_subscription_id);
+
+-- ---------------------------------------------------------------------
 -- 3. Row Level Security.
 --    A client may READ only their own invoices / line items; the admin
 --    can do everything. There is NO client INSERT/UPDATE/DELETE policy,
@@ -129,6 +225,19 @@ drop policy if exists invitem_admin_all on public.invoice_items;
 create policy invitem_admin_all on public.invoice_items
   for all using (public.is_admin()) with check (public.is_admin());
 
+-- invoice_payments: a client reads only their OWN renewal history; admin all.
+-- There is NO client INSERT/UPDATE/DELETE policy — only the service-role webhook
+-- writes here, so the anon key can never forge a "paid" renewal.
+alter table public.invoice_payments enable row level security;
+
+drop policy if exists invpay_owner_select on public.invoice_payments;
+create policy invpay_owner_select on public.invoice_payments
+  for select using (auth.uid() = user_id or public.is_admin());
+
+drop policy if exists invpay_admin_all on public.invoice_payments;
+create policy invpay_admin_all on public.invoice_payments
+  for all using (public.is_admin()) with check (public.is_admin());
+
 -- ---------------------------------------------------------------------
 -- 4. Atomic create: the invoice header + all its line items in ONE
 --    transaction. A plpgsql function body executes as a single
@@ -150,12 +259,20 @@ create policy invitem_admin_all on public.invoice_items
 --    anon/authenticated again. The RLS policies above still backstop it, but
 --    do not rely on that; keep the grant correct.
 -- ---------------------------------------------------------------------
+-- Drop the previous (pre-billing_type) signature so the new one below is the
+-- only overload — otherwise PostgREST could see two and fail with "not unique".
+-- Safe to run repeatedly: a no-op once the old signature is gone.
+drop function if exists public.create_invoice_with_items(
+  uuid, text, text, date, text, bigint, bigint, bigint, bigint, jsonb
+);
+
 create or replace function public.create_invoice_with_items(
   p_client_user_id uuid,
   p_title text,
   p_notes text,
   p_due_date date,
   p_status text,
+  p_billing_type text,
   p_subtotal_amount_cents bigint,
   p_discount_amount_cents bigint,
   p_tax_amount_cents bigint,
@@ -182,10 +299,11 @@ begin
   --    money consistency — the DB does not re-derive these from p_items, so do not
   --    grant EXECUTE to any other role (see the security note above).
   insert into public.invoices (
-    client_user_id, title, notes, due_date, status,
+    client_user_id, title, notes, due_date, status, billing_type,
     subtotal_amount_cents, discount_amount_cents, tax_amount_cents, total_amount_cents
   ) values (
     p_client_user_id, p_title, p_notes, p_due_date, coalesce(p_status, 'draft'),
+    coalesce(p_billing_type, 'one_time'),
     p_subtotal_amount_cents, p_discount_amount_cents, p_tax_amount_cents, p_total_amount_cents
   )
   returning * into v_invoice;
@@ -217,10 +335,10 @@ $$;
 
 -- Only the server route (service role) may execute this; never the browser keys.
 revoke all on function public.create_invoice_with_items(
-  uuid, text, text, date, text, bigint, bigint, bigint, bigint, jsonb
+  uuid, text, text, date, text, text, bigint, bigint, bigint, bigint, jsonb
 ) from public;
 grant execute on function public.create_invoice_with_items(
-  uuid, text, text, date, text, bigint, bigint, bigint, bigint, jsonb
+  uuid, text, text, date, text, text, bigint, bigint, bigint, bigint, jsonb
 ) to service_role;
 
 -- Expose the new/updated function to PostgREST immediately — otherwise the first

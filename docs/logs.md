@@ -6,6 +6,391 @@
 
 ---
 
+## 2026-06-24 - Efficiency - recurring-renewal-tracking
+
+Action:
+Finished
+
+Task:
+Owner-direct refinement of the recurring-invoice direction (Efficiency role, **explicit owner override** for
+payment/Stripe/Supabase/webhook code — Manager to record board status). The owner clarified: recurring custom
+invoices must be **genuine ongoing subscriptions with renewal tracking** (a custom per-invoice amount billed
+every period), NOT a fixed plan and NOT an untracked open-ended subscription. This answers the lifecycle
+DECISION I flagged in the `subscription-invoicing-gap` entry below. The Stripe model the owner described
+(inline `price_data`: custom `unit_amount` + generic `STRIPE_SUBSCRIPTION_PRODUCT_ID` + `recurring.interval`)
+was already implemented in `api/invoices/pay.js`; this session adds the missing **renewal tracking**.
+
+Files claimed / changed (mine):
+
+- `db/invoices-schema.sql` —
+  - `invoices`: added `next_payment_at timestamptz` + `stripe_invoice_id text` (create table + idempotent
+    `add column if not exists` guards).
+  - NEW table `public.invoice_payments` (renewal/payment history): `id, invoice_id (FK→invoices, cascade),
+    user_id (FK→auth.users, cascade), stripe_subscription_id, stripe_invoice_id UNIQUE, stripe_payment_intent_id,
+    amount_cents, currency, status CHECK('paid'|'failed'), period_start, period_end, paid_at, created_at` +
+    idempotent column guards + a guarded unique-constraint (for the webhook upsert `onConflict`) + indexes on
+    invoice_id / user_id / stripe_subscription_id.
+  - RLS on `invoice_payments`: `invpay_owner_select` (read own via `user_id = auth.uid()`) + `invpay_admin_all`;
+    **no client INSERT/UPDATE/DELETE** policy → only the service-role webhook writes it.
+- `api/webhook.js` —
+  - Helpers: `subscriptionNextChargeUnix` (item- or sub-level `current_period_end`), `invoicePaymentIntentId`
+    (top-level OR nested `invoice.payments[].payment.payment_intent` — API-version-safe), `unixToIso`,
+    `recordInvoicePayment` (best-effort upsert on `stripe_invoice_id`).
+  - `invoice.paid`: looks up the linked invoice by `stripe_subscription_id` (ANY status, so renewals resolve);
+    **records every period** in `invoice_payments` (status `paid`); marks the ORIGINAL invoice paid only the
+    first time (amount/currency-verified, race-guarded); best-effort stamps `stripe_invoice_id` +
+    `next_payment_at` — `next_payment_at` only on a **trusted** charge (verified first payment or genuine
+    renewal), never on a refused/mismatched one.
+  - `invoice.payment_failed`: records a `failed` history row + bumps an `issued` invoice → `overdue`.
+  - `customer.subscription.created/updated`: for invoice subs (metadata.invoice_id) updates the invoice's
+    `next_payment_at` and keeps them OUT of the plan `subscriptions` table; plan subs unchanged.
+  - `customer.subscription.deleted`: for invoice subs clears `next_payment_at` and cancels the invoice **only if
+    unpaid** (a paid invoice stays paid — renewals just stop); plan subs unchanged.
+
+Not changed (already correct for the owner's model): `api/invoices/pay.js` (inline price_data, custom amount,
+generic product, stores customer+subscription ids), `api/admin/invoices.js` (billing_type one_time/monthly/
+annual), the admin builder + `/payment?invoice_id=` flow.
+
+Status vocabulary note (owner asked for draft/open/paid/failed/canceled): the **invoice** lifecycle keeps the
+existing committed enum `draft|issued|paid|overdue|void|canceled` (load-bearing across the live one-time flow +
+RLS + UI); it covers the requested concepts (issued≈open, overdue≈failed). The per-charge **`paid`/`failed`**
+the owner wants for recurring lives exactly where it belongs — on `invoice_payments.status`. Say the word to
+rename the invoice enum if you'd rather.
+
+Method / verification:
+- `node --check` all API files = pass; inline `<script>`s compile; schema `$$` balance even; no server secrets
+  in frontend.
+- Ran a focused adversarial review workflow (2 lenses × verify, 8 agents). It confirmed RLS read-isolation is
+  sound, there is no client write path (anon can't forge a paid renewal), and the `unique(stripe_invoice_id)`
+  upsert is idempotent. It found **2 LOW data-correctness items, both fixed this session**: (1) the history PI
+  id was read from the removed top-level `invoice.payment_intent` (now reads the nested location too);
+  (2) `next_payment_at` was written even on the amount-mismatch refusal path (now gated behind `trusted`).
+
+Testing NOT run (no Stripe CLI / `vercel dev` / browser here): the live e2e — create a $26/month invoice in
+admin → client pays via `/payment?invoice_id=` (test card) → invoice flips `paid` + an `invoice_payments` row
+appears + subscription exists in Stripe → advance a Stripe test clock → renewal `invoice.paid` records a SECOND
+`invoice_payments` row + `next_payment_at` advances. → Reviewer (test mode), after the owner applies the
+migration + sets env.
+
+Risks / Notes (owner actions REQUIRED before recurring works):
+1. **Apply the updated `db/invoices-schema.sql` in Supabase** (idempotent) — adds `invoice_payments`,
+   `next_payment_at`, `stripe_invoice_id`. Apply with/before deploying the new `api/` code. (Marking an invoice
+   paid is decoupled from the new columns, so it won't break if the new columns lag — but renewal history needs
+   the table.)
+2. **`STRIPE_SUBSCRIPTION_PRODUCT_ID` = ONE generic Stripe Product** (e.g. "Custom WebSharke Service") — used
+   only as the container for inline custom prices, NOT a fixed plan. Plus the existing `STRIPE_PUBLISHABLE_KEY`,
+   `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. Test mode first.
+3. **Enable the Stripe webhook events**: `invoice.paid`, `invoice.payment_failed`,
+   `customer.subscription.updated`, `customer.subscription.created`, `customer.subscription.deleted`,
+   `payment_intent.succeeded` (one-time).
+4. **Follow-up (UI, coordinate with the dashboard-invoices-tab session):** surface `next_payment_at` + the
+   `invoice_payments` renewal history on the client history page (`prev-inv.html`) / admin — the data is now
+   tracked + RLS-readable; no UI was added this round to avoid clobbering the concurrent dashboard redesign.
+5. Cancellation is reflected from Stripe (`customer.subscription.deleted` → stops renewals); an in-app admin
+   "cancel subscription" action that calls Stripe is still a future task (interim: Stripe Dashboard).
+6. No secrets touched/printed; one-time + plan/portal flows untouched; files uncommitted, not deployed.
+
+## 2026-06-24 - Efficiency - dashboard-invoices-tab
+
+Action:
+Finished
+
+Task:
+Owner-directed (assigned to the Efficiency role): turn the client dashboard "Billing" tab into an
+"Invoices" tab — show only the CURRENT (most recent unpaid) invoice as a brief summary (Name, ID, Total,
+Pay), redirect "Pay Invoice" to the payments page (no payment inside dashboard.html), add a "View Previous
+Payments" button, and create a new `prev-inv.html` full-history page. **Role note:** this is production
+HTML/CSS/JS (Developer/Implementation territory) done here under explicit owner override — same owner-direct
+pattern as prior sessions. **Manager to mirror board status.**
+
+Owner decisions captured this session (AskUserQuestion):
+- Pay flow → "redirect now, wire Stripe later": the dashboard links to `/payment?invoice_id=…` and does NOT
+  process payment. (A concurrent session had already wired the Stripe Payment Element into `payment.html`,
+  so the redirect lands on a working payment page — net result is better than the deferred plan.)
+- Subscription/hosting controls (Manage My Subscription / Cancel Hosting / View Plans) → "make it later,
+  don't worry about it for now": left untouched in the renamed tab.
+
+Concurrent-session coordination:
+- At session start git was clean; mid-session `dashboard.html` (−~500 lines) + `payment.html` went dirty —
+  another session was actively porting the pay flow out of the dashboard and into `payment.html`. Per the
+  File-Claiming rules I STOPPED and confirmed with the owner ("they finished, continue as is, re-review").
+  I then re-read the now-stable files and built on top. The working tree also accumulated other sessions'
+  changes to `api/*`, `db/invoices-schema.sql`, `docs/*` — those are NOT mine.
+
+Files claimed / changed:
+- `dashboard.html` — the client "Billing"→"Invoices" tab ONLY: (1) sidebar nav label Billing→Invoices
+  (kept `data-tab="billing"` / `id="tab-billing"` so tab switching is unchanged); (2) `<h2 class="tab-title">`
+  Billing→Invoices; (3) `#cinv-block` markup redesigned to a single current-invoice summary card +
+  "No current invoice." empty state + a persistent `ws-btn ghost` "View Previous Payments" → `/prev-inv`;
+  (4) rewrote `loadClientInvoices()` to fetch the most-recent payable invoice (`status in (issued,overdue)`,
+  newest first, `.limit(1)`) and render `buildCurrentInvoiceCard()` (Name/title, ID ref, status badge, Total,
+  and a "Pay Invoice" anchor → `/payment?invoice_id=<id>`); (5) removed the now-dead full-list builders
+  (`buildClientInvoiceCard`/`buildClientItemsTable`/`cinvNumCell`/`buildClientTotals`/`cinvTotalRow`/
+  `cinvMetaItem`) and the second `invoice_items` query; (6) small CSS adds (`.cinv-summary`, `.ws-btn.ghost`,
+  `.cinv-prev-wrap`).
+- `prev-inv.html` — NEW. Self-contained, theme-matched (ocean/navy-teal `cinv-*`), login-gated read-only
+  full invoice history. Lists all client-visible invoices (issued/paid/overdue/void/canceled; drafts hidden),
+  newest first, scoped to `client_user_id = user.id` (RLS also enforces this); each card shows Name, ID,
+  Status badge, Total (cents→$), and a date (Paid date for paid, else Created + Due). Unpaid (issued/overdue)
+  invoices get a "Pay invoice" LINK → `/payment?invoice_id=<id>`; paid invoices get NO pay button. Every
+  value rendered via `textContent` (no innerHTML of DB data). No Stripe on this page — it only links to the
+  payments page.
+
+NOT touched: `payment.html`, `api/*`, `db/*`, Stripe/webhook/price-IDs, subscription/auth logic, other tabs.
+
+Testing:
+- Inline `<script>` syntax: extracted every non-`src` `<script>` and compiled via `vm.Script` →
+  dashboard.html (2 blocks: 29.6k + 68k chars) + prev-inv.html (1 block: 8k) = **0 errors**. (payment.html
+  also re-checked → 0 errors.)
+- CSS brace balance: dashboard.html 333/333, prev-inv.html 52/52 — balanced.
+- grep: no dangling refs to the removed builders; nav+title say "Invoices"; Pay → `/payment?invoice_id=`;
+  "View Previous Payments" → `/prev-inv`; empty state "No current invoice."; `prev-inv.html` is a new
+  untracked file. `vercel.json` `cleanUrls:true` → `/prev-inv` serves `prev-inv.html`.
+- **NOT run (no browser / `vercel dev` here):** live in-browser eyeball — tab renders, current-invoice summary
+  for a user with an unpaid invoice, "No current invoice." empty state, Pay → payment page opens the Stripe
+  modal for that id, View Previous Payments → prev-inv lists all invoices, a second account can't see the
+  first's invoices, paid invoices show no Pay button, mobile layout. → Reviewer.
+
+Risks / Notes (for the Manager + owner):
+- The working tree bundles several concurrent sessions' uncommitted changes (api/*, db/*, docs/*, payment.html).
+  A dashboard-only commit should stage just `dashboard.html` + `prev-inv.html` to avoid mixing concerns.
+- Minor dead code left in dashboard.html to keep the diff surgical (unused after the rewrite, harmless):
+  `cinvDate`, `BILLING_LABEL`, `CLIENT_VISIBLE_STATUSES`/`SHOW_DRAFTS_TO_CLIENTS`. Optional later cleanup.
+- "Current invoice" = the single most-recent issued/overdue invoice. If a client has multiple unpaid invoices,
+  only the newest shows on the dashboard; the rest are on `/prev-inv` (each with its own Pay link). Confirm
+  that matches the owner's intent.
+- Routes use the project's extensionless convention (`/payment?invoice_id=…`, `/prev-inv`) per CLAUDE.md /
+  `vercel.json cleanUrls`; the `.html` forms in the brief 308-redirect to the same destinations.
+
+## 2026-06-24 - Developer / Implementation - laptop-teardown-rebuild
+
+Action:
+Finished
+
+Task:
+Owner-direct: full rebuild of the laptop teardown demo (`/Animations/laptop-teardown`) into a premium
+scroll-driven WebSharke Engineering showcase using the real production image assets in `images/Laptop/`.
+The owner supplied the design direction inline (acting as Designer); this Developer session implemented it.
+This supersedes the demo-cleanup round's "do not touch the teardown card/route" note (owner override; the
+route is unchanged so the landing card link stays valid).
+
+Files changed:
+
+- `Animations/laptop-teardown/index.html` — full rewrite: self-contained (inline CSS/JS), no dependencies.
+  Fixed beige interior backdrop + scroll-driven cross-fade of the closed laptop → 3-layer → 4-layer teardown
+  with a big WEBSHARKE/ENGINEERING wordmark intro and a "Built layer by layer." close. Native `position:sticky`
+  + a small rAF scrub-smoothed scroll handler. Progressive-enhancement: static stacked layout for no-JS /
+  reduced-motion; animated only when motion is allowed.
+- `Animations/laptop-teardown/README.txt` — rewritten to document the new image-based approach.
+- NEW `images/Laptop/interior.jpg` (re-encoded from the 1.8 MB PNG → 136 KB JPEG, no alpha lost).
+
+Files removed (old Three.js + GSAP 3D stack, now dead):
+
+- `Animations/laptop-teardown/script.js`, `style.css`, `vendor/gsap.min.js`, `vendor/ScrollTrigger.min.js`,
+  `vendor/three.module.js`, `vendor/jsm/**`, `vendor/fonts.css`, and 5 unused font weights
+  (`cormorantgaramond-400/500`, `mulish-300/600/700`). Also removed `images/Laptop/interior.png`
+  (replaced by `.jpg`) and the duplicate `mulish-500.woff2` (byte-identical to `mulish-400`).
+
+Assets renamed (were untracked, ugly names): `c14ff01f…png`→`interior.png`(→`.jpg`), `6.png`→`closed.png`,
+`5.png`→`teardown-3.png`, `7.png`→`teardown-4.png`. Final images used: `interior.jpg`, `closed.png`,
+`teardown-3.png`, `teardown-4.png` (the 3 product shots are transparent 1366×768, registered in one frame).
+
+Testing:
+
+- `node --check` on both inline scripts: pass. No stale refs to the removed stack (grep clean).
+- All asset URLs resolve 200 via a local static server; paths root-absolute + case-exact for Vercel's Linux.
+- Headless Chrome (real Chromium binary — the live browser extension was offline) at 1440/768/390/360/320:
+  intro, all three composited teardown frames, and the outro render premium; clean transparency; no white
+  boxes; layers registered; mobile teardown readable; no horizontal overflow.
+- Caught + fixed a real mobile wordmark-overflow bug (Cormorant's wide caps); re-verified the fit.
+- Ran a 6-dimension adversarial review (js-logic / responsive / a11y / perf / design / vercel-paths) and fixed:
+  cross-fade wash-out dip (now true complementary fades, subject opacity == 1.000 across the whole scroll,
+  numerically verified); `--stone` label contrast → AA (~5.7:1); interior PNG→JPEG (−1.7 MB); deduped Mulish
+  font; short/landscape-phone image-size gap; `overflow-x:hidden`→`clip` (sticky safety); safe-area insets;
+  trimmed `will-change`; toned the outro to an editorial line + text-link CTA (removed marketing headline + pill).
+- NOT run: a live in-browser scroll pass (extension offline). Choreography is syntax-checked + opacity-verified
+  numerically, but a real-device scroll/feel check on a deploy preview is still worth doing.
+
+Risks / Notes (for the Manager):
+
+- ⚠️ DEPLOY: `images/Laptop/*` were untracked. I staged the four required images + the teardown folder changes
+  with `git add` (NOT committed). They MUST be committed or the page 404s on Vercel. Old vendor deletions staged.
+- `Examples/` (≈6.6 MB reference renders) is untracked and not in `.vercelignore` — recommend ignoring it so it
+  doesn't ship publicly. Out of this task's scope.
+- The landing card (`index.html:328-332`) still says "Interactive · 3D" / "3D Laptop Teardown". Route unchanged
+  so the link works, but the wording is stale. Left `index.html` untouched (another round owns it); recommend a
+  follow-up to relabel.
+- Optional perf: if WebP tooling appears, `interior.webp` + WebP product shots shave more; the three product
+  PNGs could also be run through oxipng/pngquant. No local tooling for these now.
+- Outro copy ("A study in how we build." + "Start a project →") kept minimal per the brief; easy to change/remove.
+
+---
+
+## 2026-06-24 - Efficiency - subscription-invoicing-gap
+
+Action:
+Finished
+
+Task:
+Owner-direct (assigned to Efficiency; **owner authorized an explicit override** to touch payment/Stripe/
+Supabase/webhook code this session — Manager to record board status). Build "subscription-based invoicing"
+**on top of the already-shipped one-time custom-invoice system.** Before coding I verified against the live
+code that admin invoice creation, the client/admin invoice UIs, the one-time pay route + webhook-verified
+"paid" already exist — so this session built ONLY the two genuine gaps: (A) wire `payment.html?invoice_id=`
+as the pay surface, and (B) monthly/annual **recurring** invoices via Stripe subscriptions. **The owner
+picked "build only the real gaps" + "owner-direct override" when asked.**
+
+⚠️ Concurrency note: a parallel Efficiency session (`dashboard-pay-to-payment-page`, entry below) was editing
+`dashboard.html` + `payment.html` at the same time (it removed the inline dashboard pay modal and built the
+full Payment Element pay flow into `payment.html` — Gap A). Our changes are **complementary** (they did the
+pay UI; I did the recurring backend + billing_type glue + the `?invoice_id=` deep link). My edits and theirs
+both survived; all inline scripts compile. Files were re-read before each edit. **Manager: reconcile the two
+2026-06-24 Efficiency entries and the shared working-tree diff before committing.**
+
+Files claimed / changed (mine):
+
+- `db/invoices-schema.sql` — added `invoices.billing_type` (`one_time|monthly|annual`, default `one_time`,
+  CHECK + idempotent backfill/SET NOT NULL for upgraded tables), `stripe_customer_id`, `stripe_subscription_id`
+  (+ `invoices_stripe_subscription_idx`). Extended `create_invoice_with_items` RPC with `p_billing_type`
+  (dropped the old 10-arg signature, recreated 11-arg, re-granted to `service_role`).
+- `api/admin/invoices.js` — validate + store `billing_type` (whitelist, default `one_time`); pass
+  `p_billing_type` to the RPC; clear **503** if the migration isn't applied (PGRST202) instead of a raw 500.
+- `api/invoices/pay.js` — NEW recurring branch: monthly/annual create/reuse a Stripe customer (by email) +
+  a `default_incomplete` subscription with an inline recurring `price_data` (one shared
+  `STRIPE_SUBSCRIPTION_PRODUCT_ID` product, `unit_amount` = the DB invoice total), store the Stripe ids on
+  the invoice, return `latest_invoice.confirmation_secret.client_secret`. **One-time path byte-unchanged.**
+  Mirrors `api/checkout.js` exactly (only `confirmation_secret` expanded).
+- `api/webhook.js` — `invoice.paid` now also marks the linked custom invoice paid (matched by
+  `stripe_subscription_id`, amount/currency re-verified, idempotent); `invoice.payment_failed` bumps a linked
+  `issued` invoice → `overdue`. **Resolved the subscription id from BOTH `invoice.subscription` and
+  `invoice.parent.subscription_details.subscription`** (the SDK's API version removed the top-level field —
+  this also repairs the pre-existing dead subscriptions-table sync in these two cases). Gated the
+  `customer.subscription.created/updated` upsert to **skip** subscriptions carrying `metadata.invoice_id` so a
+  custom-invoice subscription never pollutes the plan `subscriptions` table / hijacks the dashboard hosting
+  card or grants plan entitlement.
+- `dashboard.html` — admin builder: a **Billing type** selector wired into `collectInvoice` + reset; client
+  card shows the cadence and the "Pay invoice" link now targets `/payment?invoice_id=<id>`; `billing_type`
+  added to the client `.select()`.
+- `payment.html` — added a `?invoice_id=` **deep link** that auto-opens that invoice's Stripe payment (drives
+  one-time AND monthly/annual via the same client code; server validates payability). Additive only — the
+  pay flow itself is the parallel session's work.
+- `docs/logs.md` — this entry.
+
+Method / verification:
+- `node --check` on all four API files = pass; all inline `<script>` blocks (dashboard/payment/success)
+  compile via `vm.Script`; schema dollar-quote balance even; RPC drop/create/grant signatures aligned (10→11).
+- Ran an **adversarial review workflow** (4 lenses × verify, 17 agents) over the backend diff. It caught a
+  **CRITICAL** bug I had shipped — the `invoice.paid`/`payment_failed` handlers gated on the removed top-level
+  `invoice.subscription`, so monthly/annual invoices would NEVER be marked paid — plus the subscriptions-table
+  pollution/entitlement leak, the unapplied-migration 500, and the NOT-NULL no-op. **All four are fixed in
+  this session.** Confirmed no regression to the one-time flow or the `checkout.js` plan flow.
+
+Testing NOT run (no Stripe CLI / `vercel dev` / browser here): the live e2e — create a monthly invoice →
+client pays via `/payment?invoice_id=` test card → `invoice.paid` flips the invoice to `paid`; failed charge
+→ `overdue`; a paid one-time invoice still works; a plan subscription still grants service. → Reviewer (test
+mode), after the owner applies the migration + sets env.
+
+Risks / Notes (for the Manager + owner — REQUIRED before this goes live):
+
+1. **Apply `db/invoices-schema.sql` in Supabase** (idempotent). Until applied, admin invoice creation returns
+   the new 503 (the RPC signature changed). Apply the migration **with/before** deploying the new `api/` code.
+2. **Set `STRIPE_SUBSCRIPTION_PRODUCT_ID`** (one Stripe Product id) — required to pay a monthly/annual invoice
+   (one-time invoices don't need it). Also `STRIPE_PUBLISHABLE_KEY` must be set (already needed by the pay flow).
+   Use **test** keys + test mode first (project Stripe gate).
+3. **Stripe webhook must send `invoice.paid` + `invoice.payment_failed`** (already handled; confirm enabled) —
+   these are the ONLY events that mark a recurring invoice paid/overdue.
+4. **DESIGN DECISION the owner must make before enabling recurring invoices:** a monthly/annual invoice creates
+   an **open-ended** subscription that re-bills the full invoice total every period **forever**, renewals are
+   not recorded in `public.invoices` (only the first payment flips it to `paid`), and there is **no in-app
+   cancellation** path for invoice subscriptions (interim: cancel in the Stripe Dashboard). If "monthly/annual"
+   was meant as a **one-off** bill, it should auto-cancel after the first paid period
+   (`subscriptions.update(sub,{cancel_at_period_end:true})` in `invoice.paid`). If genuine ongoing billing is
+   intended, a follow-up Developer task should add renewal tracking (an `invoice_payments` child table) + a
+   working cancel route (`api/admin.js cancelSubscription` currently never calls Stripe). **Recommend a Manager
+   task before live recurring use.**
+5. No secrets touched/printed; one-time + plan/portal flows untouched; files uncommitted, not deployed.
+
+## 2026-06-24 - Efficiency - dashboard-pay-to-payment-page
+
+Action:
+Finished
+
+Task:
+Owner-directed (Efficiency role): the dashboard Billing tab was acting as the embedded payment center. Move
+payment OFF the dashboard — make Billing informational, and send "Pay invoice" to /payment, which runs the
+actual checkout. **Owner clarification asked + answered this session:** payment.html's "Pay invoice" button was
+DISABLED (Stripe was never wired there), so the dashboard was the ONLY working pay surface — redirecting as-is
+would have broken paying entirely. Owner chose **"Wire payment.html, then redirect"**, so this session activated
+payment.html's pay flow first and then stripped the dashboard's. Payment/Stripe code is normally a Developer
+task; done here under the explicit owner override (same owner-direct pattern as prior Efficiency pay-flow work).
+**Manager to record board status** — not a board task; Efficiency did not edit the taskboard.
+
+Files claimed:
+
+- `payment.html` — add the Stripe Payment Element invoice pay flow + enable the Pay button.
+- `dashboard.html` — the client Billing pay machinery only (remove the embedded Payment Element / plan checkout /
+  subscription-payment logic; turn the invoice Pay button into a /payment link).
+- `docs/logs.md`, `docs/performance-log.md`.
+
+Files changed:
+
+- `payment.html` (+~300): activated the previously-disabled "Pay invoice" button by porting the dashboard's
+  SHIPPED invoice pay flow VERBATIM (one-time PaymentIntent). Added the `.pay-*` modal CSS, the `#pay-overlay`
+  Payment Element modal markup, the official Stripe.js `<script>` (CDN — Stripe forbids self-hosting; mirrors the
+  dashboard), a page-level `#pay-error` line, and the JS (`payInvoice` → POST `/api/invoices/pay` → build Stripe
+  from the server-returned publishable key → mount the Payment Element → `confirmPayment({redirect:'if_required'})`
+  → poll `invoices.status` until the webhook flips it to `paid`, then reload the list). `return_url` is `/payment`
+  (DB-truthful). The webhook — never the browser — marks an invoice paid. Fixed the now-inaccurate subhead ("just
+  get in touch" → "pay any outstanding invoice securely online"). The read-only invoice LIST, RLS scoping, and
+  XSS-safe `cinvEl`/`textContent` rendering are unchanged.
+- `dashboard.html` (−486 net): removed the entire embedded Stripe Payment Element block — the `.pay-*` modal CSS,
+  the `#pay-overlay` markup, the Stripe.js `<script>`, and the whole "STRIPE PAYMENT ELEMENT" JS section
+  (`payInvoice`, `handlePlanClick`, the dormant plan `[data-price-id]` wireup, `mountPayment`, the `paySubmit`
+  confirm handler, `pollInvoicePaid`, `pollSubscriptionActive`, `markPayVerified`, modal listeners, lazy `stripe`
+  init). The client invoice "Pay invoice" button is now an `<a href="/payment">` (clean route per vercel.json
+  cleanUrls). Dropped the now-dead `clientUser` assignment. **Kept intact:** all Billing info (payment method,
+  hosting status, current plan, next payment due), the hosted **customer-portal** management (Manage My
+  Subscription / Cancel Hosting via `/api/customer-portal` — Stripe-hosted, off-page, NOT an embedded checkout),
+  the read-only invoice list, and every other tab.
+
+Route "Pay invoice" now sends users to: **`/payment`** (extensionless clean route → payment.html).
+
+Testing:
+- Inline `<script>` syntax: extracted + compiled every inline block via `vm.Script` → dashboard.html (2 blocks,
+  33k + 68k) + payment.html (1 block, 22k) = **0 errors**.
+- CSS braces balanced after edits: dashboard 326/326, payment 96/96.
+- Endpoint contract verified: `api/invoices/pay.js` returns `{clientSecret, publishableKey,
+  invoice:{total_amount_cents,…}}` — exactly what the ported payment.html client reads; the committed endpoint is
+  one-time PaymentIntent only (no `billing_type`/subscription branch yet), matching the flow I ported.
+- Reference sweep: dashboard.html has ZERO remaining `payInvoice`/`mountPayment`/`handlePlanClick`/`pay-overlay`/
+  `js.stripe.com`/`stripe` refs; kept refs (`/api/customer-portal`, `stripeCustomerId`, `manage-sub`,
+  `cancel-hosting`, `showBillError`, `loadClientInvoices`, `cinvMoney`) all present. payment.html: Pay button
+  enabled (no `disabled`/`aria-disabled`/"coming soon"), modal + `#pay-error` + Stripe.js present, single
+  `clientUser` decl.
+- **NOT run (no Stripe CLI / `vercel dev` / headless browser):** the live e2e — Pay invoice on the dashboard →
+  land on /payment → Pay → Payment Element → invoice flips to paid only after the `payment_intent.succeeded`
+  webhook; Cash App Pay opened then dismissed → stays unpaid; 401/403/404/409 negative paths. → Reviewer (test
+  mode; owner needs `stripe listen` forwarding `payment_intent.succeeded`).
+
+Risks / Notes:
+- **Scope (important — mixed working tree):** my edits are in `dashboard.html`, `payment.html`, `docs/logs.md`,
+  and `docs/performance-log.md` ONLY. The working tree ALSO contains other sessions' pre-existing uncommitted
+  work that is **NOT mine** and must NOT be bundled with this change: `db/invoices-schema.sql`
+  (+`billing_type`/`stripe_customer_id`/`stripe_subscription_id`), `api/invoices/pay.js` (+156/−7),
+  `api/webhook.js` (+50), `api/admin/invoices.js` (+16) — the in-flight subscription-invoice feature. A clean
+  commit of THIS task should stage only `dashboard.html`, `payment.html`, and the two docs files. (The
+  session-start "clean" git snapshot was stale.)
+- **Pre-existing, out-of-scope UX gap (flag for Manager):** the dashboard Billing empty-state "View Plans" links
+  to `/payment`, but payment.html is the invoices page (no plan-selection UI). The plan/subscription PURCHASE
+  surface (the dormant `handlePlanClick` flow I removed) now has no home. It was already dead on the dashboard
+  (no `[data-price-id]` buttons, no page-level publishable key), so removal changed nothing live — but selling
+  subscriptions again would need a home for it. Not in this task.
+- Requires the (already-existing) `STRIPE_PUBLISHABLE_KEY` env so `/api/invoices/pay` can return the key; if
+  unset, payment.html shows "Payments aren’t available right now. Please contact …" instead of crashing — same
+  graceful degrade the dashboard had.
+- No Stripe price IDs, no Supabase/RLS, no `/api/*` server code, no webhook, no `db/*` changed by me. Files
+  uncommitted; not deployed.
+
 ## 2026-06-23 - Designer - testing-disclaimer-gate
 
 Action:

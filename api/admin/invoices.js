@@ -21,6 +21,7 @@
 //     "notes": "Optional notes",       // optional
 //     "due_date": "2026-07-01",        // optional, YYYY-MM-DD
 //     "status": "issued",              // optional, default "draft"
+//     "billing_type": "monthly",       // optional, default "one_time" (one_time|monthly|annual)
 //     "discount_amount_cents": 0,      // optional, default 0
 //     "tax_amount_cents": 0,           // optional, default 0
 //     "items": [                       // required, >= 1
@@ -64,6 +65,10 @@ const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com")
 
 // Invoice lifecycle states the route will accept.
 const ALLOWED_STATUS = ["draft", "issued", "paid", "overdue", "void", "canceled"];
+
+// How the client is billed. 'one_time' → a single PaymentIntent; 'monthly' /
+// 'annual' → a recurring Stripe subscription started at pay time (api/invoices/pay).
+const ALLOWED_BILLING_TYPES = ["one_time", "monthly", "annual"];
 
 // Money sanity cap (cents). Blocks absurd / overflow values while staying
 // comfortably inside JS safe-integer range. $50,000,000.00.
@@ -148,6 +153,15 @@ function parseInvoiceBody(body) {
     status = body.status;
   }
 
+  // ---- billing_type (optional, whitelisted, default one_time) ----
+  let billingType = "one_time";
+  if (body.billing_type !== undefined && body.billing_type !== null && body.billing_type !== "") {
+    if (typeof body.billing_type !== "string" || !ALLOWED_BILLING_TYPES.includes(body.billing_type)) {
+      throw new HttpError(400, "billing_type must be one of: " + ALLOWED_BILLING_TYPES.join(", ") + ".");
+    }
+    billingType = body.billing_type;
+  }
+
   // ---- discount / tax (optional, default 0) ----
   const discount =
     body.discount_amount_cents === undefined || body.discount_amount_cents === null
@@ -230,6 +244,7 @@ function parseInvoiceBody(body) {
       notes,
       due_date: dueDate,
       status,
+      billing_type: billingType,
       subtotal_amount_cents: subtotal,
       discount_amount_cents: discount,
       tax_amount_cents: tax,
@@ -318,13 +333,26 @@ module.exports = async (req, res) => {
       p_notes: parsed.invoice.notes,
       p_due_date: parsed.invoice.due_date,
       p_status: parsed.invoice.status,
+      p_billing_type: parsed.invoice.billing_type,
       p_subtotal_amount_cents: parsed.invoice.subtotal_amount_cents,
       p_discount_amount_cents: parsed.invoice.discount_amount_cents,
       p_tax_amount_cents: parsed.invoice.tax_amount_cents,
       p_total_amount_cents: parsed.invoice.total_amount_cents,
       p_items: parsed.items,
     });
-    if (rpcErr) throw new Error(rpcErr.message);
+    if (rpcErr) {
+      // The route calls create_invoice_with_items by name with p_billing_type. If
+      // the latest db/invoices-schema.sql migration has not been applied, PostgREST
+      // can't resolve that signature (PGRST202) — surface a clear, actionable
+      // message instead of a generic 500 so the admin knows to run the migration.
+      if (rpcErr.code === "PGRST202" || /create_invoice_with_items/.test(rpcErr.message || "")) {
+        console.error("create-invoice RPC missing/mismatched — apply db/invoices-schema.sql:", rpcErr.message);
+        return res.status(503).json({
+          error: "Invoice service is not fully provisioned. Apply the latest db/invoices-schema.sql migration in Supabase, then try again.",
+        });
+      }
+      throw new Error(rpcErr.message);
+    }
     const invoice = created && created.invoice;
     const items = (created && created.items) || [];
     if (!invoice) throw new Error("Invoice creation returned no data.");

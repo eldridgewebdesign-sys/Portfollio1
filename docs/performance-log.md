@@ -28,6 +28,99 @@ New / Task Created / Fixed / Rejected
 
 ## Findings
 
+## 2026-06-24 - Efficiency - dashboard-invoices-tab (redesign side effects)
+
+Area Reviewed:
+The client dashboard "Invoices" tab (formerly "Billing") invoice section — `dashboard.html`
+`loadClientInvoices()` / the `cinv-*` render path. (Implementation entry is in `docs/logs.md`; this note
+captures only the Efficiency-relevant wins of the redesign.)
+
+Finding:
+The old client billing block fetched **all** of the user's visible invoices (unbounded, no `.limit`) **plus**
+a second `invoice_items` `in(...)` query, then built a full card per invoice with a line-item table + totals.
+The redesigned Invoices tab only needs the single CURRENT (most recent unpaid) invoice as a summary, so the
+old shape over-fetched and carried ~110 lines of rendering code that are no longer reachable.
+
+Impact:
+Low (the dashboard already loaded fine), but a clean reduction.
+
+Recommendation:
+**Done as part of the redesign:** the dashboard invoice load is now ONE query
+(`invoices … in(issued,overdue) order(created_at desc) limit 1`) with **no** `invoice_items` round-trip and
+no per-row card building — strictly less work on every dashboard load. Removed the now-dead
+`buildClientInvoiceCard` / `buildClientItemsTable` / `cinvNumCell` / `buildClientTotals` / `cinvTotalRow` /
+`cinvMetaItem` helpers. The full line-item detail still exists where it belongs (the read-only history at
+`/prev-inv` and the payments page). New `prev-inv.html` is CDN-free (no Stripe.js — it only LINKS to the
+payments page), reuses the vendored `/fonts` + the shared `cinv-*` theme, and renders via `textContent`
+(no innerHTML of DB data). A few small constants are left defined-but-unused in dashboard.html
+(`cinvDate`/`BILLING_LABEL`/`CLIENT_VISIBLE_STATUSES`) — harmless; optional later trim.
+
+Status:
+Fixed (code change logged in docs/logs.md; Manager to record board status — owner-directed, not a board task).
+
+---
+
+## 2026-06-24 - Efficiency - subscription-invoicing-gap
+
+Area Reviewed:
+The subscription-invoicing build (monthly/annual recurring invoices + `?invoice_id=` deep link) — efficiency
+rationale only; the full change record is in `docs/logs.md` (2026-06-24 · subscription-invoicing-gap).
+
+Finding:
+The recurring feature was built by **reusing existing surfaces instead of adding new ones**, keeping the
+network/maintenance footprint flat: (1) NO new API route — the recurring branch lives inside the existing
+`POST /api/invoices/pay`, and "mark paid" reuses the existing `invoice.paid` webhook event (no new endpoint,
+no extra Stripe round-trip on the client). (2) One shared Stripe **Product** + inline `price_data` means the
+admin can bill any monthly/annual amount with **zero** pre-created Stripe Prices to manage. (3) The webhook
+writes are idempotent (`.neq('status','paid')`) and the linked-invoice lookup is a single indexed
+`stripe_subscription_id` query (new `invoices_stripe_subscription_idx`), so renewals are cheap no-ops.
+Custom-invoice subscriptions are kept OUT of the plan `subscriptions` table, so the dashboard's existing
+single-row billing query is unchanged (no extra filtering cost on the hot path).
+
+Impact:
+Low (efficiency/maintainability — avoided new endpoints, new Stripe Price objects, and N+1 webhook work).
+
+Recommendation:
+Done as above. One **follow-up** (flagged to the Manager in `docs/logs.md`): if genuine ongoing recurring
+billing is kept, add an `invoice_payments` child table for renewal history rather than overloading the single
+invoice row — keeps per-invoice reads bounded as renewals accumulate.
+
+Status:
+New (owner-directed feature work, not a board task — Manager to record board status + triage the recurring
+lifecycle decision).
+
+## 2026-06-24 - Efficiency - dashboard-pay-to-payment-page
+
+Area Reviewed:
+The dashboard Billing pay surface (`dashboard.html`) vs. the invoices page (`payment.html`). Owner-directed:
+make the dashboard Billing tab informational and move invoice payment to `/payment`.
+
+Finding:
+`dashboard.html` carried a full embedded Stripe Payment Element checkout (~486 lines of CSS + markup + JS) plus a
+render-blocking `https://js.stripe.com/v3` `<script>` on EVERY dashboard load, AND a second, fully **dormant**
+plan/subscription checkout (`handlePlanClick`, `pollSubscriptionActive`, `[data-price-id]` wireup) that never ran
+— no plan buttons are rendered and no page-level publishable key exists, so it was pure dead weight on the
+most-loaded authenticated page. Meanwhile `payment.html` already rendered the same `cinv-*` invoice list but its
+Pay button was a hard-disabled placeholder, so it could not actually take a payment.
+
+Impact:
+Low–Medium — removes a render-blocking third-party script and ~486 lines from the authed dashboard, and deletes
+dead subscription-checkout code. No regression on payment.html: it gains the Stripe modal + Stripe.js, but only
+on the dedicated, on-demand pay page (not site-wide).
+
+Recommendation:
+**Done.** Stripe.js and the Payment Element machinery now live ONLY on payment.html (the page that needs them);
+the dashboard no longer loads Stripe.js at all and its Billing tab is display-only (info + invoice list + a
+`/payment` link + the hosted customer-portal management). No new endpoint or dependency — payment.html reuses the
+existing `/api/invoices/pay` and the existing webhook-backed DB poll (`pollInvoicePaid`), the cheapest way to
+confirm "paid" (a few small RLS-scoped reads while the charge settles, vs. a new Stripe round-trip). Ported the
+dashboard's shipped one-time-PaymentIntent flow verbatim (behavior-equivalent), so no new payment risk surface.
+
+Status:
+Fixed (code change logged in docs/logs.md; Manager to record board status — owner-directed, not a board task).
+
+---
+
 ## 2026-06-23 21:52 - Efficiency - premature-payment-success-fix (efficiency rationale)
 
 Area Reviewed:

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
+  <title>Payment History — WebSharke</title>
+  <meta name="robots" content="noindex" />
+
+  <style>
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/mulish-700.woff2) format('woff2')}
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --ink:#11364c;
+      --ink-soft:#2c5468;
+      --turq:#10b6cc;
+      --panel:rgba(224,241,243,.82);
+      --panel-soft:rgba(208,238,241,.46);
+      --panel-bd:rgba(255,255,255,.58);
+      --inner:rgba(255,255,255,.52);
+      --inner-bd:rgba(255,255,255,.62);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      min-height:100vh;
+      position:relative;
+      overflow-x:hidden;
+      font-family:"Mulish",system-ui,sans-serif;
+      color:var(--ink);
+      background:#36a1b3;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    a{color:inherit}
+    .hidden{display:none !important}
+    .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .ocean svg{width:100%;height:100%;display:block}
+    .ocean::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(18,58,73,.12),rgba(18,58,73,.22))}
+    .ws-logo{
+      position:fixed;
+      top:20px;
+      left:26px;
+      z-index:20;
+      display:block;
+      width:170px;
+      height:95px;
+      background:var(--ink);
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
+      filter:drop-shadow(0 1px 2px rgba(4,30,40,.14));
+      opacity:.84;
+      transition:transform .3s ease;
+    }
+    .ws-logo:hover{transform:translateY(-1px)}
+    .page{
+      width:min(1180px,100%);
+      margin:0 auto;
+      padding:clamp(7rem,13vh,8.5rem) clamp(1.1rem,4vw,3rem) 3.5rem;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1.4rem;
+      margin-bottom:1.2rem;
+      background:var(--panel);
+      border:1px solid var(--panel-bd);
+      border-radius:16px;
+      padding:clamp(1.5rem,3vw,2.25rem);
+      backdrop-filter:blur(6px) saturate(1.08);
+      -webkit-backdrop-filter:blur(6px) saturate(1.08);
+      box-shadow:0 16px 38px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.42);
+    }
+    .topbar > div{min-width:0}
+    .eyebrow{
+      color:var(--ink-soft);
+      font-size:.75rem;
+      font-weight:700;
+      letter-spacing:.2em;
+      text-transform:uppercase;
+      margin-bottom:.55rem;
+    }
+    h1{
+      font-family:"Cormorant Garamond",serif;
+      font-size:clamp(2.2rem,5vw,3.4rem);
+      line-height:1.06;
+      font-weight:600;
+      letter-spacing:.01em;
+      color:#0e2f44;
+    }
+    .subhead{
+      margin-top:.55rem;
+      max-width:44rem;
+      color:var(--ink-soft);
+      font-size:1rem;
+      line-height:1.6;
+    }
+    .back-link{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:42px;
+      padding:.64rem 1.1rem;
+      border:1.5px solid var(--ink);
+      border-radius:9px;
+      color:var(--ink);
+      background:rgba(255,255,255,.3);
+      font-family:"Cormorant Garamond",serif;
+      font-weight:600;
+      font-size:1.05rem;
+      text-decoration:none;
+      transition:background .25s,transform .25s,border-color .25s;
+    }
+    .back-link:hover{background:rgba(255,255,255,.5);transform:translateY(-1px);border-color:#0e2f44}
+    .back-link:focus-visible,.ws-btn:focus-visible{
+      outline:2px solid var(--turq);
+      outline-offset:3px;
+    }
+    .shell{
+      background:var(--panel);
+      border:1px solid var(--panel-bd);
+      border-radius:16px;
+      padding:clamp(1.35rem,3vw,2rem);
+      backdrop-filter:blur(6px) saturate(1.08);
+      -webkit-backdrop-filter:blur(6px) saturate(1.08);
+      box-shadow:0 16px 38px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.42);
+    }
+    .session-note{
+      margin-top:1.1rem;
+      color:var(--ink-soft);
+      font-size:.9rem;
+      line-height:1.5;
+    }
+
+    /* "Pay invoice" link — sends the client to the payments page for that invoice
+       (payment.html runs the Stripe Payment Element). No charge happens here. */
+    .ws-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:44px;
+      cursor:pointer;
+      text-decoration:none;
+      border:none;
+      border-radius:9px;
+      padding:.7rem 1.2rem;
+      background:linear-gradient(160deg,#1f93a8,#15707f);
+      color:#eaf6f8;
+      font-family:"Mulish",system-ui,sans-serif;
+      font-size:.82rem;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      transition:filter .2s,transform .2s,box-shadow .2s;
+      box-shadow:0 7px 16px rgba(8,70,84,.24),inset 0 1px 0 rgba(255,255,255,.18);
+    }
+    .ws-btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 22px rgba(8,70,84,.32)}
+
+    /* ── Invoice history (READ-ONLY) ─────────────────────────────────────────
+       Mirrors the dashboard / payment.html `cinv-*` block. Every value is
+       rendered via textContent (cinvEl), never innerHTML, so admin-entered
+       invoice text can't inject markup. */
+    .cinv-loading,.cinv-empty{color:var(--ink-soft);font-size:.98rem;line-height:1.6}
+    .cinv-error{
+      margin:0 0 1.1rem;padding:.78rem .95rem;border-radius:8px;font-size:.94rem;line-height:1.5;
+      color:#7c1d29;background:rgba(255,255,255,.52);border:1px solid rgba(150,40,52,.4);
+    }
+    .cinv-list{display:flex;flex-direction:column;gap:1.1rem}
+    .cinv-card{
+      background:rgba(255,255,255,.42);border:1px solid var(--panel-bd);border-radius:14px;
+      padding:1.2rem 1.25rem;box-shadow:0 10px 26px rgba(0,40,55,.12),inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .cinv-card-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.5rem .9rem}
+    .cinv-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;color:#0e2f44;line-height:1.2;margin:0}
+    .cinv-id{display:block;margin-top:.2rem;font-size:.74rem;letter-spacing:.05em;color:#5a7e8c;font-variant-numeric:tabular-nums}
+    .cinv-badge{
+      flex:0 0 auto;font-family:'Mulish',sans-serif;font-weight:700;font-size:.66rem;letter-spacing:.1em;
+      text-transform:uppercase;padding:.34rem .72rem;border-radius:999px;white-space:nowrap;border:1px solid transparent;
+    }
+    .cinv-badge.issued{color:#1f4f8a;background:rgba(45,111,199,.14);border-color:rgba(45,111,199,.42)}
+    .cinv-badge.paid{color:#0c5a40;background:rgba(31,140,99,.16);border-color:rgba(31,140,99,.45)}
+    .cinv-badge.overdue{color:#7c1d29;background:rgba(192,57,47,.14);border-color:rgba(192,57,47,.48)}
+    .cinv-badge.void,.cinv-badge.canceled,.cinv-badge.draft{color:#41606e;background:rgba(90,126,140,.15);border-color:rgba(90,126,140,.4)}
+    .cinv-meta{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem;margin-top:.9rem;font-size:.92rem;color:var(--ink-soft)}
+    .f-label{font-weight:700;color:var(--ink)}
+    .cinv-meta .f-label{font-size:1rem}
+    .cinv-actions{margin-top:1.1rem;display:flex;align-items:center;gap:.85rem;flex-wrap:wrap}
+    .cinv-pay-note{font-size:.82rem;color:#5a7e8c}
+    @media(max-width:720px){
+      .ws-logo{width:120px;height:67px;top:14px;left:16px}
+      .page{padding:6rem 1.1rem 2.5rem}
+      .topbar{display:block}
+      .back-link{margin-top:1rem}
+    }
+    @media(max-width:560px){
+      .cinv-actions .ws-btn{width:100%;text-align:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="ocean" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="900" fill="#39a4b6"/>
+      <path d="M0 96 C240 58 480 134 720 96 C960 58 1200 134 1440 96 L1440 900 L0 900 Z" fill="#5ec3d1"/>
+      <path d="M0 222 C240 184 480 260 720 222 C960 184 1200 260 1440 222 L1440 900 L0 900 Z" fill="#2f9aac"/>
+      <path d="M0 348 C240 388 480 312 720 348 C960 388 1200 312 1440 348 L1440 900 L0 900 Z" fill="#6fcdd9"/>
+      <path d="M0 474 C240 436 480 512 720 474 C960 436 1200 512 1440 474 L1440 900 L0 900 Z" fill="#37a2b4"/>
+      <path d="M0 600 C240 640 480 564 720 600 C960 640 1200 564 1440 600 L1440 900 L0 900 Z" fill="#63c5d3"/>
+      <path d="M0 726 C240 688 480 764 720 726 C960 688 1200 764 1440 726 L1440 900 L0 900 Z" fill="#2c92a4"/>
+      <path d="M0 822 C240 856 480 792 720 822 C960 856 1200 792 1440 822 L1440 900 L0 900 Z" fill="#57bccb"/>
+    </svg>
+  </div>
+
+  <a class="ws-logo" href="/" aria-label="WebSharke home"></a>
+
+  <main class="page hidden" id="history-page">
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">Billing</p>
+        <h1>Payment History</h1>
+        <p class="subhead">Every invoice WebSharke has issued to your account — paid, outstanding, and closed. Pay any open invoice securely online.</p>
+      </div>
+      <a class="back-link" href="/dashboard">Back to Dashboard</a>
+    </div>
+
+    <section class="shell" aria-label="Your invoice history">
+      <!-- Shown only if invoices fail to load. -->
+      <p class="cinv-error hidden" id="cinv-load-error" role="alert">We couldn’t load your invoices right now. Please refresh the page or try again later.</p>
+
+      <!-- Loading / empty / list states (mutually exclusive). The short status
+           messages share one live region so the loading → empty/loaded
+           transition is announced to screen readers. -->
+      <div class="cinv-status" role="status" aria-live="polite">
+        <p class="cinv-loading" id="cinv-loading">Loading your invoices…</p>
+        <p class="cinv-empty hidden" id="cinv-empty">You don’t have any invoices yet. When WebSharke bills you for a project, your invoices will appear here.</p>
+      </div>
+
+      <!-- Invoice cards are appended here by loadHistory(). -->
+      <div class="cinv-list hidden" id="cinv-list" aria-live="polite"></div>
+
+      <p class="session-note" id="session-note"></p>
+    </section>
+  </main>
+
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+
+  <script>
+    "use strict";
+
+    const $ = (id) => document.getElementById(id);
+    const page = $("history-page");
+    const sessionNote = $("session-note");
+
+    // ---- Text helpers (mirror dashboard.html / payment.html) ------------
+    const FALLBACK = "Not provided";
+    const NA = "Not available";
+    // Return `val` when it's a usable value, otherwise the fallback text.
+    function show(val, fallback) {
+      if (val === null || val === undefined) return fallback || FALLBACK;
+      const s = String(val).trim();
+      return s === "" ? (fallback || FALLBACK) : s;
+    }
+    // Format a timestamp (ISO string or unix seconds) → long date, or null.
+    function fmtDate(value) {
+      if (!value) return null;
+      const d = typeof value === "number" ? new Date(value * 1000) : new Date(value);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    }
+    // Format a date-only value ("YYYY-MM-DD") with no timezone shift.
+    function cinvDate(ymd) {
+      if (!ymd) return null;
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd));
+      if (!m) return fmtDate(ymd);
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      return isNaN(d.getTime())
+        ? null
+        : d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    }
+
+    // ====================================================================
+    // INVOICE HISTORY — read-only list of ALL invoices an admin created for
+    // the signed-in client (drafts excluded — they are admin work-in-progress).
+    //   • RLS (db/invoices-schema.sql) restricts the anon key to the caller's
+    //     own rows; the query also filters client_user_id = user.id. A client
+    //     can NEVER see, edit, or mark paid another client's invoice.
+    //   • Every value is rendered with textContent via cinvEl() (no innerHTML
+    //     of DB data), so admin-entered invoice text can't inject markup.
+    //   • No service-role key, no write/mutate path — display only. Paying is
+    //     done on /payment (payment.html); here we only LINK to it.
+    // ====================================================================
+
+    // Statuses a client may SEE. Draft is admin-only work-in-progress.
+    const SHOW_DRAFTS_TO_CLIENTS = false;
+    const CLIENT_VISIBLE_STATUSES =
+      ["issued", "paid", "overdue", "void", "canceled"]
+        .concat(SHOW_DRAFTS_TO_CLIENTS ? ["draft"] : []);
+    // Unpaid + actionable → gets a "Pay invoice" link. Paid/void/canceled do not.
+    const PAYABLE_STATUSES = ["issued", "overdue"];
+    const CLIENT_STATUS_LABEL = {
+      draft: "Draft", issued: "Issued", paid: "Paid",
+      overdue: "Overdue", void: "Void", canceled: "Canceled",
+    };
+
+    const clientMoneyFmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+    // Amounts are stored as integer cents; format defensively (2500 → "$25.00").
+    function cinvMoney(cents) {
+      const n = Number(cents);
+      return clientMoneyFmt.format((Number.isFinite(n) ? n : 0) / 100);
+    }
+    // Short human reference from the UUID (no invoice_number column exists).
+    function cinvRef(id) {
+      const s = String(id || "");
+      return s ? "#" + s.slice(0, 8).toUpperCase() : "";
+    }
+    // DOM builder — keeps every value as text (no innerHTML of DB data).
+    function cinvEl(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined && text !== null) n.textContent = text;
+      return n;
+    }
+    function cinvMetaItem(label, value) {
+      const wrap = cinvEl("span", "cinv-meta-item");
+      wrap.appendChild(cinvEl("span", "f-label", label + ": "));
+      wrap.appendChild(cinvEl("span", null, value));
+      return wrap;
+    }
+
+    // Fetch + render the signed-in client's full invoice history, newest first.
+    async function loadHistory(user) {
+      const loadingEl = $("cinv-loading");
+      const errEl = $("cinv-load-error");
+      const emptyEl = $("cinv-empty");
+      const listEl = $("cinv-list");
+      if (!listEl || !user) return;
+      try {
+        // The caller's own invoices only. RLS enforces this server-side; we also
+        // scope to user.id (defence in depth) and hide admin-only drafts.
+        const { data: invoices, error } = await db
+          .from("invoices")
+          .select("id,title,status,total_amount_cents,due_date,paid_at,created_at")
+          .eq("client_user_id", user.id)
+          .in("status", CLIENT_VISIBLE_STATUSES)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+
+        loadingEl.classList.add("hidden");
+        if (!invoices || invoices.length === 0) {
+          emptyEl.classList.remove("hidden");
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        invoices.forEach((iv) => frag.appendChild(buildHistoryCard(iv)));
+        listEl.textContent = "";
+        listEl.appendChild(frag);
+        listEl.classList.remove("hidden");
+      } catch (e) {
+        console.error("Could not load invoices:", e && e.message);
+        loadingEl.classList.add("hidden");
+        listEl.classList.add("hidden");
+        emptyEl.classList.add("hidden");
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    // Build one read-only history card: Name, ID, Status, Total, Date, and a
+    // "Pay invoice" LINK for unpaid invoices only. All text via cinvEl/textContent.
+    function buildHistoryCard(iv) {
+      const status = String(iv.status || "").toLowerCase();
+      const card = cinvEl("article", "cinv-card");
+      card.setAttribute("aria-label", "Invoice " + cinvRef(iv.id));
+
+      // Head: Name (title) + short ID reference, status badge.
+      const head = cinvEl("div", "cinv-card-head");
+      const titleWrap = cinvEl("div");
+      titleWrap.appendChild(cinvEl("h2", "cinv-title", show(iv.title, "Invoice")));
+      titleWrap.appendChild(cinvEl("span", "cinv-id", cinvRef(iv.id)));
+      head.appendChild(titleWrap);
+      head.appendChild(cinvEl("span", "cinv-badge " + status, CLIENT_STATUS_LABEL[status] || (status || "—")));
+      card.appendChild(head);
+
+      // Meta: Total + a date (the paid date for paid invoices, the created date
+      // otherwise, plus the due date for anything still open).
+      const meta = cinvEl("div", "cinv-meta");
+      meta.appendChild(cinvMetaItem("Total", cinvMoney(iv.total_amount_cents)));
+      const created = fmtDate(iv.created_at);
+      if (created) meta.appendChild(cinvMetaItem("Created", created));
+      if (status === "paid") {
+        const paid = fmtDate(iv.paid_at);
+        if (paid) meta.appendChild(cinvMetaItem("Paid", paid));
+      } else {
+        const due = cinvDate(iv.due_date);
+        if (due) meta.appendChild(cinvMetaItem("Due", due));
+      }
+      card.appendChild(meta);
+
+      // Pay link — ONLY for unpaid, payable invoices. Paid invoices get no button.
+      if (PAYABLE_STATUSES.indexOf(status) !== -1) {
+        const actions = cinvEl("div", "cinv-actions");
+        const pay = cinvEl("a", "ws-btn cinv-pay", "Pay invoice");
+        pay.href = "/payment?invoice_id=" + encodeURIComponent(iv.id);
+        actions.appendChild(pay);
+        actions.appendChild(cinvEl("span", "cinv-pay-note", "Pay securely on the payments page."));
+        card.appendChild(actions);
+      }
+      return card;
+    }
+
+    // ---- Page load: gate on a real session, then load + render ----------
+    (async () => {
+      const { data: authData, error: authError } = await db.auth.getUser();
+      if (authError || !authData || !authData.user) {
+        window.location.replace("/login");
+        return;
+      }
+
+      const { data } = await db.auth.getSession();
+      if (!data.session) {
+        window.location.replace("/login");
+        return;
+      }
+
+      const user = authData.user;
+      sessionNote.textContent = user.email ? "Signed in as " + user.email + "." : "";
+      page.classList.remove("hidden");
+      loadHistory(user);
+    })();
+  </script>
+</body>
+</html>

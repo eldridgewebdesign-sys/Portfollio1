@@ -227,6 +227,50 @@
       .cinv-totals{width:100%;min-width:0}
       .cinv-actions .cinv-pay{width:100%;text-align:center}
     }
+
+    /* ── Stripe Payment Element modal (ported from dashboard.html; theme-matched) ── */
+    .pay-overlay{
+      position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+      padding:1.2rem;background:rgba(7,30,40,.55);
+      backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    }
+    .pay-card{
+      width:100%;max-width:460px;max-height:92vh;overflow-y:auto;
+      background:rgba(234,247,249,.97);border:1px solid var(--panel-bd);border-radius:18px;
+      padding:clamp(1.5rem,3vw,2.1rem);
+      box-shadow:0 26px 64px rgba(0,30,45,.45),inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .pay-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.1rem}
+    .pay-title{
+      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.55rem;
+      color:#0e2f44;letter-spacing:.01em;line-height:1.15;
+    }
+    .pay-close{
+      appearance:none;-webkit-appearance:none;background:none;border:none;cursor:pointer;
+      font-size:1.6rem;line-height:1;color:var(--ink-soft);padding:.1rem .35rem;border-radius:8px;
+      transition:color .2s,background .2s;
+    }
+    .pay-close:hover{color:#0c2c40;background:rgba(255,255,255,.5)}
+    .pay-close:focus-visible{outline:2px solid var(--turq);outline-offset:2px}
+    #payment-element{margin:.3rem 0 1.1rem;min-height:44px}
+    .pay-actions{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+    .pay-actions .ws-btn{margin-top:0}
+    .pay-cancel{
+      cursor:pointer;border:1px solid rgba(17,54,76,.3);background:rgba(255,255,255,.5);
+      font-family:'Mulish',sans-serif;font-weight:600;font-size:.82rem;letter-spacing:.06em;color:var(--ink);
+      padding:.7rem 1.4rem;border-radius:9px;transition:background .2s,border-color .2s;
+    }
+    .pay-cancel:hover{background:rgba(255,255,255,.78);border-color:var(--turq)}
+    .pay-cancel:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+    .pay-cancel[disabled]{opacity:.55;cursor:not-allowed}
+    .pay-msg{display:none;margin-top:1rem;padding:.7rem .95rem;border-radius:10px;font-size:.92rem;line-height:1.5}
+    .pay-msg.show{display:block}
+    .pay-msg.error{color:#7c1d29;background:rgba(255,255,255,.6);border:1px solid rgba(150,40,52,.4)}
+    .pay-msg.success{color:#0c5a40;background:rgba(255,255,255,.6);border:1px solid rgba(30,140,90,.4)}
+    .pay-msg.pending{color:#5a4a0c;background:rgba(255,255,255,.6);border:1px solid rgba(150,120,30,.45)}
+    @media(max-width:420px){
+      .pay-actions .ws-btn,.pay-cancel{width:100%;text-align:center}
+    }
   </style>
 </head>
 <body>
@@ -250,7 +294,7 @@
       <div>
         <p class="eyebrow">Billing</p>
         <h1>Your Invoices</h1>
-        <p class="subhead">Invoices WebSharke has issued to your account. Review the details below — to settle anything outstanding, just get in touch.</p>
+        <p class="subhead">Invoices WebSharke has issued to your account. Review the details below and pay any outstanding invoice securely online.</p>
       </div>
       <a class="back-link" href="/dashboard">Back to Dashboard</a>
     </div>
@@ -258,6 +302,9 @@
     <section class="shell" aria-label="Your invoices">
       <!-- Shown only if invoices fail to load. -->
       <p class="cinv-error hidden" id="cinv-load-error" role="alert">We couldn’t load your invoices right now. Please refresh the page or try again later.</p>
+
+      <!-- Shown if starting a payment fails before the Stripe modal opens. -->
+      <p class="cinv-error hidden" id="pay-error" role="alert"></p>
 
       <!-- Loading / empty / list states (mutually exclusive). The short status
            messages share one live region so the loading → empty/loaded
@@ -274,8 +321,26 @@
     </section>
   </main>
 
+  <!-- ── Stripe Payment Element modal (hidden until "Pay invoice" is clicked) ── -->
+  <div class="pay-overlay hidden" id="pay-overlay" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+    <div class="pay-card">
+      <div class="pay-head">
+        <h2 class="pay-title" id="pay-title">Complete your payment</h2>
+        <button class="pay-close" id="pay-close" type="button" aria-label="Close payment dialog">&times;</button>
+      </div>
+      <div id="payment-element"><!-- Stripe Payment Element mounts here --></div>
+      <div class="pay-actions">
+        <button class="ws-btn" id="pay-submit" type="button">Pay</button>
+        <button class="pay-cancel" id="pay-cancel" type="button">Cancel</button>
+      </div>
+      <p class="pay-msg" id="pay-msg" role="alert"></p>
+    </div>
+  </div>
+
   <script src="js/vendor/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
+  <!-- Stripe.js (official CDN) — required for the Payment Element; Stripe forbids self-hosting it. -->
+  <script src="https://js.stripe.com/v3/"></script>
 
   <script>
     "use strict";
@@ -360,6 +425,7 @@
       const emptyEl = $("cinv-empty");
       const listEl = $("cinv-list");
       if (!listEl || !user) return;
+      clientUser = user; // remembered so a confirmed payment can refresh this list
       try {
         // 1) The caller's own invoices, newest first. Scoped to user.id (RLS
         //    also enforces this) and to client-visible statuses (drafts hidden).
@@ -452,20 +518,17 @@
         card.appendChild(box);
       }
 
-      // Actions: disabled Pay placeholder for unpaid, actionable invoices only.
+      // Actions: a real "Pay invoice" button for unpaid, actionable invoices. It
+      // opens the Stripe Payment Element (server-created PaymentIntent for the DB
+      // amount via /api/invoices/pay); the webhook — not this click — is what
+      // marks the invoice paid.
       if (PAYABLE_STATUSES.indexOf(status) !== -1) {
         const actions = cinvEl("div", "cinv-actions");
         const pay = cinvEl("button", "ws-btn cinv-pay", "Pay invoice");
         pay.type = "button";
-        pay.disabled = true;                       // placeholder — Stripe not wired yet
-        pay.setAttribute("aria-disabled", "true");
-        pay.title = "Online payment is coming soon.";
-        const note = cinvEl("span", "cinv-pay-note", "Online payment coming soon — contact us to settle this invoice.");
-        const noteId = "cinv-paynote-" + String(iv.id);
-        note.id = noteId;
-        pay.setAttribute("aria-describedby", noteId);   // tie the "why" to the inert button
+        pay.addEventListener("click", () => payInvoice(iv.id, pay));
         actions.appendChild(pay);
-        actions.appendChild(note);
+        actions.appendChild(cinvEl("span", "cinv-pay-note", "Secure card payment, processed by Stripe."));
         card.appendChild(actions);
       }
       return card;
@@ -530,6 +593,233 @@
       return row;
     }
 
+    // ====================================================================
+    // PAY INVOICE — Stripe Payment Element flow (ported from the dashboard's
+    // shipped invoice pay flow). On "Pay invoice" we ask /api/invoices/pay for a
+    // PaymentIntent client secret — the SERVER reads the amount from the DB, the
+    // client never sends it — then mount the Stripe Payment Element. The webhook
+    // (api/webhook.js, payment_intent.succeeded) is the ONLY thing that marks an
+    // invoice paid, so we wait for the DB status to flip before showing success.
+    //
+    // The publishable key is PUBLIC and safe in frontend code (like the Supabase
+    // anon key). The SECRET key is NEVER here — it lives only in /api functions.
+    // /api/invoices/pay returns the publishable key, so Stripe is built from it
+    // (its mode always matches the server's secret key).
+    // ====================================================================
+    const SUPPORT_EMAIL = "weeldridge09@gmail.com";
+
+    // Invoice payments return to THIS page; the DB-truthful list reloads once the
+    // webhook marks the invoice paid — never a static "you're all set".
+    const INVOICE_RETURN_URL = new URL("/payment", window.location.href).href;
+
+    let stripe = null;             // built lazily from the key /api/invoices/pay returns
+    let payElements = null;        // current Stripe Elements instance
+    let payPaymentElement = null;  // current mounted Payment Element
+    let payBusy = false;           // true while a payment is being submitted
+    let payInvoiceId = null;       // the invoice currently being paid
+    let clientUser = null;         // signed-in client, captured when invoices load
+
+    const payOverlay = $("pay-overlay");
+    const payMsg = $("pay-msg");
+    const paySubmit = $("pay-submit");
+    const payCancel = $("pay-cancel");
+    const payClose = $("pay-close");
+    const payError = $("pay-error");
+
+    function showPayError(msg) {
+      if (!payError) return;
+      payError.textContent = msg || "Something went wrong. Please try again.";
+      payError.classList.remove("hidden");
+    }
+    function clearPayError() { if (payError) payError.classList.add("hidden"); }
+
+    function setPayMsg(text, type) {
+      payMsg.textContent = text || "";
+      payMsg.className = "pay-msg" + (text ? " show " + (type || "error") : "");
+    }
+    function openPayModal() {
+      setPayMsg("");
+      payOverlay.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+    function closePayModal() {
+      if (payBusy) return; // never close mid-submit
+      payOverlay.classList.add("hidden");
+      document.body.style.overflow = "";
+      // Tear down the mounted Payment Element so re-opening never duplicates it.
+      if (payPaymentElement) { try { payPaymentElement.destroy(); } catch (e) {} }
+      payPaymentElement = null;
+      payElements = null;
+      payInvoiceId = null;
+      $("payment-element").innerHTML = "";
+      setPayMsg("");
+    }
+
+    // Build a fresh Elements + Payment Element from a clientSecret and open it.
+    function mountPayment(clientSecret) {
+      if (payPaymentElement) { try { payPaymentElement.destroy(); } catch (e) {} }
+      payPaymentElement = null;
+      $("payment-element").innerHTML = "";
+      payElements = stripe.elements({
+        clientSecret,
+        appearance: {
+          theme: "stripe",
+          variables: {
+            colorPrimary: "#15707f",
+            colorText: "#11364c",
+            fontFamily: "Mulish, system-ui, sans-serif",
+            borderRadius: "9px",
+          },
+        },
+      });
+      payPaymentElement = payElements.create("payment");
+      payPaymentElement.mount("#payment-element");
+      openPayModal();
+    }
+
+    // "Pay invoice" click: verify the session, ask /api/invoices/pay for a
+    // PaymentIntent client secret (the SERVER reads the amount from the DB — the
+    // client never sends it), then open the Payment Element modal. The webhook —
+    // not this click — is what marks the invoice paid.
+    async function payInvoice(invoiceId, btn) {
+      clearPayError();
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
+      btn.textContent = "Starting…";
+      try {
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) { showPayError("You must be signed in to pay an invoice."); return; }
+
+        const res = await fetch("/api/invoices/pay", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ invoice_id: invoiceId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Could not start payment. Please try again.");
+        if (!data.clientSecret) throw new Error("Could not start payment. Please try again.");
+
+        // Build a Stripe instance from the server-provided publishable key (its
+        // mode always matches the server's secret key).
+        if (!stripe && data.publishableKey && window.Stripe && /^pk_/.test(data.publishableKey)) {
+          stripe = window.Stripe(data.publishableKey);
+        }
+        if (!stripe) throw new Error("Payments aren’t available right now. Please contact " + SUPPORT_EMAIL + ".");
+
+        // Title the modal with the amount (display only — server is the source of truth).
+        if (data.invoice && data.invoice.total_amount_cents != null) {
+          $("pay-title").textContent = "Pay invoice — " + cinvMoney(data.invoice.total_amount_cents);
+        }
+        payInvoiceId = invoiceId;
+        mountPayment(data.clientSecret);
+      } catch (err) {
+        showPayError(err.message || "Could not start payment. Please try again.");
+      } finally {
+        btn.disabled = false;
+        btn.removeAttribute("aria-busy");
+        btn.textContent = original;
+      }
+    }
+
+    // Poll the invoice row until the webhook flips it to "paid" (or we give up).
+    // api/webhook.js (payment_intent.succeeded) is the ONLY writer of "paid" — the
+    // browser never sets it. ~2s × 15 ≈ 30s, then we stop and tell the user.
+    function pollInvoicePaid(invoiceId, tries, intervalMs) {
+      tries = tries || 15;
+      intervalMs = intervalMs || 2000;
+      return new Promise((resolve) => {
+        let n = 0;
+        const tick = async () => {
+          n++;
+          try {
+            const { data, error } = await db
+              .from("invoices")
+              .select("status")
+              .eq("id", invoiceId)
+              .maybeSingle();
+            if (!error && data && String(data.status).toLowerCase() === "paid") {
+              resolve(true);
+              return;
+            }
+          } catch (e) { /* transient read error — keep polling */ }
+          if (n >= tries) { resolve(false); return; }
+          setTimeout(tick, intervalMs);
+        };
+        tick();
+      });
+    }
+
+    // Submit the payment from inside the modal. A Payment Element closing — or
+    // stripe.confirmPayment resolving without an error — is NOT proof of payment
+    // (async methods like Cash App Pay resolve here while still processing), so we
+    // wait for the webhook to mark the invoice paid in the DB before showing
+    // success. We never mark an invoice paid from the browser.
+    paySubmit.addEventListener("click", async () => {
+      if (!payElements || payBusy) return;
+      payBusy = true;
+      setPayMsg("");
+      const orig = paySubmit.textContent;
+      paySubmit.disabled = true;
+      payCancel.disabled = true;
+      paySubmit.textContent = "Processing…";
+
+      const reEnablePay = () => {
+        paySubmit.disabled = false;
+        payCancel.disabled = false;
+        paySubmit.textContent = orig;
+        payBusy = false;
+      };
+
+      try {
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements: payElements,
+          confirmParams: { return_url: INVOICE_RETURN_URL },
+          redirect: "if_required",
+        });
+
+        if (error) {
+          setPayMsg(error.message || "Payment could not be completed. Please try again.", "error");
+          reEnablePay();
+          return;
+        }
+
+        const piStatus = (paymentIntent && paymentIntent.status) || "";
+        if (piStatus === "requires_payment_method" || piStatus === "canceled") {
+          setPayMsg("Payment wasn’t completed yet. You can try again.", "error");
+          reEnablePay();
+          return;
+        }
+
+        // "succeeded" / "processing" / "requires_action": wait for the webhook to
+        // mark the invoice paid in the DB before showing success.
+        setPayMsg("Payment received — waiting for confirmation…", "pending");
+        const paid = await pollInvoicePaid(payInvoiceId);
+        if (paid) {
+          setPayMsg("Payment confirmed. Updating your invoices…", "success");
+          payBusy = false;            // release the lock so the modal can close
+          closePayModal();
+          if (clientUser) loadClientInvoices(clientUser); // paid invoice drops its Pay button
+          return;
+        }
+
+        setPayMsg("Payment not confirmed yet. You can refresh the page or try again.", "pending");
+        reEnablePay();
+      } catch (err) {
+        setPayMsg(err.message || "Payment could not be completed. Please try again.", "error");
+        reEnablePay();
+      }
+    });
+
+    // Close / cancel (disabled while a payment is in flight).
+    payClose.addEventListener("click", closePayModal);
+    payCancel.addEventListener("click", closePayModal);
+    payOverlay.addEventListener("click", (e) => { if (e.target === payOverlay) closePayModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !payOverlay.classList.contains("hidden")) closePayModal();
+    });
+
     // ---- Page load: gate on a real session, then load + render ----------
     (async () => {
       const { data: authData, error: authError } = await db.auth.getUser();
@@ -548,6 +838,19 @@
       sessionNote.textContent = user.email ? "Signed in as " + user.email + "." : "";
       page.classList.remove("hidden");
       loadClientInvoices(user);
+
+      // Deep link from the dashboard "Pay invoice" button: /payment?invoice_id=…
+      // opens that specific invoice's Stripe payment straight away. The amount and
+      // whether it is payable are enforced server-side by /api/invoices/pay, so an
+      // unknown / already-paid / not-yours id just surfaces a safe error banner.
+      // (This also drives monthly/annual invoices — the route starts a subscription
+      // and the webhook marks the invoice paid; the client code is the same.)
+      const requestedInvoice = (new URLSearchParams(window.location.search).get("invoice_id") || "").trim();
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedInvoice)) {
+        // payInvoice mutates the button it is given (label/disabled); a detached
+        // one is fine here — the modal still opens and the server validates.
+        payInvoice(requestedInvoice, document.createElement("button"));
+      }
     })();
   </script>
 </body>

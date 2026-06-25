@@ -1,148 +1,398 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Served at /Animations/laptop-teardown — anchor all relative asset URLs
-     (style.css, script.js, vendor/, fonts, and the import map) to this folder so
-     they resolve whether or not the clean URL carries a trailing slash. -->
-<base href="/Animations/laptop-teardown/">
-<title>Interactive Laptop Teardown — WebSharke</title>
-<meta name="description" content="A scroll-driven 3D teardown: a laptop separating into its internal components.">
-<!-- Site tab icon (root-absolute so it ignores <base>); also avoids a /favicon.ico 404. -->
+<title>Laptop Teardown — WebSharke Engineering</title>
+<meta name="description" content="A scroll-driven product study: a laptop, taken apart layer by layer. WebSharke Engineering.">
+<meta name="theme-color" content="#e9e1d5">
+
+<!-- Tab icon (root-absolute, served at site root) -->
 <link rel="icon" href="/images/Tab-Logo.png" type="image/png">
 
-<!-- Always start at the top, never mid-teardown -->
+<!-- Decide the experience mode as early as possible, before first paint, so the
+     animated layout never flashes the static one (and vice-versa). -->
 <script>
-  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  window.__teardownReady = false;
-  window.__teardownError = null;
-
-  function teardownShowError(msg) {
-    document.getElementById('loader')?.classList.add('error');
-    var d = document.getElementById('err-detail');
-    if (d && msg) d.textContent = msg;
-  }
-  var FILE_MSG = 'This page must be served by the website over http(s), not opened as a local ' +
-    'file (browsers block ES modules on the file:// protocol). Open it from the WebSharke ' +
-    'site at /Animations/laptop-teardown/.';
-
-  // An ES-module page can't run from file:// — say so immediately, don't wait 6s.
-  if (location.protocol === 'file:')
-    document.addEventListener('DOMContentLoaded', function () { teardownShowError(FILE_MSG); });
-
-  // Capture the first real error so the fallback can explain *why* it failed.
-  window.addEventListener('error', function (e) {
-    if (!window.__teardownError && e && (e.message || e.filename))
-      window.__teardownError = (e.message || 'Load error') +
-        (e.filename ? ' — ' + e.filename.split('/').pop() : '');
-  }, true);
-  window.addEventListener('unhandledrejection', function (e) {
-    if (!window.__teardownError)
-      window.__teardownError = String((e.reason && e.reason.message) || e.reason || 'Load failed');
-  });
-  // Fallback: if the scene never initialises within a few seconds, explain why.
-  window.addEventListener('load', function () {
-    setTimeout(function () {
-      if (window.__teardownReady) return;
-      teardownShowError(location.protocol === 'file:'
-        ? FILE_MSG
-        : (window.__teardownError || 'Please refresh to try again.'));
-    }, 6000);
-  });
+  (function () {
+    var d = document.documentElement;
+    d.classList.remove('no-js');
+    d.classList.add('js');
+    try {
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('anim');
+    } catch (e) { d.classList.add('anim'); }
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  })();
 </script>
 
-<!-- Fonts (Cormorant Garamond + Mulish) — vendored locally, no external CDN. -->
-<link rel="stylesheet" href="vendor/fonts.css">
+<!-- Preload the two assets seen first: the interior backdrop + the closed laptop. -->
+<link rel="preload" as="image" href="/images/Laptop/interior.jpg">
+<link rel="preload" as="image" href="/images/Laptop/closed.png">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/Animations/laptop-teardown/vendor/fonts/cormorantgaramond-600.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2">
 
-<link rel="stylesheet" href="style.css">
+<style>
+/* ── Vendored editorial fonts (no external CDN) ─────────────────────────────── */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/Animations/laptop-teardown/vendor/fonts/cormorantgaramond-600.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;
+  src:url(/Animations/laptop-teardown/vendor/fonts/cormorantgaramond-500i.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+/* Mulish 500 is byte-identical to 400 in this vendored set, so it points at the
+   one file — the browser dedupes to a single download (no real medium weight ships). */
+@font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
 
-<!-- GSAP + ScrollTrigger (vendored locally → window.gsap / window.ScrollTrigger) -->
-<script src="vendor/gsap.min.js"></script>
-<script src="vendor/ScrollTrigger.min.js"></script>
-
-<!-- Three.js via import map — vendored locally, NO external CDN (works offline,
-     and can't be blocked by Tracking Prevention / ad-blockers / proxies). -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "./vendor/three.module.js",
-    "three/addons/": "./vendor/jsm/"
-  }
+/* ── Tokens ─────────────────────────────────────────────────────────────────── */
+:root{
+  --cream:#e9e1d5;          /* warm interior tone — matches the backdrop's wall/floor */
+  --cream-soft:#efe9df;
+  --ink:#2a2620;            /* warm near-black — the wordmark */
+  --ink-2:#4a4339;
+  --stone:#5d5448;          /* muted brown — small labels (~5.7:1 on cream, WCAG AA) */
+  --line:rgba(42,38,32,.16);
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Mulish',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
 }
-</script>
+
+*{box-sizing:border-box}
+/* overflow-x:clip (not hidden) so body never becomes a scroll container — that
+   would make it the sticky stage's scroll ancestor and can break the pin on iOS. */
+html,body{margin:0;padding:0;max-width:100%;overflow-x:clip}
+body{
+  font-family:var(--sans);
+  color:var(--ink);
+  background:var(--cream);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+img{display:block;max-width:100%}
+a{color:inherit}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BASE = STATIC LAYOUT  (no JS, or prefers-reduced-motion)
+   A calm, readable, vertically-stacked sequence over a fixed interior backdrop.
+   The .anim overrides below turn this into the pinned scroll experience.
+   ════════════════════════════════════════════════════════════════════════════ */
+.scene{position:relative}
+.stage{position:relative}
+
+.bg{
+  position:fixed; inset:0; z-index:-2;
+  background:#e9e1d5 url(/images/Laptop/interior.jpg) center center / cover no-repeat;
+}
+/* soft top/bottom blend so the photo melts into the cream page */
+.bg::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(to bottom, rgba(233,225,213,.35) 0%, rgba(233,225,213,0) 22% 78%, rgba(233,225,213,.55) 100%);
+}
+
+.frame{position:relative; display:grid; place-items:center; text-align:center}
+
+/* Intro */
+.intro{min-height:92vh; padding:10vh 6vw}
+.intro-in{max-width:100%}
+.kicker{
+  margin:0 0 clamp(1.4rem,3vw,2.4rem);
+  font-family:var(--sans); font-weight:500; color:var(--stone);
+  text-transform:uppercase; letter-spacing:.34em; font-size:clamp(.62rem,1.5vw,.8rem);
+  padding-left:.34em;
+}
+.wordmark{
+  margin:0; color:var(--ink);
+  font-family:var(--serif); font-weight:600; line-height:.92;
+  text-transform:uppercase; white-space:nowrap;
+  /* min() keeps it from ever exceeding the viewport: at the vw size the glyph
+     run + tracking always fits the content box; capped on large screens.
+     (Cormorant's caps are wide — the W especially — so the vw factor is tuned
+     empirically, with a tighter override on phones below.) */
+  font-size:min(9rem,10.2vw);
+  letter-spacing:.09em; padding-left:.09em;
+}
+.sub{
+  margin:clamp(1rem,2.4vw,1.8rem) 0 0;
+  font-family:var(--sans); font-weight:500; color:var(--ink-2);
+  text-transform:uppercase; letter-spacing:.52em; font-size:clamp(.72rem,2vw,1.05rem);
+  padding-left:.52em;
+}
+
+/* Product frames (closed / three-layer / four-layer) */
+figure.frame{margin:0; min-height:88vh; padding:8vh 6vw}
+figure.frame img{
+  width:min(940px,86vw); height:auto; max-height:80vh; object-fit:contain;
+  filter:drop-shadow(0 26px 40px rgba(40,33,24,.16));
+}
+.f-cap{
+  margin-top:clamp(1.2rem,3vw,2rem);
+  font-family:var(--sans); font-weight:500; color:var(--stone);
+  text-transform:uppercase; letter-spacing:.28em; font-size:clamp(.66rem,1.5vw,.82rem);
+  padding-left:.28em;
+}
+.cap-end{
+  margin:0; min-height:36vh; display:grid; place-items:center; padding:6vh 6vw;
+  font-family:var(--serif); font-style:italic; font-weight:500; color:var(--ink);
+  font-size:clamp(1.4rem,4vw,2.6rem); letter-spacing:.01em;
+}
+
+/* Static-mode hides the scroll-only chrome */
+.cue,.bar{display:none}
+
+/* ── Outro (always normal flow, on the cream page) ──────────────────────────── */
+.outro{
+  position:relative; z-index:1; background:var(--cream);
+  min-height:64vh; display:grid; place-items:center; text-align:center;
+  padding:clamp(5rem,12vh,9rem) 6vw;
+  border-top:1px solid var(--line);
+}
+.outro-line{
+  margin:0 auto; max-width:22ch; color:var(--ink);
+  font-family:var(--serif); font-style:italic; font-weight:500; line-height:1.12;
+  font-size:clamp(1.5rem,4vw,2.6rem);
+}
+.outro-eyebrow{
+  margin:0 0 clamp(1.4rem,3vw,2rem); color:var(--stone); font-weight:500;
+  text-transform:uppercase; letter-spacing:.34em; font-size:clamp(.62rem,1.4vw,.78rem); padding-left:.34em;
+}
+/* Editorial text link, not a SaaS pill */
+.cta{
+  display:inline-flex; align-items:center; gap:.5em; margin-top:clamp(2.2rem,4.5vw,3.2rem);
+  font-family:var(--sans); font-weight:500; text-decoration:none; color:var(--ink);
+  text-transform:uppercase; letter-spacing:.22em; font-size:.74rem;
+  padding-bottom:.4em; border-bottom:1px solid var(--line);
+  transition:border-color .35s ease;
+}
+.cta svg{width:1.05em;height:1.05em;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s ease}
+.cta:hover,.cta:focus-visible{border-color:var(--ink)}
+.cta:hover svg,.cta:focus-visible svg{transform:translateX(3px)}
+
+.site-foot{
+  background:var(--cream); position:relative; z-index:1;
+  text-align:center; color:var(--stone); font-size:.78rem; letter-spacing:.06em;
+  padding:2.4rem 6vw; border-top:1px solid var(--line);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ENHANCED = PINNED SCROLL EXPERIENCE  (.anim — motion allowed)
+   The stage is sticky; every frame is stacked absolutely and cross-faded by JS
+   as you scroll through the tall .scene. Background stays fixed the whole time.
+   ════════════════════════════════════════════════════════════════════════════ */
+.anim .scene{height:560vh}
+.anim .stage{
+  position:sticky; top:0; height:100vh; height:100svh; overflow:hidden;
+}
+.anim .bg{position:absolute; z-index:0}
+.anim .frame{
+  position:absolute; inset:0; margin:0; min-height:0; padding:clamp(1.5rem,5vw,4rem);
+  opacity:0; will-change:opacity,transform; backface-visibility:hidden;
+}
+.anim .intro{opacity:1; z-index:5}
+.anim figure.frame{z-index:3}
+.anim figure.frame img{
+  width:min(1040px,90vw); max-height:84vh;
+  filter:drop-shadow(0 30px 55px rgba(40,33,24,.22));
+}
+.anim .f-cap{display:none}
+
+/* End line — pinned near the lower third, over the held teardown.
+   (No will-change: it animates only in the last ~10% of scroll, so a permanent
+   compositor layer isn't worth holding.) */
+.anim .cap-end{
+  position:absolute; left:0; right:0; bottom:clamp(8vh,12vh,14vh); top:auto; z-index:6;
+  min-height:0; padding:0 8vw; opacity:0;
+}
+
+/* Scroll cue */
+.anim .cue{
+  display:block; position:absolute; left:50%; bottom:max(5vh,env(safe-area-inset-bottom)); transform:translateX(-50%);
+  z-index:6; color:var(--stone); font-size:.66rem; font-weight:500;
+  text-transform:uppercase; letter-spacing:.32em; padding-left:.32em;
+}
+.anim .cue span{position:relative}
+.anim .cue span::after{
+  content:""; display:block; width:1px; height:34px; margin:.8em auto 0;
+  background:linear-gradient(to bottom,var(--stone),transparent);
+  animation:cueLine 2.2s ease-in-out infinite;
+}
+@keyframes cueLine{0%,100%{transform:scaleY(.4);opacity:.4;transform-origin:top}50%{transform:scaleY(1);opacity:1;transform-origin:top}}
+
+/* Progress hairline */
+.anim .bar{
+  display:block; position:absolute; left:0; right:0; bottom:env(safe-area-inset-bottom,0); height:2px; z-index:7;
+  background:rgba(42,38,32,.10);
+}
+.anim .bar i{
+  display:block; height:100%; width:100%; transform:scaleX(0); transform-origin:left;
+  background:linear-gradient(to right,rgba(42,38,32,.55),rgba(42,38,32,.3));
+}
+
+/* In animated mode the body is its natural height (the .scene provides the scroll) */
+.anim .outro,.anim .site-foot{z-index:1}
+
+/* ── Responsive nudges ──────────────────────────────────────────────────────── */
+@media (max-width:640px){
+  .wordmark{font-size:9vw; letter-spacing:.04em; padding-left:.04em}
+  .sub{letter-spacing:.4em; padding-left:.4em}
+  .anim figure.frame img{width:94vw; max-height:62vh}
+  figure.frame img{width:92vw; max-height:60vh}
+  .anim .cap-end{bottom:9vh}
+}
+@media (max-width:400px){
+  .wordmark{letter-spacing:.03em; padding-left:.03em}
+}
+/* Short / landscape viewports (incl. narrow landscape phones <=640px wide):
+   reclaim height so the laptop stays a usable size. Placed after the mobile block
+   so it wins by source order regardless of width. */
+@media (max-height:560px){
+  .anim figure.frame img,
+  figure.frame img{max-height:84vh}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .anim .cue span::after{animation:none}
+}
+</style>
 </head>
 
 <body>
 
-<!-- ── LOADING FALLBACK ─────────────────────────────────────────────────────── -->
-<div id="loader" aria-hidden="true">
-  <div class="loader-inner">
-    <span class="spinner"></span>
-    <p class="loading-msg">Preparing teardown</p>
-    <p class="error-msg">
-      Couldn’t start the 3D experience.<br>
-      <span id="err-detail">Please refresh to try again.</span>
-    </p>
-  </div>
-</div>
+<main class="scene">
+  <div class="stage">
 
-<!-- ── INTRO ────────────────────────────────────────────────────────────────── -->
-<section id="intro">
-  <div class="intro-wrap">
-    <p class="eyebrow">WebSharke</p>
-    <h1>Interactive laptop <em>teardown</em></h1>
-    <p class="lede">
-      A scroll-based 3D build study. Keep scrolling to take the laptop apart, one layer at a time.
-    </p>
-    <div class="scroll-cue"><span></span></div>
-  </div>
-</section>
+    <!-- Fixed interior backdrop — consistent across the whole sequence -->
+    <div class="bg" aria-hidden="true"></div>
 
-<!-- ── TEARDOWN (pinned 3D stage) ───────────────────────────────────────────── -->
-<section id="teardown">
-  <div id="stage">
-    <canvas id="webgl"></canvas>
-
-    <!-- Overlays (non-interactive so scrolling passes straight through) -->
-    <div class="overlay">
-      <h2 id="stage-title">A laptop, in full.</h2>
-
-      <ul id="index" class="side-index"><!-- built from STAGES in script.js --></ul>
-
-      <div class="caption">
-        <span id="cap-num">01</span>
-        <span id="cap-name">Assembled</span>
+    <!-- 1 · Intro wordmark -->
+    <header class="frame intro">
+      <div class="intro-in">
+        <p class="kicker">Precision website systems</p>
+        <h1 class="wordmark">WebSharke</h1>
+        <p class="sub">Engineering</p>
       </div>
+    </header>
 
-      <div id="hint" class="scroll-hint">Scroll to disassemble</div>
-      <div class="progress"><span id="bar"></span></div>
-    </div>
+    <!-- 2 · Closed laptop -->
+    <figure class="frame f-closed">
+      <img src="/images/Laptop/closed.png" width="1366" height="768" decoding="async"
+           alt="A thin silver laptop, closed, floating in a quiet interior.">
+      <figcaption class="f-cap">Closed</figcaption>
+    </figure>
+
+    <!-- 3 · Three-layer teardown -->
+    <figure class="frame f-three">
+      <img src="/images/Laptop/teardown-3.png" width="1366" height="768" decoding="async"
+           alt="The laptop separated into three layers: the top shell, the mainboard, and the base chassis.">
+      <figcaption class="f-cap">Three layers</figcaption>
+    </figure>
+
+    <!-- 4 · Full teardown -->
+    <figure class="frame f-four">
+      <img src="/images/Laptop/teardown-4.png" width="1366" height="768" decoding="async"
+           alt="A full teardown: the top shell, the internal components, the mainboard, and the base chassis.">
+      <figcaption class="f-cap">Full teardown</figcaption>
+    </figure>
+
+    <!-- End line, held over the full teardown -->
+    <p class="cap-end">Built layer by layer.</p>
+
+    <div class="cue" aria-hidden="true"><span>Scroll</span></div>
+    <div class="bar" aria-hidden="true"><i></i></div>
+
   </div>
+</main>
+
+<!-- ── Outro ──────────────────────────────────────────────────────────────────── -->
+<section class="outro">
+  <p class="outro-eyebrow">WebSharke Engineering</p>
+  <p class="outro-line">A study in how we build.</p>
+  <a class="cta" href="/onboarding">Start a project
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
 </section>
 
-<!-- ── OUTRO ────────────────────────────────────────────────────────────────── -->
-<section id="outro">
-  <div class="intro-wrap">
-    <h2>Like the way this is <em>built?</em></h2>
-    <p class="lede">
-      We put the same care into the websites we build.
-    </p>
-    <a class="btn" href="/onboarding">Start a Project</a>
-  </div>
-</section>
+<footer class="site-foot">© 2026 WebSharke · Engineering</footer>
 
-<footer id="site-footer">© 2026 WebSharke. All rights reserved.</footer>
+<!-- ── Scroll choreography (plain JS, no dependencies) ───────────────────────── -->
+<script>
+(function () {
+  var root = document.documentElement;
+  if (!root.classList.contains('anim')) return;   // static layout handles no-JS / reduced-motion
 
-<!-- Main module (must be type="module" for the import map) -->
-<script type="module" src="script.js"></script>
+  var scene = document.querySelector('.scene');
+  var el = {
+    intro:  document.querySelector('.intro'),
+    closed: document.querySelector('.f-closed'),
+    three:  document.querySelector('.f-three'),
+    four:   document.querySelector('.f-four'),
+    capEnd: document.querySelector('.cap-end'),
+    cue:    document.querySelector('.cue'),
+    bar:    document.querySelector('.bar i')
+  };
 
-<!-- No-JS / module-unsupported fallback -->
-<noscript>
-  <p style="position:fixed;inset:0;display:grid;place-items:center;background:#070a0e;color:#e7edf2;font-family:sans-serif;text-align:center;padding:2rem;">
-    This interactive 3D teardown requires JavaScript.
-  </p>
-</noscript>
+  function clamp(v, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return v < a ? a : v > b ? b : v; }
+  function seg(p, a, b){ return clamp((p - a) / (b - a), 0, 1); }
+  function ease(t){ return t * t * (3 - 2 * t); }              // smoothstep
+  function lerp(a, b, t){ return a + (b - a) * t; }
+  function set(node, op, tf){ if (!node) return; node.style.opacity = op; if (tf != null) node.style.transform = tf; }
+
+  var target = 0, cur = 0, running = false;
+
+  function measure(){
+    var total = scene.offsetHeight - window.innerHeight;
+    if (total <= 0){ target = 0; return; }
+    target = clamp(-scene.getBoundingClientRect().top / total, 0, 1);
+  }
+
+  /* Each handoff is a TRUE cross-fade: the incoming frame's rise window is the
+     exact same range as the outgoing frame's fall window, and opacity = rise*(1-fall).
+     Because rise and fall share that range, the two frames sum to 1 at every point of
+     the transition — no wash-out to the empty room. rise/fall windows never overlap
+     within a single frame, so during a hold opacity is a clean 1. */
+  function render(p){
+    var introOut = ease(seg(p, 0.10, 0.20));                 // intro -> closed
+    var openUp   = ease(seg(p, 0.42, 0.54));                 // closed -> three
+    var spread   = ease(seg(p, 0.66, 0.78));                 // three -> four
+
+    /* 1 · Intro wordmark — holds, then lifts + fades away */
+    set(el.intro, 1 - introOut,
+        'translate3d(0,' + (-5 * introOut) + '%,0) scale(' + (1 + 0.05 * introOut) + ')');
+
+    /* 2 · Closed laptop — floats up into place, holds, then dissolves as it opens */
+    set(el.closed, introOut * (1 - openUp),
+        'translate3d(0,' + (lerp(3, -3, introOut) - 2 * openUp) + '%,0) scale(' + (lerp(1.05, 1, introOut) - 0.03 * openUp) + ')');
+
+    /* 3 · Three layers — emerge from a slightly compressed stack, hold, then hand off */
+    set(el.three, openUp * (1 - spread),
+        'translate3d(0,' + (lerp(2, -3, openUp) - 2 * spread) + '%,0) scaleY(' + lerp(0.98, 1, openUp) + ')');
+
+    /* 4 · Full teardown — components materialise; held to the end */
+    set(el.four, spread,
+        'translate3d(0,' + lerp(2, -3, spread) + '%,0) scaleY(' + lerp(0.98, 1, spread) + ')');
+
+    /* End line */
+    if (el.capEnd){ var ce = ease(seg(p, 0.86, 0.96)); el.capEnd.style.opacity = ce; el.capEnd.style.transform = 'translate3d(0,' + lerp(14, 0, ce) + 'px,0)'; }
+
+    /* Chrome */
+    if (el.cue) el.cue.style.opacity = 1 - ease(seg(p, 0.0, 0.06));
+    if (el.bar) el.bar.style.transform = 'scaleX(' + p + ')';
+  }
+
+  function frame(){
+    cur += (target - cur) * 0.12;                  // gentle scrub-smoothing
+    if (Math.abs(target - cur) < 0.0004){ cur = target; render(cur); running = false; return; }
+    render(cur);
+    requestAnimationFrame(frame);
+  }
+  function kick(){ measure(); if (!running){ running = true; requestAnimationFrame(frame); } }
+
+  window.addEventListener('scroll', kick, { passive:true });
+  window.addEventListener('resize', function(){ measure(); cur = target; render(cur); }, { passive:true });
+
+  measure(); cur = target; render(cur);            // first paint, no flash
+})();
+</script>
 
 </body>
 </html>
