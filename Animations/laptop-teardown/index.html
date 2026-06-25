@@ -180,7 +180,7 @@ a{color:inherit}
 }
 .anim .product .layer{
   position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
-  will-change:transform,opacity; backface-visibility:hidden;
+  will-change:transform,clip-path; backface-visibility:hidden;
 }
 /* Subtle depth on the silver panels + the closed laptop only; NONE on the
    busy board/components layers — per-part shadows there read as the
@@ -193,38 +193,24 @@ a{color:inherit}
 .anim .l-components{z-index:3}
 .anim .l-lid{z-index:4}
 .anim .l-closed{z-index:5}
-/* At rest (and before the script runs) only the closed laptop is visible;
-   the teardown layers are hidden so nothing flashes in at the top. */
-.anim .l-lid,.anim .l-components,.anim .l-board,.anim .l-chassis{opacity:0}
-.anim .l-closed{opacity:1}
+/* At rest (and before the script runs) only the closed laptop is visible.
+   The teardown layers are kept out of sight with VISIBILITY (not opacity) so
+   nothing fades; they switch on as a single discrete step the instant the
+   teardown begins. The two inner layers also start clipped to a zero-height
+   slit at the seam, so even once visible they reveal by a transform-driven
+   wipe — never an opacity fade. */
+.anim .l-lid,.anim .l-board,.anim .l-chassis,.anim .l-components{visibility:hidden}
+.anim .product.teardown .l-lid,
+.anim .product.teardown .l-board,
+.anim .product.teardown .l-chassis,
+.anim .product.teardown .l-components{visibility:visible}
+.anim .l-components,.anim .l-board{clip-path:inset(50% 0 50% 0)}   /* zero slit at rest */
+.anim .l-closed{visibility:visible}
 
 /* End line — pinned low, over the held teardown */
 .anim .cap-end{
   position:absolute; left:0; right:0; bottom:clamp(7vh,10vh,12vh); top:auto; z-index:7;
   min-height:0; padding:0 8vw; opacity:0;
-}
-
-/* Scroll cue */
-.anim .cue{
-  display:block; position:absolute; left:50%; bottom:max(4.5vh,env(safe-area-inset-bottom)); transform:translateX(-50%);
-  z-index:7; color:var(--stone); font-size:.66rem; font-weight:500;
-  text-transform:uppercase; letter-spacing:.32em; padding-left:.32em;
-}
-.anim .cue span{position:relative}
-.anim .cue span::after{
-  content:""; display:block; width:1px; height:30px; margin:.8em auto 0;
-  background:linear-gradient(to bottom,var(--stone),transparent); animation:cueLine 2.2s ease-in-out infinite;
-}
-@keyframes cueLine{0%,100%{transform:scaleY(.4);opacity:.4;transform-origin:top}50%{transform:scaleY(1);opacity:1;transform-origin:top}}
-
-/* Progress hairline */
-.anim .bar{
-  display:block; position:absolute; left:0; right:0; bottom:env(safe-area-inset-bottom,0); height:2px; z-index:8;
-  background:rgba(42,38,32,.10);
-}
-.anim .bar i{
-  display:block; height:100%; width:100%; transform:scaleX(0); transform-origin:left;
-  background:linear-gradient(to right,rgba(42,38,32,.55),rgba(42,38,32,.3));
 }
 
 /* ── Responsive ─────────────────────────────────────────────────────────────── */
@@ -245,9 +231,6 @@ a{color:inherit}
 /* Short / landscape viewports: cap the product by height so it never overflows top/bottom */
 @media (max-height:560px){
   .anim .product{width:auto; height:92vh}
-}
-@media (prefers-reduced-motion:reduce){
-  .anim .cue span::after{animation:none}
 }
 </style>
 </head>
@@ -287,9 +270,6 @@ a{color:inherit}
 
     <p class="cap-end">Built layer by layer.</p>
 
-    <div class="cue" aria-hidden="true"><span>Scroll</span></div>
-    <div class="bar" aria-hidden="true"><i></i></div>
-
   </div>
 </main>
 
@@ -318,9 +298,7 @@ a{color:inherit}
     components: document.querySelector('.l-components'),
     board:      document.querySelector('.l-board'),
     chassis:    document.querySelector('.l-chassis'),
-    capEnd:     document.querySelector('.cap-end'),
-    cue:        document.querySelector('.cue'),
-    bar:        document.querySelector('.bar i')
+    capEnd:     document.querySelector('.cap-end')
   };
 
   function clamp(v, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return v < a ? a : v > b ? b : v; }
@@ -344,50 +322,48 @@ a{color:inherit}
   }
 
   function render(p){
-    /* Intro wordmark — sits above the already-visible closed laptop, then
-       lifts + fades away as you scroll in (the laptop itself never fades). */
+    /* Intro wordmark — a text overlay, not a laptop layer, so a gentle opacity
+       lift here is fine. It sits above the already-visible closed laptop and
+       lifts away as you scroll in (the laptop itself never fades). */
     var introOut = ease(seg(p, 0.02, 0.12));
     el.intro.style.opacity = 1 - introOut;
     el.intro.style.transform = 'translate3d(0,' + (-6 * introOut) + '%,0)';
 
-    /* The closed laptop (closed.png) is the REAL start: fully visible from the
-       top, held clean through ~0.30, then it drifts up + back and dissolves as
-       the teardown layers emerge beneath it — the cover coming off, not a fade. */
-    var coverOut  = ease(seg(p, 0.30, 0.42));
-    var coverRise = ease(seg(p, 0.30, 0.52));
-    el.closed.style.opacity = 1 - coverOut;
-    el.closed.style.transform = 'translate3d(0,' + (-9 * coverRise) + '%,0) scale(' + (1 + 0.04 * coverRise) + ')';
+    /* The closed laptop (closed.png) is the REAL start and stays cleanly visible
+       until the teardown begins. At p>=0.30 it is swapped — by a single discrete
+       VISIBILITY step, never an opacity fade — for the collapsed layer slab that
+       sits pixel-aligned beneath it, so the swap is invisible. The slab's halves
+       then physically separate. The `teardown` class gates the inner layers on. */
+    var swapped = p >= 0.30;
+    el.closed.style.visibility = swapped ? 'hidden' : 'visible';
+    el.product.classList.toggle('teardown', swapped);
 
-    /* Teardown layers appear ONLY once the teardown begins — no scattered parts
-       behind the closed laptop. The reveal is a short opacity fade-in; the
-       translateY motion below is the real effect. Components reveal LATER, in
-       the gap the lid opens, so they read as internal parts being removed. */
-    var shellsIn = ease(seg(p, 0.30, 0.42));
-    var compsIn  = ease(seg(p, 0.50, 0.62));
-    el.lid.style.opacity     = shellsIn;
-    el.board.style.opacity   = shellsIn;
-    el.chassis.style.opacity = shellsIn;
-    el.components.style.opacity = compsIn;
-
-    /* Physical separation — all on translateY of real layers (no cross-fade).
-       Layers start collapsed (stacked at centre, hidden beneath the closed
-       laptop) and translate out to the exploded teardown-4 positions. */
-    var open  = ease(seg(p, 0.32, 0.58));   // lid rises + chassis drops (it opens)
-    var board = ease(seg(p, 0.36, 0.64));   // mainboard settles into the middle
-    var comps = ease(seg(p, 0.52, 0.80));   // components lift OFF the board
-    var fin   = ease(seg(p, 0.82, 0.98));   // slight final spread, then hold
+    /* Physical separation — pure translateY of real layers (no cross-fade).
+       Layers start collapsed (stacked at the seam, hidden beneath closed.png)
+       and translate out to the exploded teardown-4 positions: the top/display
+       half (lid) lifts up, the base shell (chassis) drops down. */
+    var open  = ease(seg(p, 0.30, 0.60));   // lid rises + chassis drops (the seam opens)
+    var board = ease(seg(p, 0.34, 0.64));   // mainboard settles into the middle
+    var comps = ease(seg(p, 0.44, 0.74));   // components travel out from the board
+    var fin   = ease(seg(p, 0.82, 0.96));   // slight final spread, then hold
 
     ty(el.lid,        lerp(C_LID,     0, open)  + (-2.5) * fin);
     ty(el.chassis,    lerp(C_CHASSIS, 0, open)  + ( 2.5) * fin);
     ty(el.board,      lerp(C_BOARD,   0, board));
     ty(el.components, lerp(C_COMP,    0, comps) + (-1.2) * fin);
 
-    /* End line */
-    if (el.capEnd){ var ce = ease(seg(p, 0.86, 0.96)); el.capEnd.style.opacity = ce; el.capEnd.style.transform = 'translate3d(0,' + lerp(14, 0, ce) + 'px,0)'; }
+    /* Internal reveal — NO opacity. The two inner layers are clipped to a band
+       centred on the seam (50% line) that grows symmetrically as the gap opens,
+       so the components/board are WIPED into view from between the separating
+       halves outward, physically connected to the teardown — never popping in.
+       clip-path resolves in each layer's own box, so the inset uses box-%. */
+    var half = 50 * open;                                   // 0 -> 50 (% of product box)
+    var clip = 'inset(' + (50 - half).toFixed(2) + '% 0 ' + (50 - half).toFixed(2) + '% 0)';
+    el.components.style.clipPath = clip;
+    el.board.style.clipPath      = clip;
 
-    /* Chrome */
-    if (el.cue) el.cue.style.opacity = 1 - ease(seg(p, 0.0, 0.06));
-    if (el.bar) el.bar.style.transform = 'scaleX(' + p + ')';
+    /* End line — text overlay, opacity fine here */
+    if (el.capEnd){ var ce = ease(seg(p, 0.86, 0.96)); el.capEnd.style.opacity = ce; el.capEnd.style.transform = 'translate3d(0,' + lerp(14, 0, ce) + 'px,0)'; }
   }
 
   function frame(){
