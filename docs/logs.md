@@ -6,6 +6,67 @@
 
 ---
 
+## 2026-06-24 - Developer / Implementation - laptop-teardown-physical-layers
+
+Action:
+Finished
+
+Task:
+Owner-direct follow-up: the first rebuild cross-faded full teardown frames, which read like a slideshow.
+Replace that with ONE pinned scene where the laptop physically separates under scroll (individual layers
+translate apart), not image crossfades.
+
+Was it a slideshow? Yes — the previous version sticky-pinned the scene but cross-faded between three full-frame
+composite images (closed / 3-layer / 4-layer). That is what read as a slideshow. Now removed.
+
+Animation system: still dependency-free (no Three.js/GSAP). Native `position:sticky` pinned stage + a small
+rAF scrub-smoothed scroll handler maps scroll progress to each LAYER's `translateY` (GPU transforms only;
+opacity is used once, to reveal the product group). No cross-fade anywhere.
+
+Did true transparent layer assets exist? NO. `images/Laptop/` only ever had full composite frames. So I
+SLICED `teardown-4.png` into four registered, full-frame transparent layers by detecting the transparent/low-
+density gaps in its alpha channel: `layer-lid.png` (band 20%), `layer-components.png` (38%), `layer-board.png`
+(55%), `layer-chassis.png` (73%). Each keeps the original 1366×768 coordinates, so stacking all four
+reconstructs `teardown-4.png` exactly and translating them apart is a real physical separation.
+
+Files changed:
+
+- `Animations/laptop-teardown/index.html` — replaced the 3-image cross-fade with the 4-layer translate system
+  (one `.product` box, four absolutely-stacked `.layer` images with z-order chassis<board<components<lid).
+  Timeline: intro wordmark (0–.15) → product revealed as a closed slab (.15–.30) → lid up + chassis down,
+  populated board in the middle (.30–.56) → components lift off the bare board (.56–.84) → slight final
+  spread + hold (.82–1.0). Scene height 620vh. Fixed a mobile centring bug (grid `auto` track anchored the
+  over-wide mobile frame left → `grid-template-columns:minmax(0,1fr)` so it overflows symmetrically/centred).
+- `Animations/laptop-teardown/README.txt` — documents the slicing + the new layer animation.
+- NEW `images/Laptop/layer-{lid,components,board,chassis}.png` (sliced from teardown-4.png).
+
+Now used: `interior.jpg` (bg) + the 4 layer PNGs (animated); `closed.png` + `teardown-4.png` (static fallback).
+`teardown-3.png` is now unused (kept for reference).
+
+Testing:
+
+- `node --check` both inline scripts: pass. No orphan refs to the old frame system. All asset paths exist + 200.
+- Verified the band slices: each layer contains exactly one content band; stacked at rest == teardown-4.png.
+- Rendered the EXACT render() transform math at p = 0.30/0.43/0.52/0.70/0.85/1.00 (desktop) and 0.30/0.52/0.85
+  (mobile 390) via headless Chrome: confirmed a continuous physical separation — closed slab → opening →
+  3-layer (populated board) → components lifting off → locked 4-layer exploded. No slideshow, no blank frames.
+- Real page intro renders correctly (wordmark shown, product hidden at scroll-top). Mobile centred, readable,
+  no horizontal overflow.
+- NOT run: a live scroll/feel pass in a real browser (the Chrome extension is offline). Choreography is
+  transform-only and was visually verified frame-by-frame, but a deploy-preview scroll is still worth a look.
+
+Risks / Notes:
+
+- A concurrent session committed the new layer images (they are tracked now — deploy-safe). The final
+  `index.html` + `README.txt` are STAGED but not yet committed — commit them to ship this version.
+- Asset limitation (answers the owner's question): a PERFECT physical teardown still wants natively-rendered,
+  fully-separated transparent layers — clean per-part edges, no shared shadows, and the populated board vs.
+  bare board as distinct art. The slices are a faithful approximation from the one exploded frame available;
+  the board/chassis cut runs through a density minimum (no transparent gap existed there), so that seam is the
+  least-clean of the four. `teardown-3.png` (populated-board variant) is available if a future pass wants it.
+
+---
+
 ## 2026-06-24 - Efficiency - dashboard-hosting-tab
 
 Action:

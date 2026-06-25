@@ -13,11 +13,23 @@ tracking prevention.
 
 WHAT REPLACED THE OLD DEMO
 --------------------------
-This used to be a Three.js + GSAP ScrollTrigger 3D scene (script.js / style.css /
-vendor/three.module.js / vendor/gsap*.js / vendor/jsm/). That whole stack was
-removed. The new page composites four real production images instead of rendering
-a 3D model, so it is dramatically lighter and has no WebGL / ES-module / import-map
-requirements (it no longer breaks on the file:// protocol).
+1) It used to be a Three.js + GSAP ScrollTrigger 3D scene (script.js / style.css /
+   vendor/three.module.js / vendor/gsap*.js / vendor/jsm/). That whole stack was
+   removed — no WebGL / ES-module / import-map, no dependencies.
+2) The first rebuild cross-faded between full teardown frames, which read like a
+   slideshow. This version does NOT cross-fade. It animates FOUR separate, registered
+   layer images so the laptop physically comes apart under scroll.
+
+LAYER ASSETS — HOW THEY WERE MADE (important)
+---------------------------------------------
+No separated per-layer art was ever provided — images/Laptop only had full composite
+frames. So layer-{lid,components,board,chassis}.png were SLICED from teardown-4.png:
+each is a full 1366x768 transparent frame containing only one horizontal band (the
+gaps between layers were found by analysing the PNG's alpha). Because every slice
+keeps the original frame's coordinates, stacking all four reconstructs teardown-4.png
+exactly — and translating each one apart is a true physical separation.
+For a PERFECT teardown you'd want natively-rendered, fully-separated transparent
+layers (clean edges, no shared shadows, the populated vs. bare board as distinct art).
 
 FILES
 -----
@@ -27,32 +39,38 @@ README.txt        this file
 
 IMAGE ASSETS  (root-absolute paths; folder casing matters on Vercel's Linux build)
 ----------------------------------------------------------------------------------
-/images/Laptop/interior.png      the empty beige interior — the fixed backdrop
-/images/Laptop/closed.png        the closed laptop (transparent PNG)
-/images/Laptop/teardown-3.png    three-layer teardown   (transparent PNG)
-/images/Laptop/teardown-4.png    four-layer full teardown (transparent PNG)
-The three product shots share one 1366x768 frame, so they stay registered as they
-cross-fade. The interior backdrop is a separate image and never moves.
+/images/Laptop/interior.jpg          fixed beige interior backdrop (never moves)
+/images/Laptop/layer-lid.png         top shell      (animated layer, z4)
+/images/Laptop/layer-components.png  fan/chips/RAM  (animated layer, z3)
+/images/Laptop/layer-board.png       mainboard      (animated layer, z2)
+/images/Laptop/layer-chassis.png     base chassis   (animated layer, z1)
+/images/Laptop/closed.png            closed laptop  (static fallback only)
+/images/Laptop/teardown-4.png        full teardown  (static fallback + slice source)
+/images/Laptop/teardown-3.png        currently unused (kept for reference)
 
 HOW THE SCROLL SEQUENCE WORKS
 -----------------------------
-A tall <main class="scene"> drives the scroll; inside it a sticky <div class="stage">
-is pinned for the whole sequence. A small inline script maps scroll progress (0..1)
-to the opacity + transform of each frame, with light scrub-smoothing:
+A tall <main class="scene"> drives the scroll; an inner sticky <div class="stage">
+is pinned for the whole sequence. The four layer images are absolutely stacked in
+one centred .product box. A small inline script maps scroll progress p (0..1) to each
+LAYER'S translateY (GPU transforms only; opacity is used once, to reveal the product):
 
-  intro wordmark  ->  fades/lifts away
-  closed laptop   ->  floats in, then dissolves as it "opens"
-  three layers    ->  emerge from a slightly compressed stack and spread
-  four layers     ->  components materialise; held on screen at the end
-  "Built layer by layer."  ->  closing line over the full teardown
+  0.00-0.15  intro wordmark holds, then lifts + fades away
+  0.15-0.30  product revealed; layers collapsed into a closed-laptop slab (lid on top)
+  0.30-0.56  lid translates up + chassis translates down -> the laptop OPENS, the
+             populated board shows in the middle (components still seated on it)
+  0.56-0.84  components lift OFF the board (revealing the bare board) -> four layers
+  0.82-1.00  a slight final spread, then the exploded view is held
+
+Layer z-order (chassis<board<components<lid) means the lid covers everything when
+collapsed (= a closed laptop) and reveals each layer as it moves — no opacity tricks.
 
 PROGRESSIVE ENHANCEMENT / ACCESSIBILITY
 ---------------------------------------
-The page is built static-first. With no JavaScript, or with
-prefers-reduced-motion: reduce, it renders as a calm, vertically-stacked sequence
-(each frame captioned) over the same backdrop — no pinning, no motion. An early
-inline script adds the `anim` class only when motion is allowed, which switches on
-the pinned scroll experience. There is no flash between the two modes.
+Built static-first. With no JavaScript, or prefers-reduced-motion: reduce, the layer
+animation is off and the page shows two plain frames (closed.png + teardown-4.png)
+over the same backdrop. An early inline script adds the `anim` class only when motion
+is allowed; there is no flash between modes.
 
 LOCAL PREVIEW
 -------------

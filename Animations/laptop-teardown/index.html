@@ -154,7 +154,11 @@ a{color:inherit}
 .anim .scene{height:620vh}
 .anim .stage{
   position:sticky; top:0; height:100vh; height:100svh; overflow:hidden;
-  display:grid; place-items:center; padding-bottom:6vh;       /* nudge the centered product up into the light */
+  /* minmax(0,1fr) pins the track to the viewport width so an over-wide product
+     (mobile uses a frame wider than the screen) overflows symmetrically and stays
+     centred, instead of an auto track growing and anchoring it to the left edge. */
+  display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr);
+  place-items:center; padding-bottom:6vh;       /* nudge the centred product up into the light */
 }
 .anim .bg{position:absolute; z-index:0}
 
