@@ -743,6 +743,18 @@
         <!-- Shared, always-in-DOM error line for billing actions. -->
         <p class="bill-error hidden" id="bill-error" role="alert"></p>
 
+        <!-- ── Pending subscriptions (client) ─────────────────────────────────
+             Custom recurring subscriptions the admin created for this client that
+             are still PENDING activation. Each shows the recurring price and an
+             "Activate Subscription" button that LINKS to /payment?subscription_id=…
+             (NEVER "Pay Invoice", and the dashboard never charges a card). Hidden
+             entirely when there are none. Populated by renderClientPendingSubs()
+             from the subscription rows already fetched at page load. -->
+        <div class="cinv-block hidden" id="csub-block">
+          <h3 class="cinv-heading">Subscriptions</h3>
+          <div class="cinv-list" id="csub-list" aria-live="polite"></div>
+        </div>
+
         <!-- ── Invoices (client) ──────────────────────────────────────────────
              A brief summary of the client's CURRENT (most recent unpaid) invoice:
              Name, ID, Total, and a "Pay Invoice" button. Read-only by design —
@@ -778,16 +790,17 @@
       </div>
 
       <!-- 3b ── Hosting.
-           Shows whether the client currently hosts with WebSharke. "Hosting" =
-           an active/trialing subscription (the SAME `hasService` rule the Invoices
-           section uses); everything else (no row, canceled, incomplete, past_due,
-           unpaid, unknown) = not hosting. Two states, rendered by renderHosting():
-             • NOT hosting → message + a "Request Hosting" PLACEHOLDER (client→admin
-               messaging isn't built — it only shows an inline note, never submits)
-             • hosting     → thank-you + "Manage Hosting Services" → Stripe portal
-           This tab adds NO new payment UI and duplicates no billing details — only
-           hosting status + management. The portal button is the ONLY thing here that
-           can send the user off websharke.com. -->
+           Shows whether the client currently hosts with WebSharke. Three states,
+           rendered by renderHosting() (active > pending > none):
+             • ACTIVE  (any active/trialing subscription) → thank-you + the recurring
+               price (for custom subscriptions) + "Manage Billing" → Stripe portal.
+             • PENDING (a custom 'hosting' subscription awaiting activation) → "ready
+               to activate" + the recurring price + "Activate Subscription" →
+               /payment?subscription_id=… (no charge happens on the dashboard).
+             • NONE    → "not hosting" + a "Request Hosting" PLACEHOLDER (client→admin
+               messaging isn't built — it only shows an inline note, never submits).
+           The Stripe portal button is the ONLY thing here that can send the user off
+           websharke.com; activation/payment happens on /payment, never on this tab. -->
       <div class="tab" id="tab-hosting" role="tabpanel">
         <h2 class="tab-title">Hosting</h2>
 
@@ -804,10 +817,23 @@
           <p class="f-sub hidden" id="host-request-note" role="status"></p>
         </div>
 
+        <!-- Pending: the admin created a custom recurring subscription this client
+             can activate. The recurring price is shown clearly; "Activate
+             Subscription" LINKS to /payment?subscription_id=… (the dashboard never
+             charges a card). Set up by renderHosting(). -->
+        <div class="hidden" id="host-pending">
+          <p class="field">You have a hosting subscription ready to activate</p>
+          <p class="field"><span class="f-label">Recurring payment:</span> <span class="f-value" id="host-pending-amount">…</span></p>
+          <a class="ws-btn" id="host-activate" href="#">Activate Subscription</a>
+        </div>
+
         <!-- Currently hosting (active / trialing subscription). -->
         <div class="hidden" id="host-active">
           <p class="field">Thank you for hosting with WebSharke</p>
-          <button class="ws-btn" id="manage-hosting" type="button">Manage Hosting Services</button>
+          <!-- Recurring price (shown only for custom subscriptions that carry
+               amount_cents + interval_months; legacy plans just show the thank-you). -->
+          <p class="field hidden" id="host-active-amount-row"><span class="f-label">Recurring payment:</span> <span class="f-value" id="host-active-amount">…</span></p>
+          <button class="ws-btn" id="manage-hosting" type="button">Manage Billing</button>
         </div>
 
         <!-- Clean error line for the "Manage Hosting Services" portal action
@@ -857,6 +883,7 @@
         <button data-view="onboarding"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg><span class="adm-nav-label">Onboarding Forms</span></button>
         <button data-view="payments"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="adm-nav-label">Payments</span></button>
         <button data-view="invoices"><svg viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span class="adm-nav-label">Invoices</span></button>
+        <button data-view="subscriptions"><svg viewBox="0 0 24 24"><path d="M3 4h18v6H3z"/><path d="M3 14h11v6H3z"/><path d="M18 13.5v7M14.5 17h7"/></svg><span class="adm-nav-label">Subscriptions</span></button>
         <button data-view="websites"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span class="adm-nav-label">Websites</span></button>
         <button data-view="domains"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span class="adm-nav-label">Domains</span></button>
         <button data-view="alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="adm-nav-label">Alerts</span><span class="adm-nav-badge" id="admAlertBadge" style="display:none">0</span></button>
@@ -968,6 +995,58 @@
                 <div class="inv-msg" id="inv-msg" role="status" aria-live="polite"></div>
               </div>
             </aside>
+          </div>
+        </section>
+
+        <!-- SUBSCRIPTIONS — create a custom recurring hosting subscription for a -->
+        <!-- client (custom amount + "charge every N months"). Saved as PENDING; the -->
+        <!-- client activates it on the payment page. POSTs to                      -->
+        <!-- /api/admin/subscriptions, which validates + stores the authoritative   -->
+        <!-- amount in cents. Canceling cancels the REAL Stripe subscription.        -->
+        <section class="adm-view" id="view-subscriptions">
+          <div class="adm-view-head"><h1 class="adm-h1">Subscriptions<span class="adm-sub">Create a custom recurring hosting subscription for a client</span></h1></div>
+          <div class="inv-layout">
+            <div class="inv-main">
+              <div class="adm-panel-box">
+                <h3>New subscription</h3>
+                <div class="inv-grid-2">
+                  <div class="adm-fld">
+                    <label for="sub-client">Client</label>
+                    <select id="sub-client"><option value="">Loading clients…</option></select>
+                  </div>
+                  <div class="adm-fld">
+                    <label for="sub-interval">Charge every (months)</label>
+                    <input id="sub-interval" type="number" min="1" max="12" step="1" value="1" inputmode="numeric" placeholder="e.g. 1, 3, 12" />
+                  </div>
+                </div>
+                <div class="adm-fld">
+                  <label for="sub-name">Subscription name</label>
+                  <input id="sub-name" maxlength="200" placeholder="e.g. WebSharke Hosting" />
+                </div>
+                <div class="adm-fld">
+                  <label for="sub-amount">Amount (USD)</label>
+                  <div class="inv-price-wrap"><span class="inv-cur">$</span>
+                    <input id="sub-amount" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal" aria-label="Recurring amount in dollars" /></div>
+                </div>
+                <div class="inv-actions">
+                  <button class="adm-btn primary" id="sub-create" type="button">Create subscription</button>
+                </div>
+                <div class="inv-msg" id="sub-msg" role="status" aria-live="polite"></div>
+                <p class="inv-note" id="sub-preview">Recurring price preview: —</p>
+              </div>
+            </div>
+
+            <aside class="inv-summary">
+              <div class="adm-panel-box">
+                <h3>How it works</h3>
+                <p class="inv-note">The subscription is saved as <b>Pending activation</b>. The client sees it in their Invoices and Hosting tabs and activates it on the payment page — Stripe charges them immediately, then automatically every N months. The amount is stored in cents on the server; the browser value is only a request. Canceling here cancels the real Stripe subscription.</p>
+              </div>
+            </aside>
+          </div>
+
+          <div class="adm-panel-box">
+            <h3>All subscriptions</h3>
+            <div id="sub-list">Loading…</div>
           </div>
         </section>
 
@@ -1385,14 +1464,20 @@
       $("pd-additional").textContent    = show(inquiry.additional_info, EM);
     }
 
-    // ---- Render the Hosting tab from the same subscription state ----------
-    // "Hosting" = an active/trialing subscription (the SAME `hasService` rule the
-    // Invoices section uses). This tab shows status only — no plan details, no
-    // payment UI. Exactly one state shows; a load failure shows a clean error
-    // instead of a possibly-wrong "not hosting".
-    function renderHosting(sub, hasService, billingError) {
+    // ---- Render the Hosting tab from the subscription state ---------------
+    // Three states, exactly one shown (a load failure shows a clean error instead
+    // of a possibly-wrong status):
+    //   • ACTIVE  (activeSub: any row active/trialing) → thank-you + recurring price
+    //     (when it's a custom subscription) + "Manage Billing" → Stripe portal.
+    //   • PENDING (pendingSub: a category 'hosting' row pending_activation/incomplete,
+    //     and no active row) → "ready to activate" + recurring price + "Activate
+    //     Subscription" → /payment?subscription_id=… .
+    //   • NONE    → "not hosting" + the "Request Hosting" placeholder.
+    // Precedence: active > pending > none.
+    function renderHosting(activeSub, pendingSub, billingError) {
       const loadErr   = $("host-load-error");
       const noneEl    = $("host-none");
+      const pendingEl = $("host-pending");
       const activeEl  = $("host-active");
       const actionErr = $("host-error");
       if (!noneEl || !activeEl) return;
@@ -1400,16 +1485,33 @@
       // Reset to a clean state every render.
       loadErr.classList.add("hidden");
       noneEl.classList.add("hidden");
+      if (pendingEl) pendingEl.classList.add("hidden");
       activeEl.classList.add("hidden");
       actionErr.classList.add("hidden");
 
       // Couldn't read the subscription → don't claim a status either way.
       if (billingError) { loadErr.classList.remove("hidden"); return; }
 
-      // active/trialing → hosting; everything else (no row, canceled, incomplete,
-      // past_due, unpaid, unknown) → not hosting.
-      if (hasService) {
+      if (activeSub) {
         activeEl.classList.remove("hidden");
+        // Show the recurring price for a custom subscription (amount_cents +
+        // interval_months). Legacy Stripe-plan rows lack these → just the thank-you.
+        const amtRow = $("host-active-amount-row");
+        const amtEl = $("host-active-amount");
+        if (amtRow && amtEl) {
+          if (activeSub.amount_cents != null && activeSub.interval_months != null) {
+            amtEl.textContent = recurringLabel(activeSub.amount_cents, activeSub.interval_months);
+            amtRow.classList.remove("hidden");
+          } else {
+            amtRow.classList.add("hidden");
+          }
+        }
+      } else if (pendingSub) {
+        if (pendingEl) pendingEl.classList.remove("hidden");
+        const amtEl = $("host-pending-amount");
+        if (amtEl) amtEl.textContent = recurringLabel(pendingSub.amount_cents, pendingSub.interval_months);
+        const actBtn = $("host-activate");
+        if (actBtn) actBtn.href = "/payment?subscription_id=" + encodeURIComponent(pendingSub.id);
       } else {
         noneEl.classList.remove("hidden");
       }
@@ -1537,6 +1639,17 @@
       if (text !== undefined && text !== null) n.textContent = text;
       return n;
     }
+    // Format a recurring price the way the client sees it EVERYWHERE: "$25/month"
+    // (interval_months 1), "$500/year" (12), or "$100 every 3 months" (anything
+    // else). Used by the Hosting tab + the Invoices-tab pending cards. Mirrors
+    // subRecurringLabel in payment.html and the admin section.
+    function recurringLabel(amountCents, intervalMonths) {
+      const money = cinvMoney(amountCents);
+      const n = Number(intervalMonths);
+      if (n === 1) return money + "/month";
+      if (n === 12) return money + "/year";
+      return money + " every " + n + " months";
+    }
 
     // Fetch + render the signed-in client's CURRENT invoice (the most recent
     // UNPAID, payable one — issued or overdue). The Invoices tab is a brief summary
@@ -1615,6 +1728,54 @@
       return card;
     }
 
+    // Build a PENDING-subscription card for the Invoices tab: Name (label) + ID, a
+    // "Pending activation" badge, the recurring price (clearly recurring — never a
+    // one-time total), and an "Activate Subscription" LINK to
+    // /payment?subscription_id=… (NEVER "Pay Invoice"; the dashboard never charges
+    // a card). Every value is written via cinvEl/textContent (no markup injection).
+    function buildPendingSubCard(sub) {
+      const card = cinvEl("article", "cinv-card");
+      card.setAttribute("aria-label", "Pending subscription " + cinvRef(sub.id));
+
+      const head = cinvEl("div", "cinv-card-head");
+      const titleWrap = cinvEl("div");
+      titleWrap.appendChild(cinvEl("h4", "cinv-title", show(sub.plan_name, "Subscription")));
+      titleWrap.appendChild(cinvEl("span", "cinv-id", cinvRef(sub.id)));
+      head.appendChild(titleWrap);
+      head.appendChild(cinvEl("span", "cinv-badge pending", "Pending activation"));
+      card.appendChild(head);
+
+      // Recurring price — labelled "Recurring payment", not "Total".
+      const summary = cinvEl("div", "cinv-summary");
+      summary.appendChild(cinvEl("span", "lbl", "Recurring payment"));
+      summary.appendChild(cinvEl("span", "amt", recurringLabel(sub.amount_cents, sub.interval_months)));
+      card.appendChild(summary);
+
+      const actions = cinvEl("div", "cinv-actions");
+      const activate = cinvEl("a", "ws-btn cinv-pay", "Activate Subscription");
+      activate.href = "/payment?subscription_id=" + encodeURIComponent(sub.id);
+      actions.appendChild(activate);
+      card.appendChild(actions);
+      return card;
+    }
+
+    // Render any PENDING custom recurring subscriptions into the Invoices tab from
+    // the subscription rows already fetched at page load (no extra query). Pending =
+    // category 'hosting' with status pending_activation / incomplete. The block is
+    // hidden entirely when there are none.
+    function renderClientPendingSubs(rows) {
+      const block = $("csub-block");
+      const listEl = $("csub-list");
+      if (!block || !listEl) return;
+      const pending = (rows || []).filter(
+        (r) => r.category === "hosting" && (r.status === "pending_activation" || r.status === "incomplete")
+      );
+      listEl.textContent = "";
+      if (!pending.length) { block.classList.add("hidden"); return; }
+      pending.forEach((s) => listEl.appendChild(buildPendingSubCard(s)));
+      block.classList.remove("hidden");
+    }
+
     // ---- Page load: gate on a session, then load + render ---------------
     (async () => {
       // First, verify a real logged-in user before any dashboard data is
@@ -1670,6 +1831,7 @@
       // Fresh fetch on every page load (the Supabase client does not cache
       // query results), ordered newest-first so the billing row is deterministic.
       let sub = null;
+      let subRows = [];
       let subError = false;
       try {
         const { data: rows, error } = await db
@@ -1678,6 +1840,7 @@
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
         if (error) throw error;
+        subRows = rows || [];
         sub = rows && rows[0] ? rows[0] : null;
         // Domain is the single source of truth in subscriptions. A user may
         // have more than one row (e.g. a domain placeholder plus a later Stripe
@@ -1703,12 +1866,24 @@
       // Can't trust the billing state if the subscription query failed.
       const billingError = subError;
 
+      // Hosting state is computed across ALL of the user's subscription rows (a user
+      // may have a legacy plan row AND a newer custom subscription row): active
+      // hosting = any active/trialing row; pending hosting = a category 'hosting' row
+      // awaiting activation. Precedence active > pending is applied in renderHosting.
+      const activeHostingSub =
+        subRows.find((r) => r.status === "active" || r.status === "trialing") || null;
+      const pendingHostingSub =
+        subRows.find((r) => r.category === "hosting" && (r.status === "pending_activation" || r.status === "incomplete")) || null;
+
       render(user, inquiry, sub);
       renderBusiness(inquiry, inquiryError);
       renderProject(project, projectError);
       renderBilling(sub, hasService, billingError);
-      renderHosting(sub, hasService, billingError);
+      renderHosting(activeHostingSub, pendingHostingSub, billingError);
       renderClientPayBanner(sub);
+      // Pending custom subscriptions show in the Invoices tab too (from the rows
+      // already fetched above — no extra query).
+      renderClientPendingSubs(subRows);
       // Invoices load independently (own states) and never block the dashboard.
       loadClientInvoices(user);
     })();
@@ -2794,6 +2969,190 @@
     }
 
     // =====================================================================
+    // SUBSCRIPTIONS — admin-created custom recurring hosting subscriptions
+    // Create a PENDING subscription for a client (custom amount + interval); the
+    // client activates it on the payment page. List + real Stripe cancel. All
+    // amounts are validated + stored server-side (api/admin/subscriptions.js).
+    // =====================================================================
+    const SUBS = { built: false, clientsLoaded: false, submitting: false, clientMap: {} };
+
+    // POST to the admin subscriptions route with the caller's Supabase access token.
+    async function subsApi(action, payload) {
+      const { data: sess } = await db.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) throw new Error("Your session expired. Please sign in again.");
+      const res = await fetch("/api/admin/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ action: action, payload: payload || {} }),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")."));
+      return data;
+    }
+
+    // Recurring price label: "$25/month", "$500/year", or "$100 every 3 months".
+    function subRecurringLabel(cents, months) {
+      const m = centsToUsd(cents);
+      const n = Number(months);
+      if (n === 1) return m + "/month";
+      if (n === 12) return m + "/year";
+      return m + " every " + n + " months";
+    }
+
+    function showSubMsg(kind, text) {
+      const el = aq("sub-msg");
+      el.className = "inv-msg show " + kind;
+      el.setAttribute("role", kind === "err" ? "alert" : "status");
+      el.textContent = text;
+    }
+
+    // Live recurring-price preview as the admin types amount + interval.
+    function subPreview() {
+      const cents = dollarsToCents(aq("sub-amount").value);
+      const months = Math.floor(Number(aq("sub-interval").value));
+      const prev = aq("sub-preview");
+      if (cents == null || !cents || !Number.isInteger(months) || months < 1 || months > 12) {
+        prev.textContent = "Recurring price preview: —";
+        return;
+      }
+      prev.textContent = "Recurring price preview: " + subRecurringLabel(cents, months);
+    }
+
+    // Load the client picker (same source as the invoice form) and remember
+    // user_id → name for the list table's Client column.
+    async function loadSubClients(force) {
+      const sel = aq("sub-client");
+      if (SUBS.clientsLoaded && !force) return;
+      sel.innerHTML = '<option value="">Loading clients…</option>';
+      sel.disabled = true;
+      try {
+        const data = await adminApi("list_users", { search: "", filters: {}, limit: 100000, offset: 0 });
+        const seen = {}, list = [];
+        (data.rows || []).forEach((r) => {
+          if (!r.user_id || seen[r.user_id]) return;
+          seen[r.user_id] = 1;
+          const name = r.full_name || r.business_name || r.email || "Unnamed client";
+          SUBS.clientMap[r.user_id] = name;
+          const sfx = r.email && name !== r.email ? " · " + r.email : "";
+          list.push({ id: r.user_id, label: name + sfx });
+        });
+        list.sort((a, b) => a.label.localeCompare(b.label));
+        if (!list.length) { sel.innerHTML = '<option value="">No clients found</option>'; sel.disabled = true; SUBS.clientsLoaded = true; return; }
+        sel.innerHTML = '<option value="">Select a client…</option>' +
+          list.map((o) => '<option value="' + esc(o.id) + '">' + esc(o.label) + "</option>").join("");
+        sel.disabled = false;
+        SUBS.clientsLoaded = true;
+      } catch (e) {
+        sel.innerHTML = '<option value="">Couldn’t load clients — reopen to retry</option>';
+        sel.disabled = true;
+        SUBS.clientsLoaded = false;
+        showSubMsg("err", "Couldn’t load the client list: " + e.message);
+      }
+    }
+
+    async function loadSubsList() {
+      const wrap = aq("sub-list");
+      wrap.textContent = "Loading…";
+      try {
+        const data = await subsApi("list", {});
+        const rows = (data && data.subscriptions) || [];
+        if (!rows.length) { wrap.innerHTML = '<p class="inv-note">No subscriptions yet.</p>'; return; }
+        const head = "<thead><tr><th>Name</th><th>Client</th><th>Recurring</th><th>Status</th><th>Created</th><th></th></tr></thead>";
+        const body = rows.map((r) => {
+          const client = SUBS.clientMap[r.user_id] || (r.user_id ? String(r.user_id).slice(0, 8) : "—");
+          const cancelCell = r.status !== "canceled"
+            ? '<button class="adm-mini danger" data-cancel-sub="' + esc(r.id) + '">Cancel Subscription</button>'
+            : "—";
+          return "<tr><td>" + esc(r.plan_name || "—") + "</td><td>" + esc(client) + "</td><td>" +
+            esc(subRecurringLabel(r.amount_cents, r.interval_months)) + "</td><td>" + badge(r.status) +
+            "</td><td>" + (fmtDate(r.created_at) || "—") + "</td><td>" + cancelCell + "</td></tr>";
+        }).join("");
+        wrap.innerHTML = '<table class="adm-table">' + head + "<tbody>" + body + "</tbody></table>";
+        wrap.querySelectorAll("[data-cancel-sub]").forEach((b) => {
+          b.addEventListener("click", () => cancelSub(b.getAttribute("data-cancel-sub")));
+        });
+      } catch (e) {
+        wrap.innerHTML = '<p class="inv-note" style="color:var(--adm-danger)">Couldn’t load subscriptions: ' + esc(e.message) + "</p>";
+      }
+    }
+
+    async function cancelSub(id) {
+      const ok = await confirmAction(
+        "Cancel this subscription?",
+        "This cancels the real Stripe subscription (if it has been activated) and stops all future charges. This cannot be undone.",
+        "Cancel subscription"
+      );
+      if (!ok) return;
+      try {
+        await subsApi("cancel", { subscription_id: id });
+        toast("Subscription canceled", "", false);
+        loadSubsList();
+      } catch (e) {
+        toast("Couldn’t cancel subscription", e.message, true);
+      }
+    }
+
+    async function runSubCreate() {
+      if (SUBS.submitting) return;
+      const clientEl = aq("sub-client");
+      const nameEl = aq("sub-name");
+      const amountEl = aq("sub-amount");
+      const intervalEl = aq("sub-interval");
+      aq("view-subscriptions").querySelectorAll(".flagged").forEach((e) => e.classList.remove("flagged"));
+
+      const flag = (el, msg) => { showSubMsg("err", msg); toast("Can’t create this subscription yet", msg, true); el.classList.add("flagged"); try { el.focus({ preventScroll: true }); } catch (e) {} };
+
+      if (!clientEl.value) return flag(clientEl, "Select a client.");
+      const name = nameEl.value.trim();
+      if (!name) return flag(nameEl, "Enter a subscription name.");
+      const cents = dollarsToCents(amountEl.value);
+      if (cents == null || cents < 1) return flag(amountEl, "Enter an amount greater than $0.00.");
+      const months = Number(intervalEl.value);
+      if (!Number.isInteger(months) || months < 1 || months > 12) return flag(intervalEl, "Charge interval must be a whole number of months between 1 and 12.");
+
+      SUBS.submitting = true;
+      const createBtn = aq("sub-create");
+      createBtn.disabled = true;
+      const lbl = createBtn.textContent;
+      createBtn.textContent = "Creating…";
+      try {
+        // Send the amount in DOLLARS; the server converts to cents and is the
+        // authoritative source (the browser value is never trusted as cents).
+        await subsApi("create", {
+          client_user_id: clientEl.value,
+          name: name,
+          amount_dollars: cents / 100,
+          interval_months: months,
+        });
+        showSubMsg("ok", "Subscription created (pending activation). The client can now activate it from their dashboard.");
+        toast("Subscription created", name + " · " + subRecurringLabel(cents, months), false);
+        nameEl.value = ""; amountEl.value = ""; intervalEl.value = "1"; clientEl.value = "";
+        subPreview();
+        loadSubsList();
+      } catch (e) {
+        showSubMsg("err", e.message || "Could not create the subscription.");
+        toast("Couldn’t create subscription", e.message, true);
+      } finally {
+        SUBS.submitting = false;
+        createBtn.disabled = false;
+        createBtn.textContent = lbl;
+      }
+    }
+
+    function initSubs() {
+      if (!SUBS.built) {
+        aq("sub-create").addEventListener("click", runSubCreate);
+        aq("sub-amount").addEventListener("input", subPreview);
+        aq("sub-interval").addEventListener("input", subPreview);
+        SUBS.built = true;
+      }
+      loadSubClients(false);
+      loadSubsList();
+    }
+
+    // =====================================================================
     // OVERVIEW + CHARTS
     // =====================================================================
     let overviewData = null;
@@ -2924,6 +3283,7 @@
       document.querySelectorAll(".adm-view").forEach((v) => v.classList.toggle("active", v.id === "view-" + viewId));
       if (viewId === "overview") { loadOverview(); return; }
       if (viewId === "invoices") { initInvoices(); return; }
+      if (viewId === "subscriptions") { initSubs(); return; }
       if (viewId === "settings") { return; }
       if (VIEWS[viewId]) {
         if (!state[viewId] || !state[viewId].built) buildView(viewId);

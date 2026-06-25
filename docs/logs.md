@@ -6,6 +6,142 @@
 
 ---
 
+## 2026-06-24 - Developer / Implementation - custom-recurring-subscriptions
+
+Action:
+Finished
+
+Task:
+Admin-created custom recurring hosting subscriptions — admin creates a custom recurring charge
+(amount + "charge every N months") for an existing client; the client sees it pending in the
+Invoices and Hosting tabs, activates it once on /payment (charged immediately, Stripe auto-renews
+every interval_months); admin can list + cancel (REAL Stripe cancel). Stored on the existing
+`subscriptions` table per the owner's choice; activation reuses the existing /payment Payment
+Element flow.
+
+Files claimed / changed:
+
+- db/hosting-subscriptions-schema.sql (NEW) — additive columns on public.subscriptions
+  (amount_cents, interval_months, currency, category, activated_at, canceled_at,
+  current_period_start, updated_at, created_by, stripe_price_id) + a partial unique index on
+  stripe_subscription_id (webhook upsert conflict target). Idempotent; no drops/renames; RLS
+  unchanged (owner-select + admin-all already correct, no client writes).
+- api/admin/subscriptions.js (NEW) — admin-only (Bearer + ADMIN_EMAIL gate, mirrors
+  api/admin/invoices.js). Actions: create (pending_activation row, amount validated→cents
+  server-side, no Stripe call), list (category='hosting' rows), cancel (cancels the REAL Stripe
+  subscription if present, then marks the row canceled + canceled_at). Audit-logged.
+- api/subscriptions/activate.js (NEW) — client activation (mirrors the recurring branch of
+  api/invoices/pay.js). Verifies ownership + pending status, reads amount/interval from the DB,
+  creates an inline-price Stripe subscription (interval:'month', interval_count=interval_months,
+  default_incomplete, save_default_payment_method), persists stripe ids + status incomplete,
+  returns the confirmation secret. Webhook is the only authority for 'active'.
+- api/webhook.js (MODIFIED) — small, metadata.subscription_row_id-GUARDED additions only: stamp
+  activated_at / current_period_start / updated_at on created/updated, and canceled_at on deleted.
+  Legacy plan-subscription + custom-invoice paths byte-unchanged; subscriptionRecord() omits the
+  admin-set label/amount/interval (inline price has no nickname), so the existing upsert preserves
+  them.
+- payment.html (MODIFIED) — added a ?subscription_id= deep link + activateSubscription() /
+  pollSubscriptionActive() mirroring payInvoice()/pollInvoicePaid(); the submit handler branches on
+  payKind to poll subscriptions.status until active/trialing. No change to the invoice path.
+- dashboard.html (MODIFIED) — recurringLabel() helper; Hosting tab now 3-state (active w/ recurring
+  price + "Manage Billing", pending w/ recurring price + "Activate Subscription" →
+  /payment?subscription_id=, none w/ Request Hosting placeholder); pending subscriptions also shown
+  in the Invoices tab (buildPendingSubCard, "Activate Subscription" — never "Pay Invoice"); new
+  admin "Subscriptions" section (nav + view) with a create form (client / name / amount / charge
+  every N months), a live recurring-price preview, a list table, and a Cancel Subscription button →
+  /api/admin/subscriptions. Hosting state now computed across ALL of the user's subscription rows.
+
+Testing:
+
+- node --check api/admin/subscriptions.js, api/subscriptions/activate.js, api/webhook.js → all OK.
+- vm.Script parse of payment.html (1 inline block) and dashboard.html (2 inline blocks) → 0 errors.
+- Reused admin helpers verified present (badge, centsToUsd, esc, fmtDate, dollarsToCents,
+  adminApi, confirmAction, toast) and table.adm-table styled.
+- git diff scope: only the 6 feature files changed (the dirty fonts/, Animations/, images/Laptop/,
+  docs/logs.md entries above mine are another session's work — NOT touched here).
+- NOT run: live browser / vercel dev pass (no environment here) → deferred to Reviewer.
+
+Risks / Notes:
+
+- REQUIRED setup before recurring activation works: set env STRIPE_SUBSCRIPTION_PRODUCT_ID in
+  Vercel (the inline recurring price attaches to it — almost certainly why "the client can't pay" a
+  recurring item today, since one-time invoices don't need it), ensure STRIPE_PUBLISHABLE_KEY is
+  set, run db/hosting-subscriptions-schema.sql in Supabase, and confirm the Stripe webhook
+  subscribes to customer.subscription.created/updated/deleted + invoice.paid/payment_failed.
+- interval_months is constrained to 1–12 (Stripe caps a single recurring interval at one year).
+- Active-button copy changed from "Manage Hosting Services" → "Manage Billing" per the new spec
+  (same Stripe Customer Portal action). Designer/Reviewer may want to confirm.
+- Out of scope (follow-ups): failed-RENEWAL handling beyond the first charge (a paid recurring sub
+  is not flipped past_due on a later failed renewal); consolidating the legacy DB-only
+  cancel_subscription in api/admin.js; showing recurring history in /prev-inv. The pending_activation
+  status will appear as an unknown status in the admin Payments tab/overview counts (cosmetic).
+
+---
+
+## 2026-06-24 - Developer / Implementation - laptop-teardown-closed-asset-and-artifacts
+
+Action:
+Finished
+
+Task:
+Owner-direct follow-up. Three reported defects in the teardown demo: (1) wrong starting/closed asset — it
+reconstructed the closed laptop from slices instead of using `images/Laptop/closed.png`; (2) random black/gray
+spots floating around the laptop; (3) the whole scene faded in instead of scrolling naturally into the
+animation.
+
+Diagnosis (asset-level inspection via a connected-component alpha scan of each PNG):
+- All layers are 1366×768. `closed.png` is a single clean closed laptop (x382..978 y278..497).
+- The "floating spots" were NOT a single bad asset. Two causes: (a) `layer-components.png` is 13 genuinely
+  scattered parts, and the old code revealed them collapsed + EARLY (p≈0.15) each with a 40px-blur
+  per-layer `drop-shadow`, so they read as soft black blobs above/around the laptop; (b) the board/chassis
+  bands had no clean transparent gap, leaving one isolated stray sliver in each slice (board ~92px at its
+  bottom edge, chassis ~115px at its top edge).
+- The "fade-in" was the old `.product` opacity reveal (0.15→0.28); the "wrong closed asset" was the
+  collapsed-slice reconstruction standing in for `closed.png`.
+
+Fixes:
+- Closed state now uses `closed.png` directly as a 5th stacked layer (`l-closed`, z5), visible at opacity 1
+  from the top of the section (no scene fade-in). It is held clean, then drifts up + back and dissolves as
+  the teardown layers emerge beneath it (cover-coming-off, motion-led — not a crossfade).
+- The four teardown layers start HIDDEN (`opacity:0` in CSS + JS) and only fade in once the teardown begins;
+  components reveal LATER (0.50–0.62), in the gap the lid opens, so they only ever appear as a coherent
+  internal-parts layer during active teardown.
+- Removed per-part `drop-shadow` from the board + components layers (kept a subtle one only on lid / chassis
+  / closed). Erased the two isolated seam slivers from `layer-board.png` and `layer-chassis.png` (each was a
+  separate connected component, so the real part was untouched — pixel counts unchanged after the erase).
+
+Files changed:
+
+- `Animations/laptop-teardown/index.html` — added `closed.png` as the `l-closed` top layer; new render
+  timeline (closed laptop held 0–.30 → dissolves .30–.42 while lid/board/chassis fade in and separate
+  .32–.64 → components reveal + lift .50–.80 → final spread + hold .82–1.0); product opacity 1 (was 0);
+  layers hidden at rest; intro wordmark moved to the upper area so the closed laptop is centred + visible
+  from the start; per-part shadows removed.
+- `images/Laptop/layer-board.png`, `images/Laptop/layer-chassis.png` — erased the isolated stray seam sliver
+  in each (transparent).
+- `Animations/laptop-teardown/README.txt` — documents the closed.png start, the hidden-until-teardown
+  layers, the seam/shadow cleanup, and the new timeline.
+
+Testing:
+- `node --check` on both inline scripts: OK.
+- Connected-component scan after the erase: board + chassis each = exactly 1 component (slivers gone, main
+  part pixel-count unchanged).
+- Headless-Chrome render harness mirroring the new render() at p = 0.00 / 0.20 / 0.36 / 0.50 / 0.70 / 1.00
+  (desktop 1440×900) and 0.00 / 0.50 / 1.00 (mobile 390×844): p=0 shows the real closed laptop clean +
+  centred with no layers/spots; the dissolve handoff is clean; components appear only mid-teardown as a
+  cohesive cluster; final frame = the teardown-4 exploded layout; mobile centred with no horizontal overflow.
+
+Risks / Notes:
+- Live in-browser scroll/feel pass NOT run (Claude-in-Chrome extension offline) — verified frame-by-frame
+  with headless Chrome instead; a deploy-preview scroll-through is still worth a glance.
+- Asset limitation unchanged: a flawless teardown still wants natively-rendered, fully-separated transparent
+  layers (clean edges, no shared shadows, populated vs. bare board as distinct art). The board/chassis seam
+  remains the least-clean boundary because no transparent gap existed there.
+- index.html / README.txt / logs.md changes are staged but NOT committed (commit only on request). The two
+  cleaned layer PNGs are modified in the working tree.
+
+---
+
 ## 2026-06-24 - Developer / Implementation - laptop-teardown-physical-layers
 
 Action:

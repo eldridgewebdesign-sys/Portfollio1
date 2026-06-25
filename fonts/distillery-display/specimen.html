@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distillery Display — Specimen</title>
+<style>
+  /* Inline @font-face so this file previews correctly when opened directly. */
+  @font-face {
+    font-family: "Distillery Display";
+    src: url("DistilleryDisplay-Regular.woff2") format("woff2"),
+         url("DistilleryDisplay-Regular.otf") format("opentype");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Distillery Display Alt";
+    src: url("DistilleryDisplayAlt-Regular.woff2") format("woff2"),
+         url("DistilleryDisplayAlt-Regular.otf") format("opentype");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+
+  :root { --ink: #161310; --muted: #8a8178; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 56px clamp(20px, 6vw, 96px);
+    background: #faf7f2; color: var(--ink);
+    font-family: ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+  }
+  header { margin-bottom: 48px; }
+  .kicker { letter-spacing: .28em; text-transform: uppercase; font-size: 12px; color: var(--muted); }
+  h1 { font-family: "Distillery Display", serif; font-weight: 400; font-size: clamp(48px, 11vw, 132px);
+       margin: 8px 0 0; line-height: .98; }
+  section { border-top: 1px solid #e6ddd0; padding: 32px 0; }
+  .label { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+  .display { font-family: "Distillery Display", serif; font-weight: 400; line-height: 1.05; color: var(--ink); }
+  .alt { font-family: "Distillery Display Alt", serif; }
+  .glyphs { font-size: clamp(28px, 5.4vw, 64px); letter-spacing: .04em; word-spacing: .1em; }
+  .s96 { font-size: 96px; } .s64 { font-size: 64px; } .s40 { font-size: 40px; } .s28 { font-size: 28px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  @media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <header>
+    <div class="kicker">Eldridge Web Design · Type Specimen</div>
+    <h1>Distillery&nbsp;Display</h1>
+  </header>
+
+  <section>
+    <div class="label">Uppercase · Regular</div>
+    <div class="display glyphs">ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
+  </section>
+
+  <section>
+    <div class="label">Uppercase · Alt</div>
+    <div class="display alt glyphs">ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
+  </section>
+
+  <section class="row">
+    <div>
+      <div class="label">Regular · sizes</div>
+      <div class="display s96">Aged</div>
+      <div class="display s64">Small Batch</div>
+      <div class="display s40">Reserve Cask Strength</div>
+      <div class="display s28">Distilled &amp; Bottled By Hand</div>
+    </div>
+    <div>
+      <div class="label">Alt · sizes</div>
+      <div class="display alt s96">Aged</div>
+      <div class="display alt s64">Small Batch</div>
+      <div class="display alt s40">Reserve Cask Strength</div>
+      <div class="display alt s28">Distilled &amp; Bottled By Hand</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label">Note</div>
+    <p style="max-width:60ch;color:#5a534b;line-height:1.6;font-size:15px;">
+      An all-caps display face. The glyph set covers A&ndash;Z and a space; lowercase letters
+      are mapped to the same capital forms, so words render in caps regardless of input case.
+      Digits and punctuation are not part of this specimen.
+    </p>
+  </section>
+</body>
+</html>

@@ -1,0 +1,21 @@
+/* Distillery Display
+   Generated from fonts/Examples/Distillery.display.font.png
+   Uppercase display face. A-Z covered; lowercase a-z is mapped to the same caps. */
+
+@font-face {
+  font-family: "Distillery Display";
+  src: url("DistilleryDisplay-Regular.woff2") format("woff2"),
+       url("DistilleryDisplay-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Distillery Display Alt";
+  src: url("DistilleryDisplayAlt-Regular.woff2") format("woff2"),
+       url("DistilleryDisplayAlt-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

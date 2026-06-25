@@ -22,8 +22,9 @@
   })();
 </script>
 
-<!-- Preload the animation assets (backdrop + the four product layers) so nothing pops in. -->
+<!-- Preload the animation assets (backdrop + closed laptop + the four product layers) so nothing pops in. -->
 <link rel="preload" as="image" href="/images/Laptop/interior.jpg">
+<link rel="preload" as="image" href="/images/Laptop/closed.png">
 <link rel="preload" as="image" href="/images/Laptop/layer-lid.png">
 <link rel="preload" as="image" href="/images/Laptop/layer-components.png">
 <link rel="preload" as="image" href="/images/Laptop/layer-board.png">
@@ -162,26 +163,40 @@ a{color:inherit}
 }
 .anim .bg{position:absolute; z-index:0}
 
-/* Intro overlays the centered cell */
-.anim .intro{grid-area:1/1; min-height:0; padding:clamp(1.5rem,5vw,4rem); z-index:6; align-self:center}
+/* Intro wordmark sits in the upper area, above the already-visible closed
+   laptop, and lifts away on scroll — it does not cover the product. */
+.anim .intro{grid-area:1/1; min-height:0; padding:clamp(1.5rem,5vw,4rem); padding-top:clamp(7vh,11vh,15vh); z-index:6; align-self:start}
 
 /* Static fallback figures off in animated mode */
 .anim .static-frames{display:none}
 
-/* The layered product — the actual animation */
+/* The layered product — the actual animation. closed.png is the REAL
+   starting visual (the clean closed laptop). The four teardown layers begin
+   hidden and only appear once the teardown begins, so no scattered components
+   or seams are ever seen behind / around the closed laptop. */
 .anim .product{
   display:block; grid-area:1/1; align-self:center; position:relative;
-  width:min(1060px,92vw); aspect-ratio:1366/768; opacity:0; z-index:3;
+  width:min(1060px,92vw); aspect-ratio:1366/768; opacity:1; z-index:3;
 }
 .anim .product .layer{
   position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
-  will-change:transform; backface-visibility:hidden;
-  filter:drop-shadow(0 24px 40px rgba(40,33,24,.20));
+  will-change:transform,opacity; backface-visibility:hidden;
+}
+/* Subtle depth on the silver panels + the closed laptop only; NONE on the
+   busy board/components layers — per-part shadows there read as the
+   "floating black spots" we are fixing. */
+.anim .l-closed,.anim .l-lid,.anim .l-board,.anim .l-chassis{
+  filter:drop-shadow(0 18px 30px rgba(40,33,24,.16));
 }
 .anim .l-chassis{z-index:1}
 .anim .l-board{z-index:2}
 .anim .l-components{z-index:3}
 .anim .l-lid{z-index:4}
+.anim .l-closed{z-index:5}
+/* At rest (and before the script runs) only the closed laptop is visible;
+   the teardown layers are hidden so nothing flashes in at the top. */
+.anim .l-lid,.anim .l-components,.anim .l-board,.anim .l-chassis{opacity:0}
+.anim .l-closed{opacity:1}
 
 /* End line — pinned low, over the held teardown */
 .anim .cap-end{
@@ -253,13 +268,15 @@ a{color:inherit}
       </div>
     </header>
 
-    <!-- 2 · The laptop, as four registered layers (animated) -->
+    <!-- 2 · The laptop. closed.png is the real closed-laptop start; the four
+            registered teardown layers sit beneath it and animate apart. -->
     <div class="product" role="img"
-         aria-label="A laptop separating layer by layer into its top shell, internal components, mainboard, and base chassis.">
+         aria-label="A closed laptop that separates layer by layer into its top shell, internal components, mainboard, and base chassis.">
       <img class="layer l-chassis"    src="/images/Laptop/layer-chassis.png"    alt="" width="1366" height="768" decoding="async">
       <img class="layer l-board"      src="/images/Laptop/layer-board.png"      alt="" width="1366" height="768" decoding="async">
       <img class="layer l-components" src="/images/Laptop/layer-components.png" alt="" width="1366" height="768" decoding="async">
       <img class="layer l-lid"        src="/images/Laptop/layer-lid.png"        alt="" width="1366" height="768" decoding="async">
+      <img class="layer l-closed"     src="/images/Laptop/closed.png"           alt="" width="1366" height="768" decoding="async">
     </div>
 
     <!-- Static fallback (no-JS / reduced-motion): two plain frames -->
@@ -296,6 +313,7 @@ a{color:inherit}
   var el = {
     intro:      document.querySelector('.intro'),
     product:    document.querySelector('.product'),
+    closed:     document.querySelector('.l-closed'),
     lid:        document.querySelector('.l-lid'),
     components: document.querySelector('.l-components'),
     board:      document.querySelector('.l-board'),
@@ -326,22 +344,37 @@ a{color:inherit}
   }
 
   function render(p){
-    /* Intro wordmark — holds, lifts + fades away */
-    var introOut = ease(seg(p, 0.08, 0.18));
+    /* Intro wordmark — sits above the already-visible closed laptop, then
+       lifts + fades away as you scroll in (the laptop itself never fades). */
+    var introOut = ease(seg(p, 0.02, 0.12));
     el.intro.style.opacity = 1 - introOut;
-    el.intro.style.transform = 'translate3d(0,' + (-5 * introOut) + '%,0) scale(' + (1 + 0.05 * introOut) + ')';
+    el.intro.style.transform = 'translate3d(0,' + (-6 * introOut) + '%,0)';
 
-    /* Product group — revealed once (opacity), then floats up into place. Rests
-       slightly above centre so it sits in the lit part of the room. */
-    var reveal = ease(seg(p, 0.15, 0.28));
-    var settle = ease(seg(p, 0.15, 0.32));
-    el.product.style.opacity = reveal;
-    el.product.style.transform = 'translate3d(0,' + lerp(5, -3, settle) + '%,0) scale(' + lerp(1.03, 1, settle) + ')';
+    /* The closed laptop (closed.png) is the REAL start: fully visible from the
+       top, held clean through ~0.30, then it drifts up + back and dissolves as
+       the teardown layers emerge beneath it — the cover coming off, not a fade. */
+    var coverOut  = ease(seg(p, 0.30, 0.42));
+    var coverRise = ease(seg(p, 0.30, 0.52));
+    el.closed.style.opacity = 1 - coverOut;
+    el.closed.style.transform = 'translate3d(0,' + (-9 * coverRise) + '%,0) scale(' + (1 + 0.04 * coverRise) + ')';
 
-    /* Physical separation, all on translateY of real layers (no cross-fade) */
-    var open  = ease(seg(p, 0.30, 0.56));   // lid rises + chassis drops (laptop opens)
-    var board = ease(seg(p, 0.33, 0.62));   // mainboard settles to centre
-    var comps = ease(seg(p, 0.56, 0.84));   // components lift OFF the board
+    /* Teardown layers appear ONLY once the teardown begins — no scattered parts
+       behind the closed laptop. The reveal is a short opacity fade-in; the
+       translateY motion below is the real effect. Components reveal LATER, in
+       the gap the lid opens, so they read as internal parts being removed. */
+    var shellsIn = ease(seg(p, 0.30, 0.42));
+    var compsIn  = ease(seg(p, 0.50, 0.62));
+    el.lid.style.opacity     = shellsIn;
+    el.board.style.opacity   = shellsIn;
+    el.chassis.style.opacity = shellsIn;
+    el.components.style.opacity = compsIn;
+
+    /* Physical separation — all on translateY of real layers (no cross-fade).
+       Layers start collapsed (stacked at centre, hidden beneath the closed
+       laptop) and translate out to the exploded teardown-4 positions. */
+    var open  = ease(seg(p, 0.32, 0.58));   // lid rises + chassis drops (it opens)
+    var board = ease(seg(p, 0.36, 0.64));   // mainboard settles into the middle
+    var comps = ease(seg(p, 0.52, 0.80));   // components lift OFF the board
     var fin   = ease(seg(p, 0.82, 0.98));   // slight final spread, then hold
 
     ty(el.lid,        lerp(C_LID,     0, open)  + (-2.5) * fin);

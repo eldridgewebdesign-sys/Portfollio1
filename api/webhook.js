@@ -220,6 +220,37 @@ const handler = async (req, res) => {
         await supabaseAdmin
           .from("subscriptions")
           .upsert(subscriptionRecord(subscription), { onConflict: "stripe_subscription_id" });
+        // Admin-created custom subscriptions (api/subscriptions/activate) carry
+        // metadata.subscription_row_id. Stamp activation / period-start audit
+        // timestamps here. The upsert above PRESERVES the admin-set label,
+        // amount_cents, interval_months and category — subscriptionRecord omits
+        // them for an inline price_data subscription — so this only ADDS
+        // timestamps; it never touches the legacy plan-subscription path.
+        if (subscription.metadata && subscription.metadata.subscription_row_id) {
+          const startUnix =
+            subscription.current_period_start ||
+            (subscription.items &&
+              subscription.items.data &&
+              subscription.items.data[0] &&
+              subscription.items.data[0].current_period_start) ||
+            null;
+          const patch = { updated_at: new Date().toISOString() };
+          const startIso = unixToIso(startUnix);
+          if (startIso) patch.current_period_start = startIso;
+          await supabaseAdmin
+            .from("subscriptions")
+            .update(patch)
+            .eq("stripe_subscription_id", subscription.id);
+          // Stamp activated_at the FIRST time it becomes active/trialing only
+          // (the `.is("activated_at", null)` guard keeps later events from moving it).
+          if (subscription.status === "active" || subscription.status === "trialing") {
+            await supabaseAdmin
+              .from("subscriptions")
+              .update({ activated_at: new Date().toISOString() })
+              .eq("stripe_subscription_id", subscription.id)
+              .is("activated_at", null);
+          }
+        }
         break;
       }
 
@@ -239,6 +270,17 @@ const handler = async (req, res) => {
             .update({ status: "canceled" })
             .eq("stripe_subscription_id", subscription.id)
             .neq("status", "paid");
+          break;
+        }
+        // Admin-created custom subscription → also stamp canceled_at (its column
+        // exists once db/hosting-subscriptions-schema.sql is applied). Legacy plan
+        // rows keep the original status-only update so they never depend on the
+        // newer column.
+        if (subscription.metadata && subscription.metadata.subscription_row_id) {
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({ status: "canceled", canceled_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .eq("stripe_subscription_id", subscription.id);
           break;
         }
         await supabaseAdmin

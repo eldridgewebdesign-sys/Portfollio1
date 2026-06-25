@@ -617,6 +617,8 @@
     let payPaymentElement = null;  // current mounted Payment Element
     let payBusy = false;           // true while a payment is being submitted
     let payInvoiceId = null;       // the invoice currently being paid
+    let paySubId = null;           // the subscription currently being activated
+    let payKind = "invoice";       // "invoice" | "subscription" — drives the post-pay poll
     let clientUser = null;         // signed-in client, captured when invoices load
 
     const payOverlay = $("pay-overlay");
@@ -651,6 +653,8 @@
       payPaymentElement = null;
       payElements = null;
       payInvoiceId = null;
+      paySubId = null;
+      payKind = "invoice";
       $("payment-element").innerHTML = "";
       setPayMsg("");
     }
@@ -723,6 +727,66 @@
       }
     }
 
+    // Format a recurring price for the modal title: "$25/month", "$500/year", or
+    // "$100 every 3 months" — mirrors the dashboard's recurringLabel.
+    function subRecurringLabel(amountCents, intervalMonths) {
+      const money = cinvMoney(amountCents);
+      const n = Number(intervalMonths);
+      if (n === 1) return money + "/month";
+      if (n === 12) return money + "/year";
+      return money + " every " + n + " months";
+    }
+
+    // "Activate Subscription" deep link: verify the session, ask
+    // /api/subscriptions/activate to create the recurring Stripe subscription (the
+    // SERVER reads the amount + interval from the DB — the client never sends them),
+    // then open the Payment Element modal. The webhook — not this click — is what
+    // marks the subscription active.
+    async function activateSubscription(subscriptionId, btn) {
+      clearPayError();
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
+      btn.textContent = "Starting…";
+      try {
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) { showPayError("You must be signed in to activate a subscription."); return; }
+
+        const res = await fetch("/api/subscriptions/activate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ subscription_id: subscriptionId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Could not start the subscription. Please try again.");
+        if (!data.clientSecret) throw new Error("Could not start the subscription. Please try again.");
+
+        // Build a Stripe instance from the server-provided publishable key (its
+        // mode always matches the server's secret key).
+        if (!stripe && data.publishableKey && window.Stripe && /^pk_/.test(data.publishableKey)) {
+          stripe = window.Stripe(data.publishableKey);
+        }
+        if (!stripe) throw new Error("Payments aren’t available right now. Please contact " + SUPPORT_EMAIL + ".");
+
+        // Title the modal with the recurring price (display only — server is truth).
+        if (data.subscription && data.subscription.amount_cents != null) {
+          $("pay-title").textContent =
+            "Activate subscription — " +
+            subRecurringLabel(data.subscription.amount_cents, data.subscription.interval_months);
+        }
+        paySubId = subscriptionId;
+        payKind = "subscription";
+        mountPayment(data.clientSecret);
+      } catch (err) {
+        showPayError(err.message || "Could not start the subscription. Please try again.");
+      } finally {
+        btn.disabled = false;
+        btn.removeAttribute("aria-busy");
+        btn.textContent = original;
+      }
+    }
+
     // Poll the invoice row until the webhook flips it to "paid" (or we give up).
     // api/webhook.js (payment_intent.succeeded) is the ONLY writer of "paid" — the
     // browser never sets it. ~2s × 15 ≈ 30s, then we stop and tell the user.
@@ -740,6 +804,35 @@
               .eq("id", invoiceId)
               .maybeSingle();
             if (!error && data && String(data.status).toLowerCase() === "paid") {
+              resolve(true);
+              return;
+            }
+          } catch (e) { /* transient read error — keep polling */ }
+          if (n >= tries) { resolve(false); return; }
+          setTimeout(tick, intervalMs);
+        };
+        tick();
+      });
+    }
+
+    // Poll the subscription row until the webhook flips it to active/trialing (or we
+    // give up). api/webhook.js is the ONLY writer of that status — the browser never
+    // sets it. ~2s × 15 ≈ 30s, then we stop and tell the user.
+    function pollSubscriptionActive(subscriptionId, tries, intervalMs) {
+      tries = tries || 15;
+      intervalMs = intervalMs || 2000;
+      return new Promise((resolve) => {
+        let n = 0;
+        const tick = async () => {
+          n++;
+          try {
+            const { data, error } = await db
+              .from("subscriptions")
+              .select("status")
+              .eq("id", subscriptionId)
+              .maybeSingle();
+            const s = data && String(data.status).toLowerCase();
+            if (!error && (s === "active" || s === "trialing")) {
               resolve(true);
               return;
             }
@@ -793,8 +886,21 @@
         }
 
         // "succeeded" / "processing" / "requires_action": wait for the webhook to
-        // mark the invoice paid in the DB before showing success.
+        // mark the invoice paid / subscription active in the DB before showing
+        // success. We never set either status from the browser.
         setPayMsg("Payment received — waiting for confirmation…", "pending");
+        if (payKind === "subscription") {
+          const active = await pollSubscriptionActive(paySubId);
+          if (active) {
+            setPayMsg("Subscription activated. You can return to your dashboard.", "success");
+            payBusy = false;            // release the lock so the modal can close
+            closePayModal();
+            return;
+          }
+          setPayMsg("Activation not confirmed yet. You can refresh the page or check your dashboard.", "pending");
+          reEnablePay();
+          return;
+        }
         const paid = await pollInvoicePaid(payInvoiceId);
         if (paid) {
           setPayMsg("Payment confirmed. Updating your invoices…", "success");
@@ -845,11 +951,23 @@
       // unknown / already-paid / not-yours id just surfaces a safe error banner.
       // (This also drives monthly/annual invoices — the route starts a subscription
       // and the webhook marks the invoice paid; the client code is the same.)
+      const UUID_DEEP_LINK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const requestedInvoice = (new URLSearchParams(window.location.search).get("invoice_id") || "").trim();
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedInvoice)) {
+      const invoiceMatch = UUID_DEEP_LINK.test(requestedInvoice);
+      if (invoiceMatch) {
         // payInvoice mutates the button it is given (label/disabled); a detached
         // one is fine here — the modal still opens and the server validates.
         payInvoice(requestedInvoice, document.createElement("button"));
+      }
+
+      // Deep link from the dashboard "Activate Subscription" button:
+      // /payment?subscription_id=… opens that custom recurring subscription's
+      // activation straight away. The amount + interval and whether it is
+      // activatable are enforced server-side by /api/subscriptions/activate, so an
+      // unknown / already-active / not-yours id just surfaces a safe error banner.
+      const requestedSub = (new URLSearchParams(window.location.search).get("subscription_id") || "").trim();
+      if (!invoiceMatch && UUID_DEEP_LINK.test(requestedSub)) {
+        activateSubscription(requestedSub, document.createElement("button"));
       }
     })();
   </script>
