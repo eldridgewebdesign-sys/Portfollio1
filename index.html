@@ -33,6 +33,7 @@ window.addEventListener('pageshow',function(){window.scrollTo(0,0)});
    Google Fonts URL over-requested several weights the page never uses.) ─────────────────────────── */
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
 @font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(fonts/cormorantgaramond-500i.woff2) format('woff2')}
+@font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/mulish-500.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
@@ -123,13 +124,13 @@ nav.scrolled .signin{color:var(--foam)}
 /* ── SHARED SECTION SCAFFOLD ─────────────────────────────────────────────── */
 .sx{min-height:auto;display:flex;align-items:center;padding:clamp(5rem,10vh,8rem) clamp(1.5rem,5vw,3rem);position:relative;z-index:1;scroll-margin-top:120px}
 .wrap{max-width:1100px;margin:0 auto;width:100%;text-align:center}
-.sec-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--foam);font-size:clamp(2.3rem,5vw,4rem);line-height:1.12;letter-spacing:.01em;text-shadow:0 2px 26px rgba(2,10,18,.5);text-wrap:balance;max-width:22ch;margin-left:auto;margin-right:auto}
+.sec-title{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;color:var(--foam);font-size:clamp(2.3rem,5vw,4rem);line-height:1.12;letter-spacing:.01em;text-shadow:0 2px 26px rgba(2,10,18,.5);text-wrap:balance;max-width:22ch;margin-left:auto;margin-right:auto}
 
 /* ── HERO (BEACH / SURFACE) — approved, unchanged ────────────────────────── */
 #hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(6.5rem,17vh,9.5rem) 2rem 0;position:relative;z-index:1;color:var(--ink)}
 .hero-eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:.004em;font-size:clamp(1.35rem,3vw,2.15rem);color:var(--ink-soft);max-width:52ch;line-height:1.32;text-wrap:balance;margin:0 auto clamp(1.5rem,3.4vw,2.5rem);text-shadow:0 1px 0 rgba(255,250,240,.3),0 4px 16px rgba(16,37,54,.08)}
-.hero-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);font-size:clamp(3.6rem,12vw,8.8rem);line-height:.92;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,251,242,.42),0 10px 30px rgba(16,37,54,.13)}
-.hero-title em{font-style:italic;font-weight:500}
+.hero-title{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;color:var(--ink);font-size:clamp(3.6rem,12vw,8.8rem);line-height:.92;letter-spacing:.005em;text-shadow:0 1px 0 rgba(255,251,242,.42),0 10px 30px rgba(16,37,54,.13)}
+.hero-title em{font-style:normal;font-weight:400}
 .hero-cta{margin-top:clamp(2rem,4.5vh,3.2rem)}
 /* hero intro plays after the loader hands off (body.ready) */
 #hero .anim{opacity:0;transform:translateY(28px);transition:opacity 1.1s cubic-bezier(.16,1,.3,1),transform 1.1s cubic-bezier(.16,1,.3,1)}
@@ -145,7 +146,7 @@ body.ready #hero .anim{opacity:1;transform:none}
 
 /* ── WHY CHOOSE US — three plain text columns (as in the reference) ────────── */
 .why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(2.2rem,5vw,4.5rem);max-width:1080px;margin:clamp(2rem,4vw,3rem) auto 0}
-.why-col h3{font-family:'Cormorant Garamond',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
+.why-col h3{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
 .why-col p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:.95rem;line-height:1.8}
 
 /* ── STYLES — one live sample (the 3D Laptop Teardown), presented on its own ───
