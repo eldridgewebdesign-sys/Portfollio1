@@ -7,11 +7,9 @@
 <meta name="description" content="A scroll-driven product study: a laptop, taken apart layer by layer. WebSharke Engineering.">
 <meta name="theme-color" content="#e9e1d5">
 
-<!-- Tab icon (root-absolute, served at site root) -->
 <link rel="icon" href="/images/Tab-Logo.png" type="image/png">
 
-<!-- Decide the experience mode as early as possible, before first paint, so the
-     animated layout never flashes the static one (and vice-versa). -->
+<!-- Decide the experience mode before first paint so neither layout flashes. -->
 <script>
   (function () {
     var d = document.documentElement;
@@ -24,9 +22,12 @@
   })();
 </script>
 
-<!-- Preload the two assets seen first: the interior backdrop + the closed laptop. -->
+<!-- Preload the animation assets (backdrop + the four product layers) so nothing pops in. -->
 <link rel="preload" as="image" href="/images/Laptop/interior.jpg">
-<link rel="preload" as="image" href="/images/Laptop/closed.png">
+<link rel="preload" as="image" href="/images/Laptop/layer-lid.png">
+<link rel="preload" as="image" href="/images/Laptop/layer-components.png">
+<link rel="preload" as="image" href="/images/Laptop/layer-board.png">
+<link rel="preload" as="image" href="/images/Laptop/layer-chassis.png">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="/Animations/laptop-teardown/vendor/fonts/cormorantgaramond-600.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2">
 
@@ -41,42 +42,36 @@
 @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;
   src:url(/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2) format('woff2');
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
-/* Mulish 500 is byte-identical to 400 in this vendored set, so it points at the
-   one file — the browser dedupes to a single download (no real medium weight ships). */
+/* Mulish 500 is byte-identical to 400 in this vendored set → one shared file. */
 @font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;
   src:url(/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2) format('woff2');
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
 
 /* ── Tokens ─────────────────────────────────────────────────────────────────── */
 :root{
-  --cream:#e9e1d5;          /* warm interior tone — matches the backdrop's wall/floor */
-  --cream-soft:#efe9df;
-  --ink:#2a2620;            /* warm near-black — the wordmark */
+  --cream:#e9e1d5;
+  --ink:#2a2620;
   --ink-2:#4a4339;
-  --stone:#5d5448;          /* muted brown — small labels (~5.7:1 on cream, WCAG AA) */
+  --stone:#5d5448;          /* ~5.7:1 on cream, WCAG AA */
   --line:rgba(42,38,32,.16);
   --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
   --sans:'Mulish',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
 }
 
 *{box-sizing:border-box}
-/* overflow-x:clip (not hidden) so body never becomes a scroll container — that
-   would make it the sticky stage's scroll ancestor and can break the pin on iOS. */
+/* overflow-x:clip (not hidden) so body never becomes the sticky stage's scroll ancestor. */
 html,body{margin:0;padding:0;max-width:100%;overflow-x:clip}
 body{
-  font-family:var(--sans);
-  color:var(--ink);
-  background:var(--cream);
-  -webkit-font-smoothing:antialiased;
-  text-rendering:optimizeLegibility;
+  font-family:var(--sans); color:var(--ink); background:var(--cream);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 img{display:block;max-width:100%}
 a{color:inherit}
 
 /* ════════════════════════════════════════════════════════════════════════════
-   BASE = STATIC LAYOUT  (no JS, or prefers-reduced-motion)
-   A calm, readable, vertically-stacked sequence over a fixed interior backdrop.
-   The .anim overrides below turn this into the pinned scroll experience.
+   BASE = STATIC LAYOUT  (no JS / prefers-reduced-motion)
+   Calm, readable stacked fallback over the fixed interior. The .anim overrides
+   below turn this into the pinned, scroll-scrubbed teardown.
    ════════════════════════════════════════════════════════════════════════════ */
 .scene{position:relative}
 .stage{position:relative}
@@ -85,143 +80,127 @@ a{color:inherit}
   position:fixed; inset:0; z-index:-2;
   background:#e9e1d5 url(/images/Laptop/interior.jpg) center center / cover no-repeat;
 }
-/* soft top/bottom blend so the photo melts into the cream page */
 .bg::after{
   content:""; position:absolute; inset:0;
   background:linear-gradient(to bottom, rgba(233,225,213,.35) 0%, rgba(233,225,213,0) 22% 78%, rgba(233,225,213,.55) 100%);
 }
 
-.frame{position:relative; display:grid; place-items:center; text-align:center}
-
-/* Intro */
-.intro{min-height:92vh; padding:10vh 6vw}
-.intro-in{max-width:100%}
+.intro{min-height:92vh; display:grid; place-items:center; text-align:center; padding:10vh 6vw}
 .kicker{
-  margin:0 0 clamp(1.4rem,3vw,2.4rem);
-  font-family:var(--sans); font-weight:500; color:var(--stone);
-  text-transform:uppercase; letter-spacing:.34em; font-size:clamp(.62rem,1.5vw,.8rem);
-  padding-left:.34em;
+  margin:0 0 clamp(1.4rem,3vw,2.4rem); font-family:var(--sans); font-weight:500; color:var(--stone);
+  text-transform:uppercase; letter-spacing:.34em; font-size:clamp(.62rem,1.5vw,.8rem); padding-left:.34em;
 }
 .wordmark{
-  margin:0; color:var(--ink);
-  font-family:var(--serif); font-weight:600; line-height:.92;
+  margin:0; color:var(--ink); font-family:var(--serif); font-weight:600; line-height:.92;
   text-transform:uppercase; white-space:nowrap;
-  /* min() keeps it from ever exceeding the viewport: at the vw size the glyph
-     run + tracking always fits the content box; capped on large screens.
-     (Cormorant's caps are wide — the W especially — so the vw factor is tuned
-     empirically, with a tighter override on phones below.) */
-  font-size:min(9rem,10.2vw);
-  letter-spacing:.09em; padding-left:.09em;
+  font-size:min(9rem,10.2vw); letter-spacing:.09em; padding-left:.09em;
 }
 .sub{
-  margin:clamp(1rem,2.4vw,1.8rem) 0 0;
-  font-family:var(--sans); font-weight:500; color:var(--ink-2);
-  text-transform:uppercase; letter-spacing:.52em; font-size:clamp(.72rem,2vw,1.05rem);
-  padding-left:.52em;
+  margin:clamp(1rem,2.4vw,1.8rem) 0 0; font-family:var(--sans); font-weight:500; color:var(--ink-2);
+  text-transform:uppercase; letter-spacing:.52em; font-size:clamp(.72rem,2vw,1.05rem); padding-left:.52em;
 }
 
-/* Product frames (closed / three-layer / four-layer) */
-figure.frame{margin:0; min-height:88vh; padding:8vh 6vw}
-figure.frame img{
-  width:min(940px,86vw); height:auto; max-height:80vh; object-fit:contain;
+/* The animated layer stack is hidden in static mode; the static figures show instead. */
+.product{display:none}
+.static-frames{margin:0; display:block}
+.static-frames img{
+  width:min(900px,86vw); height:auto; margin:0 auto clamp(2rem,6vh,4rem);
   filter:drop-shadow(0 26px 40px rgba(40,33,24,.16));
 }
-.f-cap{
-  margin-top:clamp(1.2rem,3vw,2rem);
-  font-family:var(--sans); font-weight:500; color:var(--stone);
-  text-transform:uppercase; letter-spacing:.28em; font-size:clamp(.66rem,1.5vw,.82rem);
-  padding-left:.28em;
-}
-.cap-end{
-  margin:0; min-height:36vh; display:grid; place-items:center; padding:6vh 6vw;
-  font-family:var(--serif); font-style:italic; font-weight:500; color:var(--ink);
-  font-size:clamp(1.4rem,4vw,2.6rem); letter-spacing:.01em;
-}
+.static-frames figcaption{display:none}
 
-/* Static-mode hides the scroll-only chrome */
+.cap-end{
+  margin:0; min-height:30vh; display:grid; place-items:center; padding:6vh 6vw;
+  font-family:var(--serif); font-style:italic; font-weight:500; color:var(--ink);
+  font-size:clamp(1.4rem,4vw,2.6rem);
+}
 .cue,.bar{display:none}
 
-/* ── Outro (always normal flow, on the cream page) ──────────────────────────── */
+/* ── Outro ──────────────────────────────────────────────────────────────────── */
 .outro{
   position:relative; z-index:1; background:var(--cream);
   min-height:64vh; display:grid; place-items:center; text-align:center;
-  padding:clamp(5rem,12vh,9rem) 6vw;
-  border-top:1px solid var(--line);
+  padding:clamp(5rem,12vh,9rem) 6vw; border-top:1px solid var(--line);
 }
 .outro-line{
   margin:0 auto; max-width:22ch; color:var(--ink);
-  font-family:var(--serif); font-style:italic; font-weight:500; line-height:1.12;
-  font-size:clamp(1.5rem,4vw,2.6rem);
+  font-family:var(--serif); font-style:italic; font-weight:500; line-height:1.12; font-size:clamp(1.5rem,4vw,2.6rem);
 }
 .outro-eyebrow{
   margin:0 0 clamp(1.4rem,3vw,2rem); color:var(--stone); font-weight:500;
   text-transform:uppercase; letter-spacing:.34em; font-size:clamp(.62rem,1.4vw,.78rem); padding-left:.34em;
 }
-/* Editorial text link, not a SaaS pill */
 .cta{
   display:inline-flex; align-items:center; gap:.5em; margin-top:clamp(2.2rem,4.5vw,3.2rem);
   font-family:var(--sans); font-weight:500; text-decoration:none; color:var(--ink);
   text-transform:uppercase; letter-spacing:.22em; font-size:.74rem;
-  padding-bottom:.4em; border-bottom:1px solid var(--line);
-  transition:border-color .35s ease;
+  padding-bottom:.4em; border-bottom:1px solid var(--line); transition:border-color .35s ease;
 }
 .cta svg{width:1.05em;height:1.05em;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s ease}
 .cta:hover,.cta:focus-visible{border-color:var(--ink)}
 .cta:hover svg,.cta:focus-visible svg{transform:translateX(3px)}
 
 .site-foot{
-  background:var(--cream); position:relative; z-index:1;
-  text-align:center; color:var(--stone); font-size:.78rem; letter-spacing:.06em;
-  padding:2.4rem 6vw; border-top:1px solid var(--line);
+  background:var(--cream); position:relative; z-index:1; text-align:center;
+  color:var(--stone); font-size:.78rem; letter-spacing:.06em; padding:2.4rem 6vw; border-top:1px solid var(--line);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   ENHANCED = PINNED SCROLL EXPERIENCE  (.anim — motion allowed)
-   The stage is sticky; every frame is stacked absolutely and cross-faded by JS
-   as you scroll through the tall .scene. Background stays fixed the whole time.
+   ENHANCED = PINNED, SCROLL-SCRUBBED TEARDOWN  (.anim)
+   One sticky stage. Four registered layer images are stacked and the scroll
+   position drives each layer's translateY, so the laptop physically comes apart.
+   Nothing cross-fades; opacity is only used to reveal the product group once.
    ════════════════════════════════════════════════════════════════════════════ */
-.anim .scene{height:560vh}
+.anim .scene{height:620vh}
 .anim .stage{
   position:sticky; top:0; height:100vh; height:100svh; overflow:hidden;
+  display:grid; place-items:center; padding-bottom:6vh;       /* nudge the centered product up into the light */
 }
 .anim .bg{position:absolute; z-index:0}
-.anim .frame{
-  position:absolute; inset:0; margin:0; min-height:0; padding:clamp(1.5rem,5vw,4rem);
-  opacity:0; will-change:opacity,transform; backface-visibility:hidden;
-}
-.anim .intro{opacity:1; z-index:5}
-.anim figure.frame{z-index:3}
-.anim figure.frame img{
-  width:min(1040px,90vw); max-height:84vh;
-  filter:drop-shadow(0 30px 55px rgba(40,33,24,.22));
-}
-.anim .f-cap{display:none}
 
-/* End line — pinned near the lower third, over the held teardown.
-   (No will-change: it animates only in the last ~10% of scroll, so a permanent
-   compositor layer isn't worth holding.) */
+/* Intro overlays the centered cell */
+.anim .intro{grid-area:1/1; min-height:0; padding:clamp(1.5rem,5vw,4rem); z-index:6; align-self:center}
+
+/* Static fallback figures off in animated mode */
+.anim .static-frames{display:none}
+
+/* The layered product — the actual animation */
+.anim .product{
+  display:block; grid-area:1/1; align-self:center; position:relative;
+  width:min(1060px,92vw); aspect-ratio:1366/768; opacity:0; z-index:3;
+}
+.anim .product .layer{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
+  will-change:transform; backface-visibility:hidden;
+  filter:drop-shadow(0 24px 40px rgba(40,33,24,.20));
+}
+.anim .l-chassis{z-index:1}
+.anim .l-board{z-index:2}
+.anim .l-components{z-index:3}
+.anim .l-lid{z-index:4}
+
+/* End line — pinned low, over the held teardown */
 .anim .cap-end{
-  position:absolute; left:0; right:0; bottom:clamp(8vh,12vh,14vh); top:auto; z-index:6;
+  position:absolute; left:0; right:0; bottom:clamp(7vh,10vh,12vh); top:auto; z-index:7;
   min-height:0; padding:0 8vw; opacity:0;
 }
 
 /* Scroll cue */
 .anim .cue{
-  display:block; position:absolute; left:50%; bottom:max(5vh,env(safe-area-inset-bottom)); transform:translateX(-50%);
-  z-index:6; color:var(--stone); font-size:.66rem; font-weight:500;
+  display:block; position:absolute; left:50%; bottom:max(4.5vh,env(safe-area-inset-bottom)); transform:translateX(-50%);
+  z-index:7; color:var(--stone); font-size:.66rem; font-weight:500;
   text-transform:uppercase; letter-spacing:.32em; padding-left:.32em;
 }
 .anim .cue span{position:relative}
 .anim .cue span::after{
-  content:""; display:block; width:1px; height:34px; margin:.8em auto 0;
-  background:linear-gradient(to bottom,var(--stone),transparent);
-  animation:cueLine 2.2s ease-in-out infinite;
+  content:""; display:block; width:1px; height:30px; margin:.8em auto 0;
+  background:linear-gradient(to bottom,var(--stone),transparent); animation:cueLine 2.2s ease-in-out infinite;
 }
 @keyframes cueLine{0%,100%{transform:scaleY(.4);opacity:.4;transform-origin:top}50%{transform:scaleY(1);opacity:1;transform-origin:top}}
 
 /* Progress hairline */
 .anim .bar{
-  display:block; position:absolute; left:0; right:0; bottom:env(safe-area-inset-bottom,0); height:2px; z-index:7;
+  display:block; position:absolute; left:0; right:0; bottom:env(safe-area-inset-bottom,0); height:2px; z-index:8;
   background:rgba(42,38,32,.10);
 }
 .anim .bar i{
@@ -229,28 +208,25 @@ figure.frame img{
   background:linear-gradient(to right,rgba(42,38,32,.55),rgba(42,38,32,.3));
 }
 
-/* In animated mode the body is its natural height (the .scene provides the scroll) */
-.anim .outro,.anim .site-foot{z-index:1}
-
-/* ── Responsive nudges ──────────────────────────────────────────────────────── */
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width:640px){
   .wordmark{font-size:9vw; letter-spacing:.04em; padding-left:.04em}
   .sub{letter-spacing:.4em; padding-left:.4em}
-  .anim figure.frame img{width:94vw; max-height:62vh}
-  figure.frame img{width:92vw; max-height:60vh}
-  .anim .cap-end{bottom:9vh}
+  /* The laptop sits in the centre ~half of each frame, so we let the (mostly
+     transparent) frame run wider than the viewport — clipped, never scrolling —
+     to keep the product itself a readable size on phones. */
+  .anim .product{width:152vw}
+  .static-frames img{width:92vw}
+  .anim .cap-end{bottom:8vh}
 }
 @media (max-width:400px){
   .wordmark{letter-spacing:.03em; padding-left:.03em}
+  .anim .product{width:168vw}
 }
-/* Short / landscape viewports (incl. narrow landscape phones <=640px wide):
-   reclaim height so the laptop stays a usable size. Placed after the mobile block
-   so it wins by source order regardless of width. */
+/* Short / landscape viewports: cap the product by height so it never overflows top/bottom */
 @media (max-height:560px){
-  .anim figure.frame img,
-  figure.frame img{max-height:84vh}
+  .anim .product{width:auto; height:92vh}
 }
-
 @media (prefers-reduced-motion:reduce){
   .anim .cue span::after{animation:none}
 }
@@ -262,11 +238,10 @@ figure.frame img{
 <main class="scene">
   <div class="stage">
 
-    <!-- Fixed interior backdrop — consistent across the whole sequence -->
     <div class="bg" aria-hidden="true"></div>
 
     <!-- 1 · Intro wordmark -->
-    <header class="frame intro">
+    <header class="intro">
       <div class="intro-in">
         <p class="kicker">Precision website systems</p>
         <h1 class="wordmark">WebSharke</h1>
@@ -274,28 +249,21 @@ figure.frame img{
       </div>
     </header>
 
-    <!-- 2 · Closed laptop -->
-    <figure class="frame f-closed">
-      <img src="/images/Laptop/closed.png" width="1366" height="768" decoding="async"
-           alt="A thin silver laptop, closed, floating in a quiet interior.">
-      <figcaption class="f-cap">Closed</figcaption>
+    <!-- 2 · The laptop, as four registered layers (animated) -->
+    <div class="product" role="img"
+         aria-label="A laptop separating layer by layer into its top shell, internal components, mainboard, and base chassis.">
+      <img class="layer l-chassis"    src="/images/Laptop/layer-chassis.png"    alt="" width="1366" height="768" decoding="async">
+      <img class="layer l-board"      src="/images/Laptop/layer-board.png"      alt="" width="1366" height="768" decoding="async">
+      <img class="layer l-components" src="/images/Laptop/layer-components.png" alt="" width="1366" height="768" decoding="async">
+      <img class="layer l-lid"        src="/images/Laptop/layer-lid.png"        alt="" width="1366" height="768" decoding="async">
+    </div>
+
+    <!-- Static fallback (no-JS / reduced-motion): two plain frames -->
+    <figure class="static-frames">
+      <img src="/images/Laptop/closed.png" alt="A thin silver laptop, closed." width="1366" height="768" decoding="async">
+      <img src="/images/Laptop/teardown-4.png" alt="The same laptop fully separated into four layers: the top shell, the internal components, the mainboard, and the base chassis." width="1366" height="768" decoding="async">
     </figure>
 
-    <!-- 3 · Three-layer teardown -->
-    <figure class="frame f-three">
-      <img src="/images/Laptop/teardown-3.png" width="1366" height="768" decoding="async"
-           alt="The laptop separated into three layers: the top shell, the mainboard, and the base chassis.">
-      <figcaption class="f-cap">Three layers</figcaption>
-    </figure>
-
-    <!-- 4 · Full teardown -->
-    <figure class="frame f-four">
-      <img src="/images/Laptop/teardown-4.png" width="1366" height="768" decoding="async"
-           alt="A full teardown: the top shell, the internal components, the mainboard, and the base chassis.">
-      <figcaption class="f-cap">Full teardown</figcaption>
-    </figure>
-
-    <!-- End line, held over the full teardown -->
     <p class="cap-end">Built layer by layer.</p>
 
     <div class="cue" aria-hidden="true"><span>Scroll</span></div>
@@ -322,20 +290,28 @@ figure.frame img{
 
   var scene = document.querySelector('.scene');
   var el = {
-    intro:  document.querySelector('.intro'),
-    closed: document.querySelector('.f-closed'),
-    three:  document.querySelector('.f-three'),
-    four:   document.querySelector('.f-four'),
-    capEnd: document.querySelector('.cap-end'),
-    cue:    document.querySelector('.cue'),
-    bar:    document.querySelector('.bar i')
+    intro:      document.querySelector('.intro'),
+    product:    document.querySelector('.product'),
+    lid:        document.querySelector('.l-lid'),
+    components: document.querySelector('.l-components'),
+    board:      document.querySelector('.l-board'),
+    chassis:    document.querySelector('.l-chassis'),
+    capEnd:     document.querySelector('.cap-end'),
+    cue:        document.querySelector('.cue'),
+    bar:        document.querySelector('.bar i')
   };
 
   function clamp(v, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return v < a ? a : v > b ? b : v; }
   function seg(p, a, b){ return clamp((p - a) / (b - a), 0, 1); }
   function ease(t){ return t * t * (3 - 2 * t); }              // smoothstep
   function lerp(a, b, t){ return a + (b - a) * t; }
-  function set(node, op, tf){ if (!node) return; node.style.opacity = op; if (tf != null) node.style.transform = tf; }
+  function ty(node, pct){ if (node) node.style.transform = 'translate3d(0,' + pct + '%,0)'; }
+
+  /* Each layer's COLLAPSED translateY (% of the product box) brings its band to
+     the frame centre, so all four stack into a closed-laptop slab (lid on top).
+     At full separation every layer returns to 0 = its natural teardown-4 position.
+     Layer band centres (% of frame): lid 20.0, components 38.2, board 54.8, chassis 73.1. */
+  var C_LID = 30.0, C_COMP = 11.8, C_BOARD = -4.8, C_CHASSIS = -23.1;
 
   var target = 0, cur = 0, running = false;
 
@@ -345,31 +321,29 @@ figure.frame img{
     target = clamp(-scene.getBoundingClientRect().top / total, 0, 1);
   }
 
-  /* Each handoff is a TRUE cross-fade: the incoming frame's rise window is the
-     exact same range as the outgoing frame's fall window, and opacity = rise*(1-fall).
-     Because rise and fall share that range, the two frames sum to 1 at every point of
-     the transition — no wash-out to the empty room. rise/fall windows never overlap
-     within a single frame, so during a hold opacity is a clean 1. */
   function render(p){
-    var introOut = ease(seg(p, 0.10, 0.20));                 // intro -> closed
-    var openUp   = ease(seg(p, 0.42, 0.54));                 // closed -> three
-    var spread   = ease(seg(p, 0.66, 0.78));                 // three -> four
+    /* Intro wordmark — holds, lifts + fades away */
+    var introOut = ease(seg(p, 0.08, 0.18));
+    el.intro.style.opacity = 1 - introOut;
+    el.intro.style.transform = 'translate3d(0,' + (-5 * introOut) + '%,0) scale(' + (1 + 0.05 * introOut) + ')';
 
-    /* 1 · Intro wordmark — holds, then lifts + fades away */
-    set(el.intro, 1 - introOut,
-        'translate3d(0,' + (-5 * introOut) + '%,0) scale(' + (1 + 0.05 * introOut) + ')');
+    /* Product group — revealed once (opacity), then floats up into place. Rests
+       slightly above centre so it sits in the lit part of the room. */
+    var reveal = ease(seg(p, 0.15, 0.28));
+    var settle = ease(seg(p, 0.15, 0.32));
+    el.product.style.opacity = reveal;
+    el.product.style.transform = 'translate3d(0,' + lerp(5, -3, settle) + '%,0) scale(' + lerp(1.03, 1, settle) + ')';
 
-    /* 2 · Closed laptop — floats up into place, holds, then dissolves as it opens */
-    set(el.closed, introOut * (1 - openUp),
-        'translate3d(0,' + (lerp(3, -3, introOut) - 2 * openUp) + '%,0) scale(' + (lerp(1.05, 1, introOut) - 0.03 * openUp) + ')');
+    /* Physical separation, all on translateY of real layers (no cross-fade) */
+    var open  = ease(seg(p, 0.30, 0.56));   // lid rises + chassis drops (laptop opens)
+    var board = ease(seg(p, 0.33, 0.62));   // mainboard settles to centre
+    var comps = ease(seg(p, 0.56, 0.84));   // components lift OFF the board
+    var fin   = ease(seg(p, 0.82, 0.98));   // slight final spread, then hold
 
-    /* 3 · Three layers — emerge from a slightly compressed stack, hold, then hand off */
-    set(el.three, openUp * (1 - spread),
-        'translate3d(0,' + (lerp(2, -3, openUp) - 2 * spread) + '%,0) scaleY(' + lerp(0.98, 1, openUp) + ')');
-
-    /* 4 · Full teardown — components materialise; held to the end */
-    set(el.four, spread,
-        'translate3d(0,' + lerp(2, -3, spread) + '%,0) scaleY(' + lerp(0.98, 1, spread) + ')');
+    ty(el.lid,        lerp(C_LID,     0, open)  + (-2.5) * fin);
+    ty(el.chassis,    lerp(C_CHASSIS, 0, open)  + ( 2.5) * fin);
+    ty(el.board,      lerp(C_BOARD,   0, board));
+    ty(el.components, lerp(C_COMP,    0, comps) + (-1.2) * fin);
 
     /* End line */
     if (el.capEnd){ var ce = ease(seg(p, 0.86, 0.96)); el.capEnd.style.opacity = ce; el.capEnd.style.transform = 'translate3d(0,' + lerp(14, 0, ce) + 'px,0)'; }

@@ -645,6 +645,7 @@
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="business">Business info</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="project">Project details</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="billing">Invoices</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="hosting">Hosting</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="domain">Domain</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="privacy">Privacy</button>
       </nav>
@@ -715,25 +716,20 @@
         </div>
       </div>
 
-      <!-- 3 ── Billing / Hosting.
-           Two states, driven entirely by Supabase subscription data:
-             • EMPTY  (#bill-none)   — no website/hosting/subscription →
-                                       one message + "View Plans" (→ payment.html)
-             • ACTIVE (#bill-active) — has hosting/subscription → full details
-           See renderBilling() for the logic. -->
+      <!-- 3 ── Invoices (subscription state + the client's current invoice).
+           The ACTIVE subscription block (#bill-active) shows only when the client
+           has an active/trialing subscription; otherwise nothing renders there. The
+           old "no website yet / View Plans" empty state was removed — the "not
+           hosting" message now lives on the Hosting tab. See renderBilling(). -->
       <div class="tab" id="tab-billing" role="tabpanel">
         <h2 class="tab-title">Invoices</h2>
 
         <!-- Shown only if the billing data fails to load. -->
         <p class="bill-error hidden" id="bill-load-error" role="alert">We couldn’t load your billing information right now. Please refresh the page or try again later.</p>
 
-        <!-- EMPTY STATE — no website/hosting/subscription with WebSharke. -->
-        <div class="hidden" id="bill-none">
-          <p class="field">You do not have a website with WebSharke yet.</p>
-          <a class="ws-btn" id="view-plans" href="/payment">View Plans</a>
-        </div>
-
-        <!-- ACTIVE STATE — current subscription details + management. -->
+        <!-- ACTIVE STATE — current subscription details + management. Shown only when
+             the client has an active/trialing subscription; otherwise it stays hidden
+             and no empty-state message renders here. -->
         <div class="hidden" id="bill-active">
           <p class="field"><span class="f-label">Current payment method:</span> <span class="f-value" id="bill-method">…</span></p>
           <p class="field"><span class="f-label">Hosting status:</span> <span class="f-value" id="bill-hosting">…</span>
@@ -779,6 +775,44 @@
             <a class="ws-btn ghost" id="cinv-prev-link" href="/prev-inv">View Previous Payments</a>
           </div>
         </div>
+      </div>
+
+      <!-- 3b ── Hosting.
+           Shows whether the client currently hosts with WebSharke. "Hosting" =
+           an active/trialing subscription (the SAME `hasService` rule the Invoices
+           section uses); everything else (no row, canceled, incomplete, past_due,
+           unpaid, unknown) = not hosting. Two states, rendered by renderHosting():
+             • NOT hosting → message + a "Request Hosting" PLACEHOLDER (client→admin
+               messaging isn't built — it only shows an inline note, never submits)
+             • hosting     → thank-you + "Manage Hosting Services" → Stripe portal
+           This tab adds NO new payment UI and duplicates no billing details — only
+           hosting status + management. The portal button is the ONLY thing here that
+           can send the user off websharke.com. -->
+      <div class="tab" id="tab-hosting" role="tabpanel">
+        <h2 class="tab-title">Hosting</h2>
+
+        <!-- Shown only if the subscription/hosting data failed to load (so we never
+             claim a wrong "not hosting" status when we simply couldn't read it). -->
+        <p class="bill-error hidden" id="host-load-error" role="alert">We couldn’t load your hosting status right now. Please refresh the page or try again later.</p>
+
+        <!-- NOT hosting with WebSharke. -->
+        <div class="hidden" id="host-none">
+          <p class="field">You are currently not hosting with WebSharke</p>
+          <button class="ws-btn" id="request-hosting" type="button">Request Hosting</button>
+          <!-- Placeholder: client→admin messaging isn't built yet. Shown on click;
+               it never redirects, submits, or implies a request was sent. -->
+          <p class="f-sub hidden" id="host-request-note" role="status"></p>
+        </div>
+
+        <!-- Currently hosting (active / trialing subscription). -->
+        <div class="hidden" id="host-active">
+          <p class="field">Thank you for hosting with WebSharke</p>
+          <button class="ws-btn" id="manage-hosting" type="button">Manage Hosting Services</button>
+        </div>
+
+        <!-- Clean error line for the "Manage Hosting Services" portal action
+             (raw API errors are never surfaced to the user). -->
+        <p class="bill-error hidden" id="host-error" role="alert"></p>
       </div>
 
       <!-- 4 ── Domain -->
@@ -1159,6 +1193,69 @@
       }
     });
 
+    // ---- Hosting tab: "Request Hosting" placeholder ------------------------
+    // Client→admin messaging isn't built yet, so this only shows an inline note.
+    // It NEVER redirects, submits, or implies a request was actually sent.
+    const requestHostingBtn = $("request-hosting");
+    const hostRequestNote = $("host-request-note");
+    if (requestHostingBtn && hostRequestNote) {
+      requestHostingBtn.addEventListener("click", () => {
+        hostRequestNote.textContent =
+          "Hosting requests are coming soon. Please contact WebSharke directly for now.";
+        hostRequestNote.classList.remove("hidden");
+      });
+    }
+
+    // ---- Hosting tab: "Manage Hosting Services" → Stripe customer portal ----
+    // Same secure flow as "Manage My Subscription": POST the verified session token
+    // to /api/customer-portal (the SERVER resolves the Stripe customer from the
+    // AUTHENTICATED user — the browser never sends a customer/user id), then redirect
+    // to the returned portal URL ONLY after a successful response. This is the one
+    // action on the dashboard that sends the user off websharke.com.
+    const manageHostingBtn = $("manage-hosting");
+    const hostError = $("host-error");
+    function showHostError(msg) {
+      if (!hostError) return;
+      hostError.textContent = msg;
+      hostError.classList.remove("hidden");
+    }
+    if (manageHostingBtn) {
+      manageHostingBtn.addEventListener("click", async () => {
+        if (hostError) hostError.classList.add("hidden");
+        const original = manageHostingBtn.textContent;
+        manageHostingBtn.disabled = true;
+        manageHostingBtn.textContent = "Opening…";
+        try {
+          // Confirm a real session (the server re-verifies the token regardless).
+          const { data: userData, error: userErr } = await db.auth.getUser();
+          const user = userData && userData.user;
+          if (userErr) throw new Error("Could not verify your session. Please sign in again.");
+          if (!user) { showHostError("You must be signed in to manage hosting."); return; }
+
+          const { data: sess } = await db.auth.getSession();
+          const token = sess && sess.session && sess.session.access_token;
+          if (!token) { showHostError("You must be signed in to manage hosting."); return; }
+
+          const res = await fetch("/api/customer-portal", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({}),
+          });
+          const data = await res.json().catch(() => ({}));
+
+          // Redirect ONLY after a confirmed portal URL; otherwise a clean error.
+          // (data.error is the server's own safe message — never a raw exception.)
+          if (!res.ok || !data.url) throw new Error(data.error || "Could not open the hosting portal. Please try again.");
+          window.location = data.url;
+        } catch (err) {
+          showHostError(err.message || "Something went wrong opening hosting. Please try again.");
+        } finally {
+          manageHostingBtn.disabled = false;
+          manageHostingBtn.textContent = original;
+        }
+      });
+    }
+
     // ---- Helpers --------------------------------------------------------
     function normalizeUrl(d) {
       if (!d) return null;
@@ -1288,6 +1385,36 @@
       $("pd-additional").textContent    = show(inquiry.additional_info, EM);
     }
 
+    // ---- Render the Hosting tab from the same subscription state ----------
+    // "Hosting" = an active/trialing subscription (the SAME `hasService` rule the
+    // Invoices section uses). This tab shows status only — no plan details, no
+    // payment UI. Exactly one state shows; a load failure shows a clean error
+    // instead of a possibly-wrong "not hosting".
+    function renderHosting(sub, hasService, billingError) {
+      const loadErr   = $("host-load-error");
+      const noneEl    = $("host-none");
+      const activeEl  = $("host-active");
+      const actionErr = $("host-error");
+      if (!noneEl || !activeEl) return;
+
+      // Reset to a clean state every render.
+      loadErr.classList.add("hidden");
+      noneEl.classList.add("hidden");
+      activeEl.classList.add("hidden");
+      actionErr.classList.add("hidden");
+
+      // Couldn't read the subscription → don't claim a status either way.
+      if (billingError) { loadErr.classList.remove("hidden"); return; }
+
+      // active/trialing → hosting; everything else (no row, canceled, incomplete,
+      // past_due, unpaid, unknown) → not hosting.
+      if (hasService) {
+        activeEl.classList.remove("hidden");
+      } else {
+        noneEl.classList.remove("hidden");
+      }
+    }
+
     // ---- Render the Billing / Hosting section from real Supabase data ----
     //   hasService → a subscriptions row with status 'active' or 'trialing'
     //                (i.e. the user has a website/hosting/subscription).
@@ -1296,12 +1423,10 @@
     function renderBilling(sub, hasService, billingError) {
       sub = sub || {};
       const loadErr  = $("bill-load-error");
-      const noneEl   = $("bill-none");
       const activeEl = $("bill-active");
 
       // Reset to a clean, empty state every render.
       loadErr.classList.add("hidden");
-      noneEl.classList.add("hidden");
       activeEl.classList.add("hidden");
       $("bill-error").classList.add("hidden");
 
@@ -1346,8 +1471,9 @@
         return;
       }
 
-      // EMPTY — no website/hosting/subscription: one message + "View Plans".
-      noneEl.classList.remove("hidden");
+      // Not active/trialing → render nothing here. The old "no website yet /
+      // View Plans" empty state was removed; the "not hosting" message now lives
+      // on the Hosting tab (renderHosting).
     }
 
     // ====================================================================
@@ -1581,6 +1707,7 @@
       renderBusiness(inquiry, inquiryError);
       renderProject(project, projectError);
       renderBilling(sub, hasService, billingError);
+      renderHosting(sub, hasService, billingError);
       renderClientPayBanner(sub);
       // Invoices load independently (own states) and never block the dashboard.
       loadClientInvoices(user);

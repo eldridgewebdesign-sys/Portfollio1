@@ -6,6 +6,60 @@
 
 ---
 
+## 2026-06-24 - Efficiency - dashboard-hosting-tab
+
+Action:
+Finished
+
+Task:
+Owner-directed: add a new "Hosting" tab to the client dashboard (status + management only), and remove the
+"You do not have a website with WebSharke yet. / View Plans" empty state from the Invoices tab. **Role note:**
+production HTML/CSS/JS (Developer territory) under explicit owner override. **Manager to mirror board status.**
+
+Files changed:
+- `dashboard.html` ONLY.
+
+What I changed:
+- **New "Hosting" nav tab** (`data-tab="hosting"`) + content panel (`#tab-hosting`, `<h2>Hosting</h2>`),
+  inserted between Invoices and Domain. Kept the existing tab system (switch maps `data-tab` → `tab-<id>`),
+  so active styling + other tabs are unaffected; the client `.side-nav` wraps on mobile as before.
+- **Hosting status** is the SAME `hasService` rule already computed at page load
+  (`sub.status === "active" || "trialing"`). New `renderHosting(sub, hasService, billingError)` (called right
+  after `renderBilling`) shows exactly one state: hosting → "Thank you for hosting with WebSharke" +
+  "Manage Hosting Services"; not hosting (no row / canceled / incomplete / past_due / unpaid / unknown) →
+  "You are currently not hosting with WebSharke" + "Request Hosting". A subscription-load error shows a clean
+  message instead of a wrong "not hosting".
+- **"Request Hosting"** is a placeholder: on click it only reveals an inline note ("Hosting requests are coming
+  soon. Please contact WebSharke directly for now.") — never redirects, submits, or implies a request was sent.
+- **"Manage Hosting Services"** reuses the existing secure portal flow (mirrors the `#manage-sub` handler):
+  POST the verified Supabase session token to `/api/customer-portal`, show an "Opening…" loading state, and
+  `window.location = data.url` ONLY on a successful response with a URL; otherwise a clean error via
+  `#host-error`. The route resolves the Stripe customer from the AUTHENTICATED user (no client-supplied id →
+  no IDOR); the secret key stays server-side. This is the only action that leaves websharke.com.
+- **Removed the Invoices-tab empty state**: deleted the `#bill-none` block ("You do not have a website with
+  WebSharke yet." + the `#view-plans` → /payment button) and its `renderBilling()` references (the `noneEl`
+  const, its reset, and the final empty-state reveal). When not active/trialing, the Invoices tab now renders
+  nothing there (the current-invoice summary + View Previous Payments are unaffected); the "not hosting"
+  message lives on the Hosting tab.
+
+NOT touched: `payment.html`, `api/*` (the customer-portal route already verifies the user — no change needed),
+`db/*`, Stripe/webhook/price IDs, auth, the admin dashboard, the `#bill-active` subscription block (left per
+the owner's earlier "leave subscription controls for now").
+
+Testing:
+- Inline `<script>` syntax: `vm.Script` on both blocks → 0 errors. grep: Hosting tab wiring all present; zero
+  remaining `bill-none` / `view-plans` refs; `renderBilling` no longer references `noneEl`. Tab-switch maps
+  `data-tab="hosting"` → `#tab-hosting`.
+- **NOT run (no browser / `vercel dev`):** live eyeball — Hosting tab renders the correct state for
+  no-sub / canceled / active, Request Hosting shows the note (no redirect/crash), Manage Hosting Services opens
+  the Stripe portal only on success, other tabs still switch, mobile nav wrap, console clean. → Reviewer.
+
+Risks / Notes:
+- Minor overlap (intended): the Invoices tab's `#bill-active` block still shows "Currently hosting…" +
+  "Manage My Subscription" for active subscribers, alongside the new dedicated Hosting tab. Owner asked to
+  keep the subscription controls "for now"; can consolidate later.
+- The portal route's `return_url` is `/dashboard.html` (existing) — resolves on-site via cleanUrls.
+
 ## 2026-06-24 - Efficiency - recurring-renewal-tracking
 
 Action:
