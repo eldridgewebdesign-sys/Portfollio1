@@ -36,7 +36,7 @@
 @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/mulish-600.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/mulish-700.woff2) format('woff2')}
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/cormorantgaramond-600.woff2) format('woff2')}
-@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(../../fonts/cormorantgaramond-500i.woff2) format('woff2')}
+
 
 /* ── :root — RE-SKIN THE WHOLE TEMPLATE FROM HERE ───────────────────────────── */
 :root{
@@ -106,7 +106,7 @@ ul{margin:0}
 .eyebrow.neutral{color:var(--faint)}
 .eyebrow.neutral::before{background:var(--line-2);opacity:1}
 .std{color:var(--muted);max-width:48ch;font-size:clamp(1.02rem,.98rem + .25vw,1.14rem)}
-.serif-em{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;color:var(--accent-2);font-size:1.06em}
+.serif-em{font-family:'Cormorant Garamond',Georgia,serif;font-style:normal;font-weight:500;color:var(--accent-2);font-size:1.06em}
 
 /* ── Layout helpers ───────────────────────────────────────────────────────── */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);position:relative;z-index:1}
@@ -271,7 +271,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .testimonial::before{content:"\201C";position:absolute;top:-.25em;left:.25em;font-family:'Cormorant Garamond',serif;
   font-size:9rem;color:var(--accent);opacity:.12;line-height:1}
 .testimonial .stars{color:var(--accent);letter-spacing:.12em;font-size:1rem;position:relative;z-index:1}
-.testimonial blockquote{margin:1rem 0 1.4rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+.testimonial blockquote{margin:1rem 0 1.4rem;font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;
   font-size:clamp(1.35rem,1.05rem + 1.2vw,1.8rem);line-height:1.4;color:var(--ink);position:relative;z-index:1}
 .testimonial .who{display:flex;align-items:center;gap:.8rem;position:relative;z-index:1}
 .testimonial .av{width:44px;height:44px;border-radius:50%;flex:0 0 44px;border:1px solid var(--line-2);
@@ -302,7 +302,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 /* ── Contact (inert demo form) ────────────────────────────────────────────── */
 #contact{border-top:1px solid var(--line);background:var(--bg-2)}
 .contact-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:clamp(2rem,5vw,4rem);align-items:start}
-.contact-intro{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+.contact-intro{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;
   font-size:clamp(1.4rem,1.1rem + 1.4vw,2.1rem);line-height:1.35;color:var(--ink);margin:.6rem 0 1.6rem;max-width:24ch}
 .contact-pts{list-style:none;padding:0;margin:0;display:grid;gap:.9rem}
 .contact-pts li{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;color:var(--muted);font-size:.95rem}
@@ -534,7 +534,7 @@ textarea{resize:vertical;min-height:120px}
           <svg viewBox="0 0 140 28" role="img"><path d="M6 22 L6 6 L18 22 L18 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="30" y="20" font-family="Mulish,sans-serif" font-weight="700" font-size="16" fill="currentColor">Northpeak</text></svg>
         </span>
         <span class="mk" aria-label="Halcyon (placeholder client)">
-          <svg viewBox="0 0 120 28" role="img"><circle cx="13" cy="14" r="9" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="13" cy="14" r="3" fill="currentColor"/><text x="30" y="20" font-family="Cormorant Garamond,serif" font-style="italic" font-weight="600" font-size="20" fill="currentColor">Halcyon</text></svg>
+          <svg viewBox="0 0 120 28" role="img"><circle cx="13" cy="14" r="9" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="13" cy="14" r="3" fill="currentColor"/><text x="30" y="20" font-family="Cormorant Garamond,serif" font-weight="600" font-size="20" fill="currentColor">Halcyon</text></svg>
         </span>
         <span class="mk" aria-label="Quanta Labs (placeholder client)">
           <svg viewBox="0 0 150 28" role="img"><rect x="4" y="5" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M16 17 L24 25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><text x="32" y="20" font-family="Mulish,sans-serif" font-weight="600" font-size="14" letter-spacing="1.5" fill="currentColor">QUANTA LABS</text></svg>

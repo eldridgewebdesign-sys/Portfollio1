@@ -36,7 +36,7 @@
       both when served (/demos/photo → /fonts) and via file://. Re-point if you move depth. ── */
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(../../fonts/cormorantgaramond-600.woff2) format('woff2')}
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/cormorantgaramond-700.woff2) format('woff2')}
-@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(../../fonts/cormorantgaramond-500i.woff2) format('woff2')}
+
 @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(../../fonts/mulish-400.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(../../fonts/mulish-500.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/mulish-600.woff2) format('woff2')}
@@ -86,7 +86,7 @@ ul{margin:0}
   text-transform:uppercase;color:var(--brass)}
 .kicker .n{font-variant-numeric:tabular-nums;opacity:.8}
 .lead{max-width:54ch;color:var(--muted);font-size:clamp(1.05rem,1rem + .3vw,1.2rem)}
-em,.it{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500}
+em,.it{font-family:'Cormorant Garamond',Georgia,serif;font-style:normal;font-weight:500}
 
 /* ── Layout helpers ─────────────────────────────────────────────────────────── */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);position:relative;z-index:1}
@@ -269,7 +269,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 /* ── Contact (inert demo form) ──────────────────────────────────────────────── */
 #contact{background:var(--bone-2);border-top:1px solid var(--line)}
 .contact-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(2rem,5vw,4.5rem);align-items:start}
-.contact-intro{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+.contact-intro{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;
   font-size:clamp(1.5rem,1.2rem + 1.4vw,2.3rem);line-height:1.28;color:var(--ink);margin-bottom:1.8rem}
 .form-row{margin-bottom:1.2rem}
 .form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:0}
@@ -293,7 +293,7 @@ textarea{resize:vertical;min-height:120px}
 .foot{background:var(--ink);color:var(--paper-on-dark)}
 .foot-top{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:2rem;padding:clamp(3rem,6vw,4.5rem) 0 clamp(2rem,4vw,3rem)}
 .foot-brand .brand{color:var(--bone)}
-.foot-tag{margin-top:1rem;max-width:32ch;color:rgba(239,233,223,.66);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem}
+.foot-tag{margin-top:1rem;max-width:32ch;color:rgba(239,233,223,.66);font-family:'Cormorant Garamond',serif;font-style:normal;font-size:1.1rem}
 .foot-col h4{font-family:var(--kicker);font-weight:500;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;
   color:rgba(239,233,223,.6);margin:0 0 1rem}
 .foot-col ul{list-style:none;margin:0;padding:0}

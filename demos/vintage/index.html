@@ -34,7 +34,7 @@
       (/demos/vintage → /fonts) and via file://; re-point if you move this file's depth. ── */
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/cormorantgaramond-600.woff2) format('woff2')}
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/cormorantgaramond-700.woff2) format('woff2')}
-@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(../../fonts/cormorantgaramond-500i.woff2) format('woff2')}
+
 @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(../../fonts/mulish-400.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(../../fonts/mulish-500.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/mulish-600.woff2) format('woff2')}
@@ -94,8 +94,8 @@ ul,ol{margin:0}
 .eyebrow.neutral{color:var(--ink-soft)}
 .eyebrow .dash{width:1.9rem;height:1px;background:var(--rust)}
 .std{color:var(--ink-soft);max-width:46ch;font-size:clamp(1.02rem,.98rem + .25vw,1.16rem)}
-.kicker{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--rust-deep)}
-em{font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.05em;color:var(--rust-deep)}
+.kicker{font-family:var(--serif);font-style:normal;font-weight:500;color:var(--rust-deep)}
+em{font-family:var(--serif);font-style:normal;font-weight:500;font-size:1.05em;color:var(--rust-deep)}
 
 /* ── Layout helpers ────────────────────────────────────────────────────────── */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);position:relative;z-index:1}
@@ -170,8 +170,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .hero-h1{font-family:var(--serif);font-weight:700;letter-spacing:-.015em;line-height:.96;
   font-size:clamp(2.9rem,1.5rem + 6.6vw,5.8rem);margin:0}
 .hero-h1 .ln{display:block}
-.hero-h1 .ital{font-style:italic;font-weight:500;color:var(--rust-deep)}
-.hero-sub{margin-top:clamp(1.3rem,3vw,1.9rem);font-family:var(--serif);font-style:italic;font-weight:500;
+.hero-h1 .ital{font-style:normal;font-weight:500;color:var(--rust-deep)}
+.hero-sub{margin-top:clamp(1.3rem,3vw,1.9rem);font-family:var(--serif);font-style:normal;font-weight:500;
   font-size:clamp(1.2rem,1.05rem + .8vw,1.55rem);line-height:1.42;color:var(--ink);max-width:42ch}
 .hero-actions{margin-top:clamp(1.6rem,3vw,2.2rem);display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
 
@@ -211,7 +211,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .story-cols .drop::first-letter{float:left;font-family:var(--serif);font-weight:700;font-size:3.9em;
   line-height:.74;padding:.04em .12em 0 0;color:var(--rust-deep)}
 .story-pull{margin:1.2rem 0;padding:.2rem 0 .2rem 1.1rem;border-left:3px solid var(--rust);
-  font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.5rem;line-height:1.28;color:var(--ink);break-inside:avoid}
+  font-family:var(--serif);font-style:normal;font-weight:500;font-size:1.5rem;line-height:1.28;color:var(--ink);break-inside:avoid}
 .story-sign{margin-top:1.4rem;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
 
 /* ── Services / menu (ticket-style cards) ──────────────────────────────────── */
@@ -263,7 +263,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .clip .pub{font-family:var(--serif);font-weight:700;font-size:1.05rem}
 .clip .date{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
 .clip .stars{color:var(--mustard-deep);font-size:.95rem;letter-spacing:.12em;margin-bottom:.5rem}
-.clip blockquote{margin:0;font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.16rem;line-height:1.4;color:var(--ink)}
+.clip blockquote{margin:0;font-family:var(--serif);font-style:normal;font-weight:500;font-size:1.16rem;line-height:1.4;color:var(--ink)}
 .clip .by{margin-top:1rem;font-family:var(--sans);font-weight:700;font-size:.82rem}
 .clip .role{font-size:.78rem;color:var(--ink-soft)}
 .clip.lead{grid-column:span 6}
@@ -276,7 +276,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 #cta .eyebrow{color:var(--paper);opacity:.85}
 .cta-h{font-family:var(--serif);font-weight:700;line-height:1;font-size:clamp(2.2rem,1.5rem + 3.4vw,4rem);
   color:var(--paper);max-width:18ch;margin:0 auto}
-.cta-h .ital{font-style:italic;font-weight:500}
+.cta-h .ital{font-style:normal;font-weight:500}
 .cta-sub{margin:1.3rem auto 1.9rem;max-width:46ch;color:rgba(243,234,214,.9);font-size:1.05rem}
 .cta-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
 #cta .btn-fill{background:var(--paper);color:var(--ink);border-color:var(--paper)}
@@ -287,7 +287,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 /* ── Contact ───────────────────────────────────────────────────────────────── */
 #contact{background:var(--paper-2);border-top:1px solid var(--line)}
 .contact-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(2rem,5vw,4.5rem);align-items:start}
-.contact-intro{font-family:var(--serif);font-style:italic;font-weight:500;font-size:clamp(1.5rem,1.2rem + 1.3vw,2.1rem);
+.contact-intro{font-family:var(--serif);font-style:normal;font-weight:500;font-size:clamp(1.5rem,1.2rem + 1.3vw,2.1rem);
   line-height:1.3;color:var(--ink);margin-bottom:1.8rem;max-width:24ch}
 .form-row{margin-bottom:1.15rem}
 .form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:1.15rem;margin-bottom:0}
@@ -316,7 +316,7 @@ textarea{resize:vertical;min-height:118px}
 .colo-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2rem;padding:clamp(2.6rem,6vw,4rem) 0 clamp(1.8rem,4vw,2.6rem)}
 .colo-brand .name{font-family:var(--serif);font-weight:700;font-size:1.5rem}
 .colo-brand .meta{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(243,234,214,.6);margin-top:.4rem}
-.colo-brand .tag{font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.08rem;color:rgba(243,234,214,.8);margin-top:1rem;max-width:30ch}
+.colo-brand .tag{font-family:var(--serif);font-style:normal;font-weight:500;font-size:1.08rem;color:rgba(243,234,214,.8);margin-top:1rem;max-width:30ch}
 .colo-col h4{font-family:var(--sans);font-weight:700;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mustard);margin:0 0 1rem}
 .colo-col ul{list-style:none;margin:0;padding:0}
 .colo-col li{margin-bottom:.55rem}
