@@ -25,11 +25,3 @@
     }
   ]
 }
-
-{
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/home", "destination": "/index.html" }
-  ]
-}
