@@ -189,8 +189,8 @@
   </div>
 
   <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
-  <a class="ws-logo" href="index.html" aria-label="WebSharke — home"></a>
-  <a class="ob-signin" href="login.html">Already a client? Sign in →</a>
+  <a class="ws-logo" href="/home" aria-label="WebSharke — home"></a>
+  <a class="ob-signin" href="login">Already a client? Sign in →</a>
 
   <main class="ob-shell">
     <div class="ob-card">
@@ -377,7 +377,7 @@
       <div id="thanks" class="thanks" style="display:none">
         <h2 id="thanks-h">Welcome aboard.</h2>
         <p id="thanks-p">Your account is set and your project details are saved. Taking you to your dashboard…</p>
-        <a id="thanks-link" href="dashboard.html" class="btn">Go to dashboard</a>
+        <a id="thanks-link" href="dashboard" class="btn">Go to dashboard</a>
       </div>
 
     </div>
@@ -551,13 +551,13 @@
 
       if (session) {
         // Email confirmation OFF → already signed in → go to dashboard.
-        setTimeout(() => window.location.replace("dashboard.html"), 1500);
+        setTimeout(() => window.location.replace("dashboard"), 1500);
       } else {
         // Email confirmation ON → must confirm before they can sign in.
         thanksP.textContent =
           "Your account was created and your project details are saved. Please check your email to confirm your account, then sign in.";
         thanksLink.textContent = "Go to sign in";
-        thanksLink.setAttribute("href", "login.html");
+        thanksLink.setAttribute("href", "login");
       }
     });
   </script>

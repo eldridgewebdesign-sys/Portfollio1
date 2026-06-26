@@ -7,7 +7,7 @@
   <title>Payment Successful — Eldridge Web Design</title>
 
   <!-- Auto-redirect fallback if JavaScript is disabled -->
-  <meta http-equiv="refresh" content="3;url=dashboard.html" />
+  <meta http-equiv="refresh" content="3;url=dashboard" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -44,13 +44,13 @@
     <div class="icon" aria-hidden="true">&#10003;</div>
     <h1>Payment successful!</h1>
     <p>Your plan is now active. You&rsquo;ll be redirected to your dashboard in a few seconds.</p>
-    <div class="dots">Redirecting&hellip; or <a href="dashboard.html">go now</a>.</div>
+    <div class="dots">Redirecting&hellip; or <a href="dashboard">go now</a>.</div>
   </main>
 
   <script>
     // Auto-redirect to the dashboard after 3 seconds.
     setTimeout(function () {
-      window.location.href = "dashboard.html";
+      window.location.href = "dashboard";
     }, 3000);
   </script>
 </body>

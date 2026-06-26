@@ -236,7 +236,7 @@
   </div>
 
   <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
-  <a class="ws-logo" href="index.html" aria-label="WebSharke — home"></a>
+  <a class="ws-logo" href="/home" aria-label="WebSharke — home"></a>
 
   <!-- Stays hidden until a logged-in session is confirmed (no flash of the
        dashboard before the redirect to login.html runs). -->
@@ -331,7 +331,7 @@
         <!-- EMPTY STATE — no website/hosting/subscription with WebSharke. -->
         <div class="hidden" id="bill-none">
           <p class="field">You do not have a website with WebSharke yet.</p>
-          <a class="ws-btn" id="view-plans" href="payment.html">View Plans</a>
+          <a class="ws-btn" id="view-plans" href="payment">View Plans</a>
         </div>
 
         <!-- ACTIVE STATE — current subscription details + management. -->
@@ -437,7 +437,7 @@
     // ---- Sign out -------------------------------------------------------
     $("signout").addEventListener("click", async () => {
       try { await db.auth.signOut(); } catch (e) { /* ignore */ }
-      window.location.replace("login.html");
+      window.location.replace("login");
     });
 
     // ---- Verify session (re-validates the Supabase session with the server;
@@ -568,7 +568,7 @@
         : null;
 
     // Reuse the existing success page (success.html) as the return URL.
-    const PAYMENT_RETURN_URL = new URL("success.html", window.location.href).href;
+    const PAYMENT_RETURN_URL = new URL("success", window.location.href).href;
 
     const payOverlay = $("pay-overlay");
     const payMsg = $("pay-msg");
@@ -913,13 +913,13 @@
       // the login page. (#dash stays hidden until the gate passes below.)
       const { data: authData, error: authError } = await db.auth.getUser();
       if (authError || !authData || !authData.user) {
-        window.location.replace("login.html");
+        window.location.replace("login");
         return;
       }
 
       const { data } = await db.auth.getSession();
       if (!data.session) {
-        window.location.replace("login.html");
+        window.location.replace("login");
         return;
       }
       const user = authData.user;

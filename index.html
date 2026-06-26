@@ -177,7 +177,7 @@ body.lock{overflow:hidden;height:100vh}
 
 <nav id="navbar">
   <a href="#hero" class="logo" aria-label="Websharke — home"></a>
-  <a href="login.html" class="signin" id="auth-cta">Sign In</a>
+  <a href="login" class="signin" id="auth-cta">Sign In</a>
 </nav>
 
 <!-- ── HERO — BEACH / SURFACE (approved) ──────────────────────────────────── -->
@@ -185,7 +185,7 @@ body.lock{overflow:hidden;height:100vh}
   <p class="hero-eyebrow anim">Most local business websites look like they were built in an afternoon.</p>
   <h1 class="hero-title anim a2">Yours <em>won’t.</em></h1>
   <div class="hero-cta anim a3">
-    <a href="onboarding.html" class="btn btn-sand">Start a Project</a>
+    <a href="onboarding" class="btn btn-sand">Start a Project</a>
   </div>
 </section>
 
@@ -384,8 +384,8 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
   const cta=document.getElementById('auth-cta');
   if(!cta) return;
   function setCta(session){
-    if(session){ cta.textContent='View Dashboard'; cta.setAttribute('href','dashboard.html'); }
-    else{ cta.textContent='Sign In'; cta.setAttribute('href','login.html'); }
+    if(session){ cta.textContent='View Dashboard'; cta.setAttribute('href','dashboard'); }
+    else{ cta.textContent='Sign In'; cta.setAttribute('href','login'); }
   }
   (async()=>{ const { data }=await db.auth.getSession(); setCta(data.session); })();
   db.auth.onAuthStateChange((event,session)=>setCta(session));
