@@ -3,15 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="Tab-Logo.png" type="image/png" />
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Dashboard — WebSharke</title>
-
-  <!-- Same brand fonts as the rest of the WebSharke site (no more space theme) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <meta name="robots" content="noindex" />
 
   <style>
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cormorantgaramond-700.woff2) format('woff2')}
+    @font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/mulish-500.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/mulish-700.woff2) format('woff2')}
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
       --ink:#11364c;            /* deep navy — primary text */
@@ -34,13 +38,13 @@
     .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
     .ocean svg{width:100%;height:100%;display:block}
 
-    /* ── WebSharke logo, top-left (Main-Logo.png masked to navy so it reads on
+    /* ── WebSharke logo, top-left (images/Main-Logo.png masked to navy so it reads on
          the turquoise water) ───────────────────────────────────────────────── */
     .ws-logo{
       position:fixed;top:18px;left:26px;z-index:20;display:block;
       width:136px;height:76px;background:var(--ink);
-      -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
-              mask:url(Main-Logo.png) left center/contain no-repeat;
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
       filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
       transition:transform .3s ease;
     }
@@ -102,7 +106,7 @@
     @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
     .tab-title{
-      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.7rem;
+      font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;font-size:1.7rem;
       color:#0e2f44;margin-bottom:1.4rem;letter-spacing:.01em;
     }
 
@@ -157,49 +161,6 @@
     .plan-row{display:flex;flex-wrap:wrap;gap:.7rem;margin:.6rem 0 .4rem}
     .plan-row .ws-btn{margin-top:0}
 
-    /* ── Stripe Payment Element modal (navy/teal beach theme) ──────────────── */
-    .pay-overlay{
-      position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
-      padding:1.2rem;background:rgba(7,30,40,.55);
-      backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-    }
-    .pay-card{
-      width:100%;max-width:460px;max-height:92vh;overflow-y:auto;
-      background:rgba(234,247,249,.97);border:1px solid var(--panel-bd);border-radius:18px;
-      padding:clamp(1.5rem,3vw,2.1rem);
-      box-shadow:0 26px 64px rgba(0,30,45,.45),inset 0 1px 0 rgba(255,255,255,.55);
-    }
-    .pay-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.1rem}
-    .pay-title{
-      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.55rem;
-      color:#0e2f44;letter-spacing:.01em;line-height:1.15;
-    }
-    .pay-close{
-      appearance:none;-webkit-appearance:none;background:none;border:none;cursor:pointer;
-      font-size:1.6rem;line-height:1;color:var(--ink-soft);padding:.1rem .35rem;border-radius:8px;
-      transition:color .2s,background .2s;
-    }
-    .pay-close:hover{color:#0c2c40;background:rgba(255,255,255,.5)}
-    .pay-close:focus-visible{outline:2px solid var(--turq);outline-offset:2px}
-    #payment-element{margin:.3rem 0 1.1rem;min-height:44px}
-    .pay-actions{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
-    .pay-actions .ws-btn{margin-top:0}
-    .pay-cancel{
-      cursor:pointer;border:1px solid rgba(17,54,76,.3);background:rgba(255,255,255,.5);
-      font-family:'Mulish',sans-serif;font-weight:600;font-size:.82rem;letter-spacing:.06em;color:var(--ink);
-      padding:.7rem 1.4rem;border-radius:9px;transition:background .2s,border-color .2s;
-    }
-    .pay-cancel:hover{background:rgba(255,255,255,.78);border-color:var(--turq)}
-    .pay-cancel:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
-    .pay-cancel[disabled]{opacity:.55;cursor:not-allowed}
-    .pay-msg{display:none;margin-top:1rem;padding:.7rem .95rem;border-radius:10px;font-size:.92rem;line-height:1.5}
-    .pay-msg.show{display:block}
-    .pay-msg.error{color:#7c1d29;background:rgba(255,255,255,.6);border:1px solid rgba(150,40,52,.4)}
-    .pay-msg.success{color:#0c5a40;background:rgba(255,255,255,.6);border:1px solid rgba(30,140,90,.4)}
-    @media(max-width:420px){
-      .pay-actions .ws-btn,.pay-cancel{width:100%;text-align:center}
-    }
-
     .hidden{display:none !important}
 
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
@@ -216,6 +177,441 @@
     @media(max-width:420px){
       .nav-item{font-size:1rem}
       .field,.warn{font-size:.96rem}
+    }
+
+    /* ── Client unpaid / payment-status banner (regular dashboard only) ─────── */
+    .pay-banner{
+      display:none;margin:0 0 1.4rem;padding:.9rem 1.1rem;border-radius:11px;
+      font-size:.96rem;line-height:1.55;font-weight:600;
+    }
+    .pay-banner.show{display:block}
+    .pay-banner.unpaid{color:#7c1d29;background:rgba(255,255,255,.5);border:1px solid rgba(190,50,60,.5)}
+    .pay-banner.warn{color:#7a4a05;background:rgba(255,255,255,.5);border:1px solid rgba(210,150,30,.5)}
+    .pay-banner a{color:inherit;text-decoration:underline;font-weight:700}
+
+    /* ── Invoices (client billing tab, READ-ONLY) ──────────────────────────────
+       Namespaced `cinv-*` so it can never collide with the admin invoice
+       builder's `.inv-*` block (Task 3) in this same file. */
+    .cinv-block{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--panel-bd)}
+    .cinv-heading{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.4rem;color:#0e2f44;margin-bottom:1.1rem;letter-spacing:.01em}
+    .cinv-loading{color:var(--ink-soft)}
+    .cinv-list{display:flex;flex-direction:column;gap:1.1rem}
+    .cinv-card{
+      background:rgba(255,255,255,.42);border:1px solid var(--panel-bd);border-radius:14px;
+      padding:1.2rem 1.25rem;box-shadow:0 10px 26px rgba(0,40,55,.12),inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .cinv-card-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.5rem .9rem}
+    .cinv-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;color:#0e2f44;line-height:1.2;margin:0}
+    .cinv-id{display:block;margin-top:.2rem;font-size:.74rem;letter-spacing:.05em;color:#5a7e8c;font-variant-numeric:tabular-nums}
+    .cinv-badge{
+      flex:0 0 auto;font-family:'Mulish',sans-serif;font-weight:700;font-size:.66rem;letter-spacing:.1em;
+      text-transform:uppercase;padding:.34rem .72rem;border-radius:999px;white-space:nowrap;border:1px solid transparent;
+    }
+    .cinv-badge.issued{color:#1f4f8a;background:rgba(45,111,199,.14);border-color:rgba(45,111,199,.42)}
+    .cinv-badge.paid{color:#0c5a40;background:rgba(31,140,99,.16);border-color:rgba(31,140,99,.45)}
+    .cinv-badge.overdue{color:#7c1d29;background:rgba(192,57,47,.14);border-color:rgba(192,57,47,.48)}
+    .cinv-badge.void,.cinv-badge.canceled,.cinv-badge.draft{color:#41606e;background:rgba(90,126,140,.15);border-color:rgba(90,126,140,.4)}
+    .cinv-meta{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem;margin-top:.9rem;font-size:.92rem;color:var(--ink-soft)}
+    .cinv-meta .f-label{font-size:1rem}
+    .cinv-items{width:100%;border-collapse:collapse;margin:1rem 0 .2rem;font-size:.92rem}
+    .cinv-items th,.cinv-items td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid rgba(17,54,76,.12);color:var(--ink);vertical-align:top}
+    .cinv-items th{font-family:'Mulish',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:#41606e}
+    .cinv-items th.cinv-num,.cinv-items td.cinv-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .cinv-item-title{font-weight:600;color:#13405a}
+    .cinv-item-desc{display:block;margin-top:.15rem;font-size:.82rem;color:#5a7e8c}
+    .cinv-totals{margin-top:.9rem;margin-left:auto;width:fit-content;min-width:min(260px,100%)}
+    .cinv-total-row{display:flex;justify-content:space-between;gap:1.6rem;padding:.26rem 0;font-size:.92rem;color:var(--ink-soft)}
+    .cinv-total-row.grand{margin-top:.3rem;padding-top:.5rem;border-top:1px solid rgba(17,54,76,.22);font-weight:800;font-size:1.02rem;color:#0e2f44}
+    .cinv-total-row .cinv-num{font-variant-numeric:tabular-nums}
+    .cinv-notes{margin-top:1rem;padding:.75rem .95rem;border-radius:10px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.6);font-size:.9rem;line-height:1.55;color:var(--ink)}
+    .cinv-notes .f-label{display:block;margin-bottom:.2rem;font-size:1rem}
+    .cinv-actions{margin-top:1.1rem;display:flex;align-items:center;gap:.85rem;flex-wrap:wrap}
+    .cinv-pay{margin-top:0}
+    .cinv-pay-note{font-size:.82rem;color:#5a7e8c}
+    /* Current-invoice summary (Invoices tab) — the only money line shown here. */
+    .cinv-summary{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-top:1rem;padding-top:.9rem;border-top:1px solid rgba(17,54,76,.14)}
+    .cinv-summary .lbl{font-weight:700;color:var(--ink);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase}
+    .cinv-summary .amt{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.9rem;line-height:1;color:#0e2f44;font-variant-numeric:tabular-nums}
+    /* Secondary "View Previous Payments" button — always visible under the summary. */
+    .cinv-prev-wrap{margin-top:1.5rem}
+    .cinv-prev-wrap .ws-btn{margin-top:0}
+    .ws-btn.ghost{background:rgba(255,255,255,.34);color:var(--ink);border:1.5px solid var(--ink);box-shadow:none}
+    .ws-btn.ghost:hover{background:rgba(255,255,255,.6);filter:none;box-shadow:none}
+    @media(max-width:560px){
+      .cinv-items thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+      .cinv-items,.cinv-items tbody,.cinv-items tr,.cinv-items td{display:block;width:100%}
+      .cinv-items tr{padding:.55rem 0;border-bottom:1px solid rgba(17,54,76,.12)}
+      .cinv-items tr:last-child{border-bottom:none}
+      .cinv-items td{border:none;padding:.12rem 0}
+      .cinv-items td.cinv-item-name{margin-bottom:.3rem}
+      .cinv-items td.cinv-num{display:flex;justify-content:space-between;gap:1rem;text-align:right}
+      .cinv-items td.cinv-num::before{content:attr(data-label);font-weight:700;color:#41606e;font-size:.78rem;letter-spacing:.02em}
+      .cinv-totals{width:100%;min-width:0}
+      .cinv-actions .cinv-pay{width:100%;text-align:center}
+    }
+  </style>
+
+  <!-- ===================================================================== -->
+  <!-- ADMIN DASHBOARD THEME — dark "business control panel".                -->
+  <!-- Scoped entirely under `.adm` so the regular client dashboard above is -->
+  <!-- never affected. Reuses the brand fonts + turquoise accents.           -->
+  <!-- ===================================================================== -->
+  <style>
+    :root{
+      /* Light "ocean" admin palette — mirrors the client dashboard above so the
+         admin panel reads as the same theme (frosted glass over the waves). */
+      --adm-bg:#36a1b3;                       /* turquoise water (same as body) */
+      --adm-panel:rgba(255,255,255,.58);      /* frosted glass panel */
+      --adm-panel-2:rgba(244,252,253,.95);    /* near-opaque glass for menus/drawers/modals */
+      --adm-input:rgba(255,255,255,.72);      /* form field fill */
+      --adm-bd:rgba(255,255,255,.55); --adm-bd-2:rgba(17,54,76,.18);
+      --adm-text:#11364c; --adm-muted:#2c5468; --adm-faint:#5a7e8c;
+      --adm-turq:#10b6cc; --adm-turq-deep:#15707f;
+      --adm-danger:#c0392f; --adm-danger-deep:#9e2a22;
+      --adm-warn:#b5740a; --adm-good:#1f8c63; --adm-blue:#2d6fc7;
+    }
+    body.adm-active{background:var(--adm-bg);overflow:hidden}
+    /* Keep the ocean waves visible behind the admin glass; only hide the client
+       logo (the admin shell has its own brand mark in the sidebar). */
+    body.adm-active .ws-logo{display:none !important}
+
+    .adm{position:fixed;inset:0;z-index:5;display:flex;color:var(--adm-text);
+      background:transparent;font-family:'Mulish',system-ui,sans-serif}
+    .adm.hidden{display:none !important}
+    .adm *{box-sizing:border-box}
+    .adm button{font-family:inherit}
+
+    /* ── Sidebar ──────────────────────────────────────────────────────────── */
+    .adm-side{flex:0 0 246px;display:flex;flex-direction:column;
+      background:rgba(198,233,237,.42);backdrop-filter:blur(9px) saturate(1.25);
+      -webkit-backdrop-filter:blur(9px) saturate(1.25);box-shadow:inset -1px 0 0 rgba(255,255,255,.35);
+      border-right:1px solid var(--adm-bd);transition:flex-basis .22s ease;overflow:hidden}
+    .adm.collapsed .adm-side{flex-basis:68px}
+    .adm-brand{display:flex;align-items:center;justify-content:flex-start;gap:.6rem;
+      padding:.6rem 1.05rem;border-bottom:1px solid var(--adm-bd);min-height:64px;overflow:hidden}
+    /* Full WebSharke logo (shark fin + wordmark). The source PNG is a wide canvas
+       with the art floating in the middle, so it's tightly cropped via mask-size/
+       position and tinted navy to read on the light frosted sidebar — same masking
+       approach as the client dashboard's .ws-logo. */
+    .adm-brand-logo{display:block;flex:0 0 auto;width:138px;height:46px;background:var(--adm-text);
+      -webkit-mask:url(images/Main-Logo.png) center 32% / 186% no-repeat;
+              mask:url(images/Main-Logo.png) center 32% / 186% no-repeat}
+    /* Shark-fin only — shown when the sidebar collapses to its icon rail. */
+    .adm-brand-icon{display:none;flex:0 0 auto;width:36px;height:30px;background:var(--adm-text);
+      -webkit-mask:url(images/Tab-Logo.png) center/contain no-repeat;
+              mask:url(images/Tab-Logo.png) center/contain no-repeat}
+    .adm.collapsed .adm-brand{justify-content:center;padding-left:0;padding-right:0}
+    .adm.collapsed .adm-brand-logo{display:none}
+    .adm.collapsed .adm-brand-icon{display:block}
+    .adm-nav{display:flex;flex-direction:column;gap:.15rem;padding:.7rem .55rem;flex:1;overflow-y:auto}
+    .adm-nav button{display:flex;align-items:center;gap:.75rem;width:100%;cursor:pointer;
+      background:none;border:none;color:var(--adm-muted);text-align:left;
+      padding:.62rem .7rem;border-radius:9px;font-size:.92rem;font-weight:600;
+      transition:background .15s,color .15s;white-space:nowrap}
+    .adm-nav button svg{width:19px;height:19px;flex:0 0 auto;stroke:currentColor;
+      fill:none;stroke-width:1.7}
+    .adm-nav button:hover{background:rgba(17,54,76,.07);color:var(--adm-text)}
+    .adm-nav button.active{background:rgba(16,182,204,.16);color:var(--adm-turq-deep)}
+    .adm-nav button.active::before{content:"";position:absolute;left:0;width:3px;height:22px;
+      border-radius:0 3px 3px 0;background:var(--adm-turq)}
+    .adm-nav button{position:relative}
+    .adm-nav .adm-nav-label{flex:1}
+    .adm.collapsed .adm-nav-label,.adm.collapsed .adm-nav-badge{display:none}
+    .adm-nav-badge{background:var(--adm-danger);color:#fff;font-size:.66rem;font-weight:800;
+      padding:.1rem .42rem;border-radius:20px;min-width:18px;text-align:center}
+    .adm-signout{margin:.6rem .7rem 1rem;display:flex;align-items:center;gap:.6rem;cursor:pointer;
+      border:1px solid var(--adm-bd-2);background:rgba(255,255,255,.42);color:var(--adm-muted);
+      padding:.6rem .7rem;border-radius:9px;font-size:.78rem;font-weight:700;letter-spacing:.08em;
+      text-transform:uppercase;transition:color .15s,border-color .15s,background .15s;white-space:nowrap}
+    .adm-signout:hover{color:var(--adm-danger);border-color:var(--adm-danger);background:rgba(192,57,47,.08)}
+    .adm-signout svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;flex:0 0 auto}
+    .adm.collapsed .adm-signout span{display:none}
+
+    /* ── Main column ──────────────────────────────────────────────────────── */
+    .adm-main{flex:1;min-width:0;display:flex;flex-direction:column}
+    .adm-top{display:flex;align-items:center;gap:1rem;padding:.8rem 1.3rem;
+      border-bottom:1px solid var(--adm-bd);background:rgba(208,238,241,.34);
+      backdrop-filter:blur(9px) saturate(1.18);-webkit-backdrop-filter:blur(9px) saturate(1.18);
+      position:relative;z-index:6}
+    .adm-icon-btn{cursor:pointer;border:1px solid var(--adm-bd-2);background:rgba(255,255,255,.5);
+      color:var(--adm-muted);width:38px;height:38px;border-radius:9px;display:grid;place-items:center;
+      flex:0 0 auto;transition:color .15s,border-color .15s}
+    .adm-icon-btn:hover{color:var(--adm-text);border-color:var(--adm-turq)}
+    .adm-icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+    .adm-search-wrap{position:relative;flex:1;max-width:560px}
+    .adm-search{width:100%;background:var(--adm-input);border:1px solid var(--adm-bd-2);
+      color:var(--adm-text);border-radius:10px;padding:.62rem .95rem .62rem 2.3rem;font-size:.92rem;outline:none}
+    .adm-search:focus{border-color:var(--adm-turq);box-shadow:0 0 0 3px rgba(16,182,204,.18)}
+    .adm-search::placeholder{color:var(--adm-faint)}
+    .adm-search-ico{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);
+      width:16px;height:16px;stroke:var(--adm-faint);fill:none;stroke-width:1.8;pointer-events:none}
+    .adm-search-results{position:absolute;top:calc(100% + .4rem);left:0;right:0;z-index:30;
+      background:var(--adm-panel-2);border:1px solid var(--adm-bd-2);border-radius:11px;
+      box-shadow:0 24px 50px rgba(0,40,55,.28);max-height:60vh;overflow-y:auto;display:none}
+    .adm-search-results.show{display:block}
+    .adm-sr-item{display:flex;align-items:center;gap:.7rem;padding:.6rem .85rem;cursor:pointer;
+      border-bottom:1px solid var(--adm-bd)}
+    .adm-sr-item:last-child{border-bottom:none}
+    .adm-sr-item:hover{background:rgba(16,182,204,.12)}
+    .adm-sr-cat{font-size:.64rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+      color:#06141b;background:var(--adm-turq);padding:.18rem .45rem;border-radius:6px;flex:0 0 auto}
+    .adm-sr-label{font-weight:600;font-size:.9rem}
+    .adm-sr-sub{color:var(--adm-muted);font-size:.78rem}
+    .adm-top-right{margin-left:auto;display:flex;align-items:center;gap:.7rem}
+    .adm-admin-chip{font-size:.78rem;color:var(--adm-muted);background:var(--adm-panel);
+      border:1px solid var(--adm-bd);padding:.45rem .8rem;border-radius:9px;white-space:nowrap}
+    .adm-admin-chip b{color:var(--adm-turq-deep);font-weight:700}
+
+    .adm-views{flex:1;overflow-y:auto;padding:1.4rem 1.5rem 3rem}
+    .adm-view{display:none;animation:admfade .3s ease}
+    .adm-view.active{display:block}
+    @keyframes admfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+    .adm-view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;
+      flex-wrap:wrap;margin-bottom:1.2rem}
+    .adm-h1{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;font-size:1.95rem;letter-spacing:.01em}
+    .adm-h1 .adm-sub{display:block;font-family:'Mulish',sans-serif;font-size:.85rem;font-weight:500;
+      color:var(--adm-muted);margin-top:.1rem}
+
+    /* ── Cards / metric grid ──────────────────────────────────────────────── */
+    .adm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem;margin-bottom:1.5rem}
+    .adm-card{background:var(--adm-panel);border:1px solid var(--adm-bd);border-radius:13px;
+      padding:1rem 1.1rem;box-shadow:0 14px 34px rgba(0,40,55,.16),inset 0 1px 0 rgba(255,255,255,.4);
+      backdrop-filter:blur(10px) saturate(1.15);-webkit-backdrop-filter:blur(10px) saturate(1.15)}
+    .adm-card .lbl{font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--adm-muted)}
+    .adm-card .val{font-size:1.85rem;font-weight:800;margin-top:.35rem;line-height:1;font-family:'Mulish',sans-serif}
+    .adm-card .val.danger{color:var(--adm-danger)}
+    .adm-card .val.warn{color:var(--adm-warn)}
+    .adm-card .val.good{color:var(--adm-good)}
+    .adm-card .val.turq{color:var(--adm-turq-deep)}
+
+    .adm-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-bottom:1.4rem}
+    .adm-panel-box{background:var(--adm-panel);border:1px solid var(--adm-bd);border-radius:13px;
+      padding:1.1rem 1.2rem;box-shadow:0 16px 40px rgba(0,40,55,.16),inset 0 1px 0 rgba(255,255,255,.4);
+      backdrop-filter:blur(11px) saturate(1.15);-webkit-backdrop-filter:blur(11px) saturate(1.15)}
+    .adm-panel-box h3{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.3rem;margin-bottom:.85rem}
+    .adm-chart-wrap{position:relative;height:230px}
+
+    /* ── Toolbar (search + filters + export) ──────────────────────────────── */
+    .adm-toolbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
+    .adm-toolbar input.adm-tsearch,.adm-toolbar select{background:var(--adm-input);
+      border:1px solid var(--adm-bd-2);color:var(--adm-text);border-radius:9px;
+      padding:.5rem .7rem;font-size:.86rem;outline:none}
+    .adm-toolbar input.adm-tsearch:focus,.adm-toolbar select:focus{border-color:var(--adm-turq)}
+    .adm-toolbar input.adm-tsearch{min-width:200px;flex:1;max-width:300px}
+    .adm-toolbar select{cursor:pointer}
+    .adm-toolbar .spacer{flex:1}
+    .adm-btn{cursor:pointer;border:1px solid var(--adm-bd-2);background:rgba(255,255,255,.5);
+      color:var(--adm-text);border-radius:9px;padding:.5rem .9rem;font-size:.82rem;font-weight:700;
+      letter-spacing:.02em;transition:border-color .15s,background .15s;white-space:nowrap}
+    .adm-btn:hover{border-color:var(--adm-turq);background:rgba(16,182,204,.12)}
+    .adm-btn.primary{background:linear-gradient(160deg,var(--adm-turq),var(--adm-turq-deep));
+      border-color:transparent;color:#06141b}
+    .adm-btn.danger{border-color:rgba(192,57,47,.5);color:var(--adm-danger)}
+    .adm-btn.danger:hover{background:rgba(192,57,47,.12);border-color:var(--adm-danger)}
+    .adm-btn[disabled]{opacity:.5;cursor:not-allowed}
+    .adm-export{position:relative}
+    .adm-export-menu{position:absolute;right:0;top:calc(100% + .35rem);z-index:20;display:none;
+      background:var(--adm-panel-2);border:1px solid var(--adm-bd-2);border-radius:10px;
+      box-shadow:0 18px 40px rgba(0,40,55,.28);min-width:210px;overflow:hidden}
+    .adm-export-menu.show{display:block}
+    .adm-export-menu button{display:block;width:100%;text-align:left;background:none;border:none;
+      color:var(--adm-text);padding:.6rem .85rem;font-size:.84rem;cursor:pointer}
+    .adm-export-menu button:hover{background:rgba(16,182,204,.12)}
+
+    /* ── Tables ───────────────────────────────────────────────────────────── */
+    .adm-table-wrap{background:var(--adm-panel);border:1px solid var(--adm-bd);border-radius:13px;
+      overflow:auto;max-height:calc(100vh - 250px);
+      box-shadow:0 16px 40px rgba(0,40,55,.16),inset 0 1px 0 rgba(255,255,255,.4);
+      backdrop-filter:blur(11px) saturate(1.15);-webkit-backdrop-filter:blur(11px) saturate(1.15)}
+    table.adm-table{width:100%;border-collapse:collapse;font-size:.84rem;table-layout:auto}
+    table.adm-table thead th{position:sticky;top:0;z-index:2;background:#cfe9ec;text-align:left;
+      padding:.7rem .85rem;font-size:.71rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+      color:var(--adm-muted);border-bottom:1px solid var(--adm-bd-2);white-space:nowrap;cursor:default}
+    table.adm-table thead th.sortable{cursor:pointer;user-select:none}
+    table.adm-table thead th.sortable:hover{color:var(--adm-text)}
+    table.adm-table thead th .arr{opacity:.5;font-size:.7rem}
+    table.adm-table tbody td{padding:.65rem .85rem;border-bottom:1px solid var(--adm-bd);
+      vertical-align:middle;color:var(--adm-text);max-width:280px}
+    table.adm-table tbody tr{cursor:pointer;transition:background .12s}
+    table.adm-table tbody tr:hover{background:rgba(16,182,204,.09)}
+    .adm-trunc{display:inline-block;max-width:240px;white-space:nowrap;overflow:hidden;
+      text-overflow:ellipsis;vertical-align:bottom;color:var(--adm-muted)}
+    .adm-row-actions{display:flex;gap:.35rem;flex-wrap:nowrap}
+    .adm-mini{cursor:pointer;border:1px solid var(--adm-bd-2);background:rgba(255,255,255,.5);
+      color:var(--adm-muted);border-radius:7px;padding:.3rem .55rem;font-size:.74rem;font-weight:700;
+      transition:color .15s,border-color .15s,background .15s;white-space:nowrap}
+    .adm-mini:hover{color:var(--adm-text);border-color:var(--adm-turq)}
+    .adm-mini.danger:hover{color:var(--adm-danger);border-color:var(--adm-danger);background:rgba(192,57,47,.1)}
+
+    /* ── Badges ───────────────────────────────────────────────────────────── */
+    .badge{display:inline-block;padding:.2rem .55rem;border-radius:20px;font-size:.7rem;font-weight:800;
+      letter-spacing:.03em;white-space:nowrap;border:1px solid transparent}
+    .badge.b-active,.badge.b-live,.badge.b-complete{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
+    .badge.b-unpaid,.badge.b-banned{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
+    .badge.b-past_due,.badge.b-suspended,.badge.b-waiting_on_client{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
+    .badge.b-canceled,.badge.b-not_started{background:rgba(44,84,104,.12);color:#2c5468;border-color:rgba(44,84,104,.32)}
+    .badge.b-in_progress{background:rgba(45,111,199,.16);color:#2d6fc7;border-color:rgba(45,111,199,.42)}
+    .badge.b-none{background:rgba(44,84,104,.08);color:var(--adm-faint);border-color:var(--adm-bd-2)}
+
+    /* ── Skeleton loaders + empty states ──────────────────────────────────── */
+    .adm-skel-row td{padding:.7rem .85rem;border-bottom:1px solid var(--adm-bd)}
+    .adm-skel{height:13px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.32) 25%,rgba(255,255,255,.7) 37%,rgba(255,255,255,.32) 63%);
+      background-size:400% 100%;animation:admshimmer 1.3s ease infinite}
+    @keyframes admshimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+    .adm-skel-card{height:84px;border-radius:13px;border:1px solid var(--adm-bd);
+      background:linear-gradient(90deg,rgba(255,255,255,.28) 25%,rgba(255,255,255,.6) 37%,rgba(255,255,255,.28) 63%);
+      background-size:400% 100%;animation:admshimmer 1.3s ease infinite}
+    .adm-empty{text-align:center;padding:3rem 1.5rem;color:var(--adm-muted)}
+    .adm-empty svg{width:46px;height:46px;stroke:var(--adm-faint);fill:none;stroke-width:1.4;margin-bottom:.8rem}
+    .adm-empty h4{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--adm-text);margin-bottom:.3rem}
+
+    /* ── Right drawer ─────────────────────────────────────────────────────── */
+    .adm-drawer-ov{position:fixed;inset:0;z-index:40;background:rgba(7,30,40,.5);
+      backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s}
+    .adm-drawer-ov.show{opacity:1;pointer-events:auto}
+    .adm-drawer{position:fixed;top:0;right:0;bottom:0;z-index:41;width:min(480px,92vw);
+      background:var(--adm-panel-2);border-left:1px solid var(--adm-bd-2);
+      box-shadow:-24px 0 60px rgba(0,30,45,.3);transform:translateX(100%);transition:transform .26s ease;
+      display:flex;flex-direction:column}
+    .adm-drawer.show{transform:none}
+    .adm-drawer-head{display:flex;align-items:center;gap:.8rem;padding:1rem 1.2rem;
+      border-bottom:1px solid var(--adm-bd);position:sticky;top:0;background:var(--adm-panel-2);z-index:2}
+    .adm-drawer-title{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.45rem;flex:1;min-width:0}
+    .adm-drawer-title small{display:block;font-family:'Mulish',sans-serif;font-size:.78rem;font-weight:500;color:var(--adm-muted)}
+    .adm-drawer-body{flex:1;overflow-y:auto;padding:1.1rem 1.2rem 2rem}
+    .adm-section{margin-bottom:1.4rem}
+    .adm-section>h4{font-size:.74rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+      color:var(--adm-turq-deep);margin-bottom:.7rem;padding-bottom:.4rem;border-bottom:1px solid var(--adm-bd-2)}
+    .adm-fld{margin-bottom:.8rem}
+    .adm-fld label{display:block;font-size:.74rem;font-weight:700;color:var(--adm-muted);margin-bottom:.28rem;letter-spacing:.02em}
+    .adm-fld input,.adm-fld select,.adm-fld textarea{width:100%;background:var(--adm-input);
+      border:1px solid var(--adm-bd-2);color:var(--adm-text);border-radius:8px;padding:.55rem .7rem;
+      font-size:.88rem;font-family:'Mulish',sans-serif;outline:none}
+    .adm-fld textarea{min-height:84px;resize:vertical;line-height:1.55}
+    .adm-fld input:focus,.adm-fld select:focus,.adm-fld textarea:focus{border-color:var(--adm-turq)}
+    .adm-fld input[readonly]{opacity:.7;cursor:not-allowed}
+
+    /* ── Invoices (admin invoice builder) ─────────────────────────────────── */
+    .inv-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1rem;align-items:start}
+    .inv-main{display:flex;flex-direction:column;gap:1rem;min-width:0}
+    .inv-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+    .inv-opt{font-weight:600;color:var(--adm-faint);text-transform:none;letter-spacing:0}
+    /* Line-item header + rows share one grid so columns line up like a ledger,
+       not a free-form spreadsheet. */
+    .inv-items-head,.inv-item{display:grid;
+      grid-template-columns:minmax(0,1fr) 66px 132px minmax(92px,auto) 34px;gap:.55rem;align-items:center}
+    .inv-items-head{padding:0 .1rem .5rem;font-size:.7rem;font-weight:800;letter-spacing:.05em;
+      text-transform:uppercase;color:var(--adm-muted)}
+    .inv-items-head span:nth-child(2),.inv-items-head span:nth-child(3),
+    .inv-items-head span:nth-child(4){text-align:right}
+    .inv-item{padding:.6rem 0;border-bottom:1px solid var(--adm-bd)}
+    .inv-item-main{display:flex;flex-direction:column;gap:.4rem;min-width:0}
+    .inv-item input{width:100%;background:var(--adm-input);border:1px solid var(--adm-bd-2);
+      color:var(--adm-text);border-radius:8px;padding:.5rem .6rem;font-size:.86rem;
+      font-family:'Mulish',sans-serif;outline:none}
+    .inv-item input:focus{border-color:var(--adm-turq)}
+    .inv-item .inv-desc{font-size:.8rem;color:var(--adm-muted)}
+    .inv-qty{text-align:right}
+    .inv-price-wrap{position:relative;display:flex;align-items:center}
+    .inv-price-wrap .inv-cur{position:absolute;left:.6rem;color:var(--adm-faint);font-size:.85rem;pointer-events:none}
+    .inv-price{padding-left:1.35rem !important;text-align:right}
+    .inv-amount{text-align:right;font-weight:800;font-size:.86rem;color:var(--adm-text);white-space:nowrap}
+    #view-invoices .flagged{border-color:var(--adm-danger) !important;background:rgba(192,57,47,.06)}
+    .inv-del{justify-self:center;line-height:1}
+    #inv-add{margin-top:.95rem}
+    .inv-summary{position:sticky;top:1.4rem}
+    .inv-srow{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+      padding:.5rem 0;font-size:.9rem;color:var(--adm-muted)}
+    .inv-srow b{font-family:'Mulish',sans-serif;font-weight:800;color:var(--adm-text);font-size:1rem}
+    .inv-total{border-top:1px solid var(--adm-bd-2);margin-top:.2rem;padding-top:.7rem}
+    .inv-total span{font-weight:800;color:var(--adm-text)}
+    .inv-total b{font-size:1.35rem;color:var(--adm-turq-deep)}
+    .inv-note{font-size:.76rem;color:var(--adm-faint);line-height:1.5;margin:.65rem 0 1rem}
+    .inv-actions{display:flex;flex-direction:column;gap:.55rem}
+    .inv-actions .adm-btn{width:100%;text-align:center;padding:.62rem .9rem}
+    .inv-msg{margin-top:.95rem;font-size:.82rem;line-height:1.5;display:none}
+    .inv-msg.show{display:block}
+    .inv-msg.ok{color:var(--adm-good)}
+    .inv-msg.err{color:var(--adm-danger)}
+    @media(max-width:1040px){
+      .inv-layout{grid-template-columns:1fr}
+      .inv-summary{position:static}
+    }
+    @media(max-width:560px){
+      .inv-grid-2{grid-template-columns:1fr}
+      .inv-items-head{display:none}
+      .inv-item{grid-template-columns:1fr 1fr;gap:.5rem .6rem;padding:.8rem 0}
+      .inv-item-main{grid-column:1 / -1}
+      .inv-del{grid-column:2;justify-self:end}
+      /* G2 (Designer spec, 2026-06-22): the column header (.inv-items-head) is
+         hidden on mobile, so surface each numeric cell's name inline — label left,
+         value right — mirroring the client read-only table's .cinv-num pattern. */
+      .inv-item .inv-cell,
+      .inv-item .inv-price-wrap,
+      .inv-item .inv-amount{
+        display:flex;align-items:center;justify-content:space-between;gap:1rem;text-align:right;
+      }
+      .inv-item .inv-cell::before,
+      .inv-item .inv-price-wrap::before,
+      .inv-item .inv-amount::before{
+        content:attr(data-label);
+        font-weight:700;font-size:.78rem;letter-spacing:.02em;color:var(--adm-muted);
+      }
+    }
+    .adm-kv{display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0;
+      border-bottom:1px solid var(--adm-bd);font-size:.86rem}
+    .adm-kv .k{color:var(--adm-muted)}
+    .adm-kv .v{text-align:right;font-weight:600;word-break:break-word}
+    .adm-actions-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+    .adm-drawer-foot{padding:.9rem 1.2rem;border-top:1px solid var(--adm-bd);
+      display:flex;gap:.6rem;background:var(--adm-panel-2)}
+    .adm-timeline{list-style:none;margin:0;padding:0}
+    .adm-timeline li{position:relative;padding:0 0 .9rem 1.1rem;border-left:1px solid var(--adm-bd-2);font-size:.82rem}
+    .adm-timeline li:last-child{padding-bottom:0}
+    .adm-timeline li::before{content:"";position:absolute;left:-4px;top:.25rem;width:8px;height:8px;
+      border-radius:50%;background:var(--adm-turq)}
+    .adm-timeline .tl-action{font-weight:700}
+    .adm-timeline .tl-meta{color:var(--adm-muted);font-size:.76rem;margin-top:.1rem}
+
+    /* ── Confirm modal ────────────────────────────────────────────────────── */
+    .adm-modal-ov{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+      padding:1.4rem;background:rgba(7,30,40,.5);backdrop-filter:blur(3px)}
+    .adm-modal-ov.show{display:flex}
+    .adm-modal{width:100%;max-width:420px;background:var(--adm-panel-2);border:1px solid var(--adm-bd-2);
+      border-radius:15px;padding:1.5rem;box-shadow:0 30px 70px rgba(0,30,45,.34)}
+    .adm-modal h3{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.5rem;margin-bottom:.6rem}
+    .adm-modal p{color:var(--adm-muted);font-size:.92rem;line-height:1.55;margin-bottom:1.3rem}
+    .adm-modal .adm-modal-actions{display:flex;gap:.6rem;justify-content:flex-end}
+
+    /* ── Toasts ───────────────────────────────────────────────────────────── */
+    .adm-toasts{position:fixed;right:1.2rem;bottom:1.2rem;z-index:80;display:flex;flex-direction:column;
+      gap:.6rem;max-width:360px}
+    .adm-toast{display:flex;align-items:flex-start;gap:.6rem;background:var(--adm-panel-2);
+      border:1px solid var(--adm-bd-2);border-left:3px solid var(--adm-good);border-radius:11px;
+      padding:.8rem 1rem;box-shadow:0 16px 40px rgba(0,30,45,.28);font-size:.86rem;line-height:1.45;
+      animation:admtoast .25s ease}
+    .adm-toast.error{border-left-color:var(--adm-danger)}
+    .adm-toast .t-title{font-weight:800;margin-bottom:.1rem}
+    .adm-toast .t-msg{color:var(--adm-muted);font-size:.8rem}
+    @keyframes admtoast{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+
+    /* ── Responsive: mini icon-only sidebar (NOT a hamburger) ─────────────── */
+    @media(max-width:900px){
+      .adm-side{flex-basis:64px !important}
+      .adm-nav-label,.adm-nav-badge,.adm-signout span{display:none !important}
+      .adm-brand{justify-content:center;padding-left:0;padding-right:0}
+      .adm-brand-logo{display:none !important}
+      .adm-brand-icon{display:block !important}
+      .adm-collapse-btn{display:none}
+      .adm-admin-chip{display:none}
+    }
+    @media(max-width:640px){
+      .adm-drawer{width:100vw}
+      .adm-views{padding:1rem .9rem 3rem}
+      .adm-toasts{left:.8rem;right:.8rem;max-width:none}
+      /* The 320px min column overflows the narrow main area beside the icon rail */
+      .adm-grid-2{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -236,7 +632,7 @@
   </div>
 
   <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
-  <a class="ws-logo" href="/home" aria-label="WebSharke — home"></a>
+  <a class="ws-logo" href="/" aria-label="WebSharke — home"></a>
 
   <!-- Stays hidden until a logged-in session is confirmed (no flash of the
        dashboard before the redirect to login.html runs). -->
@@ -249,7 +645,8 @@
         <button class="nav-item active" role="tab" aria-selected="true"  data-tab="account">Account info</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="business">Business info</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="project">Project details</button>
-        <button class="nav-item"        role="tab" aria-selected="false" data-tab="billing">Billing</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="billing">Invoices</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="hosting">Hosting</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="domain">Domain</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="privacy">Privacy</button>
       </nav>
@@ -258,6 +655,10 @@
 
     <!-- ── Main content panel ───────────────────────────────────────────────── -->
     <section class="panel">
+
+      <!-- Payment-status banner — shown only when the client's subscription is
+           unpaid or past due. Surfaces billing state without any admin tools. -->
+      <div class="pay-banner" id="client-pay-banner" role="alert"></div>
 
       <!-- 1 ── Account info -->
       <div class="tab active" id="tab-account" role="tabpanel">
@@ -316,25 +717,20 @@
         </div>
       </div>
 
-      <!-- 3 ── Billing / Hosting.
-           Two states, driven entirely by Supabase subscription data:
-             • EMPTY  (#bill-none)   — no website/hosting/subscription →
-                                       one message + "View Plans" (→ payment.html)
-             • ACTIVE (#bill-active) — has hosting/subscription → full details
-           See renderBilling() for the logic. -->
+      <!-- 3 ── Invoices (subscription state + the client's current invoice).
+           The ACTIVE subscription block (#bill-active) shows only when the client
+           has an active/trialing subscription; otherwise nothing renders there. The
+           old "no website yet / View Plans" empty state was removed — the "not
+           hosting" message now lives on the Hosting tab. See renderBilling(). -->
       <div class="tab" id="tab-billing" role="tabpanel">
-        <h2 class="tab-title">Billing</h2>
+        <h2 class="tab-title">Invoices</h2>
 
         <!-- Shown only if the billing data fails to load. -->
         <p class="bill-error hidden" id="bill-load-error" role="alert">We couldn’t load your billing information right now. Please refresh the page or try again later.</p>
 
-        <!-- EMPTY STATE — no website/hosting/subscription with WebSharke. -->
-        <div class="hidden" id="bill-none">
-          <p class="field">You do not have a website with WebSharke yet.</p>
-          <a class="ws-btn" id="view-plans" href="payment">View Plans</a>
-        </div>
-
-        <!-- ACTIVE STATE — current subscription details + management. -->
+        <!-- ACTIVE STATE — current subscription details + management. Shown only when
+             the client has an active/trialing subscription; otherwise it stays hidden
+             and no empty-state message renders here. -->
         <div class="hidden" id="bill-active">
           <p class="field"><span class="f-label">Current payment method:</span> <span class="f-value" id="bill-method">…</span></p>
           <p class="field"><span class="f-label">Hosting status:</span> <span class="f-value" id="bill-hosting">…</span>
@@ -347,6 +743,103 @@
 
         <!-- Shared, always-in-DOM error line for billing actions. -->
         <p class="bill-error hidden" id="bill-error" role="alert"></p>
+
+        <!-- ── Pending subscriptions (client) ─────────────────────────────────
+             Custom recurring subscriptions the admin created for this client that
+             are still PENDING activation. Each shows the recurring price and an
+             "Activate Subscription" button that LINKS to /payment?subscription_id=…
+             (NEVER "Pay Invoice", and the dashboard never charges a card). Hidden
+             entirely when there are none. Populated by renderClientPendingSubs()
+             from the subscription rows already fetched at page load. -->
+        <div class="cinv-block hidden" id="csub-block">
+          <h3 class="cinv-heading">Subscriptions</h3>
+          <div class="cinv-list" id="csub-list" aria-live="polite"></div>
+        </div>
+
+        <!-- ── Invoices (client) ──────────────────────────────────────────────
+             A brief summary of the client's CURRENT (most recent unpaid) invoice:
+             Name, ID, Total, and a "Pay Invoice" button. Read-only by design —
+             RLS (db/invoices-schema.sql) grants the anon key SELECT on the caller's
+             OWN rows only and NO insert/update/delete, and there are no editable
+             controls here. Payment NEVER happens on the dashboard: "Pay Invoice"
+             LINKS to /payment?invoice_id=… (payment.html), which runs the Stripe
+             Payment Element. The full history lives at /prev-inv. Classes/ids are
+             namespaced `cinv-*` so they never collide with the admin builder's
+             `.inv-*` (same file). Populated by loadClientInvoices(); independent of
+             the subscription/hosting states above. -->
+        <div class="cinv-block" id="cinv-block">
+          <h3 class="cinv-heading">Current invoice</h3>
+
+          <!-- Shown only if the invoice fails to load. -->
+          <p class="bill-error hidden" id="cinv-load-error" role="alert">We couldn’t load your invoice right now. Please refresh the page or try again later.</p>
+
+          <!-- Replaced by the current-invoice card or the empty state once loaded. -->
+          <p class="field cinv-loading" id="cinv-loading">Loading your invoice…</p>
+
+          <!-- Shown when the client has no current (unpaid) invoice. -->
+          <p class="field hidden" id="cinv-empty">No current invoice.</p>
+
+          <!-- The current-invoice summary card is rendered here by loadClientInvoices(). -->
+          <div class="cinv-list hidden" id="cinv-list" aria-live="polite"></div>
+
+          <!-- Always available, even with no current invoice: the full invoice /
+               payment history page. -->
+          <div class="cinv-prev-wrap">
+            <a class="ws-btn ghost" id="cinv-prev-link" href="/prev-inv">View Previous Payments</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3b ── Hosting.
+           Shows whether the client currently hosts with WebSharke. Three states,
+           rendered by renderHosting() (active > pending > none):
+             • ACTIVE  (any active/trialing subscription) → thank-you + the recurring
+               price (for custom subscriptions) + "Manage Billing" → Stripe portal.
+             • PENDING (a custom 'hosting' subscription awaiting activation) → "ready
+               to activate" + the recurring price + "Activate Subscription" →
+               /payment?subscription_id=… (no charge happens on the dashboard).
+             • NONE    → "not hosting" + a "Request Hosting" PLACEHOLDER (client→admin
+               messaging isn't built — it only shows an inline note, never submits).
+           The Stripe portal button is the ONLY thing here that can send the user off
+           websharke.com; activation/payment happens on /payment, never on this tab. -->
+      <div class="tab" id="tab-hosting" role="tabpanel">
+        <h2 class="tab-title">Hosting</h2>
+
+        <!-- Shown only if the subscription/hosting data failed to load (so we never
+             claim a wrong "not hosting" status when we simply couldn't read it). -->
+        <p class="bill-error hidden" id="host-load-error" role="alert">We couldn’t load your hosting status right now. Please refresh the page or try again later.</p>
+
+        <!-- NOT hosting with WebSharke. -->
+        <div class="hidden" id="host-none">
+          <p class="field">You are currently not hosting with WebSharke</p>
+          <button class="ws-btn" id="request-hosting" type="button">Request Hosting</button>
+          <!-- Placeholder: client→admin messaging isn't built yet. Shown on click;
+               it never redirects, submits, or implies a request was sent. -->
+          <p class="f-sub hidden" id="host-request-note" role="status"></p>
+        </div>
+
+        <!-- Pending: the admin created a custom recurring subscription this client
+             can activate. The recurring price is shown clearly; "Activate
+             Subscription" LINKS to /payment?subscription_id=… (the dashboard never
+             charges a card). Set up by renderHosting(). -->
+        <div class="hidden" id="host-pending">
+          <p class="field">You have a hosting subscription ready to activate</p>
+          <p class="field"><span class="f-label">Recurring payment:</span> <span class="f-value" id="host-pending-amount">…</span></p>
+          <a class="ws-btn" id="host-activate" href="#">Activate Subscription</a>
+        </div>
+
+        <!-- Currently hosting (active / trialing subscription). -->
+        <div class="hidden" id="host-active">
+          <p class="field">Thank you for hosting with WebSharke</p>
+          <!-- Recurring price (shown only for custom subscriptions that carry
+               amount_cents + interval_months; legacy plans just show the thank-you). -->
+          <p class="field hidden" id="host-active-amount-row"><span class="f-label">Recurring payment:</span> <span class="f-value" id="host-active-amount">…</span></p>
+          <button class="ws-btn" id="manage-hosting" type="button">Manage Billing</button>
+        </div>
+
+        <!-- Clean error line for the "Manage Hosting Services" portal action
+             (raw API errors are never surfaced to the user). -->
+        <p class="bill-error hidden" id="host-error" role="alert"></p>
       </div>
 
       <!-- 4 ── Domain -->
@@ -373,27 +866,247 @@
     </section>
   </main>
 
-  <!-- ── Stripe Payment Element modal (hidden until a plan is chosen) ────────── -->
-  <div class="pay-overlay hidden" id="pay-overlay" role="dialog" aria-modal="true" aria-labelledby="pay-title">
-    <div class="pay-card">
-      <div class="pay-head">
-        <h2 class="pay-title" id="pay-title">Complete your payment</h2>
-        <button class="pay-close" id="pay-close" type="button" aria-label="Close payment dialog">&times;</button>
+  <!-- ===================================================================== -->
+  <!-- ADMIN DASHBOARD — only ever shown to the admin email. Hidden by       -->
+  <!-- default; initAdmin() reveals it after a server-verified admin check.  -->
+  <!-- ===================================================================== -->
+  <div class="adm hidden" id="admin" aria-hidden="true">
+
+    <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+    <aside class="adm-side" id="admSide">
+      <div class="adm-brand">
+        <span class="adm-brand-logo" role="img" aria-label="WebSharke"></span>
+        <span class="adm-brand-icon" aria-hidden="true"></span>
       </div>
-      <div id="payment-element"><!-- Stripe Payment Element mounts here --></div>
-      <div class="pay-actions">
-        <button class="ws-btn" id="pay-submit" type="button">Pay</button>
-        <button class="pay-cancel" id="pay-cancel" type="button">Cancel</button>
+      <nav class="adm-nav" id="admNav" aria-label="Admin sections">
+        <button class="active" data-view="overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="adm-nav-label">Overview</span></button>
+        <button data-view="users"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg><span class="adm-nav-label">Users</span></button>
+        <button data-view="onboarding"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg><span class="adm-nav-label">Onboarding Forms</span></button>
+        <button data-view="payments"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="adm-nav-label">Payments</span></button>
+        <button data-view="invoices"><svg viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span class="adm-nav-label">Invoices</span></button>
+        <button data-view="subscriptions"><svg viewBox="0 0 24 24"><path d="M3 4h18v6H3z"/><path d="M3 14h11v6H3z"/><path d="M18 13.5v7M14.5 17h7"/></svg><span class="adm-nav-label">Subscriptions</span></button>
+        <button data-view="websites"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span class="adm-nav-label">Websites</span></button>
+        <button data-view="domains"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span class="adm-nav-label">Domains</span></button>
+        <button data-view="alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="adm-nav-label">Alerts</span><span class="adm-nav-badge" id="admAlertBadge" style="display:none">0</span></button>
+        <button data-view="activity"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="adm-nav-label">Activity Log</span></button>
+        <button data-view="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 6 9.4l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 11 5.6h.09A2 2 0 1 1 15 5.6V5.7a1.65 1.65 0 0 0 2.82-1.17l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9h.1a2 2 0 1 1 0 4h-.1z"/></svg><span class="adm-nav-label">Settings</span></button>
+      </nav>
+      <button class="adm-signout" id="admSignout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg><span>Sign Out</span></button>
+    </aside>
+
+    <!-- ── Main column ──────────────────────────────────────────────────── -->
+    <div class="adm-main">
+      <header class="adm-top">
+        <button class="adm-icon-btn adm-collapse-btn" id="admCollapse" title="Collapse sidebar" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="adm-search-wrap">
+          <svg class="adm-search-ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input class="adm-search" id="admSearch" type="text" placeholder="Search users, domains, websites, onboarding, payments…" autocomplete="off" />
+          <div class="adm-search-results" id="admSearchResults"></div>
+        </div>
+        <div class="adm-top-right">
+          <span class="adm-admin-chip">Admin · <b id="admWho">—</b></span>
+        </div>
+      </header>
+
+      <div class="adm-views" id="admViews">
+
+        <!-- OVERVIEW -->
+        <section class="adm-view active" id="view-overview">
+          <div class="adm-view-head"><h1 class="adm-h1">Overview<span class="adm-sub">Command center — everything that needs your attention</span></h1></div>
+          <div class="adm-cards" id="ovCards"></div>
+          <div class="adm-grid-2">
+            <div class="adm-panel-box"><h3>Subscription breakdown</h3><div class="adm-chart-wrap"><canvas id="chPlans"></canvas></div></div>
+            <div class="adm-panel-box"><h3>Payment status</h3><div class="adm-chart-wrap"><canvas id="chPay"></canvas></div></div>
+            <div class="adm-panel-box"><h3>Website type</h3><div class="adm-chart-wrap"><canvas id="chType"></canvas></div></div>
+            <div class="adm-panel-box">
+              <h3 style="display:flex;justify-content:space-between;align-items:center">Site purchases over time
+                <select id="ovTimeframe" style="background:var(--adm-input);border:1px solid var(--adm-bd-2);color:var(--adm-text);border-radius:8px;padding:.3rem .5rem;font-size:.8rem">
+                  <option value="6">Last 6 months</option><option value="12">Last 12 months</option><option value="0">All time</option>
+                </select></h3>
+              <div class="adm-chart-wrap"><canvas id="chSites"></canvas></div>
+            </div>
+          </div>
+          <div class="adm-panel-box"><h3>Recent activity</h3><div id="ovActivity"></div></div>
+        </section>
+
+        <!-- Generic data views (toolbar + table injected by JS) -->
+        <section class="adm-view" id="view-users"></section>
+        <section class="adm-view" id="view-onboarding"></section>
+        <section class="adm-view" id="view-payments"></section>
+        <section class="adm-view" id="view-websites"></section>
+        <section class="adm-view" id="view-domains"></section>
+        <section class="adm-view" id="view-alerts"></section>
+        <section class="adm-view" id="view-activity"></section>
+
+        <!-- INVOICES — create a draft or issued invoice for a client. -->
+        <!-- The form sends only line items (in cents) to POST /api/admin/invoices; -->
+        <!-- the server recomputes + stores the authoritative subtotal/total. -->
+        <section class="adm-view" id="view-invoices">
+          <div class="adm-view-head"><h1 class="adm-h1">Invoices<span class="adm-sub">Create a draft or issued invoice for a client</span></h1></div>
+          <div class="inv-layout">
+            <div class="inv-main">
+              <div class="adm-panel-box">
+                <h3>Invoice details</h3>
+                <div class="inv-grid-2">
+                  <div class="adm-fld">
+                    <label for="inv-client">Client</label>
+                    <select id="inv-client"><option value="">Loading clients…</option></select>
+                  </div>
+                  <div class="adm-fld">
+                    <label for="inv-due">Due date <span class="inv-opt">(optional)</span></label>
+                    <input id="inv-due" type="date" />
+                  </div>
+                  <div class="adm-fld">
+                    <label for="inv-billing">Billing type</label>
+                    <select id="inv-billing">
+                      <option value="one_time">One-time</option>
+                      <option value="monthly">Monthly (recurring)</option>
+                      <option value="annual">Annual (recurring)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="adm-fld">
+                  <label for="inv-title">Invoice title</label>
+                  <input id="inv-title" maxlength="200" placeholder="e.g. Website build — Phase 1" />
+                </div>
+                <div class="adm-fld">
+                  <label for="inv-notes">Notes <span class="inv-opt">(optional)</span></label>
+                  <textarea id="inv-notes" maxlength="5000" placeholder="Payment terms, scope notes, a thank-you message…"></textarea>
+                </div>
+              </div>
+
+              <div class="adm-panel-box">
+                <h3>Line items</h3>
+                <div class="inv-items-head" aria-hidden="true"><span>Item</span><span>Qty</span><span>Unit price</span><span>Amount</span><span></span></div>
+                <div id="inv-items"></div>
+                <button class="adm-btn" id="inv-add" type="button">+ Add line item</button>
+              </div>
+            </div>
+
+            <aside class="inv-summary">
+              <div class="adm-panel-box">
+                <h3>Summary</h3>
+                <div class="inv-srow"><span>Subtotal</span><b id="inv-subtotal">$0.00</b></div>
+                <div class="inv-srow inv-total"><span>Total</span><b id="inv-total">$0.00</b></div>
+                <p class="inv-note">Live estimate. The server calculates and stores the authoritative total from the line items.</p>
+                <div class="inv-actions">
+                  <button class="adm-btn" id="inv-draft" type="button">Save as draft</button>
+                  <button class="adm-btn primary" id="inv-issue" type="button">Issue invoice</button>
+                </div>
+                <div class="inv-msg" id="inv-msg" role="status" aria-live="polite"></div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- SUBSCRIPTIONS — create a custom recurring hosting subscription for a -->
+        <!-- client (custom amount + "charge every N months"). Saved as PENDING; the -->
+        <!-- client activates it on the payment page. POSTs to                      -->
+        <!-- /api/admin/subscriptions, which validates + stores the authoritative   -->
+        <!-- amount in cents. Canceling cancels the REAL Stripe subscription.        -->
+        <section class="adm-view" id="view-subscriptions">
+          <div class="adm-view-head"><h1 class="adm-h1">Subscriptions<span class="adm-sub">Create a custom recurring hosting subscription for a client</span></h1></div>
+          <div class="inv-layout">
+            <div class="inv-main">
+              <div class="adm-panel-box">
+                <h3>New subscription</h3>
+                <div class="inv-grid-2">
+                  <div class="adm-fld">
+                    <label for="sub-client">Client</label>
+                    <select id="sub-client"><option value="">Loading clients…</option></select>
+                  </div>
+                  <div class="adm-fld">
+                    <label for="sub-interval">Charge every (months)</label>
+                    <input id="sub-interval" type="number" min="1" max="12" step="1" value="1" inputmode="numeric" placeholder="e.g. 1, 3, 12" />
+                  </div>
+                </div>
+                <div class="adm-fld">
+                  <label for="sub-name">Subscription name</label>
+                  <input id="sub-name" maxlength="200" placeholder="e.g. WebSharke Hosting" />
+                </div>
+                <div class="adm-fld">
+                  <label for="sub-amount">Amount (USD)</label>
+                  <div class="inv-price-wrap"><span class="inv-cur">$</span>
+                    <input id="sub-amount" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal" aria-label="Recurring amount in dollars" /></div>
+                </div>
+                <div class="inv-actions">
+                  <button class="adm-btn primary" id="sub-create" type="button">Create subscription</button>
+                </div>
+                <div class="inv-msg" id="sub-msg" role="status" aria-live="polite"></div>
+                <p class="inv-note" id="sub-preview">Recurring price preview: —</p>
+              </div>
+            </div>
+
+            <aside class="inv-summary">
+              <div class="adm-panel-box">
+                <h3>How it works</h3>
+                <p class="inv-note">The subscription is saved as <b>Pending activation</b>. The client sees it in their Invoices and Hosting tabs and activates it on the payment page — Stripe charges them immediately, then automatically every N months. The amount is stored in cents on the server; the browser value is only a request. Canceling here cancels the real Stripe subscription.</p>
+              </div>
+            </aside>
+          </div>
+
+          <div class="adm-panel-box">
+            <h3>All subscriptions</h3>
+            <div id="sub-list">Loading…</div>
+          </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="adm-view" id="view-settings">
+          <div class="adm-view-head"><h1 class="adm-h1">Settings<span class="adm-sub">Admin-only preferences</span></h1></div>
+          <div class="adm-grid-2">
+            <div class="adm-panel-box">
+              <h3>Admin account</h3>
+              <div class="adm-kv"><span class="k">Admin email</span><span class="v" id="setEmail">—</span></div>
+              <div class="adm-kv"><span class="k">Supabase connection</span><span class="v" id="setConn">Checking…</span></div>
+              <div class="adm-kv"><span class="k">Admin API</span><span class="v" id="setApi">Checking…</span></div>
+            </div>
+            <div class="adm-panel-box">
+              <h3>Display preferences</h3>
+              <div class="adm-fld">
+                <label for="setDensity">Table density</label>
+                <select id="setDensity"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select>
+              </div>
+              <p style="color:var(--adm-muted);font-size:.82rem;line-height:1.5">Table columns are fixed by design and cannot be customised, keeping every record consistent and exportable.</p>
+            </div>
+          </div>
+        </section>
+
       </div>
-      <p class="pay-msg" id="pay-msg" role="alert"></p>
     </div>
+
+    <!-- ── Right drawer ─────────────────────────────────────────────────── -->
+    <div class="adm-drawer-ov" id="admDrawerOv"></div>
+    <aside class="adm-drawer" id="admDrawer" aria-hidden="true">
+      <div class="adm-drawer-head">
+        <div class="adm-drawer-title" id="admDrawerTitle">Record</div>
+        <button class="adm-icon-btn" id="admDrawerClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="adm-drawer-body" id="admDrawerBody"></div>
+      <div class="adm-drawer-foot" id="admDrawerFoot" style="display:none"></div>
+    </aside>
+
+    <!-- ── Confirm modal ────────────────────────────────────────────────── -->
+    <div class="adm-modal-ov" id="admModalOv">
+      <div class="adm-modal">
+        <h3 id="admModalTitle">Are you sure?</h3>
+        <p id="admModalText">This action cannot be undone.</p>
+        <div class="adm-modal-actions">
+          <button class="adm-btn" id="admModalCancel">Cancel</button>
+          <button class="adm-btn danger" id="admModalConfirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Toasts ───────────────────────────────────────────────────────── -->
+    <div class="adm-toasts" id="admToasts"></div>
   </div>
 
   <!-- ── Supabase (shared client `db`) — same config every page uses ────────── -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
-  <!-- Stripe.js (official CDN) — used for the Payment Element modal below. -->
-  <script src="https://js.stripe.com/v3/"></script>
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <!-- Chart.js v4.4.1, vendored locally (no CDN) — only used by the admin Overview charts. -->
+  <script src="js/vendor/chart.umd.min.js"></script>
 
   <script>
     // =================================================================
@@ -437,7 +1150,10 @@
     // ---- Sign out -------------------------------------------------------
     $("signout").addEventListener("click", async () => {
       try { await db.auth.signOut(); } catch (e) { /* ignore */ }
-      window.location.replace("login");
+      // Clear the server-side session hint cookie set by login.html.
+      document.cookie =
+        "ws_session=; path=/; SameSite=Lax; Secure; max-age=0";
+      window.location.replace("/login");
     });
 
     // ---- Verify session (re-validates the Supabase session with the server;
@@ -465,7 +1181,7 @@
       if (!resetEmail) return;
       try {
         const { error } = await db.auth.resetPasswordForEmail(resetEmail, {
-          redirectTo: window.location.origin + "/login.html",
+          redirectTo: window.location.origin + "/login",
         });
         if (error) throw error;
         alert("Password reset link sent to " + resetEmail + ". Check your inbox.");
@@ -498,10 +1214,13 @@
       btn.disabled = true;
       btn.textContent = "Opening billing…";
       try {
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) throw new Error("You must be signed in to manage billing.");
         const res = await fetch("/api/customer-portal", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ customerId: stripeCustomerId }),
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({}),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.url) throw new Error(data.error || "Could not open the billing portal.");
@@ -532,11 +1251,14 @@
         if (userErr) throw new Error("Could not verify your session. Please sign in again.");
         if (!user) { showBillError("You must be signed in to manage your subscription."); return; }
 
-        // 2-4. Ask the server for a billing-portal URL for this user.
+        // 2-4. Ask the server for a billing-portal URL (resolved from the verified session).
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) { showBillError("You must be signed in to manage your subscription."); return; }
         const res = await fetch("/api/customer-portal", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id }),
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({}),
         });
         const data = await res.json().catch(() => ({}));
 
@@ -551,171 +1273,68 @@
       }
     });
 
-    // ====================================================================
-    // STRIPE PAYMENT ELEMENT — plan button → /api/checkout → modal.
-    //
-    // The publishable key is PUBLIC and safe in frontend code (just like the
-    // Supabase anon key in supabase-config.js). The SECRET key is NEVER used
-    // here — it lives only in the serverless /api functions.
-    // ====================================================================
-    const stripePublishableKey =
-      (typeof STRIPE_PUBLISHABLE_KEY !== "undefined" && STRIPE_PUBLISHABLE_KEY) || "";
-
-    // Initialise Stripe once (only if the library loaded and a key is set).
-    const stripe =
-      (window.Stripe && /^pk_/.test(stripePublishableKey))
-        ? window.Stripe(stripePublishableKey)
-        : null;
-
-    // Reuse the existing success page (success.html) as the return URL.
-    const PAYMENT_RETURN_URL = new URL("success", window.location.href).href;
-
-    const payOverlay = $("pay-overlay");
-    const payMsg = $("pay-msg");
-    const paySubmit = $("pay-submit");
-    const payCancel = $("pay-cancel");
-    const payClose = $("pay-close");
-
-    let payElements = null;        // current Stripe Elements instance
-    let payPaymentElement = null;  // current mounted Payment Element
-    let payBusy = false;           // true while a payment is being submitted
-
-    function setPayMsg(text, type) {
-      payMsg.textContent = text || "";
-      payMsg.className = "pay-msg" + (text ? " show " + (type || "error") : "");
-    }
-    function openPayModal() {
-      setPayMsg("");
-      payOverlay.classList.remove("hidden");
-      document.body.style.overflow = "hidden";
-    }
-    function closePayModal() {
-      if (payBusy) return; // never close mid-submit
-      payOverlay.classList.add("hidden");
-      document.body.style.overflow = "";
-      // Tear down the mounted Payment Element so re-opening never duplicates it.
-      if (payPaymentElement) { try { payPaymentElement.destroy(); } catch (e) {} }
-      payPaymentElement = null;
-      payElements = null;
-      $("payment-element").innerHTML = "";
-      setPayMsg("");
-    }
-
-    // Build a fresh Elements + Payment Element from a clientSecret and open it.
-    function mountPayment(clientSecret) {
-      // Clean up any previous mount first (covers opening the modal twice).
-      if (payPaymentElement) { try { payPaymentElement.destroy(); } catch (e) {} }
-      payPaymentElement = null;
-      $("payment-element").innerHTML = "";
-
-      payElements = stripe.elements({
-        clientSecret,
-        appearance: {
-          theme: "stripe",
-          variables: {
-            colorPrimary: "#15707f",
-            colorText: "#11364c",
-            fontFamily: "Mulish, system-ui, sans-serif",
-            borderRadius: "9px",
-          },
-        },
+    // ---- Hosting tab: "Request Hosting" placeholder ------------------------
+    // Client→admin messaging isn't built yet, so this only shows an inline note.
+    // It NEVER redirects, submits, or implies a request was actually sent.
+    const requestHostingBtn = $("request-hosting");
+    const hostRequestNote = $("host-request-note");
+    if (requestHostingBtn && hostRequestNote) {
+      requestHostingBtn.addEventListener("click", () => {
+        hostRequestNote.textContent =
+          "Hosting requests are coming soon. Please contact WebSharke directly for now.";
+        hostRequestNote.classList.remove("hidden");
       });
-      payPaymentElement = payElements.create("payment");
-      payPaymentElement.mount("#payment-element");
-      openPayModal();
     }
 
-    // Plan button click: verify user, call /api/checkout, then open the modal.
-    async function handlePlanClick(btn) {
-      billError.classList.add("hidden");
-      const priceId = btn.getAttribute("data-price-id");
-
-      if (!stripe) {
-        showBillError("Payments aren’t available right now. Please try again later.");
-        return;
-      }
-      if (!priceId) {
-        showBillError("This plan isn’t available right now. Please contact " + SUPPORT_EMAIL + ".");
-        return;
-      }
-
-      const original = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "Starting…";
-      try {
-        // Who is logged in? (reuse the existing `db` Supabase client)
-        const { data: userData, error: userErr } = await db.auth.getUser();
-        const user = userData && userData.user;
-        if (userErr) throw new Error("Could not verify your session. Please sign in again.");
-        if (!user) { showBillError("You must be signed in to choose a plan."); return; }
-
-        // Ask the server for a Payment Element client secret.
-        const res = await fetch("/api/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ priceId: priceId, userId: user.id, email: user.email }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || "Could not start checkout. Please try again.");
-        if (!data.clientSecret) throw new Error("Could not start checkout. Please try again.");
-
-        mountPayment(data.clientSecret);
-      } catch (err) {
-        showBillError(err.message || "Could not start checkout. Please try again.");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = original;
-      }
+    // ---- Hosting tab: "Manage Hosting Services" → Stripe customer portal ----
+    // Same secure flow as "Manage My Subscription": POST the verified session token
+    // to /api/customer-portal (the SERVER resolves the Stripe customer from the
+    // AUTHENTICATED user — the browser never sends a customer/user id), then redirect
+    // to the returned portal URL ONLY after a successful response. This is the one
+    // action on the dashboard that sends the user off websharke.com.
+    const manageHostingBtn = $("manage-hosting");
+    const hostError = $("host-error");
+    function showHostError(msg) {
+      if (!hostError) return;
+      hostError.textContent = msg;
+      hostError.classList.remove("hidden");
     }
+    if (manageHostingBtn) {
+      manageHostingBtn.addEventListener("click", async () => {
+        if (hostError) hostError.classList.add("hidden");
+        const original = manageHostingBtn.textContent;
+        manageHostingBtn.disabled = true;
+        manageHostingBtn.textContent = "Opening…";
+        try {
+          // Confirm a real session (the server re-verifies the token regardless).
+          const { data: userData, error: userErr } = await db.auth.getUser();
+          const user = userData && userData.user;
+          if (userErr) throw new Error("Could not verify your session. Please sign in again.");
+          if (!user) { showHostError("You must be signed in to manage hosting."); return; }
 
-    // Wire every plan button (any element carrying a data-price-id).
-    document.querySelectorAll("[data-price-id]").forEach((btn) => {
-      btn.addEventListener("click", () => handlePlanClick(btn));
-    });
+          const { data: sess } = await db.auth.getSession();
+          const token = sess && sess.session && sess.session.access_token;
+          if (!token) { showHostError("You must be signed in to manage hosting."); return; }
 
-    // Submit the payment from inside the modal.
-    paySubmit.addEventListener("click", async () => {
-      if (!payElements || payBusy) return;
-      payBusy = true;
-      setPayMsg("");
-      const orig = paySubmit.textContent;
-      paySubmit.disabled = true;
-      payCancel.disabled = true;
-      paySubmit.textContent = "Processing…";
-      try {
-        const { error } = await stripe.confirmPayment({
-          elements: payElements,
-          confirmParams: { return_url: PAYMENT_RETURN_URL },
-          redirect: "if_required",
-        });
-        if (error) {
-          // Failed → show a clean message and re-enable the Pay button.
-          setPayMsg(error.message || "Payment could not be completed. Please try again.", "error");
-          paySubmit.disabled = false;
-          payCancel.disabled = false;
-          paySubmit.textContent = orig;
-          payBusy = false;
-          return;
+          const res = await fetch("/api/customer-portal", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({}),
+          });
+          const data = await res.json().catch(() => ({}));
+
+          // Redirect ONLY after a confirmed portal URL; otherwise a clean error.
+          // (data.error is the server's own safe message — never a raw exception.)
+          if (!res.ok || !data.url) throw new Error(data.error || "Could not open the hosting portal. Please try again.");
+          window.location = data.url;
+        } catch (err) {
+          showHostError(err.message || "Something went wrong opening hosting. Please try again.");
+        } finally {
+          manageHostingBtn.disabled = false;
+          manageHostingBtn.textContent = original;
         }
-        // Succeeded without a redirect → show success, then go to success page.
-        setPayMsg("Payment successful! Redirecting…", "success");
-        window.location.href = PAYMENT_RETURN_URL;
-      } catch (err) {
-        setPayMsg(err.message || "Payment could not be completed. Please try again.", "error");
-        paySubmit.disabled = false;
-        payCancel.disabled = false;
-        paySubmit.textContent = orig;
-        payBusy = false;
-      }
-    });
-
-    // Close / cancel (disabled while a payment is in flight).
-    payClose.addEventListener("click", closePayModal);
-    payCancel.addEventListener("click", closePayModal);
-    payOverlay.addEventListener("click", (e) => { if (e.target === payOverlay) closePayModal(); });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !payOverlay.classList.contains("hidden")) closePayModal();
-    });
+      });
+    }
 
     // ---- Helpers --------------------------------------------------------
     function normalizeUrl(d) {
@@ -747,9 +1366,11 @@
       //    render from real Supabase booleans instead of inline guesses.
 
       // 4) Domain -------------------------------------------------------
-      const domain = inquiry.domain || meta.domain || null;
+      // Source of truth: subscriptions.domain (set by the admin dashboard,
+      // keyed on this user's auth id). `sub` is fetched fresh on page load.
+      const domain = (sub.domain && String(sub.domain).trim()) ? sub.domain : null;
       const url = normalizeUrl(domain);
-      $("dom-name").textContent = show(domain);
+      $("dom-name").textContent = domain || "No domain on file yet.";
       const preview = $("dom-preview");
       if (url) {
         preview.setAttribute("href", url);
@@ -831,7 +1452,7 @@
       const EM = "—";
       $("pd-business-name").textContent = show(inquiry.business_name, EM);
       $("pd-business-desc").textContent = show(inquiry.business_description, EM);
-      $("pd-products").textContent      = show(inquiry.products_service, EM);
+      $("pd-products").textContent      = show(inquiry.products_services, EM);
       $("pd-goals").textContent         = show(inquiry.website_goals, EM);
       $("pd-actions").textContent       = show(inquiry.visitor_actions, EM);
       // preferred_styles may be stored as an array; present it as a readable list.
@@ -844,6 +1465,59 @@
       $("pd-additional").textContent    = show(inquiry.additional_info, EM);
     }
 
+    // ---- Render the Hosting tab from the subscription state ---------------
+    // Three states, exactly one shown (a load failure shows a clean error instead
+    // of a possibly-wrong status):
+    //   • ACTIVE  (activeSub: any row active/trialing) → thank-you + recurring price
+    //     (when it's a custom subscription) + "Manage Billing" → Stripe portal.
+    //   • PENDING (pendingSub: a category 'hosting' row pending_activation/incomplete,
+    //     and no active row) → "ready to activate" + recurring price + "Activate
+    //     Subscription" → /payment?subscription_id=… .
+    //   • NONE    → "not hosting" + the "Request Hosting" placeholder.
+    // Precedence: active > pending > none.
+    function renderHosting(activeSub, pendingSub, billingError) {
+      const loadErr   = $("host-load-error");
+      const noneEl    = $("host-none");
+      const pendingEl = $("host-pending");
+      const activeEl  = $("host-active");
+      const actionErr = $("host-error");
+      if (!noneEl || !activeEl) return;
+
+      // Reset to a clean state every render.
+      loadErr.classList.add("hidden");
+      noneEl.classList.add("hidden");
+      if (pendingEl) pendingEl.classList.add("hidden");
+      activeEl.classList.add("hidden");
+      actionErr.classList.add("hidden");
+
+      // Couldn't read the subscription → don't claim a status either way.
+      if (billingError) { loadErr.classList.remove("hidden"); return; }
+
+      if (activeSub) {
+        activeEl.classList.remove("hidden");
+        // Show the recurring price for a custom subscription (amount_cents +
+        // interval_months). Legacy Stripe-plan rows lack these → just the thank-you.
+        const amtRow = $("host-active-amount-row");
+        const amtEl = $("host-active-amount");
+        if (amtRow && amtEl) {
+          if (activeSub.amount_cents != null && activeSub.interval_months != null) {
+            amtEl.textContent = recurringLabel(activeSub.amount_cents, activeSub.interval_months);
+            amtRow.classList.remove("hidden");
+          } else {
+            amtRow.classList.add("hidden");
+          }
+        }
+      } else if (pendingSub) {
+        if (pendingEl) pendingEl.classList.remove("hidden");
+        const amtEl = $("host-pending-amount");
+        if (amtEl) amtEl.textContent = recurringLabel(pendingSub.amount_cents, pendingSub.interval_months);
+        const actBtn = $("host-activate");
+        if (actBtn) actBtn.href = "/payment?subscription_id=" + encodeURIComponent(pendingSub.id);
+      } else {
+        noneEl.classList.remove("hidden");
+      }
+    }
+
     // ---- Render the Billing / Hosting section from real Supabase data ----
     //   hasService → a subscriptions row with status 'active' or 'trialing'
     //                (i.e. the user has a website/hosting/subscription).
@@ -852,12 +1526,10 @@
     function renderBilling(sub, hasService, billingError) {
       sub = sub || {};
       const loadErr  = $("bill-load-error");
-      const noneEl   = $("bill-none");
       const activeEl = $("bill-active");
 
       // Reset to a clean, empty state every render.
       loadErr.classList.add("hidden");
-      noneEl.classList.add("hidden");
       activeEl.classList.add("hidden");
       $("bill-error").classList.add("hidden");
 
@@ -902,8 +1574,207 @@
         return;
       }
 
-      // EMPTY — no website/hosting/subscription: one message + "View Plans".
-      noneEl.classList.remove("hidden");
+      // Not active/trialing → render nothing here. The old "no website yet /
+      // View Plans" empty state was removed; the "not hosting" message now lives
+      // on the Hosting tab (renderHosting).
+    }
+
+    // ====================================================================
+    // INVOICES (client, READ-ONLY) — phase 1, NO Stripe.
+    //
+    // Shows the invoices an admin created for THIS signed-in client.
+    // Read-only by design:
+    //   • RLS (db/invoices-schema.sql) grants the anon key SELECT on the
+    //     caller's OWN invoice / item rows only, and NO insert/update/delete,
+    //     so a client can never create, edit, delete, or reprice an invoice.
+    //     We ALSO scope the query to user.id as defence in depth.
+    //   • The UI renders values only (no inputs); the Pay button is a
+    //     disabled placeholder (Stripe is a later phase).
+    // Every dynamic value is written via textContent (never innerHTML of DB
+    // data), so admin-entered invoice text can't inject markup. Classes/ids
+    // are `cinv-*` to avoid colliding with the admin builder's `.inv-*`.
+    // ====================================================================
+
+    // Statuses a client may SEE. Draft is admin-only work-in-progress and is
+    // hidden unless the project explicitly opts in.
+    const SHOW_DRAFTS_TO_CLIENTS = false;
+    const CLIENT_VISIBLE_STATUSES =
+      ["issued", "paid", "overdue", "void", "canceled"]
+        .concat(SHOW_DRAFTS_TO_CLIENTS ? ["draft"] : []);
+    // Unpaid + actionable (issued/overdue) → gets the live "Pay invoice" button.
+    const PAYABLE_STATUSES = ["issued", "overdue"];
+    const CLIENT_STATUS_LABEL = {
+      draft: "Draft", issued: "Issued", paid: "Paid",
+      overdue: "Overdue", void: "Void", canceled: "Canceled",
+    };
+    // How the invoice is billed (kept in sync with db/invoices-schema.sql
+    // billing_type + api/admin/invoices.js ALLOWED_BILLING_TYPES). Shown on the
+    // card so a client knows a "monthly"/"annual" invoice starts a subscription.
+    const BILLING_LABEL = { one_time: "One-time", monthly: "Monthly", annual: "Annual" };
+
+    const clientMoneyFmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+    // Amounts are stored as integer cents; format defensively.
+    function cinvMoney(cents) {
+      const n = Number(cents);
+      return clientMoneyFmt.format((Number.isFinite(n) ? n : 0) / 100);
+    }
+    // Format a date-only value ("YYYY-MM-DD") with no timezone shift.
+    function cinvDate(ymd) {
+      if (!ymd) return null;
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd));
+      if (!m) return fmtDate(ymd);
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      return isNaN(d.getTime())
+        ? null
+        : d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    }
+    // Short human reference from the UUID (no invoice_number column exists yet).
+    function cinvRef(id) {
+      const s = String(id || "");
+      return s ? "#" + s.slice(0, 8).toUpperCase() : "";
+    }
+    // DOM builder — keeps every value as text (no innerHTML of DB data).
+    function cinvEl(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined && text !== null) n.textContent = text;
+      return n;
+    }
+    // Format a recurring price the way the client sees it EVERYWHERE: "$25/month"
+    // (interval_months 1), "$500/year" (12), or "$100 every 3 months" (anything
+    // else). Used by the Hosting tab + the Invoices-tab pending cards. Mirrors
+    // subRecurringLabel in payment.html and the admin section.
+    function recurringLabel(amountCents, intervalMonths) {
+      const money = cinvMoney(amountCents);
+      const n = Number(intervalMonths);
+      if (n === 1) return money + "/month";
+      if (n === 12) return money + "/year";
+      return money + " every " + n + " months";
+    }
+
+    // Fetch + render the signed-in client's CURRENT invoice (the most recent
+    // UNPAID, payable one — issued or overdue). The Invoices tab is a brief summary
+    // only: Name, ID, Total, and a "Pay Invoice" button that LINKS to the payments
+    // page — no charge ever happens on the dashboard. Self-contained: own loading /
+    // error / empty states; a failure here never affects the rest of the dashboard.
+    // RLS (db/invoices-schema.sql) restricts the anon key to the caller's own rows;
+    // we also scope the query to user.id as defence in depth.
+    async function loadClientInvoices(user) {
+      const loadingEl = $("cinv-loading");
+      const errEl = $("cinv-load-error");
+      const emptyEl = $("cinv-empty");
+      const listEl = $("cinv-list");
+      if (!listEl || !user) return;
+      try {
+        // The current invoice = most recent unpaid + payable (issued/overdue),
+        // newest first. Paid / draft / void / canceled never qualify as "current".
+        const { data: invoices, error: invErr } = await db
+          .from("invoices")
+          .select("id,title,status,total_amount_cents")
+          .eq("client_user_id", user.id)
+          .in("status", PAYABLE_STATUSES)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (invErr) throw invErr;
+
+        loadingEl.classList.add("hidden");
+        const current = invoices && invoices[0];
+        if (!current) {
+          emptyEl.classList.remove("hidden");   // "No current invoice."
+          return;
+        }
+        listEl.textContent = "";
+        listEl.appendChild(buildCurrentInvoiceCard(current));
+        listEl.classList.remove("hidden");
+      } catch (e) {
+        console.error("Could not load invoice:", e && e.message);
+        loadingEl.classList.add("hidden");
+        listEl.classList.add("hidden");
+        emptyEl.classList.add("hidden");
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    // Build the current-invoice summary card: Name (title) + ID, status badge,
+    // Total, and a "Pay Invoice" LINK to /payment?invoice_id=… (payment.html runs
+    // the Stripe Payment Element — the dashboard never charges a card). Every value
+    // is written via cinvEl/textContent, so admin-entered text can't inject markup.
+    function buildCurrentInvoiceCard(iv) {
+      const status = String(iv.status || "").toLowerCase();
+      const card = cinvEl("article", "cinv-card");
+      card.setAttribute("aria-label", "Current invoice " + cinvRef(iv.id));
+
+      // Head: Name (title) + short ID reference, status badge.
+      const head = cinvEl("div", "cinv-card-head");
+      const titleWrap = cinvEl("div");
+      titleWrap.appendChild(cinvEl("h4", "cinv-title", show(iv.title, "Invoice")));
+      titleWrap.appendChild(cinvEl("span", "cinv-id", cinvRef(iv.id)));
+      head.appendChild(titleWrap);
+      head.appendChild(cinvEl("span", "cinv-badge " + status, CLIENT_STATUS_LABEL[status] || (status || "—")));
+      card.appendChild(head);
+
+      // Total — the only money figure shown in the dashboard summary.
+      const summary = cinvEl("div", "cinv-summary");
+      summary.appendChild(cinvEl("span", "lbl", "Total"));
+      summary.appendChild(cinvEl("span", "amt", cinvMoney(iv.total_amount_cents)));
+      card.appendChild(summary);
+
+      // Pay Invoice → the dedicated payments page for THIS invoice. The dashboard
+      // never charges a card; /payment?invoice_id=… runs the Stripe Payment Element.
+      const actions = cinvEl("div", "cinv-actions");
+      const pay = cinvEl("a", "ws-btn cinv-pay", "Pay Invoice");
+      pay.href = "/payment?invoice_id=" + encodeURIComponent(iv.id);
+      actions.appendChild(pay);
+      card.appendChild(actions);
+      return card;
+    }
+
+    // Build a PENDING-subscription card for the Invoices tab: Name (label) + ID, a
+    // "Pending activation" badge, the recurring price (clearly recurring — never a
+    // one-time total), and an "Activate Subscription" LINK to
+    // /payment?subscription_id=… (NEVER "Pay Invoice"; the dashboard never charges
+    // a card). Every value is written via cinvEl/textContent (no markup injection).
+    function buildPendingSubCard(sub) {
+      const card = cinvEl("article", "cinv-card");
+      card.setAttribute("aria-label", "Pending subscription " + cinvRef(sub.id));
+
+      const head = cinvEl("div", "cinv-card-head");
+      const titleWrap = cinvEl("div");
+      titleWrap.appendChild(cinvEl("h4", "cinv-title", show(sub.plan_name, "Subscription")));
+      titleWrap.appendChild(cinvEl("span", "cinv-id", cinvRef(sub.id)));
+      head.appendChild(titleWrap);
+      head.appendChild(cinvEl("span", "cinv-badge pending", "Pending activation"));
+      card.appendChild(head);
+
+      // Recurring price — labelled "Recurring payment", not "Total".
+      const summary = cinvEl("div", "cinv-summary");
+      summary.appendChild(cinvEl("span", "lbl", "Recurring payment"));
+      summary.appendChild(cinvEl("span", "amt", recurringLabel(sub.amount_cents, sub.interval_months)));
+      card.appendChild(summary);
+
+      const actions = cinvEl("div", "cinv-actions");
+      const activate = cinvEl("a", "ws-btn cinv-pay", "Activate Subscription");
+      activate.href = "/payment?subscription_id=" + encodeURIComponent(sub.id);
+      actions.appendChild(activate);
+      card.appendChild(actions);
+      return card;
+    }
+
+    // Render any PENDING custom recurring subscriptions into the Invoices tab from
+    // the subscription rows already fetched at page load (no extra query). Pending =
+    // category 'hosting' with status pending_activation / incomplete. The block is
+    // hidden entirely when there are none.
+    function renderClientPendingSubs(rows) {
+      const block = $("csub-block");
+      const listEl = $("csub-list");
+      if (!block || !listEl) return;
+      const pending = (rows || []).filter(
+        (r) => r.category === "hosting" && (r.status === "pending_activation" || r.status === "incomplete")
+      );
+      listEl.textContent = "";
+      if (!pending.length) { block.classList.add("hidden"); return; }
+      pending.forEach((s) => listEl.appendChild(buildPendingSubCard(s)));
+      block.classList.remove("hidden");
     }
 
     // ---- Page load: gate on a session, then load + render ---------------
@@ -913,16 +1784,28 @@
       // the login page. (#dash stays hidden until the gate passes below.)
       const { data: authData, error: authError } = await db.auth.getUser();
       if (authError || !authData || !authData.user) {
-        window.location.replace("login");
+        window.location.replace("/login");
         return;
       }
 
       const { data } = await db.auth.getSession();
       if (!data.session) {
-        window.location.replace("login");
+        window.location.replace("/login");
         return;
       }
       const user = authData.user;
+      console.log("[dashboard] logged-in user id:", user.id); // TEMP debug
+
+      // ---- Admin gate ------------------------------------------------
+      // Only the admin email gets the admin dashboard. This is a UX gate;
+      // the real security is server-side (every /api/admin call re-verifies
+      // the signed-in user's email before doing anything).
+      const ADMIN_EMAIL = "weeldridge09@gmail.com";
+      if ((user.email || "").trim().toLowerCase() === ADMIN_EMAIL && window.initAdmin) {
+        window.initAdmin(user);
+        return; // skip the regular client dashboard entirely
+      }
+
       document.getElementById("dash").classList.remove("hidden");
 
       // Most-recent intake row for this user (business + contact details).
@@ -946,36 +1829,36 @@
 
       // Subscription / billing row (status + Stripe customer id). Track a load
       // failure so Billing can show a clean error rather than a wrong state.
+      // Fresh fetch on every page load (the Supabase client does not cache
+      // query results), ordered newest-first so the billing row is deterministic.
       let sub = null;
+      let subRows = [];
       let subError = false;
       try {
         const { data: rows, error } = await db
           .from("subscriptions")
           .select("*")
           .eq("user_id", user.id)
-          .limit(1);
+          .order("created_at", { ascending: false });
         if (error) throw error;
+        subRows = rows || [];
         sub = rows && rows[0] ? rows[0] : null;
+        // Domain is the single source of truth in subscriptions. A user may
+        // have more than one row (e.g. a domain placeholder plus a later Stripe
+        // row), so surface the domain from whichever row actually has one.
+        if (sub && (!sub.domain || !String(sub.domain).trim())) {
+          const withDom = (rows || []).find((r) => r.domain && String(r.domain).trim());
+          if (withDom) sub.domain = withDom.domain;
+        }
+        console.log("[dashboard] subscription/domain query result:", { user_id: user.id, rows, domain: sub && sub.domain }); // TEMP debug
       } catch (e) { console.error("Could not load subscription:", e.message); subError = true; }
 
-      // Project details intake row from `project_inquiries` for the signed-in
-      // user. Most recent row wins when several exist. A load failure is kept
-      // separate so the section shows a clean error instead of "none on file".
-      let project = null;
-      let projectError = false;
-      try {
-        const { data: rows, error } = await db
-          .from("project_inquiries")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        if (error) throw error;
-        project = rows && rows[0] ? rows[0] : null;
-      } catch (e) {
-        console.error("Could not load project details:", e.message);
-        projectError = true;
-      }
+      // Project details read from the SAME `project_inquiries` row loaded above
+      // (identical query — most-recent intake for this user). Reusing it avoids a
+      // second, redundant round-trip on every dashboard load; the Project and
+      // Business sections render from this one fetch and share its load state.
+      const project = inquiry;
+      const projectError = inquiryError;
 
       // ---- WebSharke data rule → does the user have a website / hosting /
       // subscription with WebSharke? Billing shows full details only then;
@@ -984,11 +1867,1463 @@
       // Can't trust the billing state if the subscription query failed.
       const billingError = subError;
 
+      // Hosting state is computed across ALL of the user's subscription rows (a user
+      // may have a legacy plan row AND a newer custom subscription row): active
+      // hosting = any active/trialing row; pending hosting = a category 'hosting' row
+      // awaiting activation. Precedence active > pending is applied in renderHosting.
+      const activeHostingSub =
+        subRows.find((r) => r.status === "active" || r.status === "trialing") || null;
+      const pendingHostingSub =
+        subRows.find((r) => r.category === "hosting" && (r.status === "pending_activation" || r.status === "incomplete")) || null;
+
       render(user, inquiry, sub);
       renderBusiness(inquiry, inquiryError);
       renderProject(project, projectError);
       renderBilling(sub, hasService, billingError);
+      renderHosting(activeHostingSub, pendingHostingSub, billingError);
+      renderClientPayBanner(sub);
+      // Pending custom subscriptions show in the Invoices tab too (from the rows
+      // already fetched above — no extra query).
+      renderClientPendingSubs(subRows);
+      // Invoices load independently (own states) and never block the dashboard.
+      loadClientInvoices(user);
     })();
+
+    // ---- Client-facing payment-status banner ----------------------------
+    // Surfaces unpaid / past-due / canceled state clearly on the regular
+    // dashboard, with NO admin tools. Reads only the user's own row.
+    function renderClientPayBanner(sub) {
+      const el = $("client-pay-banner");
+      if (!el || !sub) return;
+      const status = String(sub.status || "").toLowerCase();
+      if (status === "unpaid" || status === "past_due") {
+        el.className = "pay-banner show unpaid";
+        el.innerHTML = (status === "unpaid"
+          ? "Your account is currently <strong>unpaid</strong>. Some services may be paused until payment is received. "
+          : "Your latest payment is <strong>past due</strong>. Please update your billing to avoid interruption. ") +
+          '<a href="/payment">View plans &amp; pay</a> or use “Manage My Subscription” under Billing.';
+      } else if (status === "canceled") {
+        el.className = "pay-banner show warn";
+        el.innerHTML = 'Your subscription has been <strong>canceled</strong>. <a href="/payment">Reactivate a plan</a> to restore hosting.';
+      } else {
+        el.className = "pay-banner";
+      }
+    }
+  </script>
+
+  <!-- ===================================================================== -->
+  <!-- ADMIN DASHBOARD LOGIC                                                  -->
+  <!-- Self-contained (wrapped in an IIFE). Exposes window.initAdmin, called  -->
+  <!-- by the page-load gate above ONLY for the admin email. Every data read  -->
+  <!-- and every write goes through /api/admin, which re-verifies the admin   -->
+  <!-- on the server, so this UI can never be used to reach admin data as a   -->
+  <!-- regular user.                                                          -->
+  <!-- ===================================================================== -->
+  <script>
+  (function () {
+    "use strict";
+    const aq = (id) => document.getElementById(id);
+    const ce = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+    let ADMIN_USER = null;
+
+    // ---- Small utilities ------------------------------------------------
+    function esc(s) {
+      if (s === null || s === undefined) return "";
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+    function pretty(s) {
+      if (s === null || s === undefined || s === "") return "—";
+      return String(s).replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+    }
+    function truncate(s, n) {
+      s = (s === null || s === undefined) ? "" : String(s);
+      return s.length > (n || 60) ? s.slice(0, n || 60).trim() + "…" : s;
+    }
+    function fmtDate(v) {
+      if (!v) return "—";
+      const d = typeof v === "number" ? new Date(v * 1000) : new Date(v);
+      if (isNaN(d.getTime())) return "—";
+      return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    }
+    function fmtDateTime(v) {
+      if (!v) return "—";
+      const d = new Date(v);
+      if (isNaN(d.getTime())) return "—";
+      return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+    function money(v) {
+      if (v === null || v === undefined || v === "") return "—";
+      const n = Number(v);
+      if (isNaN(n)) return esc(v);
+      return "$" + n.toLocaleString(undefined, { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+    }
+    function badge(value) {
+      if (value === null || value === undefined || value === "") return '<span class="badge b-none">—</span>';
+      const key = String(value).toLowerCase().replace(/\s+/g, "_");
+      return '<span class="badge b-' + esc(key) + '">' + esc(pretty(value)) + "</span>";
+    }
+    function sevBadge(sev) {
+      const map = { high: "b-unpaid", medium: "b-suspended", low: "b-none" };
+      return '<span class="badge ' + (map[sev] || "b-none") + '">' + esc(pretty(sev)) + "</span>";
+    }
+    const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+    // ---- Secure API helper ---------------------------------------------
+    async function adminApi(action, payload) {
+      const { data: sess } = await db.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) throw new Error("Your session expired. Please sign in again.");
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ action, payload: payload || {} }),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")."));
+      return data;
+    }
+
+    // ---- Toasts ---------------------------------------------------------
+    function toast(title, msg, isError) {
+      const wrap = aq("admToasts");
+      const t = ce("div", "adm-toast" + (isError ? " error" : ""));
+      t.innerHTML = '<div><div class="t-title">' + esc(title) + "</div>" +
+        (msg ? '<div class="t-msg">' + esc(msg) + "</div>" : "") + "</div>";
+      wrap.appendChild(t);
+      setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateX(20px)"; t.style.transition = "all .3s"; setTimeout(() => t.remove(), 320); }, isError ? 6500 : 3800);
+    }
+
+    // ---- Confirm modal --------------------------------------------------
+    function confirmAction(title, text, confirmLabel) {
+      return new Promise((resolve) => {
+        aq("admModalTitle").textContent = title;
+        aq("admModalText").textContent = text;
+        aq("admModalConfirm").textContent = confirmLabel || "Confirm";
+        const ov = aq("admModalOv");
+        ov.classList.add("show");
+        const cleanup = () => { ov.classList.remove("show"); aq("admModalConfirm").onclick = null; aq("admModalCancel").onclick = null; };
+        aq("admModalConfirm").onclick = () => { cleanup(); resolve(true); };
+        aq("admModalCancel").onclick = () => { cleanup(); resolve(false); };
+      });
+    }
+
+    // =====================================================================
+    // VIEW CONFIGS
+    // =====================================================================
+    const STATUS_OPT_PAY = [["active", "Active"], ["unpaid", "Unpaid"], ["past_due", "Past Due"], ["canceled", "Canceled"]];
+    const STATUS_OPT_SITE = [["not_started", "Not Started"], ["in_progress", "In Progress"], ["waiting_on_client", "Waiting On Client"], ["complete", "Complete"], ["live", "Live"]];
+
+    const VIEWS = {
+      users: {
+        action: "list_users", title: "Users", subtitle: "Every client record from project_inquiries",
+        searchPlaceholder: "Search name, business, email, phone, domain…",
+        rowClick: (r) => openUserDrawer(r.user_id, r.id),
+        filters: [
+          { key: "account_status", label: "Account status", options: [["active", "Active"], ["suspended", "Suspended"], ["banned", "Banned"]] },
+          { key: "payment_status", label: "Payment", options: STATUS_OPT_PAY },
+          { key: "website_type", label: "Website type", options: [["frontend", "Frontend"], ["full_stack", "Full Stack"]] },
+          { key: "domain", label: "Domain", options: [["assigned", "Assigned"], ["missing", "Missing"]] },
+          { key: "plan", label: "Plan", dynamicFrom: "plan_name" },
+        ],
+        columns: [
+          { key: "full_name", label: "Name", sortable: true },
+          { key: "business_name", label: "Business", sortable: true },
+          { key: "email", label: "Email", sortable: true },
+          { key: "cell_phone", label: "Phone" },
+          { key: "account_status", label: "Status", render: (r) => badge(r.account_status || "active") },
+          { key: "payment_status", label: "Payment", render: (r) => badge(r.payment_status) },
+          { key: "plan_name", label: "Plan", render: (r) => esc(r.plan_name || "—") },
+          { key: "domain", label: "Domain", render: (r) => esc(r.domain || "—") },
+          { key: "website_type", label: "Type", render: (r) => r.website_type ? esc(pretty(r.website_type)) : "—" },
+          { key: "business_description", label: "Description", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.business_description, 60)) + "</span>" },
+          { key: "created_at", label: "Created", sortable: true, render: (r) => fmtDate(r.created_at) },
+          { key: "_actions", label: "", render: (r) => userActionsHtml(r) },
+        ],
+        emptyTitle: "No users found", emptyMsg: "No client records match your filters yet.",
+      },
+      onboarding: {
+        action: "list_onboarding", title: "Onboarding Forms", subtitle: "Project intake answers — editable via the drawer",
+        searchPlaceholder: "Search name, business, goals, description…",
+        rowClick: (r) => openUserDrawer(r.user_id, r.id),
+        filters: [
+          { key: "status", label: "Status", dynamicFrom: "status" },
+          { key: "from", label: "From", type: "date" },
+          { key: "to", label: "To", type: "date" },
+        ],
+        columns: [
+          { key: "full_name", label: "Name", sortable: true },
+          { key: "business_name", label: "Business", sortable: true },
+          { key: "email", label: "Email", sortable: true },
+          { key: "status", label: "Status", render: (r) => badge(r.status || "new") },
+          { key: "business_description", label: "Business", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.business_description, 70)) + "</span>" },
+          { key: "website_goals", label: "Goals", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.website_goals, 70)) + "</span>" },
+          { key: "preferred_styles", label: "Styles", render: (r) => esc(Array.isArray(r.preferred_styles) ? r.preferred_styles.join(", ") : (r.preferred_styles || "—")) },
+          { key: "created_at", label: "Submitted", sortable: true, render: (r) => fmtDate(r.created_at) },
+          { key: "_actions", label: "", render: () => '<button class="adm-mini" data-act="edit">Edit</button>' },
+        ],
+        emptyTitle: "No onboarding forms yet", emptyMsg: "New project intake submissions will show up here.",
+      },
+      payments: {
+        action: "list_payments", title: "Payments", subtitle: "Subscription & payment state from Supabase",
+        searchPlaceholder: "Search client, email, plan, domain…",
+        rowClick: (r) => r.user_id ? openUserDrawer(r.user_id) : null,
+        filters: [
+          { key: "status", label: "Status", options: STATUS_OPT_PAY },
+          { key: "billing", label: "Billing", options: [["month", "Monthly"], ["year", "Annual"]] },
+          { key: "plan", label: "Plan", dynamicFrom: "plan_name" },
+          { key: "from", label: "From", type: "date" },
+          { key: "to", label: "To", type: "date" },
+        ],
+        columns: [
+          { key: "client_name", label: "Client" },
+          { key: "client_email", label: "Email" },
+          { key: "plan_name", label: "Plan", render: (r) => esc(r.plan_name || "—") },
+          { key: "status", label: "Status", render: (r) => badge(r.status) },
+          { key: "amount", label: "Amount", render: (r) => money(r.amount) },
+          { key: "plan_interval", label: "Billing", render: (r) => r.plan_interval ? (/year|annual/i.test(r.plan_interval) ? "Annual" : "Monthly") : "—" },
+          { key: "last_payment_date", label: "Last Paid", sortable: true, render: (r) => fmtDate(r.last_payment_date) },
+          { key: "current_period_end", label: "Next Billing", render: (r) => fmtDate(r.current_period_end) },
+          { key: "linked_website", label: "Website", render: (r) => r.linked_website ? esc(pretty(r.linked_website)) : "—" },
+          { key: "linked_domain", label: "Domain", render: (r) => esc(r.linked_domain || "—") },
+          { key: "_actions", label: "", render: (r) => paymentActionsHtml(r) },
+        ],
+        emptyTitle: "No payments found", emptyMsg: "No subscriptions match your filters.",
+      },
+      websites: {
+        action: "list_websites", title: "Websites", subtitle: "Site purchases & build tracking",
+        searchPlaceholder: "Search client, email, domain, notes…",
+        rowClick: (r) => openWebsiteDrawer(r),
+        toolbarBtn: { label: "+ New website", onClick: () => openWebsiteDrawer(null) },
+        filters: [
+          { key: "website_type", label: "Type", options: [["frontend", "Frontend"], ["full_stack", "Full Stack"]] },
+          { key: "status", label: "Status", options: STATUS_OPT_SITE },
+          { key: "domain", label: "Domain", options: [["assigned", "Assigned"], ["missing", "Missing"]] },
+          { key: "from", label: "From", type: "date" },
+          { key: "to", label: "To", type: "date" },
+        ],
+        columns: [
+          { key: "client_name", label: "Client", render: (r) => esc(r.client_name || r.client_email || "—") },
+          { key: "domain", label: "Domain", render: (r) => esc(r.domain || "—") },
+          { key: "website_type", label: "Type", render: (r) => esc(pretty(r.website_type)) },
+          { key: "status", label: "Status", render: (r) => badge(r.status) },
+          { key: "notes", label: "Notes", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.notes, 60)) + "</span>" },
+          { key: "purchase_date", label: "Purchased", sortable: true, render: (r) => fmtDate(r.purchase_date || r.created_at) },
+          { key: "_actions", label: "", render: () => '<button class="adm-mini" data-act="edit">Edit</button>' },
+        ],
+        emptyTitle: "No websites yet", emptyMsg: "Create a website record to start tracking a build.",
+      },
+      domains: {
+        action: "list_domains", title: "Domains", subtitle: "View & assign domains",
+        searchPlaceholder: "Search domain, user, email…",
+        rowClick: (r) => r.user_id ? openUserDrawer(r.user_id) : null,
+        filters: [
+          { key: "assigned", label: "Assignment", options: [["assigned", "Assigned"], ["unassigned", "Unassigned"]] },
+          { key: "website_type", label: "Type", options: [["frontend", "Frontend"], ["full_stack", "Full Stack"]] },
+          { key: "status", label: "Site status", options: STATUS_OPT_SITE },
+        ],
+        columns: [
+          { key: "domain", label: "Domain", render: (r) => r.domain ? esc(r.domain) : '<span class="badge b-none">Unassigned</span>' },
+          { key: "assigned_user", label: "Assigned user", render: (r) => esc(r.assigned_user) },
+          { key: "client_email", label: "Email", render: (r) => esc(r.client_email) },
+          { key: "linked_website", label: "Website", render: (r) => r.linked_website ? esc(pretty(r.linked_website)) : "—" },
+          { key: "website_status", label: "Site status", render: (r) => badge(r.website_status) },
+          { key: "payment_status", label: "Payment", render: (r) => badge(r.payment_status) },
+          { key: "_actions", label: "", render: () => '<button class="adm-mini" data-act="assign">Assign</button>' },
+        ],
+        emptyTitle: "No domains found", emptyMsg: "No domains match your filters.",
+      },
+      alerts: {
+        action: "list_alerts", title: "Alerts", subtitle: "Urgent items needing attention",
+        searchPlaceholder: "Search alerts…",
+        rowClick: (r) => r.user_id ? openUserDrawer(r.user_id) : null,
+        filters: [{ key: "type", label: "Type", dynamicFrom: "type" }],
+        columns: [
+          { key: "severity", label: "Severity", render: (r) => sevBadge(r.severity) },
+          { key: "title", label: "Alert", render: (r) => esc(r.title) },
+          { key: "detail", label: "Who", render: (r) => esc(r.detail) },
+          { key: "type", label: "Type", render: (r) => esc(pretty(r.type)) },
+          { key: "created_at", label: "When", sortable: true, render: (r) => fmtDate(r.created_at) },
+        ],
+        emptyTitle: "All clear", emptyMsg: "No alerts right now — nothing needs your attention.",
+        noScroll: true,
+      },
+      activity: {
+        action: "list_activity", title: "Activity Log", subtitle: "Audit trail of admin actions",
+        searchPlaceholder: "Search action, admin, field…",
+        filters: [
+          { key: "action", label: "Action", dynamicFrom: "action" },
+          { key: "entity_type", label: "Entity", dynamicFrom: "entity_type" },
+        ],
+        columns: [
+          { key: "created_at", label: "When", sortable: true, render: (r) => fmtDateTime(r.created_at) },
+          { key: "admin_email", label: "Admin" },
+          { key: "action", label: "Action", render: (r) => esc(pretty(r.action)) },
+          { key: "entity_type", label: "Entity", render: (r) => esc(pretty(r.entity_type)) },
+          { key: "changed_field", label: "Field", render: (r) => esc(r.changed_field || "—") },
+          { key: "old_value", label: "Old", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.old_value, 40)) + "</span>" },
+          { key: "new_value", label: "New", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.new_value, 40)) + "</span>" },
+        ],
+        emptyTitle: "No activity yet", emptyMsg: "Admin actions you take will be logged here.",
+      },
+    };
+
+    function userActionsHtml() {
+      return '<div class="adm-row-actions">' +
+        '<button class="adm-mini" data-act="edit">Edit</button>' +
+        '<button class="adm-mini" data-act="suspend">Suspend</button>' +
+        '<button class="adm-mini danger" data-act="ban">Ban</button>' +
+        '<button class="adm-mini danger" data-act="delete">Delete</button></div>';
+    }
+    function paymentActionsHtml() {
+      return '<div class="adm-row-actions">' +
+        '<button class="adm-mini" data-act="view">View</button>' +
+        '<button class="adm-mini danger" data-act="unpaid">Mark Unpaid</button>' +
+        '<button class="adm-mini" data-act="active">Mark Active</button></div>';
+    }
+
+    // =====================================================================
+    // GENERIC TABLE ENGINE (search · filters · sort · infinite scroll · CSV)
+    // =====================================================================
+    const PAGE = 50;
+    const state = {}; // viewId -> { built, rows, offset, hasMore, loading, search, filters, sortBy, sortDir }
+
+    function buildView(viewId) {
+      const cfg = VIEWS[viewId];
+      const sec = aq("view-" + viewId);
+      state[viewId] = { built: true, rows: [], offset: 0, hasMore: true, loading: false, search: "", filters: {}, sortBy: null, sortDir: "desc" };
+      const st = state[viewId];
+
+      sec.innerHTML = "";
+      const head = ce("div", "adm-view-head");
+      head.innerHTML = '<h1 class="adm-h1">' + esc(cfg.title) + '<span class="adm-sub">' + esc(cfg.subtitle) + "</span></h1>";
+      sec.appendChild(head);
+
+      // Toolbar
+      const tb = ce("div", "adm-toolbar");
+      const search = ce("input", "adm-tsearch");
+      search.type = "text"; search.placeholder = cfg.searchPlaceholder || "Search…";
+      search.addEventListener("input", debounce(() => { st.search = search.value.trim(); loadView(viewId, true); }, 320));
+      tb.appendChild(search);
+
+      (cfg.filters || []).forEach((f) => {
+        if (f.type === "date") {
+          const wrap = ce("label", null, esc(f.label) + " ");
+          wrap.style.cssText = "color:var(--adm-muted);font-size:.78rem;display:flex;align-items:center;gap:.3rem";
+          const inp = ce("input"); inp.type = "date";
+          inp.style.cssText = "background:var(--adm-panel);border:1px solid var(--adm-bd-2);color:var(--adm-text);border-radius:9px;padding:.4rem .5rem;font-size:.82rem";
+          inp.addEventListener("change", () => { st.filters[f.key] = inp.value || undefined; loadView(viewId, true); });
+          wrap.appendChild(inp); tb.appendChild(wrap);
+        } else {
+          const sel = ce("select"); sel.dataset.filter = f.key;
+          sel.appendChild(new Option(f.label + ": All", ""));
+          (f.options || []).forEach((o) => sel.appendChild(new Option(o[1], o[0])));
+          sel.addEventListener("change", () => { st.filters[f.key] = sel.value || undefined; loadView(viewId, true); });
+          tb.appendChild(sel);
+        }
+      });
+
+      tb.appendChild(ce("span", "spacer"));
+      if (cfg.toolbarBtn) {
+        const b = ce("button", "adm-btn primary", esc(cfg.toolbarBtn.label));
+        b.addEventListener("click", cfg.toolbarBtn.onClick);
+        tb.appendChild(b);
+      }
+      if (viewId === "users" || viewId === "payments" || viewId === "websites" || viewId === "onboarding") {
+        const exp = ce("div", "adm-export");
+        exp.innerHTML = '<button class="adm-btn">Export CSV ▾</button>' +
+          '<div class="adm-export-menu"><button data-scope="current">Export current results</button><button data-scope="all">Export all records</button></div>';
+        const menu = exp.querySelector(".adm-export-menu");
+        exp.querySelector(".adm-btn").addEventListener("click", (e) => { e.stopPropagation(); menu.classList.toggle("show"); });
+        menu.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { menu.classList.remove("show"); exportCsv(viewId, b.dataset.scope); }));
+        tb.appendChild(exp);
+      }
+      sec.appendChild(tb);
+
+      // Table
+      const wrap = ce("div", "adm-table-wrap");
+      const table = ce("table", "adm-table");
+      const thead = ce("thead");
+      const trh = ce("tr");
+      cfg.columns.forEach((c) => {
+        const th = ce("th", c.sortable ? "sortable" : null);
+        th.innerHTML = esc(c.label) + (c.sortable ? ' <span class="arr"></span>' : "");
+        if (c.sortable) th.addEventListener("click", () => {
+          if (st.sortBy === c.key) st.sortDir = st.sortDir === "desc" ? "asc" : "desc";
+          else { st.sortBy = c.key; st.sortDir = "desc"; }
+          updateSortArrows(viewId);
+          loadView(viewId, true);
+        });
+        th.dataset.key = c.key;
+        trh.appendChild(th);
+      });
+      thead.appendChild(trh);
+      const tbody = ce("tbody"); tbody.id = "tbody-" + viewId;
+      table.append(thead, tbody);
+      wrap.appendChild(table);
+      sec.appendChild(wrap);
+
+      // Infinite scroll
+      if (!cfg.noScroll) {
+        wrap.addEventListener("scroll", () => {
+          if (wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 80) loadView(viewId, false);
+        });
+      }
+    }
+
+    function updateSortArrows(viewId) {
+      const st = state[viewId];
+      document.querySelectorAll("#view-" + viewId + " thead th").forEach((th) => {
+        const arr = th.querySelector(".arr");
+        if (arr) arr.textContent = th.dataset.key === st.sortBy ? (st.sortDir === "desc" ? "↓" : "↑") : "";
+      });
+    }
+
+    function skeletonRows(viewId) {
+      const cfg = VIEWS[viewId];
+      let html = "";
+      for (let i = 0; i < 8; i++) {
+        html += '<tr class="adm-skel-row">';
+        for (let j = 0; j < cfg.columns.length; j++) html += '<td><div class="adm-skel" style="width:' + (40 + Math.random() * 50) + '%"></div></td>';
+        html += "</tr>";
+      }
+      return html;
+    }
+
+    async function loadView(viewId, reset) {
+      const cfg = VIEWS[viewId];
+      const st = state[viewId];
+      if (st.loading) return;
+      if (!reset && !st.hasMore) return;
+      st.loading = true;
+      const tbody = aq("tbody-" + viewId);
+
+      if (reset) {
+        st.offset = 0; st.rows = []; st.hasMore = true;
+        tbody.innerHTML = skeletonRows(viewId);
+      }
+
+      try {
+        const resp = await adminApi(cfg.action, {
+          search: st.search, filters: st.filters, sortBy: st.sortBy, sortDir: st.sortDir,
+          limit: PAGE, offset: st.offset,
+        });
+        const rows = resp.rows || [];
+        if (reset) { st.rows = rows; tbody.innerHTML = ""; }
+        else st.rows = st.rows.concat(rows);
+        st.offset += rows.length;
+        st.hasMore = !!resp.hasMore && rows.length > 0;
+
+        populateDynamicFilters(viewId);
+
+        if (!st.rows.length) {
+          tbody.innerHTML = '<tr><td colspan="' + cfg.columns.length + '">' + emptyHtml(cfg) + "</td></tr>";
+        } else {
+          rows.forEach((r) => tbody.appendChild(buildRow(viewId, r)));
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="' + cfg.columns.length + '"><div class="adm-empty"><h4>Couldn’t load ' + esc(cfg.title) + '</h4><p>' + esc(err.message) + "</p></div></td></tr>";
+      } finally {
+        st.loading = false;
+      }
+    }
+
+    function emptyHtml(cfg) {
+      return '<div class="adm-empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>' +
+        "<h4>" + esc(cfg.emptyTitle) + "</h4><p>" + esc(cfg.emptyMsg) + "</p></div>";
+    }
+
+    function buildRow(viewId, r) {
+      const cfg = VIEWS[viewId];
+      const tr = ce("tr");
+      cfg.columns.forEach((c) => {
+        const td = ce("td");
+        td.innerHTML = c.render ? c.render(r) : esc(r[c.key] != null ? r[c.key] : "—");
+        tr.appendChild(td);
+      });
+      // Row click → drawer (unless a row-action button was clicked)
+      tr.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-act]");
+        if (btn) { e.stopPropagation(); handleRowAction(viewId, btn.dataset.act, r); return; }
+        if (cfg.rowClick) cfg.rowClick(r);
+      });
+      return tr;
+    }
+
+    function populateDynamicFilters(viewId) {
+      const cfg = VIEWS[viewId];
+      const st = state[viewId];
+      (cfg.filters || []).forEach((f) => {
+        if (!f.dynamicFrom) return;
+        const sel = document.querySelector("#view-" + viewId + ' select[data-filter="' + f.key + '"]');
+        if (!sel) return;
+        const have = new Set(Array.from(sel.options).map((o) => o.value));
+        const vals = new Set();
+        st.rows.forEach((r) => { const v = r[f.dynamicFrom]; if (v) vals.add(String(v)); });
+        vals.forEach((v) => { if (!have.has(v)) sel.appendChild(new Option(pretty(v), v)); });
+      });
+    }
+
+    // ---- Row action buttons --------------------------------------------
+    async function handleRowAction(viewId, act, r) {
+      if (act === "edit" || act === "view") {
+        if (viewId === "websites") openWebsiteDrawer(r);
+        else openUserDrawer(r.user_id, r.id);
+        return;
+      }
+      if (act === "assign") { openUserDrawer(r.user_id); return; }
+      if (viewId === "users") {
+        if (act === "suspend") return doStatus(r, "suspended");
+        if (act === "ban") return doStatus(r, "banned");
+        if (act === "delete") return doDelete(r);
+      }
+      if (viewId === "payments") {
+        if (act === "unpaid") return doPayStatus(r, "unpaid");
+        if (act === "active") return doPayStatus(r, "active");
+      }
+    }
+
+    async function doStatus(r, status) {
+      const verb = status === "banned" ? "ban" : status === "suspended" ? "suspend" : "reactivate";
+      const ok = await confirmAction("Confirm " + verb, "Are you sure you want to " + verb + " " + (r.full_name || r.email || "this user") + "? Their record is kept.", pretty(verb));
+      if (!ok) return;
+      try {
+        await adminApi("set_user_status", { id: r.id, status });
+        toast(status === "banned" ? "User banned" : status === "suspended" ? "User suspended" : "User reactivated");
+        refreshCurrent();
+      } catch (e) { toast("Couldn’t update status", e.message, true); }
+    }
+    async function doDelete(r) {
+      const ok = await confirmAction("Delete user", "This permanently deletes the record for " + (r.full_name || r.email || "this user") + ". This cannot be undone.", "Delete");
+      if (!ok) return;
+      try {
+        await adminApi("delete_user", { id: r.id });
+        toast("User deleted");
+        refreshCurrent();
+      } catch (e) { toast("Couldn’t delete user", e.message, true); }
+    }
+    async function doPayStatus(r, status) {
+      if (status === "unpaid") {
+        const ok = await confirmAction("Mark unpaid", "Marking this client unpaid may affect their access. Continue?", "Mark Unpaid");
+        if (!ok) return;
+      }
+      try {
+        await adminApi("set_payment_status", { id: r.id, user_id: r.user_id, status });
+        toast(status === "unpaid" ? "Payment marked unpaid" : "Payment marked active");
+        refreshCurrent();
+      } catch (e) { toast("Couldn’t update payment", e.message, true); }
+    }
+
+    function refreshCurrent() {
+      const active = document.querySelector(".adm-view.active");
+      if (!active) return;
+      const id = active.id.replace("view-", "");
+      if (id === "overview") return loadOverview();
+      if (VIEWS[id]) loadView(id, true);
+      loadAlertBadge();
+    }
+
+    // =====================================================================
+    // CSV EXPORT
+    // =====================================================================
+    function csvCell(v) {
+      if (v === null || v === undefined) return "";
+      if (Array.isArray(v)) v = v.join("; ");
+      const s = String(v).replace(/"/g, '""');
+      return /[",\n]/.test(s) ? '"' + s + '"' : s;
+    }
+    async function exportCsv(viewId, scope) {
+      const cfg = VIEWS[viewId];
+      const st = state[viewId];
+      let rows = st.rows;
+      try {
+        if (scope === "all") {
+          toast("Preparing export", "Fetching all records…");
+          const resp = await adminApi(cfg.action, { search: scope === "all" ? "" : st.search, filters: scope === "all" ? {} : st.filters, sortBy: st.sortBy, sortDir: st.sortDir, limit: 100000, offset: 0 });
+          rows = resp.rows || [];
+        }
+      } catch (e) { toast("Export failed", e.message, true); return; }
+      if (!rows.length) { toast("Nothing to export", "There are no rows for this selection.", true); return; }
+
+      const cols = cfg.columns.filter((c) => c.key !== "_actions");
+      const header = cols.map((c) => csvCell(c.label)).join(",");
+      const lines = rows.map((r) => cols.map((c) => csvCell(r[c.key])).join(","));
+      const blob = new Blob([[header].concat(lines).join("\n")], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = ce("a"); a.href = url; a.download = "websharke-" + viewId + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      toast("Export ready", rows.length + " rows exported.");
+    }
+
+    // =====================================================================
+    // DRAWER — user detail (Profile · Onboarding · Subscription · Website ·
+    //          Domain · Admin Actions · Recent Activity)
+    // =====================================================================
+    let drawerRec = null;
+
+    function openDrawer() { aq("admDrawer").classList.add("show"); aq("admDrawerOv").classList.add("show"); aq("admDrawer").setAttribute("aria-hidden", "false"); }
+    function closeDrawer() { aq("admDrawer").classList.remove("show"); aq("admDrawerOv").classList.remove("show"); aq("admDrawer").setAttribute("aria-hidden", "true"); drawerRec = null; aq("admDrawerFoot").style.display = "none"; }
+
+    const PROFILE_FIELDS = [["full_name", "Full name"], ["business_name", "Business name"], ["email", "Email"], ["cell_phone", "Phone"], ["business_address", "Business address"]];
+    const ONB_FIELDS = [["business_description", "Business description"], ["products_services", "Products / Services"], ["website_goals", "Website goals"], ["visitor_actions", "Visitor actions"], ["websites_liked", "Websites liked"], ["color_preferences", "Color preferences"], ["design_notes", "Design notes"], ["additional_info", "Additional info"]];
+
+    async function openUserDrawer(userId, fallbackId) {
+      openDrawer();
+      aq("admDrawerTitle").innerHTML = "Loading…";
+      aq("admDrawerBody").innerHTML = drawerSkeleton();
+      aq("admDrawerFoot").style.display = "none";
+      try {
+        const data = await adminApi("get_user", { user_id: userId, id: fallbackId });
+        drawerRec = data;
+        renderUserDrawer(data);
+      } catch (e) {
+        aq("admDrawerBody").innerHTML = '<div class="adm-empty"><h4>Couldn’t load record</h4><p>' + esc(e.message) + "</p></div>";
+      }
+    }
+
+    function drawerSkeleton() {
+      let h = "";
+      for (let i = 0; i < 6; i++) h += '<div class="adm-skel" style="height:16px;margin:.7rem 0;width:' + (50 + Math.random() * 40) + '%"></div>';
+      return h;
+    }
+
+    function field(id, label, value, type) {
+      const v = value == null ? "" : value;
+      if (type === "textarea")
+        return '<div class="adm-fld"><label>' + esc(label) + '</label><textarea id="' + id + '">' + esc(v) + "</textarea></div>";
+      return '<div class="adm-fld"><label>' + esc(label) + '</label><input id="' + id + '" value="' + esc(v) + '" /></div>';
+    }
+
+    function renderUserDrawer(data) {
+      const inq = data.inquiry || {};
+      const sub = data.subscription || {};
+      const site = data.website || {};
+      drawerRec = data;
+      aq("admDrawerTitle").innerHTML = esc(inq.full_name || inq.business_name || "User") + "<small>" + esc(inq.email || "") + "</small>";
+
+      let h = "";
+      // Profile
+      h += '<div class="adm-section"><h4>Profile</h4>';
+      PROFILE_FIELDS.forEach((f) => h += field("dk-" + f[0], f[1], inq[f[0]]));
+      h += field("dk-domain", "Domain", inq.domain);
+      h += '<div class="adm-fld"><label>Account status</label><select id="dk-account_status">' +
+        ["active", "suspended", "banned"].map((s) => '<option value="' + s + '"' + ((inq.account_status || "active") === s ? " selected" : "") + ">" + pretty(s) + "</option>").join("") + "</select></div>";
+      h += "</div>";
+
+      // Onboarding answers
+      h += '<div class="adm-section"><h4>Onboarding Answers</h4>';
+      ONB_FIELDS.forEach((f) => h += field("dk-" + f[0], f[1], inq[f[0]], "textarea"));
+      const styles = Array.isArray(inq.preferred_styles) ? inq.preferred_styles.join(", ") : (inq.preferred_styles || "—");
+      h += '<div class="adm-kv"><span class="k">Preferred styles</span><span class="v">' + esc(styles) + "</span></div></div>";
+
+      // Subscription
+      h += '<div class="adm-section"><h4>Subscription</h4>';
+      h += '<div class="adm-kv"><span class="k">Plan</span><span class="v">' + esc(sub.plan_name || sub.website_type || "—") + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Status</span><span class="v">' + badge(sub.status) + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Amount</span><span class="v">' + money(sub.amount) + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Billing</span><span class="v">' + (sub.plan_interval ? (/year|annual/i.test(sub.plan_interval) ? "Annual" : "Monthly") : "—") + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Next billing</span><span class="v">' + fmtDate(sub.current_period_end) + "</span></div>";
+      if (sub.id || sub.user_id) {
+        h += '<div class="adm-actions-row">' +
+          '<button class="adm-btn" data-sub="active">Mark Active</button>' +
+          '<button class="adm-btn danger" data-sub="unpaid">Mark Unpaid</button>' +
+          '<button class="adm-btn" data-sub="past_due">Past Due</button>' +
+          '<button class="adm-btn danger" data-sub="cancel">Cancel</button>' +
+          '<button class="adm-btn" data-sub="editplan">Edit Plan</button></div>';
+        h += '<div id="dk-planedit" style="display:none;margin-top:.7rem">' +
+          field("dk-plan_name", "Plan name", sub.plan_name) +
+          '<div class="adm-fld"><label>Billing interval</label><select id="dk-plan_interval"><option value="">—</option><option value="month"' + (sub.plan_interval === "month" ? " selected" : "") + '>Monthly</option><option value="year"' + (/year|annual/i.test(sub.plan_interval || "") ? " selected" : "") + '>Annual</option></select></div>' +
+          field("dk-amount", "Amount (USD)", sub.amount) +
+          '<button class="adm-btn primary" data-sub="saveplan">Save plan</button></div>';
+      } else {
+        h += '<p style="color:var(--adm-muted);font-size:.84rem">No subscription on file for this client.</p>';
+      }
+      h += "</div>";
+
+      // Website
+      h += '<div class="adm-section"><h4>Website</h4>';
+      if (site && site.id) {
+        h += '<div class="adm-kv"><span class="k">Type</span><span class="v">' + esc(pretty(site.website_type)) + "</span></div>";
+        h += '<div class="adm-kv"><span class="k">Status</span><span class="v">' + badge(site.status) + "</span></div>";
+        h += '<div class="adm-kv"><span class="k">Domain</span><span class="v">' + esc(site.domain || "—") + "</span></div>";
+        h += '<div class="adm-actions-row"><button class="adm-btn" data-web="edit">Open website editor</button></div>';
+      } else {
+        h += '<p style="color:var(--adm-muted);font-size:.84rem">No website record yet.</p>' +
+          '<div class="adm-actions-row"><button class="adm-btn" data-web="create">Create website for this user</button></div>';
+      }
+      h += "</div>";
+
+      // Domain
+      h += '<div class="adm-section"><h4>Domain</h4>' +
+        '<div class="adm-fld"><label>Assign / update domain</label><input id="dk-assign-domain" value="' + esc(data.domain || "") + '" placeholder="example.com" /></div>' +
+        '<div class="adm-actions-row"><button class="adm-btn primary" data-act="assign-domain">Assign domain</button></div></div>';
+
+      // Admin Actions
+      h += '<div class="adm-section"><h4>Admin Actions</h4>' +
+        '<div class="adm-kv"><span class="k">Current status</span><span class="v">' + badge(inq.account_status || "active") + "</span></div>" +
+        '<div class="adm-actions-row">' +
+        '<button class="adm-btn" data-act="reactivate">Reactivate</button>' +
+        '<button class="adm-btn danger" data-act="suspend">Suspend</button>' +
+        '<button class="adm-btn danger" data-act="ban">Ban</button>' +
+        '<button class="adm-btn danger" data-act="delete">Delete user</button></div></div>';
+
+      // Recent Activity Timeline
+      h += '<div class="adm-section"><h4>Recent Activity</h4>';
+      if (data.activity && data.activity.length) {
+        h += '<ul class="adm-timeline">' + data.activity.map((a) =>
+          '<li><div class="tl-action">' + esc(pretty(a.action)) + "</div><div class=\"tl-meta\">" +
+          (a.changed_field ? esc(a.changed_field) + ": " + esc(truncate(a.old_value, 24)) + " → " + esc(truncate(a.new_value, 24)) + " · " : "") +
+          fmtDateTime(a.created_at) + "</div></li>").join("") + "</ul>";
+      } else {
+        h += '<p style="color:var(--adm-muted);font-size:.84rem">No recorded activity yet.</p>';
+      }
+      h += "</div>";
+
+      aq("admDrawerBody").innerHTML = h;
+      wireUserDrawer(data);
+
+      // Footer save (profile + onboarding edits)
+      const foot = aq("admDrawerFoot");
+      foot.style.display = "flex";
+      foot.innerHTML = '<button class="adm-btn primary" id="dk-save" style="flex:1">Save Changes</button><button class="adm-btn" id="dk-close">Close</button>';
+      aq("dk-save").onclick = () => saveUserDrawer(data);
+      aq("dk-close").onclick = closeDrawer;
+    }
+
+    function wireUserDrawer(data) {
+      const inq = data.inquiry || {};
+      const body = aq("admDrawerBody");
+
+      body.querySelectorAll("[data-sub]").forEach((b) => b.addEventListener("click", async () => {
+        const k = b.dataset.sub;
+        try {
+          if (k === "editplan") { const pe = aq("dk-planedit"); pe.style.display = pe.style.display === "none" ? "block" : "none"; return; }
+          if (k === "saveplan") {
+            await adminApi("update_plan", { user_id: inq.user_id, updates: { plan_name: aq("dk-plan_name").value, plan_interval: aq("dk-plan_interval").value || null, amount: aq("dk-amount").value ? Number(aq("dk-amount").value) : null } });
+            toast("Plan updated"); openUserDrawer(inq.user_id, inq.id); refreshCurrent(); return;
+          }
+          if (k === "cancel") {
+            const ok = await confirmAction("Cancel subscription", "This cancels the client’s subscription. Continue?", "Cancel subscription");
+            if (!ok) return;
+            await adminApi("cancel_subscription", { user_id: inq.user_id }); toast("Subscription canceled");
+          } else if (k === "unpaid") {
+            const ok = await confirmAction("Mark unpaid", "Marking unpaid may affect client access. Continue?", "Mark Unpaid");
+            if (!ok) return;
+            await adminApi("set_payment_status", { user_id: inq.user_id, status: "unpaid" }); toast("Payment marked unpaid");
+          } else {
+            await adminApi("set_payment_status", { user_id: inq.user_id, status: k });
+            toast(k === "active" ? "Payment marked active" : "Payment status updated");
+          }
+          openUserDrawer(inq.user_id, inq.id); refreshCurrent();
+        } catch (e) { toast("Action failed", e.message, true); }
+      }));
+
+      body.querySelectorAll("[data-web]").forEach((b) => b.addEventListener("click", () => {
+        if (b.dataset.web === "edit") openWebsiteDrawer(data.website);
+        else openWebsiteDrawer({ user_id: inq.user_id, client_name: inq.full_name || inq.business_name, client_email: inq.email, domain: data.domain });
+      }));
+
+      body.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
+        const k = b.dataset.act;
+        try {
+          if (k === "assign-domain") {
+            const dom = aq("dk-assign-domain").value.trim();
+            if (!dom) { toast("Enter a domain", "Type a domain before assigning.", true); return; }
+            console.log("[admin] assign_domain → selected user id:", inq.user_id, "inquiry id:", inq.id, "domain:", dom); // TEMP debug
+            const res = await adminApi("assign_domain", { user_id: inq.user_id, inquiry_id: inq.id, domain: dom });
+            console.log("[admin] assign_domain result:", res); // TEMP debug
+            if (res && res.hasAccount === false) {
+              toast("Domain saved (no account yet)", res.message || "This client has no linked account yet, so it won't show on a client dashboard until they sign up.", true);
+            } else {
+              toast("Domain assigned", (res && res.message) || "");
+            }
+            openUserDrawer(inq.user_id, inq.id); refreshCurrent(); return;
+          }
+          if (k === "reactivate") { await doStatus(inq, "active"); openUserDrawer(inq.user_id, inq.id); return; }
+          if (k === "suspend") { await doStatus(inq, "suspended"); openUserDrawer(inq.user_id, inq.id); return; }
+          if (k === "ban") { await doStatus(inq, "banned"); openUserDrawer(inq.user_id, inq.id); return; }
+          if (k === "delete") { await doDelete(inq); closeDrawer(); return; }
+        } catch (e) { toast("Action failed", e.message, true); }
+      }));
+    }
+
+    async function saveUserDrawer(data) {
+      const inq = data.inquiry || {};
+      const updates = {};
+      PROFILE_FIELDS.forEach((f) => { const el = aq("dk-" + f[0]); if (el) updates[f[0]] = el.value; });
+      ONB_FIELDS.forEach((f) => { const el = aq("dk-" + f[0]); if (el) updates[f[0]] = el.value; });
+      const dom = aq("dk-domain"); if (dom) updates.domain = dom.value;
+      const acc = aq("dk-account_status") ? aq("dk-account_status").value : null;
+      try {
+        await adminApi("update_user", { id: inq.id, updates });
+        if (acc && acc !== (inq.account_status || "active")) {
+          await adminApi("set_user_status", { id: inq.id, status: acc });
+        }
+        toast("User updated");
+        openUserDrawer(inq.user_id, inq.id);
+        refreshCurrent();
+      } catch (e) { toast("Couldn’t save changes", e.message, true); }
+    }
+
+    // ---- Website drawer (create / edit) --------------------------------
+    function openWebsiteDrawer(site) {
+      site = site || {};
+      const isNew = !site.id;
+      openDrawer();
+      aq("admDrawerTitle").innerHTML = (isNew ? "New website" : "Edit website") + "<small>" + esc(site.client_name || site.client_email || site.domain || "") + "</small>";
+      let h = '<div class="adm-section"><h4>Website record</h4>';
+      h += field("wk-client_name", "Client name", site.client_name);
+      h += field("wk-client_email", "Client email", site.client_email);
+      h += field("wk-user_id", "User ID (auth uuid — links to a client)", site.user_id);
+      h += field("wk-domain", "Domain", site.domain);
+      h += '<div class="adm-fld"><label>Website type</label><select id="wk-website_type">' +
+        [["frontend", "Frontend"], ["full_stack", "Full Stack"]].map((o) => '<option value="' + o[0] + '"' + ((site.website_type || "frontend") === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></div>";
+      h += '<div class="adm-fld"><label>Status</label><select id="wk-status">' +
+        STATUS_OPT_SITE.map((o) => '<option value="' + o[0] + '"' + ((site.status || "not_started") === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></div>";
+      h += field("wk-purchase_date", "Purchase date", (site.purchase_date || "").slice(0, 10));
+      h += field("wk-notes", "Notes", site.notes, "textarea");
+      h += "</div>";
+      aq("admDrawerBody").innerHTML = h;
+      const pd = aq("wk-purchase_date"); if (pd) pd.type = "date";
+
+      const foot = aq("admDrawerFoot");
+      foot.style.display = "flex";
+      foot.innerHTML = '<button class="adm-btn primary" id="wk-save" style="flex:1">Save Changes</button><button class="adm-btn" id="wk-close">Close</button>';
+      aq("wk-close").onclick = closeDrawer;
+      aq("wk-save").onclick = async () => {
+        const vals = {
+          client_name: aq("wk-client_name").value || null,
+          client_email: aq("wk-client_email").value || null,
+          user_id: aq("wk-user_id").value.trim() || null,
+          domain: aq("wk-domain").value.trim() || null,
+          website_type: aq("wk-website_type").value,
+          status: aq("wk-status").value,
+          notes: aq("wk-notes").value || null,
+          purchase_date: aq("wk-purchase_date").value || null,
+        };
+        try {
+          if (isNew) { await adminApi("create_website", { values: vals }); toast("Website created"); }
+          else {
+            const statusChanged = vals.status !== site.status;
+            await adminApi("update_website", { id: site.id, updates: vals });
+            toast(statusChanged ? "Website status updated" : "Website updated");
+          }
+          closeDrawer();
+          refreshCurrent();
+        } catch (e) { toast("Couldn’t save website", e.message, true); }
+      };
+    }
+
+    // =====================================================================
+    // INVOICES — create a draft or issued invoice for a client.
+    //
+    // Posts to the admin-only POST /api/admin/invoices route (separate from the
+    // adminApi /api/admin {action,payload} helper). The browser sends ONLY the
+    // line items (name/description/quantity + unit price in CENTS) plus the
+    // title/client/notes/due/status; the server recomputes and stores the
+    // authoritative subtotal + total. The on-screen total is a live estimate.
+    // =====================================================================
+    const INV = { built: false, clientsLoaded: false, submitting: false, seq: 0 };
+
+    // Integer cents -> "$x.xx" for display only.
+    function centsToUsd(c) {
+      return "$" + (Number(c) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    // Dollars (raw input string) -> integer cents. Returns null for blank or any
+    // value that is not a finite number >= 0 (negative prices are rejected here).
+    function dollarsToCents(str) {
+      if (str == null) return null;
+      const s = String(str).trim();
+      if (s === "") return null;
+      // Only a plain non-negative amount with at most 2 decimals. This rejects
+      // negatives, scientific notation, and >2-decimal input (e.g. "19.999") so
+      // it gets flagged with an inline error instead of being silently rounded.
+      if (!/^\d*\.?\d{0,2}$/.test(s)) return null;
+      const n = Number(s);
+      if (!isFinite(n) || n < 0) return null;
+      return Math.round(n * 100);
+    }
+
+    function showInvMsg(kind, text) {
+      const el = aq("inv-msg");
+      el.className = "inv-msg show " + kind;
+      // Errors block the save, so announce them assertively; success stays polite.
+      el.setAttribute("role", kind === "err" ? "alert" : "status");
+      el.setAttribute("aria-live", kind === "err" ? "assertive" : "polite");
+      el.textContent = text;
+    }
+    function clearInvFlags() {
+      aq("view-invoices").querySelectorAll(".flagged").forEach((e) => e.classList.remove("flagged"));
+      const msg = aq("inv-msg"); msg.className = "inv-msg"; msg.textContent = "";
+    }
+    // Show an inline error, highlight + focus the offending field, and stop.
+    // Also raise a toast: on a stacked layout the inline #inv-msg lives in the
+    // summary at the bottom, so the toast guarantees the reason is always visible.
+    function invFail(msg, el) {
+      showInvMsg("err", msg);
+      toast("Can’t save this invoice yet", msg, true);
+      if (el) {
+        el.classList.add("flagged");
+        try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e2) {} }
+        try { el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
+      }
+      return { ok: false };
+    }
+
+    function invItemRow() {
+      const row = ce("div", "inv-item");
+      row.dataset.i = INV.seq++;
+      row.innerHTML =
+        '<div class="inv-item-main">' +
+          '<input class="inv-name" maxlength="200" placeholder="Item name (e.g. Stripe integration)" aria-label="Item name" />' +
+          '<input class="inv-desc" maxlength="2000" placeholder="Description (optional)" aria-label="Item description" />' +
+        "</div>" +
+        '<label class="inv-cell" data-label="Qty"><input class="inv-qty" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Quantity" /></label>' +
+        '<div class="inv-price-wrap" data-label="Unit price"><span class="inv-cur">$</span>' +
+          '<input class="inv-price" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal" aria-label="Unit price in dollars" /></div>' +
+        '<div class="inv-amount" data-amount data-label="Amount">$0.00</div>' +
+        '<button class="adm-mini danger inv-del" type="button" aria-label="Remove line item" title="Remove line item">&times;</button>';
+      row.querySelector(".inv-del").addEventListener("click", () => {
+        row.remove();
+        if (!aq("inv-items").children.length) addInvItem(); // never leave zero rows
+        recomputeInvoice();
+      });
+      row.addEventListener("input", recomputeInvoice);
+      return row;
+    }
+    function addInvItem() { aq("inv-items").appendChild(invItemRow()); }
+
+    // Live estimate only — invalid/blank prices count as 0 here; strict
+    // validation runs on submit and the server owns the real total.
+    function recomputeInvoice() {
+      let subtotal = 0;
+      aq("inv-items").querySelectorAll(".inv-item").forEach((row) => {
+        const qty = Math.max(1, Math.floor(Number(row.querySelector(".inv-qty").value) || 0));
+        const cents = dollarsToCents(row.querySelector(".inv-price").value);
+        const line = cents == null ? 0 : qty * cents;
+        row.querySelector("[data-amount]").textContent = centsToUsd(line);
+        subtotal += line;
+      });
+      aq("inv-subtotal").textContent = centsToUsd(subtotal);
+      aq("inv-total").textContent = centsToUsd(subtotal);
+    }
+
+    // Validate the form + build the request body. Returns {ok:true, body} or
+    // {ok:false} (after showing an inline error on the first bad field).
+    function collectInvoice(status) {
+      clearInvFlags();
+      const clientEl = aq("inv-client");
+      if (!clientEl.value) return invFail("Select a client for this invoice.", clientEl);
+
+      const titleEl = aq("inv-title");
+      const title = titleEl.value.trim();
+      if (!title) return invFail("Enter an invoice title.", titleEl);
+
+      const rows = Array.from(aq("inv-items").querySelectorAll(".inv-item"));
+      const items = [];
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const human = "Line " + (i + 1);
+        const nameEl = row.querySelector(".inv-name");
+        const name = nameEl.value.trim();
+        if (!name) return invFail(human + ": enter an item name.", nameEl);
+        const qtyEl = row.querySelector(".inv-qty");
+        const qty = Number(qtyEl.value);
+        if (!Number.isInteger(qty) || qty < 1) return invFail(human + ": quantity must be a whole number of 1 or more.", qtyEl);
+        const priceEl = row.querySelector(".inv-price");
+        const cents = dollarsToCents(priceEl.value);
+        if (cents == null) return invFail(human + ": enter a unit price of $0.00 or more (no negatives).", priceEl);
+        const desc = row.querySelector(".inv-desc").value.trim();
+        items.push({ name: name, description: desc || null, quantity: qty, unit_amount_cents: cents });
+      }
+      if (!items.length) return invFail("Add at least one line item before saving.", aq("inv-add"));
+
+      const body = { client_user_id: clientEl.value, title: title, status: status, items: items };
+      const notes = aq("inv-notes").value.trim();
+      if (notes) body.notes = notes;
+      const due = aq("inv-due").value; // type=date → "YYYY-MM-DD" (or "")
+      if (due) body.due_date = due;
+      // Billing cadence: one_time | monthly | annual. monthly/annual start a Stripe
+      // subscription when the client pays (api/invoices/pay). The server re-validates.
+      const billing = aq("inv-billing").value;
+      body.billing_type = ["one_time", "monthly", "annual"].indexOf(billing) !== -1 ? billing : "one_time";
+      return { ok: true, body: body };
+    }
+
+    function setInvBusy(busy, status) {
+      ["inv-draft", "inv-issue", "inv-add"].forEach((id) => { const b = aq(id); if (b) b.disabled = busy; });
+      const d = aq("inv-draft"), s = aq("inv-issue");
+      if (busy) {
+        if (status === "issued") { s.dataset.lbl = s.textContent; s.textContent = "Issuing…"; }
+        else { d.dataset.lbl = d.textContent; d.textContent = "Saving…"; }
+      } else {
+        if (d.dataset.lbl) { d.textContent = d.dataset.lbl; delete d.dataset.lbl; }
+        if (s.dataset.lbl) { s.textContent = s.dataset.lbl; delete s.dataset.lbl; }
+      }
+    }
+
+    // POST to the admin invoices route with the caller's Supabase access token.
+    async function postInvoice(body) {
+      const { data: sess } = await db.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) throw new Error("Your session expired. Please sign in again.");
+      const res = await fetch("/api/admin/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify(body),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")."));
+      return data;
+    }
+
+    // Single entry point for both buttons. Holds INV.submitting + the disabled
+    // button state across the WHOLE validate → (confirm) → POST sequence, so a
+    // second click or keypress (e.g. tabbing to "Save as draft" while the Issue
+    // confirm modal is open) can never start a duplicate invoice.
+    async function runInvoiceSubmit(status) {
+      if (INV.submitting) return;
+      const r = collectInvoice(status);
+      if (!r.ok) return;
+      INV.submitting = true;
+      setInvBusy(true, status);
+      try {
+        if (status === "issued") {
+          const ok = await confirmAction(
+            "Issue this invoice?",
+            "Issued invoices are client-facing: the client will be able to see this invoice on their billing page. (No email or charge is sent yet.)",
+            "Issue invoice"
+          );
+          if (!ok) return; // the finally below clears the lock + busy state
+        }
+        const data = await postInvoice(r.body);
+        const inv = (data && data.invoice) || {};
+        const total = typeof inv.total_amount_cents === "number" ? centsToUsd(inv.total_amount_cents) : "";
+        const label = inv.status === "issued" ? "issued" : "saved as draft";
+        const idText = inv.id ? " (#" + String(inv.id).slice(0, 8) + ")" : "";
+        showInvMsg("ok", "Invoice " + label + (total ? " — server total " + total : "") + idText + ". The form has been cleared for the next invoice.");
+        toast("Invoice " + label, (inv.title || "") + (total ? " · " + total : ""), false);
+        resetInvoiceForm();
+      } catch (e) {
+        showInvMsg("err", e.message || "Could not create the invoice.");
+        toast("Couldn’t create invoice", e.message, true);
+      } finally {
+        INV.submitting = false;
+        setInvBusy(false);
+      }
+    }
+
+    function resetInvoiceForm() {
+      aq("inv-client").value = "";
+      aq("inv-title").value = "";
+      aq("inv-notes").value = "";
+      aq("inv-due").value = "";
+      aq("inv-billing").value = "one_time";
+      aq("inv-items").innerHTML = "";
+      addInvItem();
+      recomputeInvoice();
+      // The success message in #inv-msg is left visible until the next attempt.
+    }
+
+    async function loadInvoiceClients(force) {
+      const sel = aq("inv-client");
+      if (INV.clientsLoaded && !force) return;
+      sel.innerHTML = '<option value="">Loading clients…</option>';
+      sel.disabled = true;
+      try {
+        // sortBy omitted on purpose — applyListOpts() defaults to created_at and
+        // there is no server-side column whitelist; we sort by name client-side.
+        const data = await adminApi("list_users", { search: "", filters: {}, limit: 100000, offset: 0 });
+        const seen = {}, list = [];
+        (data.rows || []).forEach((r) => {
+          if (!r.user_id || seen[r.user_id]) return;
+          seen[r.user_id] = 1;
+          const name = r.full_name || r.business_name || r.email || "Unnamed client";
+          const sub = r.email && name !== r.email ? " · " + r.email : "";
+          list.push({ id: r.user_id, label: name + sub });
+        });
+        list.sort((a, b) => a.label.localeCompare(b.label));
+        if (!list.length) { sel.innerHTML = '<option value="">No clients found</option>'; sel.disabled = true; INV.clientsLoaded = true; return; }
+        sel.innerHTML = '<option value="">Select a client…</option>' +
+          list.map((o) => '<option value="' + esc(o.id) + '">' + esc(o.label) + "</option>").join("");
+        sel.disabled = false;
+        INV.clientsLoaded = true;
+      } catch (e) {
+        sel.innerHTML = '<option value="">Couldn’t load clients — reopen to retry</option>';
+        sel.disabled = true;
+        INV.clientsLoaded = false; // allow a retry next time the view opens
+        showInvMsg("err", "Couldn’t load the client list: " + e.message);
+      }
+    }
+
+    function initInvoices() {
+      if (!INV.built) {
+        addInvItem();
+        recomputeInvoice();
+        aq("inv-add").addEventListener("click", () => { addInvItem(); recomputeInvoice(); });
+        aq("inv-draft").addEventListener("click", () => runInvoiceSubmit("draft"));
+        aq("inv-issue").addEventListener("click", () => runInvoiceSubmit("issued"));
+        INV.built = true;
+      }
+      loadInvoiceClients(false);
+    }
+
+    // =====================================================================
+    // SUBSCRIPTIONS — admin-created custom recurring hosting subscriptions
+    // Create a PENDING subscription for a client (custom amount + interval); the
+    // client activates it on the payment page. List + real Stripe cancel. All
+    // amounts are validated + stored server-side (api/admin/subscriptions.js).
+    // =====================================================================
+    const SUBS = { built: false, clientsLoaded: false, submitting: false, clientMap: {} };
+
+    // POST to the admin subscriptions route with the caller's Supabase access token.
+    async function subsApi(action, payload) {
+      const { data: sess } = await db.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) throw new Error("Your session expired. Please sign in again.");
+      const res = await fetch("/api/admin/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ action: action, payload: payload || {} }),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")."));
+      return data;
+    }
+
+    // Recurring price label: "$25/month", "$500/year", or "$100 every 3 months".
+    function subRecurringLabel(cents, months) {
+      const m = centsToUsd(cents);
+      const n = Number(months);
+      if (n === 1) return m + "/month";
+      if (n === 12) return m + "/year";
+      return m + " every " + n + " months";
+    }
+
+    function showSubMsg(kind, text) {
+      const el = aq("sub-msg");
+      el.className = "inv-msg show " + kind;
+      el.setAttribute("role", kind === "err" ? "alert" : "status");
+      el.textContent = text;
+    }
+
+    // Live recurring-price preview as the admin types amount + interval.
+    function subPreview() {
+      const cents = dollarsToCents(aq("sub-amount").value);
+      const months = Math.floor(Number(aq("sub-interval").value));
+      const prev = aq("sub-preview");
+      if (cents == null || !cents || !Number.isInteger(months) || months < 1 || months > 12) {
+        prev.textContent = "Recurring price preview: —";
+        return;
+      }
+      prev.textContent = "Recurring price preview: " + subRecurringLabel(cents, months);
+    }
+
+    // Load the client picker (same source as the invoice form) and remember
+    // user_id → name for the list table's Client column.
+    async function loadSubClients(force) {
+      const sel = aq("sub-client");
+      if (SUBS.clientsLoaded && !force) return;
+      sel.innerHTML = '<option value="">Loading clients…</option>';
+      sel.disabled = true;
+      try {
+        const data = await adminApi("list_users", { search: "", filters: {}, limit: 100000, offset: 0 });
+        const seen = {}, list = [];
+        (data.rows || []).forEach((r) => {
+          if (!r.user_id || seen[r.user_id]) return;
+          seen[r.user_id] = 1;
+          const name = r.full_name || r.business_name || r.email || "Unnamed client";
+          SUBS.clientMap[r.user_id] = name;
+          const sfx = r.email && name !== r.email ? " · " + r.email : "";
+          list.push({ id: r.user_id, label: name + sfx });
+        });
+        list.sort((a, b) => a.label.localeCompare(b.label));
+        if (!list.length) { sel.innerHTML = '<option value="">No clients found</option>'; sel.disabled = true; SUBS.clientsLoaded = true; return; }
+        sel.innerHTML = '<option value="">Select a client…</option>' +
+          list.map((o) => '<option value="' + esc(o.id) + '">' + esc(o.label) + "</option>").join("");
+        sel.disabled = false;
+        SUBS.clientsLoaded = true;
+      } catch (e) {
+        sel.innerHTML = '<option value="">Couldn’t load clients — reopen to retry</option>';
+        sel.disabled = true;
+        SUBS.clientsLoaded = false;
+        showSubMsg("err", "Couldn’t load the client list: " + e.message);
+      }
+    }
+
+    async function loadSubsList() {
+      const wrap = aq("sub-list");
+      wrap.textContent = "Loading…";
+      try {
+        const data = await subsApi("list", {});
+        const rows = (data && data.subscriptions) || [];
+        if (!rows.length) { wrap.innerHTML = '<p class="inv-note">No subscriptions yet.</p>'; return; }
+        const head = "<thead><tr><th>Name</th><th>Client</th><th>Recurring</th><th>Status</th><th>Created</th><th></th></tr></thead>";
+        const body = rows.map((r) => {
+          const client = SUBS.clientMap[r.user_id] || (r.user_id ? String(r.user_id).slice(0, 8) : "—");
+          const cancelCell = r.status !== "canceled"
+            ? '<button class="adm-mini danger" data-cancel-sub="' + esc(r.id) + '">Cancel Subscription</button>'
+            : "—";
+          return "<tr><td>" + esc(r.plan_name || "—") + "</td><td>" + esc(client) + "</td><td>" +
+            esc(subRecurringLabel(r.amount_cents, r.interval_months)) + "</td><td>" + badge(r.status) +
+            "</td><td>" + (fmtDate(r.created_at) || "—") + "</td><td>" + cancelCell + "</td></tr>";
+        }).join("");
+        wrap.innerHTML = '<table class="adm-table">' + head + "<tbody>" + body + "</tbody></table>";
+        wrap.querySelectorAll("[data-cancel-sub]").forEach((b) => {
+          b.addEventListener("click", () => cancelSub(b.getAttribute("data-cancel-sub")));
+        });
+      } catch (e) {
+        wrap.innerHTML = '<p class="inv-note" style="color:var(--adm-danger)">Couldn’t load subscriptions: ' + esc(e.message) + "</p>";
+      }
+    }
+
+    async function cancelSub(id) {
+      const ok = await confirmAction(
+        "Cancel this subscription?",
+        "This cancels the real Stripe subscription (if it has been activated) and stops all future charges. This cannot be undone.",
+        "Cancel subscription"
+      );
+      if (!ok) return;
+      try {
+        await subsApi("cancel", { subscription_id: id });
+        toast("Subscription canceled", "", false);
+        loadSubsList();
+      } catch (e) {
+        toast("Couldn’t cancel subscription", e.message, true);
+      }
+    }
+
+    async function runSubCreate() {
+      if (SUBS.submitting) return;
+      const clientEl = aq("sub-client");
+      const nameEl = aq("sub-name");
+      const amountEl = aq("sub-amount");
+      const intervalEl = aq("sub-interval");
+      aq("view-subscriptions").querySelectorAll(".flagged").forEach((e) => e.classList.remove("flagged"));
+
+      const flag = (el, msg) => { showSubMsg("err", msg); toast("Can’t create this subscription yet", msg, true); el.classList.add("flagged"); try { el.focus({ preventScroll: true }); } catch (e) {} };
+
+      if (!clientEl.value) return flag(clientEl, "Select a client.");
+      const name = nameEl.value.trim();
+      if (!name) return flag(nameEl, "Enter a subscription name.");
+      const cents = dollarsToCents(amountEl.value);
+      if (cents == null || cents < 1) return flag(amountEl, "Enter an amount greater than $0.00.");
+      const months = Number(intervalEl.value);
+      if (!Number.isInteger(months) || months < 1 || months > 12) return flag(intervalEl, "Charge interval must be a whole number of months between 1 and 12.");
+
+      SUBS.submitting = true;
+      const createBtn = aq("sub-create");
+      createBtn.disabled = true;
+      const lbl = createBtn.textContent;
+      createBtn.textContent = "Creating…";
+      try {
+        // Send the amount in DOLLARS; the server converts to cents and is the
+        // authoritative source (the browser value is never trusted as cents).
+        await subsApi("create", {
+          client_user_id: clientEl.value,
+          name: name,
+          amount_dollars: cents / 100,
+          interval_months: months,
+        });
+        showSubMsg("ok", "Subscription created (pending activation). The client can now activate it from their dashboard.");
+        toast("Subscription created", name + " · " + subRecurringLabel(cents, months), false);
+        nameEl.value = ""; amountEl.value = ""; intervalEl.value = "1"; clientEl.value = "";
+        subPreview();
+        loadSubsList();
+      } catch (e) {
+        showSubMsg("err", e.message || "Could not create the subscription.");
+        toast("Couldn’t create subscription", e.message, true);
+      } finally {
+        SUBS.submitting = false;
+        createBtn.disabled = false;
+        createBtn.textContent = lbl;
+      }
+    }
+
+    function initSubs() {
+      if (!SUBS.built) {
+        aq("sub-create").addEventListener("click", runSubCreate);
+        aq("sub-amount").addEventListener("input", subPreview);
+        aq("sub-interval").addEventListener("input", subPreview);
+        SUBS.built = true;
+      }
+      loadSubClients(false);
+      loadSubsList();
+    }
+
+    // =====================================================================
+    // OVERVIEW + CHARTS
+    // =====================================================================
+    let overviewData = null;
+    const charts = {};
+    const CHART_COLORS = ["#19c2d8", "#3fb98a", "#f5a524", "#e5484d", "#3d7bd9", "#9b6dff", "#15707f", "#c2506a"];
+
+    function chartDefaults() {
+      if (window.Chart) {
+        Chart.defaults.color = "#2c5468";
+        Chart.defaults.borderColor = "rgba(17,54,76,.12)";
+        Chart.defaults.font.family = "Mulish, system-ui, sans-serif";
+      }
+    }
+    function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+    function setChartEmpty(id, isEmpty, msg) {
+      const ctx = aq(id); if (!ctx) return;
+      const wrap = ctx.parentElement;
+      let ov = wrap.querySelector(".chart-empty");
+      ctx.style.display = isEmpty ? "none" : "";
+      if (isEmpty) {
+        if (!ov) { ov = ce("div", "chart-empty"); ov.style.cssText = "position:absolute;inset:0;display:grid;place-items:center;color:var(--adm-muted);font-size:.85rem"; wrap.appendChild(ov); }
+        ov.textContent = msg || "No data yet.";
+      } else if (ov) ov.remove();
+    }
+    function doughnut(id, labelsObj) {
+      if (!window.Chart) return;
+      destroyChart(id);
+      const labels = Object.keys(labelsObj).filter((k) => labelsObj[k] > 0);
+      const values = labels.map((k) => labelsObj[k]);
+      const ctx = aq(id); if (!ctx) return;
+      if (!labels.length) { setChartEmpty(id, true, "No data yet."); return; }
+      setChartEmpty(id, false);
+      charts[id] = new Chart(ctx, {
+        type: "doughnut",
+        data: { labels: labels.map(pretty), datasets: [{ data: values, backgroundColor: CHART_COLORS, borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom", labels: { boxWidth: 12, padding: 12 } } } },
+      });
+    }
+    function renderSitesChart(months) {
+      if (!window.Chart) return;
+      destroyChart("chSites");
+      const data = overviewData ? overviewData.charts.sitesByMonth : {};
+      let keys = Object.keys(data).sort();
+      if (months > 0) keys = keys.slice(-months);
+      const ctx = aq("chSites"); if (!ctx) return;
+      if (!keys.length) { setChartEmpty("chSites", true, "No site purchases recorded yet."); return; }
+      setChartEmpty("chSites", false);
+      charts.chSites = new Chart(ctx, {
+        type: "bar",
+        data: { labels: keys, datasets: [{ label: "Sites purchased", data: keys.map((k) => data[k]), backgroundColor: "#19c2d8", borderRadius: 5 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+      });
+    }
+
+    async function loadOverview() {
+      aq("ovCards").innerHTML = Array(12).fill('<div class="adm-skel-card"></div>').join("");
+      try {
+        const data = await adminApi("overview");
+        overviewData = data;
+        const c = data.cards;
+        const cards = [
+          ["Total users", c.totalUsers, ""], ["New this week", c.newUsersWeek, "turq"], ["New this month", c.newUsersMonth, "turq"],
+          ["Active subscriptions", c.activeSubscriptions, "good"], ["Unpaid clients", c.unpaidClients, "danger"], ["Past due", c.pastDueClients, "warn"],
+          ["Canceled", c.canceledSubscriptions, ""], ["Total websites", c.totalWebsites, ""], ["In progress", c.websitesInProgress, "blue"],
+          ["Waiting on client", c.websitesWaitingClient, "warn"], ["Live websites", c.liveWebsites, "good"], ["Missing domains", c.missingDomains, "danger"],
+          ["New onboarding", c.newOnboarding, "turq"], ["Suspended", c.suspended, "warn"], ["Banned", c.banned, "danger"],
+        ];
+        aq("ovCards").innerHTML = cards.map((k) => '<div class="adm-card"><div class="lbl">' + esc(k[0]) + '</div><div class="val ' + k[2] + '">' + (k[1] != null ? k[1] : 0) + "</div></div>").join("");
+
+        chartDefaults();
+        doughnut("chPlans", data.charts.planCounts);
+        doughnut("chPay", data.charts.payStatusCounts);
+        doughnut("chType", data.charts.siteTypeCounts);
+        renderSitesChart(Number(aq("ovTimeframe").value) || 6);
+
+        const act = data.recentActivity || [];
+        aq("ovActivity").innerHTML = act.length
+          ? '<ul class="adm-timeline">' + act.map((a) => '<li><div class="tl-action">' + esc(pretty(a.action)) + ' <span style="color:var(--adm-muted);font-weight:400">by ' + esc(a.admin_email) + '</span></div><div class="tl-meta">' + (a.changed_field ? esc(a.changed_field) + " · " : "") + fmtDateTime(a.created_at) + "</div></li>").join("") + "</ul>"
+          : '<div class="adm-empty" style="padding:1.5rem"><p>No admin activity recorded yet.</p></div>';
+      } catch (e) {
+        aq("ovCards").innerHTML = '<div class="adm-empty" style="grid-column:1/-1"><h4>Couldn’t load overview</h4><p>' + esc(e.message) + "</p></div>";
+      }
+    }
+
+    // ---- Alert badge ----------------------------------------------------
+    async function loadAlertBadge() {
+      try {
+        const data = await adminApi("list_alerts", {});
+        const n = (data.rows || []).filter((a) => a.severity === "high").length;
+        const b = aq("admAlertBadge");
+        if (n > 0) { b.textContent = n; b.style.display = ""; } else b.style.display = "none";
+      } catch (e) { /* non-critical */ }
+    }
+
+    // =====================================================================
+    // GLOBAL SEARCH
+    // =====================================================================
+    const searchInput = aq("admSearch");
+    const searchResults = aq("admSearchResults");
+    searchInput.addEventListener("input", debounce(async () => {
+      const term = searchInput.value.trim();
+      if (term.length < 2) { searchResults.classList.remove("show"); return; }
+      try {
+        const data = await adminApi("search", { search: term });
+        const rows = data.results || [];
+        if (!rows.length) { searchResults.innerHTML = '<div class="adm-sr-item"><span class="adm-sr-label" style="color:var(--adm-muted)">No matches</span></div>'; searchResults.classList.add("show"); return; }
+        searchResults.innerHTML = rows.map((r, i) =>
+          '<div class="adm-sr-item" data-i="' + i + '"><span class="adm-sr-cat">' + esc(r.category) + '</span><div style="min-width:0"><div class="adm-sr-label">' + esc(r.label || "—") + '</div><div class="adm-sr-sub">' + esc(r.sub || "") + "</div></div></div>").join("");
+        searchResults.classList.add("show");
+        searchResults.querySelectorAll(".adm-sr-item[data-i]").forEach((el) => el.addEventListener("click", () => {
+          const r = rows[Number(el.dataset.i)];
+          searchResults.classList.remove("show"); searchInput.value = "";
+          if (r.category === "Website") { /* open via user if linked, else website list */ if (r.user_id) openUserDrawer(r.user_id); }
+          else if (r.user_id) openUserDrawer(r.user_id, r.id);
+        }));
+      } catch (e) { searchResults.innerHTML = '<div class="adm-sr-item"><span class="adm-sr-label" style="color:#b3322a">' + esc(e.message) + "</span></div>"; searchResults.classList.add("show"); }
+    }, 300));
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".adm-search-wrap")) searchResults.classList.remove("show");
+      if (!e.target.closest(".adm-export")) document.querySelectorAll(".adm-export-menu.show").forEach((m) => m.classList.remove("show"));
+    });
+
+    // =====================================================================
+    // NAV / SHELL
+    // =====================================================================
+    function switchView(viewId) {
+      document.querySelectorAll(".adm-nav button").forEach((b) => b.classList.toggle("active", b.dataset.view === viewId));
+      document.querySelectorAll(".adm-view").forEach((v) => v.classList.toggle("active", v.id === "view-" + viewId));
+      if (viewId === "overview") { loadOverview(); return; }
+      if (viewId === "invoices") { initInvoices(); return; }
+      if (viewId === "subscriptions") { initSubs(); return; }
+      if (viewId === "settings") { return; }
+      if (VIEWS[viewId]) {
+        if (!state[viewId] || !state[viewId].built) buildView(viewId);
+        loadView(viewId, true);
+      }
+    }
+
+    // =====================================================================
+    // INIT
+    // =====================================================================
+    window.initAdmin = function (user) {
+      ADMIN_USER = user;
+      document.body.classList.add("adm-active");
+      aq("admin").classList.remove("hidden");
+      aq("admin").setAttribute("aria-hidden", "false");
+      aq("admWho").textContent = user.email;
+      aq("setEmail").textContent = user.email;
+
+      // Nav
+      document.querySelectorAll(".adm-nav button").forEach((b) => b.addEventListener("click", () => switchView(b.dataset.view)));
+      aq("admCollapse").addEventListener("click", () => aq("admin").classList.toggle("collapsed"));
+      aq("admDrawerClose").addEventListener("click", closeDrawer);
+      aq("admDrawerOv").addEventListener("click", closeDrawer);
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+      aq("admSignout").addEventListener("click", async () => { try { await db.auth.signOut(); } catch (e) {} document.cookie = "ws_session=; path=/; SameSite=Lax; Secure; max-age=0"; window.location.replace("/login"); });
+      aq("ovTimeframe").addEventListener("change", () => renderSitesChart(Number(aq("ovTimeframe").value) || 0));
+      aq("setDensity").addEventListener("change", (e) => {
+        document.querySelectorAll("table.adm-table").forEach((t) => t.style.fontSize = e.target.value === "compact" ? ".78rem" : ".84rem");
+      });
+
+      // Settings connection indicators
+      aq("setConn").innerHTML = '<span class="badge b-active">Connected</span>';
+      adminApi("overview").then(() => { aq("setApi").innerHTML = '<span class="badge b-active">Authorized</span>'; })
+        .catch(() => { aq("setApi").innerHTML = '<span class="badge b-unpaid">Error</span>'; });
+
+      loadOverview();
+      loadAlertBadge();
+    };
+  })();
   </script>
 </body>
 </html>

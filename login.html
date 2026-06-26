@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="Tab-Logo.png" type="image/png" />
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Client Login — WebSharke</title>
-
-  <!-- Same brand fonts as the WebSharke dashboard (beach theme) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <meta name="description" content="Sign in to your WebSharke client dashboard to manage your website, hosting, billing, and project details." />
 
   <style>
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+    @font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
       --ink:#11364c;            /* deep navy — primary text */
@@ -32,12 +32,12 @@
     .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
     .ocean svg{width:100%;height:100%;display:block}
 
-    /* ── WebSharke logo, top-left (Main-Logo.png masked to navy) ────────────── */
+    /* ── WebSharke logo, top-left (images/Main-Logo.png masked to navy) ────────────── */
     .ws-logo{
       position:fixed;top:18px;left:26px;z-index:20;display:block;
       width:136px;height:76px;background:var(--ink);
-      -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
-              mask:url(Main-Logo.png) left center/contain no-repeat;
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
       filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
       transition:transform .3s ease;
     }
@@ -59,8 +59,8 @@
     }
 
     .login-title{
-      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.9rem;
-      color:#0e2f44;letter-spacing:.01em;margin-bottom:1.4rem;
+      font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;font-size:1.9rem;
+      color:#0e2f44;letter-spacing:.02em;margin-bottom:1.4rem;
     }
 
     .field{margin-bottom:1.4rem}
@@ -82,11 +82,11 @@
       display:block;width:100%;cursor:pointer;border:none;margin-top:.4rem;
       font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.15rem;
       color:#eaf2ff;padding:.6rem 1.5rem;border-radius:9px;
-      background:linear-gradient(160deg,#2d57b4,#1d3f8f);
-      box-shadow:0 8px 20px rgba(18,40,90,.32),inset 0 1px 0 rgba(255,255,255,.18);
+      background:linear-gradient(160deg,#16465f,#0c2636);
+      box-shadow:0 8px 20px rgba(8,40,55,.36),inset 0 1px 0 rgba(255,255,255,.16);
       transition:transform .25s,filter .25s,box-shadow .25s;
     }
-    .btn-signin:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 12px 26px rgba(18,40,90,.4)}
+    .btn-signin:hover{transform:translateY(-1px);filter:brightness(1.12);box-shadow:0 12px 28px rgba(8,40,55,.46)}
     .btn-signin:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
     .btn-signin[disabled]{opacity:.6;cursor:not-allowed;transform:none;filter:none}
 
@@ -132,7 +132,7 @@
   </div>
 
   <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
-  <a class="ws-logo" href="/home" aria-label="WebSharke — home"></a>
+  <a class="ws-logo" href="/" aria-label="WebSharke — home"></a>
 
   <main class="login-shell">
     <div class="login-card">
@@ -151,15 +151,15 @@
       <button id="signin-btn" class="btn-signin">Sign In</button>
 
       <p class="new-here">No account? Create a project here</p>
-      <a href="onboarding" class="btn-new">New Project</a>
+      <a href="/onboarding" class="btn-new">New Project</a>
 
-      <p id="message" class="msg"></p>
+      <p id="message" class="msg" role="status" aria-live="polite"></p>
     </div>
   </main>
 
   <!-- ── Supabase (shared client `db`) — same config every page uses ────────── -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
 
   <script>
     // =================================================================
@@ -183,7 +183,12 @@
     // ---- After login, the logged-in area lives on the dashboard. ----
     // replace() keeps the login page out of the browser's back history.
     function goToDashboard() {
-      window.location.replace("dashboard");
+      // Set a lightweight session-hint cookie so the server-side middleware
+      // (middleware.js) can gate /dashboard before serving HTML.
+      // 7-day expiry; SameSite=Lax prevents cross-site request forgery.
+      document.cookie =
+        "ws_session=1; path=/; SameSite=Lax; Secure; max-age=604800";
+      window.location.replace("/dashboard");
     }
 
     // ---- SIGN IN — log in with an existing email + password. ----
@@ -199,6 +204,16 @@
       signinBtn.disabled = false;
       if (error) showMessage(error.message, "error");
       // On success, onAuthStateChange fires below and redirects to the dashboard.
+    });
+
+    // ---- Submit on Enter from either field (no <form>, so wire it manually). ----
+    [emailInput, passwordInput].forEach((el) => {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (!signinBtn.disabled) signinBtn.click();
+        }
+      });
     });
 
     // ---- ON PAGE LOAD — if already signed in, skip the form. ----

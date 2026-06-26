@@ -3,40 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="Tab-Logo.png" type="image/png" />
-  <title>Payment Successful — Eldridge Web Design</title>
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
+  <title>Finishing up — WebSharke</title>
+  <meta name="robots" content="noindex" />
 
-  <!-- Auto-redirect fallback if JavaScript is disabled -->
-  <meta http-equiv="refresh" content="3;url=dashboard" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Auto-redirect fallback if JavaScript is disabled. The dashboard is the real
+       source of truth for billing status, so landing there is always correct. -->
+  <meta http-equiv="refresh" content="6;url=/dashboard" />
 
   <style>
-    :root{ --navy:#0e1b2a; --teal:#2dd4bf; --t:#eaf2f7; --tm:#9fb3c2; }
-    *{box-sizing:border-box}
-    body{
-      margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-      padding:1.5rem; background:var(--navy); color:var(--t);
-      font-family:'Space Grotesk',system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.6;
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+    @font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --ink:#11364c;            /* deep navy — primary text */
+      --ink-soft:#2c5468;       /* muted coastal blue — secondary text */
+      --turq:#10b6cc;           /* turquoise accent */
+      --turq-deep:#15707f;      /* deeper teal — links */
+      --card:rgba(208,238,241,.34);
+      --card-bd:rgba(255,255,255,.5);
     }
+    body{
+      font-family:'Mulish',system-ui,sans-serif;color:var(--ink);
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      padding:1.5rem;position:relative;overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;background:#36a1b3;
+    }
+
+    /* ── Layered turquoise ocean waves (fixed, behind everything) ───────────── */
+    .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .ocean svg{width:100%;height:100%;display:block}
+
+    /* ── WebSharke logo, top-left (images/Main-Logo.png masked to navy) ──────── */
+    .ws-logo{
+      position:fixed;top:18px;left:26px;z-index:20;display:block;
+      width:136px;height:76px;background:var(--ink);
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
+      filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));transition:transform .3s ease;
+    }
+    .ws-logo:hover{transform:translateY(-1px)}
+
+    /* ── Translucent light-aqua result card (matches the login card) ────────── */
     .card{
-      max-width:440px; width:100%; text-align:center; padding:3rem 2.2rem;
-      background:rgba(255,255,255,.03); border:1px solid rgba(45,212,191,.32);
-      border-radius:12px; box-shadow:0 16px 44px rgba(0,0,0,.5);
+      max-width:440px;width:100%;text-align:center;
+      padding:clamp(2.2rem,5vw,3rem) clamp(1.6rem,4vw,2.4rem);
+      background:var(--card);border:1px solid var(--card-bd);border-radius:16px;
+      backdrop-filter:blur(11px) saturate(1.18);-webkit-backdrop-filter:blur(11px) saturate(1.18);
+      box-shadow:0 20px 54px rgba(0,40,55,.22),inset 0 1px 0 rgba(255,255,255,.45);
     }
     .icon{
-      width:72px; height:72px; margin:0 auto 1.6rem; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      background:rgba(45,212,191,.12); border:1px solid rgba(45,212,191,.45);
-      color:var(--teal); font-size:2.2rem; line-height:1;
+      width:74px;height:74px;margin:0 auto 1.5rem;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(16,182,204,.16);border:1px solid rgba(16,182,204,.5);
+      color:var(--turq-deep);font-size:2.3rem;line-height:1;
     }
-    h1{font-family:'Abril Fatface',serif; font-weight:400; font-size:1.9rem; margin:0 0 .8rem; color:var(--teal)}
-    p{color:var(--tm); font-size:1rem; margin:0 auto; max-width:34ch}
-    .dots{margin-top:1.6rem; font-size:.85rem; color:var(--tm); letter-spacing:.04em}
-    a{color:var(--teal); text-decoration:none}
-    a:hover{text-decoration:underline}
+    h1{
+      font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;
+      font-size:clamp(1.7rem,4vw,2.1rem);margin-bottom:.7rem;color:#0e2f44;letter-spacing:.01em;
+    }
+    p{color:var(--ink-soft);font-size:1.02rem;line-height:1.6;margin:0 auto;max-width:34ch}
+    .dots{margin-top:1.5rem;font-size:.9rem;color:var(--ink-soft);letter-spacing:.02em}
+    .dots a{color:var(--turq-deep);text-decoration:none;font-weight:600;border-bottom:1px solid rgba(21,112,127,.5)}
+    .dots a:hover{color:#0a566a;border-bottom-color:#0a566a}
+    .dots a:focus-visible{outline:2px solid var(--turq);outline-offset:3px;border-radius:3px}
+
+    @media(max-width:560px){ .ws-logo{width:114px;height:64px;top:14px;left:16px} }
   </style>
 </head>
 <body>
@@ -44,13 +79,13 @@
     <div class="icon" aria-hidden="true">&#10003;</div>
     <h1>Payment successful!</h1>
     <p>Your plan is now active. You&rsquo;ll be redirected to your dashboard in a few seconds.</p>
-    <div class="dots">Redirecting&hellip; or <a href="dashboard">go now</a>.</div>
+    <div class="dots">Redirecting&hellip; or <a href="dashboard.html">go now</a>.</div>
   </main>
 
   <script>
     // Auto-redirect to the dashboard after 3 seconds.
     setTimeout(function () {
-      window.location.href = "dashboard";
+      window.location.href = "dashboard.html";
     }, 3000);
   </script>
 </body>

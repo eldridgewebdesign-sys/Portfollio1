@@ -3,18 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="Tab-Logo.png" type="image/png">
-<title>WEBSHARKE</title>
+<link rel="icon" href="images/Tab-Logo.png" type="image/png">
+<title>WebSharke — Websites for Small Businesses, Fully Handled</title>
+<meta name="description" content="WebSharke builds and runs your whole small-business website — design, hosting, backend, forms, and payments — in one place. No agency price tag, no DIY headache." />
+<link rel="canonical" href="https://websharke.com/" />
+<meta name="theme-color" content="#102536" />
+
+<!-- Social link previews. TODO: swap og:image for a dedicated 1200×630 image when available. -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="WebSharke" />
+<meta property="og:url" content="https://websharke.com/" />
+<meta property="og:title" content="WebSharke — Websites for Small Businesses, Fully Handled" />
+<meta property="og:description" content="Your whole site built and kept running in one place — design, hosting, backend, and payments. No agency price tag, no DIY headache." />
+<meta property="og:image" content="https://websharke.com/images/Main-Logo.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="WebSharke — Websites for Small Businesses, Fully Handled" />
+<meta name="twitter:description" content="Your whole site built and kept running in one place — design, hosting, backend, and payments." />
+<meta name="twitter:image" content="https://websharke.com/images/Main-Logo.png" />
 <script>
 if('scrollRestoration' in history)history.scrollRestoration='manual';
 window.addEventListener('load',function(){window.scrollTo(0,0)});
 window.addEventListener('pageshow',function(){window.scrollTo(0,0)});
 </script>
-<link rel="preload" as="image" href="Site_bkg.png" fetchpriority="high">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="images/Site_bkg.webp" type="image/webp" fetchpriority="high">
 <style>
+/* ── FONTS — vendored locally, no CDN (assets are bundled locally; CDNs are blocked in the user's
+   environment). Cormorant Garamond + Mulish, latin woff2 copied into /fonts. Only the faces the page
+   actually renders are defined — Cormorant Garamond 600 + 500-italic, Mulish 400/500/600. (The old
+   Google Fonts URL over-requested several weights the page never uses.) ─────────────────────────── */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(fonts/cormorantgaramond-500i.woff2) format('woff2')}
+@font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/mulish-500.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   /* palette derived from the background image itself */
@@ -27,7 +49,8 @@ window.addEventListener('pageshow',function(){window.scrollTo(0,0)});
   --surf:#0a3d50;          /* surface teal (image) */
   --aqua:#62b6c6;          /* soft aqua accent */
   --aqua-d:#2c7e90;        /* deeper teal accent */
-  --warm:#e4cfa6;          /* warm sand accent */
+  --warm:#e4cfa6;          /* warm sand accent — .btn-sand lower stop */
+  --warm-lt:#f8ecd3;       /* light warm cream — .btn-sand upper stop */
 }
 html{scroll-behavior:smooth}
 body{font-family:'Mulish',system-ui,sans-serif;background:var(--deep);color:var(--foam);overflow-x:hidden;position:relative;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
@@ -70,8 +93,8 @@ body.submerged .school{opacity:1}
 nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:1rem 2.6rem 1rem 1.6rem;transition:background .55s,backdrop-filter .55s,box-shadow .55s,padding .45s}
 nav.scrolled{background:linear-gradient(to bottom,rgba(6,24,33,.66) 0%,rgba(6,24,33,.3) 58%,transparent 100%);box-shadow:none;padding-top:.7rem;padding-bottom:.7rem}
 .logo{display:block;width:210px;height:118px;background:var(--ink);
-  -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
-          mask:url(Main-Logo.png) left center/contain no-repeat;
+  -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+          mask:url(images/Main-Logo.png) left center/contain no-repeat;
   transition:background .55s,filter .35s,transform .35s}
 .logo:hover{transform:translateY(-1px)}
 nav.scrolled .logo{background:var(--foam)}
@@ -82,8 +105,16 @@ nav.scrolled .signin{color:var(--foam)}
 
 /* ── BUTTON (hero CTA) ───────────────────────────────────────────────────── */
 .btn{font-family:'Mulish',sans-serif;font-weight:500;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;border-radius:100px;cursor:pointer;border:none;transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s,background .4s}
-.btn-sand{padding:1.05rem 2.9rem;color:var(--ink);background:linear-gradient(135deg,#f8ecd3,#e4cfa6);box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 12px 32px rgba(16,37,54,.2),0 2px 6px rgba(16,37,54,.12)}
+.btn-sand{padding:1.05rem 2.9rem;color:var(--ink);background:linear-gradient(135deg,var(--warm-lt),var(--warm));box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 12px 32px rgba(16,37,54,.2),0 2px 6px rgba(16,37,54,.12)}
 .btn-sand:hover{transform:translateY(-3px);box-shadow:0 1px 0 rgba(255,255,255,.75) inset,0 20px 46px rgba(16,37,54,.28)}
+
+/* ── FOCUS STATES (keyboard accessibility) ───────────────────────────────── */
+.logo:focus-visible{outline:2px solid var(--aqua);outline-offset:5px;border-radius:8px}
+.signin:focus-visible{outline:2px solid currentColor;outline-offset:5px;border-radius:3px}
+.signin:focus-visible::after{width:100%}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.style-card:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}
+*:focus-visible{outline-color:var(--aqua)}
 
 /* ── REVEAL ──────────────────────────────────────────────────────────────── */
 .rv{opacity:0;transform:translateY(34px);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1)}
@@ -93,13 +124,13 @@ nav.scrolled .signin{color:var(--foam)}
 /* ── SHARED SECTION SCAFFOLD ─────────────────────────────────────────────── */
 .sx{min-height:auto;display:flex;align-items:center;padding:clamp(5rem,10vh,8rem) clamp(1.5rem,5vw,3rem);position:relative;z-index:1;scroll-margin-top:120px}
 .wrap{max-width:1100px;margin:0 auto;width:100%;text-align:center}
-.sec-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--foam);font-size:clamp(2.3rem,5vw,4rem);line-height:1.12;letter-spacing:.01em;text-shadow:0 2px 26px rgba(2,10,18,.5);text-wrap:balance;max-width:22ch;margin-left:auto;margin-right:auto}
+.sec-title{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;color:var(--foam);font-size:clamp(2.3rem,5vw,4rem);line-height:1.12;letter-spacing:.01em;text-shadow:0 2px 26px rgba(2,10,18,.5);text-wrap:balance;max-width:22ch;margin-left:auto;margin-right:auto}
 
 /* ── HERO (BEACH / SURFACE) — approved, unchanged ────────────────────────── */
 #hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(6.5rem,17vh,9.5rem) 2rem 0;position:relative;z-index:1;color:var(--ink)}
-.hero-eyebrow{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;letter-spacing:.004em;font-size:clamp(1.35rem,3vw,2.15rem);color:var(--ink-soft);max-width:52ch;line-height:1.32;text-wrap:balance;margin:0 auto clamp(1.5rem,3.4vw,2.5rem);text-shadow:0 1px 0 rgba(255,250,240,.3),0 4px 16px rgba(16,37,54,.08)}
-.hero-title{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--ink);font-size:clamp(3.6rem,12vw,8.8rem);line-height:.92;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,251,242,.42),0 10px 30px rgba(16,37,54,.13)}
-.hero-title em{font-style:italic;font-weight:500}
+.hero-eyebrow{font-family:'Distillery Display','Cormorant Garamond',serif;font-style:normal;font-weight:400;letter-spacing:.02em;font-size:clamp(1.7rem,4vw,3rem);color:var(--ink-soft);max-width:52ch;line-height:1.22;text-wrap:balance;margin:0 auto clamp(1.5rem,3.4vw,2.5rem);text-shadow:0 1px 0 rgba(255,250,240,.3),0 4px 16px rgba(16,37,54,.08)}
+.hero-title{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;color:var(--ink);font-size:clamp(3.6rem,12vw,8.8rem);line-height:.92;letter-spacing:.005em;text-shadow:0 1px 0 rgba(255,251,242,.42),0 10px 30px rgba(16,37,54,.13)}
+.hero-title em{font-style:normal;font-weight:400}
 .hero-cta{margin-top:clamp(2rem,4.5vh,3.2rem)}
 /* hero intro plays after the loader hands off (body.ready) */
 #hero .anim{opacity:0;transform:translateY(28px);transition:opacity 1.1s cubic-bezier(.16,1,.3,1),transform 1.1s cubic-bezier(.16,1,.3,1)}
@@ -115,18 +146,45 @@ body.ready #hero .anim{opacity:1;transform:none}
 
 /* ── WHY CHOOSE US — three plain text columns (as in the reference) ────────── */
 .why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(2.2rem,5vw,4.5rem);max-width:1080px;margin:clamp(2rem,4vw,3rem) auto 0}
-.why-col h3{font-family:'Cormorant Garamond',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
+.why-col h3{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:1.1rem}
 .why-col p{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:.95rem;line-height:1.8}
 
-/* ── STYLES — placeholder windows (future examples go here) ────────────────── */
-.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-top:clamp(2.4rem,4.5vw,3.4rem);text-align:left}
-.style-card{position:relative;border-radius:16px;background:rgba(174,195,201,.055);border:1px solid rgba(174,195,201,.15);backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);box-shadow:inset 0 1px 0 rgba(236,244,243,.1),0 18px 46px rgba(0,0,0,.34);overflow:hidden;display:flex;flex-direction:column;min-height:212px;transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .45s,box-shadow .45s}
-.style-card:hover{transform:translateY(-4px);border-color:rgba(98,182,198,.24);box-shadow:0 22px 50px rgba(0,0,0,.4)}
-.sc-bar{display:flex;gap:.5rem;padding:.95rem 1.15rem;border-bottom:1px solid rgba(174,195,201,.12);flex-shrink:0}
-.sc-dot{width:10px;height:10px;border-radius:50%;background:rgba(174,195,201,.34)}
-.sc-body{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:.6rem;text-align:left;padding:1.4rem 1.5rem 1.65rem}
-.sc-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.42rem;line-height:1.1;color:var(--foam);letter-spacing:.01em}
-.sc-desc{font-family:'Mulish',sans-serif;font-weight:300;font-size:.9rem;line-height:1.62;color:rgba(240,248,250,.76)}
+/* ── STYLES — one live sample (the 3D Laptop Teardown), presented on its own ───
+   No numbered grid, no "coming soon" placeholder cards: a responsive grid of
+   live featured cards (the canonical .style-card.feat) + one honest lede line.
+   Every card is a real, live sample — no fake browser chrome, no neon glow. ── */
+.styles-lede{font-family:'Mulish',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:clamp(1rem,1.4vw,1.12rem);line-height:1.8;max-width:46ch;margin:clamp(1.2rem,2.5vw,1.8rem) auto 0}
+.style-one{max-width:540px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
+/* two live samples, side by side (kept for reference) */
+.style-two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,1.6vw,1.4rem);max-width:760px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
+@media(max-width:680px){.style-two{grid-template-columns:1fr}}
+/* responsive grid of live demo samples (teardown + the reusable templates) */
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1rem,1.6vw,1.4rem);max-width:1100px;margin:clamp(2.4rem,4.5vw,3.4rem) auto 0;text-align:left}
+@media(max-width:900px){.style-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.style-grid{grid-template-columns:1fr}}
+.style-card{position:relative;display:flex;flex-direction:column;min-height:202px;padding:1.7rem 1.6rem 1.45rem;border-radius:16px;
+  background:rgba(174,195,201,.05);border:1px solid rgba(174,195,201,.14);
+  backdrop-filter:blur(13px) saturate(140%);-webkit-backdrop-filter:blur(13px) saturate(140%);
+  box-shadow:inset 0 1px 0 rgba(236,244,243,.07),0 16px 40px rgba(0,0,0,.3);
+  overflow:hidden;text-decoration:none;color:inherit;
+  transition:transform .5s cubic-bezier(.16,1,.3,1),border-color .5s,box-shadow .5s,background .5s}
+/* aqua accent that draws across the top edge on hover */
+.style-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--aqua),rgba(98,182,198,0));
+  transform:scaleX(0);transform-origin:left;transition:transform .55s cubic-bezier(.16,1,.3,1)}
+.style-card:hover{transform:translateY(-5px);border-color:rgba(98,182,198,.32);
+  background:rgba(174,195,201,.07);box-shadow:0 24px 52px rgba(0,0,0,.4)}
+.style-card:hover::before{transform:scaleX(1)}
+.sc-kicker{font-family:'Mulish',sans-serif;font-weight:600;font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--aqua);opacity:.85;margin-bottom:.85rem}
+.sc-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.5rem;line-height:1.12;letter-spacing:.01em;color:var(--foam)}
+.sc-desc{font-family:'Mulish',sans-serif;font-weight:400;font-size:.9rem;line-height:1.66;color:rgba(240,248,250,.78);margin-top:.6rem}
+.sc-foot{margin-top:auto;padding-top:1.05rem;border-top:1px solid rgba(174,195,201,.12)}
+.sc-go{display:inline-flex;align-items:center;gap:.45rem;font-family:'Mulish',sans-serif;font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua)}
+.sc-go svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s cubic-bezier(.16,1,.3,1)}
+.style-card:hover .sc-go svg{transform:translate(3px,-3px)}
+/* the one live sample — a quietly featured, clickable card */
+.style-card.feat{background:linear-gradient(165deg,rgba(98,182,198,.1),rgba(174,195,201,.045) 62%);border-color:rgba(98,182,198,.26)}
+.style-card.feat:hover{background:linear-gradient(165deg,rgba(98,182,198,.14),rgba(174,195,201,.06) 62%)}
 /* deepest section — ends the page on the content, not on empty water */
 #styles{min-height:auto;padding-top:clamp(5.5rem,11vh,8.5rem);padding-bottom:clamp(4rem,7vh,5.5rem)}
 #site-footer{position:relative;z-index:1;text-align:center;padding:1.6rem 1.5rem 2.2rem;font-family:'Mulish',sans-serif;font-weight:400;font-size:.76rem;letter-spacing:.08em;color:rgba(236,244,243,.68)}
@@ -142,30 +200,70 @@ body.lock{overflow:hidden;height:100vh}
   .fish,.fish>i,.mote,.school,.school .sf{animation:none!important}
   #snow{display:none}
   html{scroll-behavior:auto}
+  /* Show all reveal/intro content immediately — no slide-in for reduced-motion users */
+  .rv,#hero .anim{opacity:1!important;transform:none!important;transition:none!important}
 }
 
 /* ── RESPONSIVE (desktop-first) ──────────────────────────────────────────── */
 @media(max-width:900px){
   .why-cols{grid-template-columns:1fr;gap:2.6rem;max-width:460px}
-  .style-grid{grid-template-columns:1fr 1fr}
 }
 @media(max-width:680px){
   nav{padding:.8rem 1.4rem}
-  .logo{width:160px;height:90px}
-  .style-grid{grid-template-columns:1fr}
-  .sx{min-height:auto;padding:clamp(5rem,14vh,7rem) 1.4rem}
+  .logo{width:140px;height:79px}
+  .signin{letter-spacing:.16em}
+  .sx{min-height:auto;padding:clamp(3.5rem,9vh,5rem) 1.4rem}
   #hero{padding-top:30vh}
 }
+
+/* ── TESTING DISCLAIMER GATE ──────────────────────────────────────────────────
+   Plain entry gate: solid black, white text, no styling. JS-driven and hidden by
+   default so no-JS visitors are never trapped. ──────────────────────────────── */
+#disclaimer{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;padding:1.5rem;background:#000}
+#disclaimer.show{display:flex}
+body.gate-open{overflow:hidden;height:100vh}
+.dlg{width:min(620px,100%);max-height:90vh;overflow-y:auto;color:#fff;font-family:'Mulish',system-ui,sans-serif}
+.dlg h2{font-size:1.4rem;margin-bottom:1rem}
+.dlg p{font-size:1rem;line-height:1.6;margin-bottom:1rem}
+.dlg ul{margin:0 0 1.2rem 1.2rem;padding:0}
+.dlg li{font-size:1rem;line-height:1.6;margin-bottom:.7rem}
+#dlg-agree{margin-top:.5rem;padding:.7rem 1.4rem;font:inherit;color:#000;background:#fff;border:1px solid #fff;cursor:pointer}
 </style>
+
+<!-- JavaScript disabled / failed: hide the preloader, unlock scroll, and reveal
+     all content so the page is still fully readable and usable. -->
+<noscript><style>
+  #loader{display:none!important}
+  #disclaimer{display:none!important}
+  body.lock{overflow:auto!important;height:auto!important}
+  .rv,#hero .anim{opacity:1!important;transform:none!important}
+</style></noscript>
 </head>
 <body class="lock">
 
 <div id="loader">
-  <img class="load-logo" src="Main-Logo.png" alt="WebSharke">
+  <img class="load-logo" src="images/Main-Logo.png" alt="WebSharke">
+</div>
+
+<!-- ── TESTING DISCLAIMER GATE — shown once before entering the site (JS-driven;
+     hidden when JS is unavailable so no-JS visitors are never trapped). ──────── -->
+<div id="disclaimer" role="dialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-intro">
+  <div class="dlg">
+    <h2 id="dlg-title">This site is in testing</h2>
+    <p id="dlg-intro">WebSharke is still in testing. Payments made on this site are real and will be processed — we are not building client websites yet. By continuing, you acknowledge and agree that:</p>
+    <ul>
+      <li>Purchases are non-refundable. WebSharke is not responsible for, and is not required to refund, any money spent on this site.</li>
+      <li>You continue at your own risk. Because the site is in testing mode, WebSharke is not responsible for any issues, errors, or loss that occur here by any means.</li>
+    </ul>
+    <button type="button" id="dlg-agree">I Understand &amp; Continue</button>
+  </div>
 </div>
 
 <!-- background image + ocean fx (all behind content) -->
-<img id="bg" src="Site_bkg.png" alt="" fetchpriority="high" decoding="async">
+<picture>
+  <source srcset="images/Site_bkg.webp" type="image/webp">
+  <img id="bg" src="images/Site_bkg.jpg" alt="" fetchpriority="high" decoding="async">
+</picture>
 <div id="snow"></div>
 <div id="fish"></div>
 
@@ -177,7 +275,7 @@ body.lock{overflow:hidden;height:100vh}
 
 <nav id="navbar">
   <a href="#hero" class="logo" aria-label="Websharke — home"></a>
-  <a href="login" class="signin" id="auth-cta">Sign In</a>
+  <a href="/login" class="signin" id="auth-cta">Sign In</a>
 </nav>
 
 <!-- ── HERO — BEACH / SURFACE (approved) ──────────────────────────────────── -->
@@ -185,7 +283,7 @@ body.lock{overflow:hidden;height:100vh}
   <p class="hero-eyebrow anim">Most local business websites look like they were built in an afternoon.</p>
   <h1 class="hero-title anim a2">Yours <em>won’t.</em></h1>
   <div class="hero-cta anim a3">
-    <a href="onboarding" class="btn btn-sand">Start a Project</a>
+    <a href="/onboarding" class="btn btn-sand">Start a Project</a>
   </div>
 </section>
 
@@ -222,17 +320,48 @@ body.lock{overflow:hidden;height:100vh}
   </div>
 </section>
 
-<!-- ── STYLES — placeholders ──────────────────────────────────────────────── -->
+<!-- ── STYLES — live demo templates, presented intentionally (every card is a real, live sample) ── -->
 <section id="styles" class="sx">
   <div class="wrap">
     <h2 class="sec-title rv">Styles</h2>
+    <p class="styles-lede rv d1">A range of styles we build — each one a live demo below.</p>
     <div class="style-grid">
-      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Clean Local</h3><p class="sc-desc">Simple sites for service businesses that need trust, speed, and clear contact options.</p></div></div>
-      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Bold Landing Page</h3><p class="sc-desc">A focused one-page site built to explain the offer and push visitors toward action.</p></div></div>
-      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Premium Dark</h3><p class="sc-desc">A sharper look for brands that want depth, contrast, and a more polished feel.</p></div></div>
-      <div class="style-card rv d1"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Soft Coastal</h3><p class="sc-desc">Light, calm layouts with warm spacing, clean sections, and a relaxed visual style.</p></div></div>
-      <div class="style-card rv d2"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Modern Portfolio</h3><p class="sc-desc">A visual-first layout for showing work, projects, photos, or case studies.</p></div></div>
-      <div class="style-card rv d3"><div class="sc-bar"><span class="sc-dot"></span><span class="sc-dot"></span><span class="sc-dot"></span></div><div class="sc-body"><h3 class="sc-title">Full Client Portal</h3><p class="sc-desc">A site with login, dashboard access, payments, forms, and backend features.</p></div></div>
+      <a class="style-card feat rv d1" href="/Animations/laptop-teardown" aria-label="3D Laptop Teardown — open interactive demo">
+        <div class="sc-kicker">Interactive · 3D</div>
+        <h3 class="sc-title">3D Laptop Teardown</h3>
+        <p class="sc-desc">A scroll-based 3D build study — a laptop coming apart, layer by layer.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d2" href="/demos/bold" aria-label="Bold creative brand template — open demo">
+        <div class="sc-kicker">Bold · Template</div>
+        <h3 class="sc-title">Creative Studio</h3>
+        <p class="sc-desc">A bold, colorful brand site with real personality — built as a reusable template.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d3" href="/demos/dark" aria-label="Dark mode product template — open demo">
+        <div class="sc-kicker">Dark · Template</div>
+        <h3 class="sc-title">Studio Dark</h3>
+        <p class="sc-desc">A sleek dark-mode product site — deep navy, one clean accent, glass panels.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d1" href="/demos/vintage" aria-label="Vintage editorial template — open demo">
+        <div class="sc-kicker">Retro · Template</div>
+        <h3 class="sc-title">Heritage Press</h3>
+        <p class="sc-desc">A 1970s editorial print look, rebuilt with modern spacing and UX.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d2" href="/demos/photo" aria-label="Photography-led template — open demo">
+        <div class="sc-kicker">Visual · Template</div>
+        <h3 class="sc-title">Lens &amp; Frame</h3>
+        <p class="sc-desc">Image-led and immersive, with minimal copy — built for visual-first brands.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
+      <a class="style-card feat rv d3" href="/demos/cards" aria-label="Card-based modular template — open demo">
+        <div class="sc-kicker">Modular · Template</div>
+        <h3 class="sc-title">Modular</h3>
+        <p class="sc-desc">A clean, scannable card system — modular and dashboard-ready.</p>
+        <div class="sc-foot"><span class="sc-go">View demo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span></div>
+      </a>
     </div>
   </div>
 </section>
@@ -240,6 +369,30 @@ body.lock{overflow:hidden;height:100vh}
 <footer id="site-footer">© 2026 WebSharke. All rights reserved.</footer>
 
 <script>
+// ── TESTING DISCLAIMER GATE ──────────────────────────────────────────────────
+// Shown once (until acknowledged) before the visitor enters the site, locking
+// the page behind it and remembering the acknowledgement so returning visitors
+// are not nagged. JS-only by design (the site is fully usable without JS).
+(function(){
+  const KEY='ws_testing_ack_v1';
+  const gate=document.getElementById('disclaimer');
+  if(!gate)return;
+  let acked=false;
+  try{acked=localStorage.getItem(KEY)==='yes'}catch(e){}
+  if(acked)return;                                  // already agreed — never show again
+  const agree=document.getElementById('dlg-agree');
+  gate.classList.add('show');
+  document.body.classList.add('gate-open');
+  requestAnimationFrame(()=>{try{agree.focus()}catch(e){}});
+  // single focusable control — keep keyboard focus inside the gate while it's open
+  gate.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();try{agree.focus()}catch(_){}}});
+  agree.addEventListener('click',()=>{
+    try{localStorage.setItem(KEY,'yes')}catch(e){}
+    gate.classList.remove('show');
+    document.body.classList.remove('gate-open');
+  });
+})();
+
 // ── PRELOADER ──────────────────────────────────────────────────────────────
 (function(){
   const l=document.getElementById('loader');
@@ -259,7 +412,7 @@ body.lock{overflow:hidden;height:100vh}
 const obs=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');obs.unobserve(e.target)}});
 },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
-document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
+document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
 
 // ── MARINE SNOW (generated once, CSS-animated) ───────────────────────────────
 (function(){
@@ -370,13 +523,13 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
     const link=document.querySelector('link[rel="icon"]');
     if(link)link.href=c.toDataURL();
   };
-  img.src='Tab-Logo.png';
+  img.src='images/Tab-Logo.png';
 })();
 </script>
 
 <!-- ── AUTH-AWARE NAV CTA (unchanged behaviour) ────────────────────────────── -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
+<script src="js/vendor/supabase.min.js"></script>
+<script src="js/supabase-config.js"></script>
 <script>
 // Shows "Sign In" for visitors and "View Dashboard" once a client is signed in —
 // only the text + destination change.
@@ -384,8 +537,8 @@ document.querySelectorAll('.rv,.rl,.rr').forEach(el=>obs.observe(el));
   const cta=document.getElementById('auth-cta');
   if(!cta) return;
   function setCta(session){
-    if(session){ cta.textContent='View Dashboard'; cta.setAttribute('href','dashboard'); }
-    else{ cta.textContent='Sign In'; cta.setAttribute('href','login'); }
+    if(session){ cta.textContent='View Dashboard'; cta.setAttribute('href','/dashboard'); }
+    else{ cta.textContent='Sign In'; cta.setAttribute('href','/login'); }
   }
   (async()=>{ const { data }=await db.auth.getSession(); setCta(data.session); })();
   db.auth.onAuthStateChange((event,session)=>setCta(session));

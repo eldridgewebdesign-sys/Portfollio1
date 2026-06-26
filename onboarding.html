@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="Tab-Logo.png" type="image/png" />
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Start Your Project — WebSharke</title>
-
-  <!-- Same brand fonts as login.html / dashboard.html (beach theme) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <meta name="description" content="Tell WebSharke about your business and we build and run your website end to end — design, hosting, backend, forms, and payments. No agency price tag, no DIY headache." />
 
   <style>
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
+    @font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+    @font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/mulish-700.woff2) format('woff2')}
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
       --ink:#11364c;            /* deep navy — primary text */
@@ -36,12 +38,12 @@
     /* Soft wash that calms the waves so the form stays the focus */
     .ocean::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(18,58,73,.16),rgba(18,58,73,.24))}
 
-    /* ── WebSharke logo, top-left (Main-Logo.png masked to navy) ────────────── */
+    /* ── WebSharke logo, top-left (images/Main-Logo.png masked to navy) ────────────── */
     .ws-logo{
       position:fixed;top:20px;left:26px;z-index:20;display:block;
       width:170px;height:95px;background:var(--ink);
-      -webkit-mask:url(Main-Logo.png) left center/contain no-repeat;
-              mask:url(Main-Logo.png) left center/contain no-repeat;
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
       filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
       transition:transform .3s ease;
     }
@@ -81,11 +83,11 @@
       letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);
     }
     .ob-title{
-      font-family:'Cormorant Garamond',serif;font-weight:600;
+      font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;
       font-size:clamp(2.1rem,5vw,3.1rem);color:#0e2f44;line-height:1.08;
       letter-spacing:.01em;margin:.45rem 0 0;
     }
-    .ob-title em{font-style:normal;font-weight:600;color:inherit}
+    .ob-title em{font-style:normal;font-weight:400;color:inherit}
 
     /* Intro callout */
     .intro{
@@ -100,7 +102,7 @@
     .section{padding:1.25rem 0;border-top:1px solid rgba(17,54,76,.18)}
     .section:first-of-type{border-top:none;padding-top:.3rem}
     .section-head{display:flex;align-items:baseline;margin-bottom:1rem}
-    .section-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.45rem;color:#0e2f44;letter-spacing:.01em}
+    .section-title{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;font-size:1.45rem;color:#0e2f44;letter-spacing:.02em}
 
     /* ── Fields ────────────────────────────────────────────────────────────── */
     .field{margin-bottom:1.05rem}
@@ -158,13 +160,15 @@
 
     /* ── Success screen ────────────────────────────────────────────────────── */
     .thanks{text-align:center;padding:1rem .5rem}
-    .thanks h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:2rem;color:#0e2f44;margin-bottom:.8rem}
+    .thanks h2{font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;font-size:2rem;color:#0e2f44;margin-bottom:.8rem}
     .thanks p{color:var(--ink-soft);max-width:460px;margin:0 auto 1.8rem;line-height:1.7}
     .thanks .btn{max-width:260px;margin:0 auto}
 
     @media(max-width:600px){
       .ws-logo{width:120px;height:67px;top:14px;left:16px}
       .ob-signin{top:20px;right:16px;font-size:.95rem;padding:.36rem .8rem}
+      /* Drop the "Already a client?" prefix so the fixed pill can't collide with the logo on phones */
+      .ob-signin-pre{display:none}
       .ob-shell{padding:6rem 1.1rem 2.5rem}
       .ob-card{padding:1.5rem 1.25rem 1.8rem}
       .grid-2{grid-template-columns:1fr;gap:0}
@@ -189,8 +193,8 @@
   </div>
 
   <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
-  <a class="ws-logo" href="/home" aria-label="WebSharke — home"></a>
-  <a class="ob-signin" href="login">Already a client? Sign in →</a>
+  <a class="ws-logo" href="/" aria-label="WebSharke — home"></a>
+  <a class="ob-signin" href="/login"><span class="ob-signin-pre">Already a client? </span>Sign in →</a>
 
   <main class="ob-shell">
     <div class="ob-card">
@@ -369,7 +373,7 @@
         <!-- ---------- Submit + status message ---------- -->
         <div class="submit-row">
           <button type="submit" id="submit-btn" class="btn">Create Account &amp; Submit</button>
-          <p id="message" class="msg"></p>
+          <p id="message" class="msg" role="alert" aria-live="assertive"></p>
         </div>
       </form>
 
@@ -377,7 +381,7 @@
       <div id="thanks" class="thanks" style="display:none">
         <h2 id="thanks-h">Welcome aboard.</h2>
         <p id="thanks-p">Your account is set and your project details are saved. Taking you to your dashboard…</p>
-        <a id="thanks-link" href="dashboard" class="btn">Go to dashboard</a>
+        <a id="thanks-link" href="/dashboard" class="btn">Go to dashboard</a>
       </div>
 
     </div>
@@ -386,8 +390,8 @@
   <!-- ================================================================= -->
   <!-- Supabase v2 + shared config (creates the global `db`)             -->
   <!-- ================================================================= -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
 
   <script>
     // =================================================================
@@ -468,6 +472,14 @@
         document.getElementById("confirm_password").classList.add("invalid");
         if (!firstInvalid) { firstInvalid = "confirm_password"; message = "Passwords do not match."; }
       }
+
+      // Keep aria-invalid in sync with the visual state so screen readers
+      // announce exactly which fields need fixing.
+      ["email", "full_name", "business_name", "cell_phone", "password", "confirm_password"]
+        .forEach((id) => {
+          const el = document.getElementById(id);
+          el.setAttribute("aria-invalid", el.classList.contains("invalid") ? "true" : "false");
+        });
 
       if (firstInvalid) {
         document.getElementById(firstInvalid).focus();
@@ -551,13 +563,19 @@
 
       if (session) {
         // Email confirmation OFF → already signed in → go to dashboard.
-        setTimeout(() => window.location.replace("dashboard"), 1500);
+        // Set the same lightweight session-hint cookie login.html sets, so the
+        // server-side middleware (middleware.js) lets this brand-new client
+        // through to the protected /dashboard instead of bouncing them to
+        // /login. Mirror login.html's goToDashboard() exactly (7-day expiry).
+        document.cookie =
+          "ws_session=1; path=/; SameSite=Lax; Secure; max-age=604800";
+        setTimeout(() => window.location.replace("/dashboard"), 1500);
       } else {
         // Email confirmation ON → must confirm before they can sign in.
         thanksP.textContent =
           "Your account was created and your project details are saved. Please check your email to confirm your account, then sign in.";
         thanksLink.textContent = "Go to sign in";
-        thanksLink.setAttribute("href", "login");
+        thanksLink.setAttribute("href", "/login");
       }
     });
   </script>

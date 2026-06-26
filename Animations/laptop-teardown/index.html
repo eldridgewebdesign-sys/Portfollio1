@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laptop Teardown — WebSharke Engineering</title>
+<meta name="description" content="A scroll-driven product study: a laptop, taken apart layer by layer. WebSharke Engineering.">
+<meta name="theme-color" content="#e9e1d5">
+
+<link rel="icon" href="/images/Tab-Logo.png" type="image/png">
+
+<!-- Decide the experience mode before first paint so neither layout flashes. -->
+<script>
+  (function () {
+    var d = document.documentElement;
+    d.classList.remove('no-js');
+    d.classList.add('js');
+    try {
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('anim');
+    } catch (e) { d.classList.add('anim'); }
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  })();
+</script>
+
+<!-- Preload the animation assets (backdrop + closed laptop + the four product layers) so nothing pops in. -->
+<link rel="preload" as="image" href="/images/Laptop/interior.jpg">
+<link rel="preload" as="image" href="/images/Laptop/closed.png">
+<link rel="preload" as="image" href="/images/Laptop/layer-lid.png">
+<link rel="preload" as="image" href="/images/Laptop/layer-components.png">
+<link rel="preload" as="image" href="/images/Laptop/layer-board.png">
+<link rel="preload" as="image" href="/images/Laptop/layer-chassis.png">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/Animations/laptop-teardown/vendor/fonts/cormorantgaramond-600.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2">
+
+<style>
+/* ── Vendored editorial fonts (no external CDN) ─────────────────────────────── */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;
+  src:url(/Animations/laptop-teardown/vendor/fonts/cormorantgaramond-600.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;
+  src:url(/Animations/laptop-teardown/vendor/fonts/cormorantgaramond-500i.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;
+  src:url(/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+/* Mulish 500 is byte-identical to 400 in this vendored set → one shared file. */
+@font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;
+  src:url(/Animations/laptop-teardown/vendor/fonts/mulish-400.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+
+/* ── Tokens ─────────────────────────────────────────────────────────────────── */
+:root{
+  --cream:#e9e1d5;
+  --ink:#2a2620;
+  --ink-2:#4a4339;
+  --stone:#5d5448;          /* ~5.7:1 on cream, WCAG AA */
+  --line:rgba(42,38,32,.16);
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Mulish',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+}
+
+*{box-sizing:border-box}
+/* overflow-x:clip (not hidden) so body never becomes the sticky stage's scroll ancestor. */
+html,body{margin:0;padding:0;max-width:100%;overflow-x:clip}
+body{
+  font-family:var(--sans); color:var(--ink); background:var(--cream);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+img{display:block;max-width:100%}
+a{color:inherit}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BASE = STATIC LAYOUT  (no JS / prefers-reduced-motion)
+   Calm, readable stacked fallback over the fixed interior. The .anim overrides
+   below turn this into the pinned, scroll-scrubbed teardown.
+   ════════════════════════════════════════════════════════════════════════════ */
+.scene{position:relative}
+.stage{position:relative}
+
+.bg{
+  position:fixed; inset:0; z-index:-2;
+  background:#e9e1d5 url(/images/Laptop/interior.jpg) center center / cover no-repeat;
+}
+.bg::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(to bottom, rgba(233,225,213,.35) 0%, rgba(233,225,213,0) 22% 78%, rgba(233,225,213,.55) 100%);
+}
+
+.intro{min-height:92vh; display:grid; place-items:center; text-align:center; padding:10vh 6vw}
+.kicker{
+  margin:0 0 clamp(1.4rem,3vw,2.4rem); font-family:var(--sans); font-weight:500; color:var(--stone);
+  text-transform:uppercase; letter-spacing:.34em; font-size:clamp(.62rem,1.5vw,.8rem); padding-left:.34em;
+}
+.wordmark{
+  margin:0; color:var(--ink); font-family:var(--serif); font-weight:600; line-height:.92;
+  text-transform:uppercase; white-space:nowrap;
+  font-size:min(9rem,10.2vw); letter-spacing:.09em; padding-left:.09em;
+}
+.sub{
+  margin:clamp(1rem,2.4vw,1.8rem) 0 0; font-family:var(--sans); font-weight:500; color:var(--ink-2);
+  text-transform:uppercase; letter-spacing:.52em; font-size:clamp(.72rem,2vw,1.05rem); padding-left:.52em;
+}
+
+/* The animated layer stack is hidden in static mode; the static figures show instead. */
+.product{display:none}
+.static-frames{margin:0; display:block}
+.static-frames img{
+  width:min(900px,86vw); height:auto; margin:0 auto clamp(2rem,6vh,4rem);
+  filter:drop-shadow(0 26px 40px rgba(40,33,24,.16));
+}
+.static-frames figcaption{display:none}
+
+.cap-end{
+  margin:0; min-height:30vh; display:grid; place-items:center; padding:6vh 6vw;
+  font-family:var(--serif); font-style:italic; font-weight:500; color:var(--ink);
+  font-size:clamp(1.4rem,4vw,2.6rem);
+}
+.cue,.bar{display:none}
+
+/* ── Outro ──────────────────────────────────────────────────────────────────── */
+.outro{
+  position:relative; z-index:1; background:var(--cream);
+  min-height:64vh; display:grid; place-items:center; text-align:center;
+  padding:clamp(5rem,12vh,9rem) 6vw; border-top:1px solid var(--line);
+}
+.outro-line{
+  margin:0 auto; max-width:22ch; color:var(--ink);
+  font-family:var(--serif); font-style:italic; font-weight:500; line-height:1.12; font-size:clamp(1.5rem,4vw,2.6rem);
+}
+.outro-eyebrow{
+  margin:0 0 clamp(1.4rem,3vw,2rem); color:var(--stone); font-weight:500;
+  text-transform:uppercase; letter-spacing:.34em; font-size:clamp(.62rem,1.4vw,.78rem); padding-left:.34em;
+}
+.cta{
+  display:inline-flex; align-items:center; gap:.5em; margin-top:clamp(2.2rem,4.5vw,3.2rem);
+  font-family:var(--sans); font-weight:500; text-decoration:none; color:var(--ink);
+  text-transform:uppercase; letter-spacing:.22em; font-size:.74rem;
+  padding-bottom:.4em; border-bottom:1px solid var(--line); transition:border-color .35s ease;
+}
+.cta svg{width:1.05em;height:1.05em;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s ease}
+.cta:hover,.cta:focus-visible{border-color:var(--ink)}
+.cta:hover svg,.cta:focus-visible svg{transform:translateX(3px)}
+
+.site-foot{
+  background:var(--cream); position:relative; z-index:1; text-align:center;
+  color:var(--stone); font-size:.78rem; letter-spacing:.06em; padding:2.4rem 6vw; border-top:1px solid var(--line);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ENHANCED = PINNED, SCROLL-SCRUBBED TEARDOWN  (.anim)
+   One sticky stage. Four registered layer images are stacked and the scroll
+   position drives each layer's translateY, so the laptop physically comes apart.
+   Nothing cross-fades; opacity is only used to reveal the product group once.
+   ════════════════════════════════════════════════════════════════════════════ */
+.anim .scene{height:620vh}
+.anim .stage{
+  position:sticky; top:0; height:100vh; height:100svh; overflow:hidden;
+  /* minmax(0,1fr) pins the track to the viewport width so an over-wide product
+     (mobile uses a frame wider than the screen) overflows symmetrically and stays
+     centred, instead of an auto track growing and anchoring it to the left edge. */
+  display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr);
+  place-items:center; padding-bottom:6vh;       /* nudge the centred product up into the light */
+}
+.anim .bg{position:absolute; z-index:0}
+
+/* Intro wordmark sits in the upper area, above the already-visible closed
+   laptop, and lifts away on scroll — it does not cover the product. */
+.anim .intro{grid-area:1/1; min-height:0; padding:clamp(1.5rem,5vw,4rem); padding-top:clamp(7vh,11vh,15vh); z-index:6; align-self:start}
+
+/* Static fallback figures off in animated mode */
+.anim .static-frames{display:none}
+
+/* The layered product — the actual animation. closed.png is the REAL
+   starting visual (the clean closed laptop). The four teardown layers begin
+   hidden and only appear once the teardown begins, so no scattered components
+   or seams are ever seen behind / around the closed laptop. */
+.anim .product{
+  display:block; grid-area:1/1; align-self:center; position:relative;
+  width:min(1060px,92vw); aspect-ratio:1366/768; opacity:1; z-index:3;
+}
+.anim .product .layer{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
+  will-change:transform,clip-path; backface-visibility:hidden;
+}
+/* Subtle depth on the silver panels + the closed laptop only; NONE on the
+   busy board/components layers — per-part shadows there read as the
+   "floating black spots" we are fixing. */
+.anim .l-closed,.anim .l-lid,.anim .l-board,.anim .l-chassis{
+  filter:drop-shadow(0 18px 30px rgba(40,33,24,.16));
+}
+.anim .l-chassis{z-index:1}
+.anim .l-board{z-index:2}
+.anim .l-components{z-index:3}
+.anim .l-lid{z-index:4}
+.anim .l-closed{z-index:5}
+/* At rest (and before the script runs) only the closed laptop is visible.
+   The teardown layers are kept out of sight with VISIBILITY (not opacity) so
+   nothing fades; they switch on as a single discrete step the instant the
+   teardown begins. The two inner layers also start clipped to a zero-height
+   slit at the seam, so even once visible they reveal by a transform-driven
+   wipe — never an opacity fade. */
+.anim .l-lid,.anim .l-board,.anim .l-chassis,.anim .l-components{visibility:hidden}
+.anim .product.teardown .l-lid,
+.anim .product.teardown .l-board,
+.anim .product.teardown .l-chassis,
+.anim .product.teardown .l-components{visibility:visible}
+.anim .l-components,.anim .l-board{clip-path:inset(50% 0 50% 0)}   /* zero slit at rest */
+.anim .l-closed{visibility:visible}
+
+/* End line — pinned low, over the held teardown */
+.anim .cap-end{
+  position:absolute; left:0; right:0; bottom:clamp(7vh,10vh,12vh); top:auto; z-index:7;
+  min-height:0; padding:0 8vw; opacity:0;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width:640px){
+  .wordmark{font-size:9vw; letter-spacing:.04em; padding-left:.04em}
+  .sub{letter-spacing:.4em; padding-left:.4em}
+  /* The laptop sits in the centre ~half of each frame, so we let the (mostly
+     transparent) frame run wider than the viewport — clipped, never scrolling —
+     to keep the product itself a readable size on phones. */
+  .anim .product{width:152vw}
+  .static-frames img{width:92vw}
+  .anim .cap-end{bottom:8vh}
+}
+@media (max-width:400px){
+  .wordmark{letter-spacing:.03em; padding-left:.03em}
+  .anim .product{width:168vw}
+}
+/* Short / landscape viewports: cap the product by height so it never overflows top/bottom */
+@media (max-height:560px){
+  .anim .product{width:auto; height:92vh}
+}
+</style>
+</head>
+
+<body>
+
+<main class="scene">
+  <div class="stage">
+
+    <div class="bg" aria-hidden="true"></div>
+
+    <!-- 1 · Intro wordmark -->
+    <header class="intro">
+      <div class="intro-in">
+        <p class="kicker">Precision website systems</p>
+        <h1 class="wordmark">WebSharke</h1>
+        <p class="sub">Engineering</p>
+      </div>
+    </header>
+
+    <!-- 2 · The laptop. closed.png is the real closed-laptop start; the four
+            registered teardown layers sit beneath it and animate apart. -->
+    <div class="product" role="img"
+         aria-label="A closed laptop that separates layer by layer into its top shell, internal components, mainboard, and base chassis.">
+      <img class="layer l-chassis"    src="/images/Laptop/layer-chassis.png"    alt="" width="1366" height="768" decoding="async">
+      <img class="layer l-board"      src="/images/Laptop/layer-board.png"      alt="" width="1366" height="768" decoding="async">
+      <img class="layer l-components" src="/images/Laptop/layer-components.png" alt="" width="1366" height="768" decoding="async">
+      <img class="layer l-lid"        src="/images/Laptop/layer-lid.png"        alt="" width="1366" height="768" decoding="async">
+      <img class="layer l-closed"     src="/images/Laptop/closed.png"           alt="" width="1366" height="768" decoding="async">
+    </div>
+
+    <!-- Static fallback (no-JS / reduced-motion): two plain frames -->
+    <figure class="static-frames">
+      <img src="/images/Laptop/closed.png" alt="A thin silver laptop, closed." width="1366" height="768" decoding="async">
+      <img src="/images/Laptop/teardown-4.png" alt="The same laptop fully separated into four layers: the top shell, the internal components, the mainboard, and the base chassis." width="1366" height="768" decoding="async">
+    </figure>
+
+    <p class="cap-end">Built layer by layer.</p>
+
+  </div>
+</main>
+
+<!-- ── Outro ──────────────────────────────────────────────────────────────────── -->
+<section class="outro">
+  <p class="outro-eyebrow">WebSharke Engineering</p>
+  <p class="outro-line">A study in how we build.</p>
+  <a class="cta" href="/onboarding">Start a project
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</section>
+
+<footer class="site-foot">© 2026 WebSharke · Engineering</footer>
+
+<!-- ── Scroll choreography (plain JS, no dependencies) ───────────────────────── -->
+<script>
+(function () {
+  var root = document.documentElement;
+  if (!root.classList.contains('anim')) return;   // static layout handles no-JS / reduced-motion
+
+  var scene = document.querySelector('.scene');
+  var el = {
+    intro:      document.querySelector('.intro'),
+    product:    document.querySelector('.product'),
+    closed:     document.querySelector('.l-closed'),
+    lid:        document.querySelector('.l-lid'),
+    components: document.querySelector('.l-components'),
+    board:      document.querySelector('.l-board'),
+    chassis:    document.querySelector('.l-chassis'),
+    capEnd:     document.querySelector('.cap-end')
+  };
+
+  function clamp(v, a, b){ a = a == null ? 0 : a; b = b == null ? 1 : b; return v < a ? a : v > b ? b : v; }
+  function seg(p, a, b){ return clamp((p - a) / (b - a), 0, 1); }
+  function ease(t){ return t * t * (3 - 2 * t); }              // smoothstep
+  function lerp(a, b, t){ return a + (b - a) * t; }
+  function ty(node, pct){ if (node) node.style.transform = 'translate3d(0,' + pct + '%,0)'; }
+
+  /* Each layer's COLLAPSED translateY (% of the product box) brings its band to
+     the frame centre, so all four stack into a closed-laptop slab (lid on top).
+     At full separation every layer returns to 0 = its natural teardown-4 position.
+     Layer band centres (% of frame): lid 20.0, components 38.2, board 54.8, chassis 73.1. */
+  var C_LID = 30.0, C_COMP = 11.8, C_BOARD = -4.8, C_CHASSIS = -23.1;
+
+  var target = 0, cur = 0, running = false;
+
+  function measure(){
+    var total = scene.offsetHeight - window.innerHeight;
+    if (total <= 0){ target = 0; return; }
+    target = clamp(-scene.getBoundingClientRect().top / total, 0, 1);
+  }
+
+  function render(p){
+    /* Intro wordmark — a text overlay, not a laptop layer, so a gentle opacity
+       lift here is fine. It sits above the already-visible closed laptop and
+       lifts away as you scroll in (the laptop itself never fades). */
+    var introOut = ease(seg(p, 0.02, 0.12));
+    el.intro.style.opacity = 1 - introOut;
+    el.intro.style.transform = 'translate3d(0,' + (-6 * introOut) + '%,0)';
+
+    /* The closed laptop (closed.png) is the REAL start and stays cleanly visible
+       until the teardown begins. At p>=0.30 it is swapped — by a single discrete
+       VISIBILITY step, never an opacity fade — for the collapsed layer slab that
+       sits pixel-aligned beneath it, so the swap is invisible. The slab's halves
+       then physically separate. The `teardown` class gates the inner layers on. */
+    var swapped = p >= 0.30;
+    el.closed.style.visibility = swapped ? 'hidden' : 'visible';
+    el.product.classList.toggle('teardown', swapped);
+
+    /* Physical separation — pure translateY of real layers (no cross-fade).
+       Layers start collapsed (stacked at the seam, hidden beneath closed.png)
+       and translate out to the exploded teardown-4 positions: the top/display
+       half (lid) lifts up, the base shell (chassis) drops down. */
+    var open  = ease(seg(p, 0.30, 0.60));   // lid rises + chassis drops (the seam opens)
+    var board = ease(seg(p, 0.34, 0.64));   // mainboard settles into the middle
+    var comps = ease(seg(p, 0.44, 0.74));   // components travel out from the board
+    var fin   = ease(seg(p, 0.82, 0.96));   // slight final spread, then hold
+
+    ty(el.lid,        lerp(C_LID,     0, open)  + (-2.5) * fin);
+    ty(el.chassis,    lerp(C_CHASSIS, 0, open)  + ( 2.5) * fin);
+    ty(el.board,      lerp(C_BOARD,   0, board));
+    ty(el.components, lerp(C_COMP,    0, comps) + (-1.2) * fin);
+
+    /* Internal reveal — NO opacity. The two inner layers are clipped to a band
+       centred on the seam (50% line) that grows symmetrically as the gap opens,
+       so the components/board are WIPED into view from between the separating
+       halves outward, physically connected to the teardown — never popping in.
+       clip-path resolves in each layer's own box, so the inset uses box-%. */
+    var half = 50 * open;                                   // 0 -> 50 (% of product box)
+    var clip = 'inset(' + (50 - half).toFixed(2) + '% 0 ' + (50 - half).toFixed(2) + '% 0)';
+    el.components.style.clipPath = clip;
+    el.board.style.clipPath      = clip;
+
+    /* End line — text overlay, opacity fine here */
+    if (el.capEnd){ var ce = ease(seg(p, 0.86, 0.96)); el.capEnd.style.opacity = ce; el.capEnd.style.transform = 'translate3d(0,' + lerp(14, 0, ce) + 'px,0)'; }
+  }
+
+  function frame(){
+    cur += (target - cur) * 0.12;                  // gentle scrub-smoothing
+    if (Math.abs(target - cur) < 0.0004){ cur = target; render(cur); running = false; return; }
+    render(cur);
+    requestAnimationFrame(frame);
+  }
+  function kick(){ measure(); if (!running){ running = true; requestAnimationFrame(frame); } }
+
+  window.addEventListener('scroll', kick, { passive:true });
+  window.addEventListener('resize', function(){ measure(); cur = target; render(cur); }, { passive:true });
+
+  measure(); cur = target; render(cur);            // first paint, no flash
+})();
+</script>
+
+</body>
+</html>

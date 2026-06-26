@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="description" content="Small-batch cookies, baked fresh to order — a 1970s editorial / magazine-spread site in warm earth tones. No business name, no logo; fully self-contained, no CDN.">
+<meta name="robots" content="noindex">
+<title>Fresh-baked cookies, by the dozen — retro cookie shop (demo)</title>
+
+<!-- ============================================================================
+     FRESH-BAKED COOKIES — a 1970s editorial / magazine-spread page (NO business name)
+     -------------------------------------------------------------------------
+     This is the cookie-shop instance of the retro 1970s-editorial template
+     (sibling: docs/mockups/retro-template.html — the blank, reusable version).
+     The owner asked for NO business name and NO logo, so the brand mark is a
+     nameless chocolate-chip COOKIE emblem (inline SVG) + a descriptive line
+     ("Fresh-baked cookies · by the dozen") — never a proper name. Favicon is a
+     cookie, not a monogram letter.
+
+     ERA & JOB: one era, one job — a well-art-directed 1970s lifestyle-magazine
+     SPREAD. The period work is done by real PRINT MECHANICS (ruled nameplate,
+     folio/kicker system, hairline rules, drop cap, captions, pull-quote, circular
+     stamp) — NOT by filters, faux-distress, torn paper, or sepia.
+
+     RE-SKIN FROM :root: the whole page re-skins from the single :root block below
+     — a rationed 5-colour earth palette (rust, mustard, avocado, chocolate ink,
+     cream) + two surface tones. Editable regions are marked "SWAP:". Bracketed
+     slots still to fill: [City], [Year], and the review names ([Customer Name] /
+     [Neighbourhood]). The cookie flavours + per-dozen prices are PLACEHOLDERS —
+     swap in your real cookie list and prices (e.g. from your dashboard → project
+     details).
+
+     FONTS / ../../fonts CAVEAT: only the repo's vendored woff2 are referenced, as
+     RELATIVE ../../fonts/NAME.woff2 — resolves to the repo /fonts from BOTH
+     docs/mockups/ and demos/<name>/ (both two levels deep), so promoting this file
+     to demos/<name>/index.html needs NO path change. NO Google Fonts, NO CDN,
+     works via file://. SVG colours via fill="currentColor" or a LITERAL hex only —
+     CSS var() does NOT resolve inside SVG presentation attributes.
+
+     A11Y / CONTRAST (inherited from the reviewed template, verified vs the real
+     grain-tinted cream #F3E8D2): ink on cream ~12:1; rust small on cream ~5.2:1;
+     cream on the rust CTA passes; mustard is a contrast trap, so small mustard
+     words use --mustard-text #7E5410 (~5.3:1 on paper) / --mustard-deep #6F4A0E
+     (~4.9:1 on the deeper --surface mat); the rust-band sub-paragraph uses
+     full-strength --paper (~5.58:1), not softened cream. Skip link, :focus-visible
+     ring + forced-colors fallback, prefers-reduced-motion, and the no-JS reveal
+     fallback are all preserved.
+     ========================================================================= -->
+
+<!-- SWAP: favicon = a chocolate-chip cookie (no letter/name). Colours are LITERAL %23 hex — var() does NOT work inside SVG. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23F3E8D2'/><circle cx='16' cy='16' r='11' fill='none' stroke='%232A1E12' stroke-width='2'/><circle cx='12' cy='13' r='1.6' fill='%239E3B1F'/><circle cx='20' cy='12.5' r='1.4' fill='%232A1E12'/><circle cx='16' cy='18' r='1.8' fill='%239E3B1F'/><circle cx='11' cy='19.5' r='1.3' fill='%232A1E12'/><circle cx='21' cy='19.5' r='1.5' fill='%232A1E12'/></svg>">
+
+<style>
+/* ── Fonts: vendored woff2 (relative ../../fonts, no CDN). ───────────────────────
+      Body/UI = Mulish; headline-serif & italic decks = Cormorant Garamond.
+      The 70s "display" voice is ENGINEERED in CSS (Cormorant 700 set large +
+      tight tracking for heads; system-ui 700 caps + tracking for labels) — the
+      look never depends on an installed display font.
+      ⚑ SWAP/MOVE: these ../../fonts paths are relative to THIS file. They resolve
+      from docs/mockups/ AND demos/<name>/ (both 2 levels deep). If you move this
+      to a different depth, re-point them (e.g. /fonts/...). ── */
+@font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(../../fonts/mulish-400.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(../../fonts/mulish-500.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/mulish-600.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/mulish-700.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/cormorantgaramond-700.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(../../fonts/cormorantgaramond-500i.woff2) format('woff2')}
+
+/* ── :root — RE-SKIN THE WHOLE TEMPLATE FROM HERE ───────────────────────────── */
+:root{
+  /* SWAP: brand palette — 5 rationed earth colours + 2 surface tones */
+  --paper:#F3E8D2;        /* page canvas — warm cream (never pure #fff) */
+  --ink:#2A1E12;          /* text + hairline rules — warm chocolate near-black (never #000) */
+  --rust:#9E3B1F;         /* primary accent / CTA fill (carries CREAM text ≥4.5:1) */
+  --mustard:#C9912E;      /* secondary accent / folios-badges — INK TEXT ONLY (too light for white) */
+  --mustard-text:#7E5410; /* darkened mustard for SMALL mustard-coloured WORDS on paper (~5.3:1, with reskin headroom) */
+  --mustard-deep:#6F4A0E; /* deepest mustard for small words on the --surface mat (~4.9:1 on surface, where --mustard-text would dip below 4.5:1) */
+  --avocado:#586134;      /* tertiary accent / story band + seal — CREAM text ≥4.5:1 on the deep tone */
+  --surface:#E7D6B6;      /* raised panels / framed-photo mat — deeper cream */
+
+  /* derived text neutrals */
+  --ink-soft:#4a3c2c;     /* secondary body on cream (still passes) */
+  --cream-soft:rgba(243,232,210,.82); /* secondary text ON dark bands */
+
+  /* structure tokens — the print recipe */
+  --rule:1px;                       /* hairline rule width */
+  --rule-bold:2px;                  /* keyline frame width */
+  --hair:rgba(42,30,18,.28);        /* low-alpha ink for column rules */
+  --hair-strong:rgba(42,30,18,.55);
+  --radius:0px;                     /* squared, print-true corners */
+
+  --focus:0 0 0 3px var(--paper),0 0 0 6px var(--rust);  /* two-layer ink+rust ring (paper gap then rust) */
+  --ease:cubic-bezier(.2,.7,.3,1);
+  --maxw:1180px;
+  --pad:clamp(1.15rem,5vw,2.75rem);
+  --measure:62ch;                   /* readable measure cap */
+  --display:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Mulish',system-ui,sans-serif;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-weight:400;line-height:1.7;
+  font-size:clamp(1rem,.97rem + .2vw,1.0625rem);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:clip;
+}
+img{max-width:100%;display:block}
+h1,h2,h3{margin:0;font-weight:400}
+p{margin:0}
+ul{margin:0}
+
+/* inline links carry BOTH colour AND underline (survives colour-blindness + forced-colors) */
+a{color:var(--ink)}
+.prose a,a.inline{color:var(--rust);text-decoration:underline;text-underline-offset:.18em;
+  text-decoration-thickness:.08em;text-decoration-color:rgba(158,59,31,.5)}
+.prose a:hover,a.inline:hover{text-decoration-color:var(--rust)}
+
+/* ── Type voices ─────────────────────────────────────────────────────────────── */
+/* the gothic magazine-LABEL voice — engineered, never an installed display font */
+.label{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.16em;
+  font-size:.72rem;line-height:1.3;font-variant-numeric:tabular-nums}
+.serif{font-family:var(--serif)}
+.tnum{font-variant-numeric:tabular-nums}
+/* visually-hidden but available to screen readers */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ── Layout helpers ─────────────────────────────────────────────────────────── */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);position:relative;z-index:1}
+.section{padding:clamp(3.25rem,7vw,6rem) 0;position:relative}
+.measure{max-width:var(--measure)}
+.prose p{max-width:var(--measure)}
+.prose p + p{margin-top:1.1em}
+.ink-soft{color:var(--ink-soft)}
+
+/* kicker = small uppercase label with a folio number, set like page furniture */
+.kicker{display:flex;align-items:baseline;gap:.7rem;margin:0 0 1.1rem}
+.kicker .num{font-family:var(--serif);font-weight:700;font-size:1.05rem;line-height:1;
+  color:var(--rust);font-variant-numeric:tabular-nums}
+.kicker .lbl{color:var(--ink)}
+.kicker .lbl::before{content:"";display:inline-block;width:1.6rem;height:var(--rule);
+  background:var(--ink);vertical-align:middle;margin-right:.6rem;opacity:.5}
+
+/* section head — the big 70s serif, set large with tight tracking + leading */
+.head-xl{font-family:var(--serif);font-weight:700;line-height:.97;letter-spacing:-.01em;
+  font-size:clamp(2.1rem,1.4rem + 3.4vw,3.7rem)}
+
+/* hairline horizontal rules (print furniture) */
+.rule{height:var(--rule);background:var(--ink);border:0;opacity:.85;margin:0}
+.rule.thin{opacity:.45}
+
+/* ── Skip link + focus ──────────────────────────────────────────────────────── */
+.skip{position:absolute;left:-9999px;top:0;z-index:200;background:var(--ink);color:var(--paper);
+  padding:.7rem 1.1rem;font-weight:700;text-decoration:none}
+.skip:focus{left:1rem;top:1rem}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shadow:var(--focus)}
+/* forced-colors / Windows high-contrast: box-shadow is dropped there, so add an outline */
+@media (forced-colors:active){a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid CanvasText;outline-offset:3px}}
+
+/* ── Paper grain — barely-there, capped ≤4%, fixed behind everything, never under copy at a hurtful alpha ── */
+.grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size:170px}
+
+/* ── Buttons / CTAs ─────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:.55rem;font-family:var(--sans);font-weight:700;
+  font-size:.95rem;letter-spacing:.02em;text-decoration:none;cursor:pointer;min-height:44px;
+  padding:.8rem 1.55rem;border:var(--rule-bold) solid var(--ink);border-radius:var(--radius);
+  transition:transform .14s var(--ease),box-shadow .14s var(--ease),background .14s var(--ease);
+  background:transparent;color:var(--ink)}
+.btn .arr{transition:transform .25s var(--ease)}
+.btn:hover .arr,.btn:focus-visible .arr{transform:translateX(4px)}
+/* primary — solid rust, CREAM label (cream-on-rust passes); tactile press-in (shadow flips inset) */
+.btn-primary{background:var(--rust);color:var(--paper);border-color:var(--rust);
+  box-shadow:4px 4px 0 var(--ink)}
+.btn-primary:hover,.btn-primary:focus-visible{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.btn-primary:active{transform:translate(4px,4px);box-shadow:inset 3px 3px 0 rgba(42,30,18,.45)}
+/* secondary — visually subordinate keyline, still ≥44px and clearly clickable */
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-ghost:hover,.btn-ghost:focus-visible{background:var(--surface)}
+.btn-lg{padding:1rem 1.9rem;font-size:1.02rem}
+/* a cream button for use ON the rust back-cover band */
+.btn-cream{background:var(--paper);color:var(--ink);border-color:var(--paper);box-shadow:4px 4px 0 rgba(42,30,18,.5)}
+.btn-cream:hover,.btn-cream:focus-visible{transform:translate(2px,2px);box-shadow:2px 2px 0 rgba(42,30,18,.5)}
+.btn-cream:active{transform:translate(4px,4px);box-shadow:inset 3px 3px 0 rgba(42,30,18,.3)}
+
+/* ── Editorial seal / stamp (pure inline SVG; ONE per region, rationed) ──────── */
+.seal{display:inline-block;color:var(--avocado)}     /* currentColor drives the SVG ink */
+.seal svg{display:block;width:100%;height:auto}
+
+/* ── Nameplate header / nav ─────────────────────────────────────────────────── */
+.head{position:sticky;top:0;z-index:100;background:var(--paper);
+  border-bottom:var(--rule) solid transparent;transition:border-color .3s var(--ease)}
+.head.scrolled{border-bottom-color:var(--ink)}
+.head .rule-top{height:var(--rule);background:var(--ink);opacity:.85}
+.nav{max-width:var(--maxw);margin:0 auto;padding:.55rem var(--pad);display:flex;align-items:center;gap:1rem}
+/* No business name (owner direction): the brand lockup is a nameless cookie emblem
+   + a descriptive line — never a proper name. */
+.brand{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:var(--ink);line-height:1}
+.brand .brand-mark{flex:none;width:clamp(38px,2.4vw,46px);height:clamp(38px,2.4vw,46px);color:var(--rust)}
+.brand .brand-mark svg{display:block;width:100%;height:100%}
+.brand .brand-txt{display:flex;flex-direction:column}
+.brand .wordmark{font-family:var(--serif);font-weight:700;font-size:clamp(1.35rem,1.1rem + 1vw,1.8rem);
+  letter-spacing:-.01em;line-height:.95}
+.brand .sub{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.18em;
+  font-size:.56rem;color:var(--mustard-text);margin-top:.25rem;font-variant-numeric:tabular-nums}
+.nav-links{display:flex;align-items:center;gap:1.6rem;margin-left:auto;list-style:none;padding:0}
+.nav-links a{text-decoration:none;font-family:var(--display);font-weight:700;text-transform:uppercase;
+  letter-spacing:.12em;font-size:.74rem;color:var(--ink);position:relative;padding:.35rem 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:-1px;height:var(--rule-bold);width:100%;
+  background:var(--rust);transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
+.nav-links a:hover::after,.nav-links a:focus-visible::after{transform:scaleX(1)}
+.nav-cta{margin-left:.4rem}
+.btn-sm{padding:.55rem 1.1rem;font-size:.8rem;min-height:44px}
+.hamb{display:none;margin-left:auto;width:46px;height:46px;align-items:center;justify-content:center;
+  background:transparent;border:var(--rule-bold) solid var(--ink);cursor:pointer;color:var(--ink)}
+.hamb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.mobile{display:none;border-bottom:var(--rule) solid var(--ink);background:var(--surface)}
+.mobile a{display:block;text-decoration:none;font-family:var(--display);font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.85rem;min-height:44px;display:flex;align-items:center;
+  padding:.85rem var(--pad);border-top:var(--rule) solid var(--hair)}
+.mobile a:first-child{border-top:0}
+
+/* dateline strip under the nameplate — folio furniture */
+.dateline{border-bottom:var(--rule) solid var(--ink)}
+.dateline-inner{max-width:var(--maxw);margin:0 auto;padding:.4rem var(--pad);display:flex;
+  justify-content:space-between;gap:1rem;flex-wrap:wrap;color:var(--ink-soft)}
+.dateline span{display:inline-flex;gap:.4rem}
+.dateline b{font-weight:700;color:var(--ink)}
+
+/* ── HERO — two-column editorial spread ─────────────────────────────────────── */
+#hero{padding-top:clamp(2.25rem,5vw,3.75rem)}
+.hero-grid{display:grid;grid-template-columns:1.18fr .82fr;gap:clamp(1.75rem,4vw,3.25rem);align-items:start}
+.hero-grid > .hero-main{position:relative}
+/* hairline vertical column rule between the two columns (desktop only) */
+.hero-grid > .hero-aside{position:relative}
+.hero-grid > .hero-aside::before{content:"";position:absolute;left:calc(-1 * clamp(.9rem,2vw,1.6rem));
+  top:0;bottom:0;width:var(--rule);background:var(--hair)}
+.hero-h1{font-family:var(--serif);font-weight:700;line-height:.95;letter-spacing:-.012em;
+  font-size:clamp(2.6rem,1.3rem + 7.4vw,6rem);margin:.35rem 0 0;
+  text-shadow:1px 1px 0 rgba(42,30,18,.06)}  /* the ONE faint single hero shadow — no glow */
+.hero-h1 em{font-style:italic;font-weight:500;color:var(--rust)}
+.hero-deck{margin-top:clamp(1.1rem,2.4vw,1.6rem);max-width:46ch;
+  font-family:var(--serif);font-style:italic;font-weight:500;
+  font-size:clamp(1.25rem,1.05rem + .8vw,1.7rem);line-height:1.4;color:var(--ink-soft)}
+.hero-intro{margin-top:1.25rem;max-width:var(--measure)}
+.hero-actions{margin-top:clamp(1.5rem,3vw,2.1rem);display:flex;gap:.9rem;flex-wrap:wrap;align-items:center}
+
+/* framed-photo placeholder block — cream mat + ink keyline + halftone fill + caption strip.
+   ⚠ SWAP NOTE: this is a CSS/SVG PLACEHOLDER ONLY. Do NOT drop in a remote <img>
+   (that breaks the no-network / file:// rule). Re-skin via the tokens; if a real
+   image is ever needed, it must be a LOCAL asset shipped with the template. */
+.frame{background:var(--surface);border:var(--rule-bold) solid var(--ink);padding:.85rem}
+.frame .plate{position:relative;border:var(--rule) solid var(--ink);aspect-ratio:4/5;overflow:hidden;
+  background:
+    /* faint halftone dots confined to THIS plate (and the seal) — never broad backgrounds */
+    radial-gradient(circle at center, rgba(42,30,18,.22) 22%, transparent 23%);
+  background-size:9px 9px;background-color:var(--paper)}
+.frame .plate .plate-mark{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.5rem;text-align:center;padding:1.25rem}
+.frame .plate .plate-mark .seal{width:clamp(80px,22vw,118px)}
+.frame .plate .plate-tag{font-family:var(--display);font-weight:700;text-transform:uppercase;
+  letter-spacing:.18em;font-size:.6rem;color:var(--ink-soft)}
+.frame figcaption{display:flex;gap:.6rem;align-items:baseline;padding:.7rem .15rem .15rem;
+  border-top:0;color:var(--ink-soft)}
+/* sits on --surface (deeper than --paper), where --mustard-text drops to ~3.98:1.
+   Use the darker --mustard-deep (#6F4A0E ≈ 4.9:1 on surface) so this small caps caption clears 4.5:1. */
+.frame figcaption .fc-no{font-family:var(--display);font-weight:700;letter-spacing:.1em;
+  font-size:.62rem;text-transform:uppercase;color:var(--mustard-deep);white-space:nowrap}
+.frame figcaption .fc-tx{font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.3}
+
+/* ── STORY — drop cap on an avocado band; body rides an inset cream card ─────── */
+#story{background:var(--avocado);border-top:var(--rule) solid var(--ink);border-bottom:var(--rule) solid var(--ink);color:var(--paper)}
+#story .kicker .lbl{color:var(--paper)}
+#story .kicker .lbl::before{background:var(--paper);opacity:.55}
+#story .kicker .num{color:var(--mustard)}
+.story-grid{display:grid;grid-template-columns:1fr;gap:clamp(1.5rem,3vw,2.25rem)}
+.story-head{color:var(--paper);max-width:24ch;text-shadow:none}
+.story-head em{font-style:italic;font-weight:500;color:var(--mustard)}
+/* sustained reading NEVER on the dark band: body sits on an inset cream card */
+.story-card{background:var(--paper);color:var(--ink);border:var(--rule-bold) solid var(--ink);
+  padding:clamp(1.5rem,3.5vw,2.75rem);box-shadow:8px 8px 0 rgba(42,30,18,.35)}
+.story-columns{display:grid;grid-template-columns:1.5fr 1fr;gap:clamp(1.75rem,4vw,3rem);align-items:start}
+.story-lede{position:relative}
+.story-lede::first-letter{font-family:var(--serif);font-weight:700;float:left;line-height:.7;
+  font-size:4.1em;padding:.05em .12em 0 0;color:var(--rust)}
+.story-lede p{max-width:62ch}
+.story-lede p + p{margin-top:1.05em}
+/* narrow sidebar with a big italic pull-quote, divided by a hairline rule */
+.story-aside{position:relative}
+.story-aside::before{content:"";position:absolute;left:calc(-1 * clamp(.9rem,2vw,1.5rem));top:.3rem;bottom:.3rem;
+  width:var(--rule);background:var(--hair)}
+.pull{font-family:var(--serif);font-style:italic;font-weight:500;line-height:1.18;
+  font-size:clamp(1.5rem,1.1rem + 1.8vw,2.25rem);margin:0;color:var(--ink)}
+.pull .q{color:var(--rust)}
+.pull-by{margin-top:1rem;color:var(--mustard-text);font-family:var(--display);font-weight:700;
+  text-transform:uppercase;letter-spacing:.14em;font-size:.66rem}
+
+/* ── SERVICES — typeset "menu" rows: name + dotted leader + tabular price ───── */
+.svc-top{display:flex;justify-content:space-between;align-items:flex-end;gap:1.5rem;flex-wrap:wrap;
+  margin-bottom:clamp(1.75rem,3.5vw,2.5rem)}
+.svc-top .lead{max-width:40ch;color:var(--ink-soft)}
+.menu{border-top:var(--rule-bold) solid var(--ink);border-bottom:var(--rule-bold) solid var(--ink)}
+.row{display:grid;grid-template-columns:auto 1fr auto;align-items:baseline;gap:1rem;
+  padding:clamp(1.1rem,2.5vw,1.6rem) 0;border-top:var(--rule) solid var(--hair)}
+.row:first-child{border-top:0}
+.row .r-no{font-family:var(--serif);font-weight:700;font-size:1.35rem;line-height:1;color:var(--rust);
+  font-variant-numeric:tabular-nums;min-width:2.2ch}
+.row .r-body{min-width:0}
+.row .r-name{font-family:var(--sans);font-weight:700;font-size:clamp(1.15rem,1rem + .55vw,1.4rem);
+  line-height:1.2;display:flex;align-items:baseline;flex-wrap:wrap;gap:.4rem .9rem}
+/* the dotted leader is the separate .r-lead span (desktop only), set as the elastic
+   grid track between the name block and the price — like a real menu/contents bar */
+.row .r-desc{margin-top:.45rem;color:var(--ink-soft);max-width:60ch}
+.row .r-price{font-family:var(--serif);font-weight:700;font-size:clamp(1.25rem,1rem + .8vw,1.6rem);
+  line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.row .r-price small{display:block;font-family:var(--display);font-weight:700;text-transform:uppercase;
+  letter-spacing:.12em;font-size:.56rem;color:var(--mustard-text);margin-top:.35rem}
+/* desktop dotted leader between the name block and the price */
+.r-lead{display:none}
+@media (min-width:761px){
+  /* 4 tracks: r-no | r-body(auto) | r-lead(1fr elastic leader) | r-price(auto) */
+  .row{grid-template-columns:auto auto 1fr auto}
+  .row .r-body{max-width:46ch}
+  .r-lead{display:block;align-self:end;border-bottom:2px dotted var(--hair-strong);
+    height:.7em;margin:0 .25rem .15em}
+}
+
+/* ── TRUST — press clippings + stats bar + seal ─────────────────────────────── */
+#trust{background:var(--surface);border-top:var(--rule) solid var(--ink);border-bottom:var(--rule) solid var(--ink)}
+.trust-grid{display:grid;grid-template-columns:1.6fr .9fr;gap:clamp(1.75rem,4vw,3rem);align-items:start}
+/* stats "contents bar" — ruled cells, tabular figures */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border:var(--rule-bold) solid var(--ink);
+  background:var(--ink);gap:var(--rule)}
+.stat{background:var(--surface);padding:clamp(1.1rem,2.5vw,1.6rem) 1rem;text-align:center}
+.stat .fig{font-family:var(--serif);font-weight:700;line-height:.95;font-variant-numeric:tabular-nums;
+  font-size:clamp(2.4rem,1.6rem + 3vw,3.6rem);color:var(--ink)}
+.stat .fig .sx{color:var(--rust)}
+.stat .lbl{margin-top:.5rem;color:var(--ink-soft)}
+/* clippings — testimonials as clean "cuttings" with a mustard label tab (no faux-distress) */
+.clips{margin-top:clamp(1.5rem,3vw,2.25rem);display:grid;grid-template-columns:repeat(2,1fr);
+  gap:clamp(1rem,2.5vw,1.6rem)}
+.clip{position:relative;background:var(--paper);border:var(--rule-bold) solid var(--ink);
+  padding:1.5rem 1.4rem 1.35rem}
+.clip .tab{display:inline-block;background:var(--mustard);color:var(--ink);  /* mustard fill carries INK only */
+  font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:.6rem;
+  padding:.3rem .65rem;margin:-1.5rem 0 1rem -1.4rem;border-bottom:var(--rule-bold) solid var(--ink);
+  border-right:var(--rule-bold) solid var(--ink)}
+.clip .stars{color:var(--rust);letter-spacing:.12em;font-size:.95rem}
+.clip blockquote{margin:.55rem 0 1rem;font-family:var(--serif);font-style:italic;font-weight:500;
+  font-size:clamp(1.15rem,1rem + .6vw,1.4rem);line-height:1.35;color:var(--ink)}
+.clip .who{font-family:var(--sans);font-weight:700;font-size:.95rem}
+.clip .role{color:var(--ink-soft);font-size:.85rem}
+/* seal column */
+.seal-card{text-align:center;border:var(--rule) solid var(--ink);background:var(--paper);
+  padding:clamp(1.5rem,3.5vw,2.25rem) 1.5rem}
+.seal-card .seal{width:clamp(140px,40%,190px);margin:0 auto;color:var(--avocado)}
+.seal-card .seal-note{margin-top:1.1rem;font-family:var(--serif);font-style:italic;font-size:1.08rem;
+  line-height:1.4;color:var(--ink-soft);max-width:28ch;margin-left:auto;margin-right:auto}
+
+/* ── FINAL CTA — full-width rust "back cover" band ──────────────────────────── */
+#cta{background:var(--rust);border-top:var(--rule) solid var(--ink);color:var(--paper)}
+.cta-inner{text-align:center;padding:clamp(.5rem,2vw,1.5rem) 0;max-width:24ch;margin:0 auto}
+#cta .kicker{justify-content:center}
+#cta .kicker .lbl{color:var(--paper)}
+#cta .kicker .lbl::before{background:var(--paper);opacity:.7}
+#cta .kicker .num{color:var(--paper)}
+.cta-h{font-family:var(--serif);font-weight:700;line-height:.98;letter-spacing:-.01em;
+  font-size:clamp(2.4rem,1.5rem + 4.4vw,4.6rem);color:var(--paper)}
+.cta-h em{font-style:italic;font-weight:500;color:var(--mustard)}  /* mustard on rust = large display only */
+/* full-strength cream (NOT --cream-soft .82): body copy on the rust band must clear 4.5:1.
+   --paper on --rust = ~5.58:1; the softened token (.82) only measured ~4.29:1 here. */
+.cta-sub{margin:clamp(1rem,2.4vw,1.5rem) auto 0;max-width:46ch;color:var(--paper);
+  font-size:clamp(1rem,.95rem + .35vw,1.12rem)}
+.cta-actions{margin-top:clamp(1.5rem,3vw,2.1rem);display:flex;gap:.9rem;justify-content:center;flex-wrap:wrap}
+
+/* ── FOOTER / colophon — magazine masthead over ruled lines ─────────────────── */
+.foot{background:var(--ink);color:var(--paper)}
+.foot .rule{background:var(--paper);opacity:.85}
+.foot-inner{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:clamp(1.5rem,4vw,3rem);
+  padding:clamp(2.25rem,5vw,3.5rem) 0 1.75rem;align-items:start}
+.foot .wordmark{font-family:var(--serif);font-weight:700;font-size:1.55rem;color:var(--paper);line-height:1}
+.foot .colophon{margin-top:.7rem;color:var(--cream-soft);max-width:34ch;font-size:.95rem}
+.foot .col-h{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.16em;
+  font-size:.68rem;color:var(--mustard);margin:0 0 .9rem}
+.foot-nav{list-style:none;padding:0;display:grid;gap:.55rem}
+.foot-nav a{text-decoration:none;color:var(--cream-soft);font-size:.95rem;display:inline-block;min-height:24px}
+.foot-nav a:hover,.foot-nav a:focus-visible{color:var(--paper);text-decoration:underline;text-underline-offset:.18em}
+.foot-bottom{border-top:var(--rule) solid rgba(243,232,210,.22);padding:1.1rem 0 2rem;
+  display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:rgba(243,232,210,.62);font-size:.82rem}
+.foot-bottom .label{color:rgba(243,232,210,.7)}
+
+/* ── Reveal-on-scroll (visible-by-default if JS/IO never fires) ──────────────── */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.rv.on{opacity:1;transform:none}
+.d1{transition-delay:.06s}.d2{transition-delay:.12s}.d3{transition-delay:.18s}.d4{transition-delay:.24s}
+
+/* ── Responsive: collapse the spread to one measure-capped column under 760px ── */
+@media (max-width:1000px){
+  .trust-grid{grid-template-columns:1fr}
+  .seal-card{max-width:460px}
+}
+@media (max-width:760px){
+  .nav-links,.nav-cta{display:none}
+  .hamb{display:flex}
+  /* spread → single stacked column; the framed-photo block moves ABOVE the headline */
+  .hero-grid{grid-template-columns:1fr;gap:1.75rem}
+  .hero-aside{order:-1}
+  .hero-aside::before{display:none}      /* hairline column rules hide on mobile */
+  .frame{max-width:420px}
+  .hero-deck,.hero-h1{max-width:none}
+  .story-columns{grid-template-columns:1fr;gap:1.75rem}
+  .story-aside::before{display:none}
+  .pull{font-size:1.5rem}
+  .stats{grid-template-columns:1fr}
+  .clips{grid-template-columns:1fr}
+  .foot-inner{grid-template-columns:1fr;gap:2rem}
+}
+@media (max-width:520px){
+  .row{grid-template-columns:auto 1fr;column-gap:.8rem}
+  .row .r-price{grid-column:1 / -1;text-align:left;margin-top:.55rem}
+  .row .r-price small{display:inline;margin:0 0 0 .5rem}
+  .story-card{box-shadow:5px 5px 0 rgba(42,30,18,.35)}
+  .story-lede::first-letter{font-size:3.4em}
+}
+
+/* ── Reduced motion: freeze everything; reveal all content ───────────────────── */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1!important;transform:none!important}
+}
+</style>
+
+<!-- No-JS safety: never leave revealed content hidden -->
+<noscript><style>.rv{opacity:1;transform:none}</style></noscript>
+</head>
+
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ════════ NAMEPLATE HEADER / NAV ════════ -->
+<header class="head" id="top">
+  <div class="rule-top" aria-hidden="true"></div>
+  <nav class="nav" aria-label="Primary">
+    <!-- Brand lockup: a nameless cookie emblem + a descriptive line (NO business name, by owner direction) -->
+    <a class="brand" href="#top" aria-label="Home — fresh-baked cookies">
+      <span class="brand-mark" aria-hidden="true">
+        <!-- chocolate-chip cookie, currentColor = rust -->
+        <svg viewBox="0 0 48 48" role="img">
+          <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2.5"/>
+          <circle cx="18" cy="19" r="2.4" fill="currentColor"/>
+          <circle cx="30" cy="18" r="2" fill="currentColor"/>
+          <circle cx="24" cy="27" r="2.6" fill="currentColor"/>
+          <circle cx="17" cy="29" r="1.9" fill="currentColor"/>
+          <circle cx="32" cy="29" r="2.1" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="brand-txt">
+        <!-- SWAP: descriptor (NOT a name) -->
+        <span class="wordmark">Fresh-baked&nbsp;cookies</span>
+        <span class="sub">By the dozen · baked to order</span>
+      </span>
+    </a>
+    <ul class="nav-links">
+      <!-- SWAP: nav labels + #targets (use clean routes, not .html, when promoted) -->
+      <li><a href="#story">Our Story</a></li>
+      <li><a href="#services">The Cookies</a></li>
+      <li><a href="#trust">Reviews</a></li>
+    </ul>
+    <a class="btn btn-primary btn-sm nav-cta" href="#cta">Order cookies <span class="arr" aria-hidden="true">→</span></a>
+    <button class="hamb" id="hamb" aria-label="Menu" aria-expanded="false" aria-controls="mobile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </nav>
+  <div class="mobile" id="mobile" hidden>
+    <a href="#story">Our Story</a>
+    <a href="#services">The Cookies</a>
+    <a href="#trust">Reviews</a>
+    <a href="#cta">Order cookies →</a>
+  </div>
+  <!-- Dateline / folio strip — bakery furniture (no name) -->
+  <div class="dateline" aria-hidden="true">
+    <div class="dateline-inner label">
+      <!-- SWAP: bakery strip -->
+      <span>Baked fresh · <b>[City]</b></span>
+      <span>By the dozen · to order</span>
+      <span>Real butter · <b>no</b> preservatives</span>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ════════ 1 · HERO (two-column editorial spread) ════════ -->
+  <section id="hero" class="section" aria-labelledby="hero-h1">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-main">
+          <!-- SWAP: kicker — folio number + section label -->
+          <p class="kicker rv"><span class="num serif tnum">01</span><span class="label lbl">Fresh Out The Oven</span></p>
+          <!-- SWAP: headline. The italic word is the rust accent — keep it short. -->
+          <h1 class="hero-h1 serif rv d1" id="hero-h1">We make the cookies.<br>You buy the <em>cookies</em>.</h1>
+          <!-- SWAP: deck (italic Cormorant — the magazine "deck" voice) -->
+          <p class="hero-deck rv d2">Small-batch cookies baked fresh to order in [City] — real butter, real time, and absolutely nothing out of a freezer.</p>
+          <!-- SWAP: short human intro -->
+          <div class="hero-intro prose rv d2">
+            <p class="ink-soft">We bake the morning you order, so every dozen leaves the oven warm. Pick them up the same day or have them dropped at your door — that's the whole idea: <a class="inline" href="#services">good cookies, no fuss</a>.</p>
+          </div>
+          <div class="hero-actions rv d3">
+            <!-- SWAP: CTA labels + destinations -->
+            <a class="btn btn-primary btn-lg" href="#cta">Order a dozen <span class="arr" aria-hidden="true">→</span></a>
+            <a class="btn btn-ghost btn-lg" href="#services">See the cookies</a>
+          </div>
+        </div>
+
+        <!-- Framed-photo PLACEHOLDER (CSS/SVG only — see .frame note in CSS; do NOT add a remote <img>) -->
+        <aside class="hero-aside rv d2">
+          <figure class="frame">
+            <div class="plate">
+              <div class="plate-mark">
+                <!-- SWAP: cookie emblem inside the plate (no letter/name) -->
+                <span class="seal" aria-hidden="true">
+                  <svg viewBox="0 0 120 120" role="img">
+                    <circle cx="60" cy="60" r="48" fill="none" stroke="currentColor" stroke-width="2.5"/>
+                    <circle cx="44" cy="46" r="5.5" fill="currentColor"/>
+                    <circle cx="74" cy="44" r="4.5" fill="currentColor"/>
+                    <circle cx="60" cy="64" r="6" fill="currentColor"/>
+                    <circle cx="42" cy="74" r="4.5" fill="currentColor"/>
+                    <circle cx="80" cy="70" r="5" fill="currentColor"/>
+                    <circle cx="86" cy="54" r="3.2" fill="currentColor"/>
+                  </svg>
+                </span>
+                <span class="plate-tag">Photo of the cookies goes here</span>
+              </div>
+            </div>
+            <!-- SWAP: caption (italic, with a folio number — real print furniture) -->
+            <figcaption>
+              <span class="fc-no">Fig. 01</span>
+              <span class="fc-tx serif">This morning's batch, straight from the oven.</span>
+            </figcaption>
+          </figure>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule thin" aria-hidden="true">
+
+  <!-- ════════ 2 · STORY (drop-cap lede on an avocado band; copy on an inset cream card) ════════ -->
+  <section id="story" class="section" aria-labelledby="story-title">
+    <div class="wrap">
+      <p class="kicker rv"><span class="num serif tnum">02</span><span class="label lbl">The Story</span></p>
+      <div class="story-grid">
+        <h2 class="head-xl story-head serif rv d1" id="story-title">It started with one <em>recipe</em> and a full oven.</h2>
+
+        <div class="story-card rv d2">
+          <div class="story-columns">
+            <!-- SWAP: the story. Drop cap is automatic on the first letter. -->
+            <div class="story-lede prose">
+              <p>It began the way most good things in a kitchen do — with one recipe, written on the back of an envelope, and an oven that ran a little hot. The first batch was for friends. The second batch was because they asked again.</p>
+              <p>Word got around the way it does about good cookies. People wanted a dozen, then two, then a box for the office. So we started baking on purpose — same recipe, same real butter, same stubborn refusal to rush a cookie out of the oven before it's ready.</p>
+              <p>We're still small on purpose. Small enough to bake your order the morning you want it, and to remember that you like the edges a little crisp. We'd rather be the cookies you bring to the party than the ones that sat in a bag all week.</p>
+            </div>
+            <!-- narrow sidebar: a big italic pull-quote (ONE per section) -->
+            <aside class="story-aside">
+              <blockquote class="pull serif">“Real butter. <span class="q">No shortcuts.</span>”</blockquote>
+              <p class="pull-by">— the only rule, since the first batch</p>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 3 · SERVICES (typeset "menu" rows + dotted leaders + tabular prices) ════════ -->
+  <section id="services" class="section" aria-labelledby="svc-title">
+    <div class="wrap">
+      <p class="kicker rv"><span class="num serif tnum">03</span><span class="label lbl">The Cookies</span></p>
+      <div class="svc-top">
+        <h2 class="head-xl serif rv d1" id="svc-title">The cookies,<br>priced by the dozen.</h2>
+        <p class="lead rv d2">Order a single dozen or mix a box. Everything is baked to order — tell us when you need them and we'll have them ready warm.</p>
+      </div>
+
+      <!-- SWAP: cookie menu. These flavours + per-dozen prices are PLACEHOLDERS — replace with your
+           real cookie list and prices (e.g. from your dashboard → project details). Add/remove a
+           <div class="row"> freely; numbering is manual (tnum keeps them aligned). -->
+      <div class="menu">
+        <div class="row rv">
+          <span class="r-no serif tnum" aria-hidden="true">01</span>
+          <div class="r-body">
+            <h3 class="r-name">Chocolate Chip</h3>
+            <p class="r-desc">The classic. Brown butter, a little sea salt, and real chocolate chips in every bite.</p>
+          </div>
+          <span class="r-lead" aria-hidden="true"></span>
+          <p class="r-price serif tnum">$24<small>per dozen</small></p>
+        </div>
+
+        <div class="row rv d1">
+          <span class="r-no serif tnum" aria-hidden="true">02</span>
+          <div class="r-body">
+            <h3 class="r-name">Oatmeal Raisin</h3>
+            <p class="r-desc">Chewy, warmly spiced, and unfashionably good. Soft in the middle, crisp at the edge.</p>
+          </div>
+          <span class="r-lead" aria-hidden="true"></span>
+          <p class="r-price serif tnum">$22<small>per dozen</small></p>
+        </div>
+
+        <div class="row rv d2">
+          <span class="r-no serif tnum" aria-hidden="true">03</span>
+          <div class="r-body">
+            <h3 class="r-name">Peanut Butter</h3>
+            <p class="r-desc">Soft centers, criss-cross tops, and a proper peanut hit. A quiet favourite.</p>
+          </div>
+          <span class="r-lead" aria-hidden="true"></span>
+          <p class="r-price serif tnum">$24<small>per dozen</small></p>
+        </div>
+
+        <div class="row rv d2">
+          <span class="r-no serif tnum" aria-hidden="true">04</span>
+          <div class="r-body">
+            <h3 class="r-name">Snickerdoodle</h3>
+            <p class="r-desc">Rolled in cinnamon sugar, baked just past golden. The one that disappears first.</p>
+          </div>
+          <span class="r-lead" aria-hidden="true"></span>
+          <p class="r-price serif tnum">$22<small>per dozen</small></p>
+        </div>
+
+        <div class="row rv d2">
+          <span class="r-no serif tnum" aria-hidden="true">05</span>
+          <div class="r-body">
+            <h3 class="r-name">Baker's Mixed Box</h3>
+            <p class="r-desc">Can't choose? A baker's pick of the day's best — great for offices, parties and gifts.</p>
+          </div>
+          <span class="r-lead" aria-hidden="true"></span>
+          <p class="r-price serif tnum">$28<small>per box</small></p>
+        </div>
+        <!-- SWAP: add a 6th <div class="row"> here for a seasonal special; the layout keeps working. -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 4 · TRUST (press clippings + stats bar + editorial seal) ════════ -->
+  <section id="trust" class="section" aria-labelledby="trust-title">
+    <div class="wrap">
+      <p class="kicker rv"><span class="num serif tnum">04</span><span class="label lbl">Word Of Mouth</span></p>
+      <div class="trust-grid">
+        <div>
+          <h2 class="head-xl serif rv d1" id="trust-title">What the<br>neighbours say.</h2>
+
+          <!-- SWAP: stats. data-count animates up; the real figure shows if JS is off. -->
+          <div class="stats rv d1" style="margin-top:clamp(1.5rem,3vw,2.25rem)">
+            <div class="stat"><div class="fig"><span class="tnum" data-count="12000">12000</span><span class="sx">+</span></div><div class="lbl label">Cookies baked</div></div>
+            <div class="stat"><div class="fig"><span class="tnum" data-count="98">98</span><span class="sx">%</span></div><div class="lbl label">Order again</div></div>
+            <div class="stat"><div class="fig"><span class="sx">No.</span> <span class="tnum" data-count="1">1</span></div><div class="lbl label">By word of mouth</div></div>
+          </div>
+
+          <!-- SWAP: clippings (real customer reviews as clean cuttings with a mustard label tab) -->
+          <div class="clips">
+            <blockquote class="clip rv">
+              <span class="tab">[City] Gazette</span>
+              <div class="stars"><span aria-hidden="true">★★★★★</span><span class="sr-only">5 out of 5</span></div>
+              <p>“Best chocolate chip in town, full stop. We order a dozen every Friday and they never make it to Saturday.”</p>
+              <footer><div class="who">— [Customer Name]</div><div class="role">[Neighbourhood] regular</div></footer>
+            </blockquote>
+            <blockquote class="clip rv d1">
+              <span class="tab">Office Order</span>
+              <div class="stars"><span aria-hidden="true">★★★★★</span><span class="sr-only">5 out of 5</span></div>
+              <p>“Brought a mixed box to work and instantly became everyone's favourite coworker. Still warm when they arrived.”</p>
+              <footer><div class="who">— [Customer Name]</div><div class="role">Repeat customer</div></footer>
+            </blockquote>
+          </div>
+        </div>
+
+        <!-- ONE seal, on the grid — the rationed ornament -->
+        <aside class="seal-card rv d2">
+          <span class="seal" aria-hidden="true">
+            <!-- Nameless cookie stamp: words on the curve + a chocolate-chip cookie at the centre. currentColor drives the ink. -->
+            <svg viewBox="0 0 200 200" role="img" aria-label="Fresh-baked stamp">
+              <defs>
+                <path id="sealTop" d="M 100,100 m -74,0 a 74,74 0 1 1 148,0" fill="none"/>
+                <path id="sealBot" d="M 100,100 m -66,0 a 66,66 0 1 0 132,0" fill="none"/>
+              </defs>
+              <circle cx="100" cy="100" r="92" fill="none" stroke="currentColor" stroke-width="2.5"/>
+              <circle cx="100" cy="100" r="80" fill="none" stroke="currentColor" stroke-width="1"/>
+              <circle cx="100" cy="100" r="50" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              <text font-family="system-ui,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="3" fill="currentColor">
+                <textPath href="#sealTop" startOffset="50%" text-anchor="middle">★ FRESH · BAKED · DAILY ★</textPath>
+              </text>
+              <text font-family="system-ui,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="3" fill="currentColor">
+                <textPath href="#sealBot" startOffset="50%" text-anchor="middle">BY THE DOZEN — TO ORDER</textPath>
+              </text>
+              <!-- chocolate-chip cookie at the centre (no letter/name) -->
+              <circle cx="90" cy="92" r="5" fill="currentColor"/>
+              <circle cx="110" cy="90" r="4" fill="currentColor"/>
+              <circle cx="100" cy="106" r="5.5" fill="currentColor"/>
+              <circle cx="86" cy="110" r="4" fill="currentColor"/>
+              <circle cx="114" cy="108" r="4.5" fill="currentColor"/>
+            </svg>
+          </span>
+          <!-- SWAP: seal motto (italic) -->
+          <p class="seal-note serif">“Baked to order. Never frozen, never yesterday's.”</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 5 · FINAL CTA (full-width rust back-cover band) ════════ -->
+  <section id="cta" class="section" aria-labelledby="cta-h">
+    <div class="wrap">
+      <div class="cta-inner">
+        <p class="kicker rv"><span class="num serif tnum">05</span><span class="label lbl">Last Call</span></p>
+        <!-- SWAP: closing headline -->
+        <h2 class="cta-h serif rv d1" id="cta-h">Hungry yet? <em>Order a batch.</em></h2>
+        <p class="cta-sub rv d2">Tell us what you'd like and when you need it. We'll bake it fresh and let you know the moment it's out of the oven and ready to go.</p>
+        <div class="cta-actions rv d3">
+          <!-- SWAP: final CTA labels + destinations. Cream button reads clearly on the rust band. -->
+          <a class="btn btn-cream btn-lg" href="#top">Order cookies <span class="arr" aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost btn-lg" href="#services" style="border-color:var(--paper);color:var(--paper)">See the cookies</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ════════ FOOTER / COLOPHON ════════ -->
+<footer class="foot">
+  <div class="rule" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="foot-inner">
+      <div>
+        <!-- Footer brand: nameless cookie emblem + a descriptor line (no business name) -->
+        <span class="brand-mark" aria-hidden="true" style="display:inline-block;width:34px;height:34px;color:var(--paper)">
+          <svg viewBox="0 0 48 48" role="img">
+            <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <circle cx="18" cy="19" r="2.4" fill="currentColor"/>
+            <circle cx="30" cy="18" r="2" fill="currentColor"/>
+            <circle cx="24" cy="27" r="2.6" fill="currentColor"/>
+            <circle cx="17" cy="29" r="1.9" fill="currentColor"/>
+            <circle cx="32" cy="29" r="2.1" fill="currentColor"/>
+          </svg>
+        </span>
+        <p class="colophon">Small-batch cookies, baked fresh to order in [City]. Real butter, real time. Set in Cormorant Garamond &amp; Mulish.</p>
+      </div>
+      <nav aria-label="Footer — sections">
+        <h3 class="col-h">The Menu</h3>
+        <ul class="foot-nav">
+          <li><a href="#story">Our Story</a></li>
+          <li><a href="#services">The Cookies</a></li>
+          <li><a href="#trust">Reviews</a></li>
+          <li><a href="#cta">Order cookies</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Footer — contact">
+        <h3 class="col-h">Get In Touch</h3>
+        <ul class="foot-nav">
+          <!-- SWAP: contact placeholders -->
+          <li><a href="#cta">orders@example.com</a></li>
+          <li><a href="#cta">[City] — pickup &amp; local delivery</a></li>
+          <li><a href="#top">Back to top ↑</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="foot-bottom">
+      <span class="label">© [Year] — fresh-baked cookies. Swap everything in [brackets].</span>
+      <span class="label">Demo page · placeholder content · no business name (by request)</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  /* Mobile menu */
+  var hamb = document.getElementById("hamb"), mobile = document.getElementById("mobile");
+  if(hamb && mobile){
+    hamb.addEventListener("click", function(){
+      var open = mobile.hasAttribute("hidden") === false;
+      if(open){ mobile.setAttribute("hidden",""); hamb.setAttribute("aria-expanded","false"); }
+      else { mobile.removeAttribute("hidden"); hamb.setAttribute("aria-expanded","true"); }
+    });
+    mobile.addEventListener("click", function(e){
+      if(e.target.tagName === "A"){ mobile.setAttribute("hidden",""); hamb.setAttribute("aria-expanded","false"); }
+    });
+  }
+
+  /* Sticky-header hairline once scrolled */
+  var head = document.querySelector(".head");
+  var onScroll = function(){ if(head) head.classList.toggle("scrolled", window.scrollY > 8); };
+  window.addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+  /* Reveal-on-scroll — visible-by-default if reduced-motion or IO is unavailable */
+  var rv = Array.prototype.slice.call(document.querySelectorAll(".rv"));
+  if(reduce || !("IntersectionObserver" in window)){
+    rv.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add("on"); io.unobserve(en.target); }
+      });
+    }, {threshold:0.14, rootMargin:"0px 0px -8% 0px"});
+    rv.forEach(function(el){ io.observe(el); });
+  }
+
+  /* Count-up stats (final value already in the DOM, so no-JS / reduced-motion shows it) */
+  var nums = Array.prototype.slice.call(document.querySelectorAll("[data-count]"));
+  function countUp(el){
+    var target = parseInt(el.getAttribute("data-count"), 10);
+    if(isNaN(target)) return;
+    if(reduce){ el.textContent = target; return; }
+    var start = null, dur = 1100;
+    function step(ts){
+      if(start === null) start = ts;
+      var p = Math.min((ts - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased);
+      if(p < 1) requestAnimationFrame(step);
+    }
+    el.textContent = "0";
+    requestAnimationFrame(step);
+  }
+  if(!reduce && "IntersectionObserver" in window){
+    var sio = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ countUp(en.target); sio.unobserve(en.target); }
+      });
+    }, {threshold:0.5});
+    nums.forEach(function(el){ if(el.getAttribute("data-count")) sio.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>

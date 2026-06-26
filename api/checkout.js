@@ -11,12 +11,17 @@
 // =====================================================================
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { createClient } = require("@supabase/supabase-js");
 
 module.exports = async (req, res) => {
   // ---- CORS headers (set before any response is returned). ----
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST");
+  // Same-origin site only; the access token (below) is the real access control.
+  res.setHeader("Access-Control-Allow-Origin", "https://websharke.com");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Content-Type", "application/json");
+
+  if (req.method === "OPTIONS") return res.status(204).end();
 
   // ---- Only POST is allowed. ----
   if (req.method !== "POST") {
@@ -29,6 +34,31 @@ module.exports = async (req, res) => {
     console.error("STRIPE_SECRET_KEY is not set.");
     return res.status(500).json({ error: "Server is not configured for payments." });
   }
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("Supabase env vars are not set for auth.");
+    return res.status(500).json({ error: "Server is not configured for payments." });
+  }
+
+  // ---- Authenticate the caller: a valid Supabase access token is required. ----
+  // The userId/email used for Stripe come from the VERIFIED token, never from
+  // the client body, so a caller can only ever check out as themselves.
+  const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+  const authHeader = req.headers.authorization || req.headers.Authorization || "";
+  const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  if (!bearer) return res.status(401).json({ error: "You must be signed in to check out." });
+
+  let caller;
+  try {
+    const { data, error } = await supabaseAdmin.auth.getUser(bearer);
+    if (error || !data || !data.user) throw new Error("invalid session");
+    caller = data.user;
+  } catch (e) {
+    return res.status(401).json({ error: "Your session is invalid. Please sign in again." });
+  }
 
   try {
     // ---- Pull the chosen price ID out of the request body. ----
@@ -36,18 +66,21 @@ module.exports = async (req, res) => {
     // handle both rather than assuming req.body is already JSON.
     const body =
       typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-    const { priceId, userId, email } = body;
+    const { priceId } = body;
 
     if (!priceId || typeof priceId !== "string") {
       return res.status(400).json({ error: "A valid priceId is required." });
     }
 
-    if (!userId || typeof userId !== "string") {
-      return res.status(400).json({ error: "A valid userId is required." });
+    // Identity comes from the verified token, not the request body. If the body
+    // carries a userId it must match the caller (defence in depth).
+    if (body.userId && body.userId !== caller.id) {
+      return res.status(403).json({ error: "You can only check out for your own account." });
     }
-
-    if (!email || typeof email !== "string") {
-      return res.status(400).json({ error: "A valid email is required." });
+    const userId = caller.id;
+    const email = caller.email;
+    if (!email) {
+      return res.status(400).json({ error: "Your account is missing an email address. Please contact support." });
     }
 
     // ---- Look up the price to decide the Payment Element flow. ----
@@ -77,8 +110,11 @@ module.exports = async (req, res) => {
       return res.status(200).json({ clientSecret: intent.client_secret });
     }
 
-    let customer = null;
-    let subscription = null;
+    // Reuse the customer for this email if one already exists, otherwise create one.
+    // Declared before the try so the catch block (and the code after it) can
+    // still read them, and with `let` so we never leak an implicit global.
+    let customer;
+    let subscription;
 
     try {
       const existingCustomers = await stripe.customers.list({

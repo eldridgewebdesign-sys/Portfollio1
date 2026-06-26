@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="A photography-heavy, editorial website TEMPLATE with large image-slot placeholders and minimal, elegant copy. No brand, no logo — built to re-skin. Self-contained, no CDN.">
+<meta name="robots" content="noindex">
+<title>Editorial photography — demo template</title>
+
+<!-- ============================================================================
+     Photography-heavy / editorial reusable TEMPLATE
+     - Visual-first: large image areas carry the mood, text is minimal and placed
+       with care. Every "photo" is a TASTEFUL inline-SVG/CSS IMAGE-SLOT placeholder
+       (aspect-ratio block + subtle gradient + faint motif + small "Image" label +
+       descriptive aria-label). NO raster files anywhere.
+     - To use real photos: replace each .slot's inner SVG with
+       <img src="…" loading="lazy" alt="descriptive alt"> (see "SWAP" comments).
+       Keep the dark/light .scrim overlay so any overlaid text stays readable.
+     - NO logo / NO brand name. A "[Company Name]" slot sits in header + footer.
+       The favicon is a neutral geometric data-URI mark (no letter, no wordmark).
+     - Self-contained: inline <style>/<script>, fonts from the repo /fonts (relative),
+       zero CDN / zero network calls.
+     - No <base>: in-page links are #fragments; SVG colour uses fill="currentColor"
+       or literal hex (CSS var() does NOT resolve inside SVG presentation attributes).
+     ========================================================================= -->
+
+<!-- Favicon — neutral geometric mark (no letter, no wordmark). Colours from this
+     demo's palette: %23F6F2EC bone, %231B1714 ink, %23B08D57 brass. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%231B1714'/><rect x='5' y='5' width='22' height='22' fill='none' stroke='%23F6F2EC' stroke-width='1.5'/><circle cx='16' cy='16' r='6.5' fill='none' stroke='%23B08D57' stroke-width='2'/><circle cx='16' cy='16' r='1.6' fill='%23B08D57'/></svg>">
+
+<style>
+/* ── Fonts: vendored woff2 (relative ../../fonts, no CDN). Display=Cormorant serif,
+      body/labels=Mulish. A condensed-feel "kicker" rides a SYSTEM stack (no extra font).
+      ⚑ Paths are relative to THIS file (demos/photo/) — they resolve to the repo /fonts
+      both when served (/demos/photo → /fonts) and via file://. Re-point if you move depth. ── */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(../../fonts/cormorantgaramond-600.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/cormorantgaramond-700.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(../../fonts/cormorantgaramond-500i.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(../../fonts/mulish-400.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(../../fonts/mulish-500.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(../../fonts/mulish-600.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(../../fonts/mulish-700.woff2) format('woff2')}
+
+/* ── :root — RE-SKIN THE WHOLE TEMPLATE FROM HERE ───────────────────────────── */
+:root{
+  /* SWAP: palette — warm gallery bone + near-black ink + one brass accent.
+     Restrained on purpose: the images carry the colour, the page stays calm. */
+  --bone:#F6F2EC;        /* page canvas — warm off-white (never pure #fff) */
+  --bone-2:#EDE7DD;      /* raised panels / alt sections */
+  --ink:#1B1714;         /* text + dark blocks — warm near-black (never #000) */
+  --ink-soft:#3A332E;    /* secondary heads on bone */
+  --muted:#6A6157;       /* body-muted on bone — passes 4.5:1 */
+  --line:#D8CFC1;        /* hairlines */
+  --brass:#9C7A3E;       /* accent text on bone — deep brass passes 4.5:1 */
+  --brass-bright:#C49A5A;/* accent on the DARK ink (light brass, ~6:1 on ink) */
+  --paper-on-dark:#EFE9DF;/* body text on ink blocks (~13:1) */
+  --scrim-dark:linear-gradient(180deg,rgba(20,17,14,.18) 0%,rgba(20,17,14,.06) 38%,rgba(20,17,14,.62) 100%);
+  --scrim-soft:linear-gradient(180deg,rgba(20,17,14,.05),rgba(20,17,14,.22));
+
+  --ease:cubic-bezier(.18,.85,.3,1);
+  --maxw:1240px;
+  --pad:clamp(1.15rem,5vw,3rem);
+  --kicker:ui-monospace,'SF Mono',Menlo,Consolas,monospace; /* condensed mono flavour, system only */
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;background:var(--bone);color:var(--ink);
+  font-family:'Mulish',system-ui,sans-serif;font-weight:400;line-height:1.65;
+  font-size:clamp(1rem,.97rem + .18vw,1.0625rem);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:clip;
+}
+img{max-width:100%;display:block}
+a{color:inherit}
+h1,h2,h3{margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;letter-spacing:-.01em;line-height:1.02}
+p{margin:0}
+ul{margin:0}
+
+/* ── Typography primitives ──────────────────────────────────────────────────── */
+.serif{font-family:'Cormorant Garamond',Georgia,serif}
+.kicker{font-family:var(--kicker);font-weight:500;font-size:.72rem;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--brass)}
+.kicker .n{font-variant-numeric:tabular-nums;opacity:.8}
+.lead{max-width:54ch;color:var(--muted);font-size:clamp(1.05rem,1rem + .3vw,1.2rem)}
+em,.it{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500}
+
+/* ── Layout helpers ─────────────────────────────────────────────────────────── */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);position:relative;z-index:1}
+.section{padding:clamp(4rem,9vw,8rem) 0;position:relative}
+.rule-top{border-top:1px solid var(--line)}
+.center{text-align:center}
+
+/* ── Skip link + focus ──────────────────────────────────────────────────────── */
+.skip{position:absolute;left:-9999px;top:0;z-index:200;background:var(--ink);color:var(--bone);
+  padding:.7rem 1.1rem;font-weight:600;text-decoration:none;border-radius:3px}
+.skip:focus{left:1rem;top:1rem}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{
+  outline:none;box-shadow:0 0 0 2px var(--bone),0 0 0 4px var(--brass);border-radius:2px}
+@media (forced-colors:active){a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid CanvasText;outline-offset:2px}}
+
+/* ── Image-slot placeholder — the recurring "photo" primitive ────────────────
+   A .slot is an aspect-ratio block with a faint duotone gradient + a soft motif.
+   To use a real photo: drop <img loading="lazy" alt="…"> inside, keep the .scrim. */
+.slot{position:relative;overflow:hidden;background:var(--bone-2);border-radius:4px;isolation:isolate}
+.slot .ph{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+.slot .scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:var(--scrim-soft)}
+.slot.dark .scrim{background:var(--scrim-dark)}
+/* tiny corner label so it reads as a deliberate placeholder, not a broken image */
+.slot .tag{position:absolute;left:.9rem;top:.9rem;z-index:2;font-family:var(--kicker);font-size:.62rem;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--paper-on-dark);
+  background:rgba(20,17,14,.42);backdrop-filter:blur(2px);padding:.28rem .55rem;border-radius:100px}
+.slot .cap{position:absolute;left:1.1rem;bottom:1.05rem;right:1.1rem;z-index:2;color:var(--paper-on-dark)}
+.slot .cap .ttl{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(1.2rem,1rem + 1vw,1.7rem);line-height:1.08}
+.slot .cap .sub{display:block;margin-top:.25rem;font-family:var(--kicker);font-size:.66rem;letter-spacing:.2em;
+  text-transform:uppercase;color:rgba(239,233,223,.82)}
+.ratio-21x9{aspect-ratio:21/9}
+.ratio-4x3{aspect-ratio:4/3}
+.ratio-3x4{aspect-ratio:3/4}
+.ratio-1x1{aspect-ratio:1/1}
+.ratio-16x10{aspect-ratio:16/10}
+
+/* ── Buttons / links ────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:.55rem;font-family:'Mulish',sans-serif;font-weight:600;
+  font-size:.9rem;letter-spacing:.02em;text-decoration:none;cursor:pointer;
+  padding:.85rem 1.6rem;border-radius:100px;transition:transform .4s var(--ease),background .4s,color .4s,border-color .4s}
+.btn .arr{transition:transform .35s var(--ease)}
+.btn:hover .arr,.btn:focus-visible .arr{transform:translateX(4px)}
+.btn-solid{background:var(--ink);color:var(--bone);border:1px solid var(--ink)}
+.btn-solid:hover,.btn-solid:focus-visible{transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover,.btn-ghost:focus-visible{border-color:var(--ink);transform:translateY(-2px)}
+.btn-light{background:var(--bone);color:var(--ink);border:1px solid transparent}
+.btn-outline-light{background:transparent;color:var(--bone);border:1px solid rgba(246,242,236,.55)}
+.btn-outline-light:hover,.btn-outline-light:focus-visible{border-color:var(--bone);transform:translateY(-2px)}
+.underlink{display:inline-flex;align-items:center;gap:.45rem;font-weight:600;font-size:.92rem;
+  text-decoration:none;color:var(--brass);position:relative;width:fit-content}
+.underlink::after{content:"";position:absolute;left:0;bottom:-3px;height:1.5px;width:100%;background:currentColor;
+  transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
+.underlink:hover::after,.underlink:focus-visible::after{transform:scaleX(1)}
+.underlink .arr{transition:transform .35s var(--ease)}
+.underlink:hover .arr,.underlink:focus-visible .arr{transform:translateX(4px)}
+
+/* ── Header / nav ───────────────────────────────────────────────────────────── */
+.head{position:fixed;top:0;left:0;right:0;z-index:100;transition:background .4s var(--ease),border-color .4s,color .4s;
+  border-bottom:1px solid transparent;color:var(--bone)}            /* over the dark hero → light text */
+.head.scrolled{background:rgba(246,242,236,.92);backdrop-filter:saturate(140%) blur(10px);
+  border-bottom-color:var(--line);color:var(--ink)}
+.nav{max-width:var(--maxw);margin:0 auto;padding:1.1rem var(--pad);display:flex;align-items:center;gap:1.5rem}
+.brand{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:1.35rem;letter-spacing:.01em;
+  text-decoration:none;color:inherit;display:inline-flex;align-items:center;gap:.6rem}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--brass-bright);flex:0 0 8px}
+.nav-links{display:flex;align-items:center;gap:1.6rem;margin-left:auto;list-style:none;padding:0}
+.nav-links a{text-decoration:none;font-family:'Mulish',sans-serif;font-weight:500;font-size:.86rem;
+  letter-spacing:.04em;color:inherit;position:relative;padding:.2rem 0;opacity:.92}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:-3px;height:1.5px;width:100%;background:currentColor;
+  transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
+.nav-links a:hover::after,.nav-links a:focus-visible::after{transform:scaleX(1)}
+.nav-cta{margin-left:1.2rem;padding:.55rem 1.2rem;border:1px solid currentColor;border-radius:100px;
+  font-family:'Mulish',sans-serif;font-weight:600;font-size:.82rem;letter-spacing:.04em;text-decoration:none;color:inherit;
+  transition:background .35s,color .35s}
+.head.scrolled .nav-cta:hover,.head.scrolled .nav-cta:focus-visible{background:var(--ink);color:var(--bone)}
+.head:not(.scrolled) .nav-cta:hover,.head:not(.scrolled) .nav-cta:focus-visible{background:var(--bone);color:var(--ink)}
+.hamb{display:none;margin-left:auto;width:44px;height:44px;align-items:center;justify-content:center;
+  background:transparent;border:1px solid currentColor;border-radius:4px;cursor:pointer;color:inherit}
+.hamb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.mobile{display:none;background:var(--bone);border-bottom:1px solid var(--line)}
+.mobile a{display:block;text-decoration:none;color:var(--ink);font-weight:500;font-size:1.05rem;
+  padding:.9rem var(--pad);border-top:1px solid var(--line)}
+.mobile a:first-child{border-top:0}
+
+/* ── Hero — full-bleed image slot with overlaid headline ────────────────────── */
+#hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden}
+#hero .ph{position:absolute;inset:0;z-index:0}
+#hero .hero-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(20,17,14,.42) 0%,rgba(20,17,14,.12) 32%,rgba(20,17,14,.20) 60%,rgba(20,17,14,.74) 100%)}
+.hero-inner{position:relative;z-index:2;width:100%;max-width:var(--maxw);margin:0 auto;
+  padding:0 var(--pad) clamp(3rem,7vw,5.5rem);color:var(--bone)}
+.hero-kicker{color:var(--brass-bright)}
+.hero-h1{font-family:'Cormorant Garamond',serif;font-weight:500;color:var(--bone);
+  font-size:clamp(2.7rem,1.6rem + 6vw,6rem);line-height:.98;letter-spacing:-.015em;
+  margin:1.1rem 0 0;max-width:16ch;text-wrap:balance}
+.hero-h1 em{color:var(--bone)}
+.hero-sub{margin-top:clamp(1.2rem,2.5vw,1.8rem);max-width:46ch;color:rgba(239,233,223,.9);
+  font-size:clamp(1.02rem,.98rem + .35vw,1.18rem)}
+.hero-actions{margin-top:clamp(1.6rem,3vw,2.2rem);display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
+.hero-scroll{position:absolute;right:var(--pad);bottom:clamp(3rem,7vw,5.5rem);z-index:2;
+  display:flex;flex-direction:column;align-items:center;gap:.6rem;color:rgba(239,233,223,.8)}
+.hero-scroll .ln{width:1px;height:46px;background:linear-gradient(rgba(239,233,223,.7),transparent);
+  animation:drift 2.4s var(--ease) infinite}
+.hero-scroll span{writing-mode:vertical-rl;font-family:var(--kicker);font-size:.6rem;letter-spacing:.3em;text-transform:uppercase}
+@keyframes drift{0%{transform:scaleY(.2);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}100%{transform:scaleY(.2);transform-origin:bottom}}
+@media (max-width:760px){.hero-scroll{display:none}}
+
+/* ── Intro statement ────────────────────────────────────────────────────────── */
+#intro{padding-top:clamp(4.5rem,9vw,8rem)}
+.intro-grid{display:grid;grid-template-columns:auto 1fr;gap:clamp(1.5rem,5vw,4.5rem);align-items:start}
+.intro-grid .lhs{position:sticky;top:6rem}
+.intro-statement{font-family:'Cormorant Garamond',serif;font-weight:500;
+  font-size:clamp(1.7rem,1.2rem + 2.4vw,3rem);line-height:1.22;letter-spacing:-.01em;max-width:24ch;color:var(--ink)}
+.intro-statement em{color:var(--brass)}
+.intro-meta{margin-top:clamp(1.8rem,3vw,2.6rem);display:flex;flex-wrap:wrap;gap:2.4rem}
+.intro-meta dt{font-family:var(--kicker);font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.intro-meta dd{margin:.35rem 0 0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:1.5rem;color:var(--ink)}
+
+/* ── Visual story — alternating large image blocks + short caption ──────────── */
+.story{display:grid;gap:clamp(3rem,7vw,6rem)}
+.story-row{display:grid;grid-template-columns:1fr;gap:clamp(1.4rem,3vw,2.5rem);align-items:center}
+@media (min-width:820px){
+  .story-row{grid-template-columns:1.35fr .9fr}
+  .story-row.flip .s-media{order:2}
+  .story-row.flip .s-text{order:1}
+}
+.s-text .num{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:2.2rem;color:var(--brass);line-height:1}
+.s-text h3{font-size:clamp(1.7rem,1.3rem + 1.6vw,2.6rem);margin:.4rem 0 .8rem;color:var(--ink-soft)}
+.s-text p{color:var(--muted);max-width:42ch}
+.s-text .underlink{margin-top:1.3rem}
+
+/* ── Feature split (image-led cards) ────────────────────────────────────────── */
+#features{background:var(--bone-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.feat-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1.5rem;flex-wrap:wrap;
+  margin-bottom:clamp(2rem,4vw,3rem)}
+.feat-head h2{font-size:clamp(2rem,1.4rem + 2.6vw,3.4rem);color:var(--ink);max-width:14ch}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.1rem,2.5vw,1.8rem)}
+.feat{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);
+  transition:transform .45s var(--ease)}
+.feat:hover,.feat:focus-visible{transform:translateY(-5px)}
+.feat .slot{transition:box-shadow .45s var(--ease)}
+.feat:hover .slot,.feat:focus-visible .slot{box-shadow:0 22px 50px rgba(27,23,20,.16)}
+.feat h3{font-size:1.6rem;margin:1.1rem 0 .4rem;position:relative;display:inline-block;align-self:flex-start}
+.feat h3::after{content:"";position:absolute;left:0;bottom:-3px;height:1.5px;width:100%;background:var(--brass);
+  transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease)}
+.feat:hover h3::after,.feat:focus-visible h3::after{transform:scaleX(1)}
+.feat p{color:var(--muted);font-size:.96rem;max-width:34ch}
+.feat .meta{margin-top:.9rem;font-family:var(--kicker);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--brass)}
+
+/* ── Gallery / masonry grid of image slots ──────────────────────────────────── */
+.gal-head{margin-bottom:clamp(2rem,4vw,3rem);max-width:46ch}
+.gal-head h2{font-size:clamp(2rem,1.4rem + 2.6vw,3.4rem);color:var(--ink)}
+.gallery{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(.7rem,1.6vw,1.1rem)}
+.gallery .g{position:relative}
+/* a deliberate editorial rhythm of spans, not a uniform grid */
+.g1{grid-column:span 4}
+.g2{grid-column:span 2}
+.g3{grid-column:span 2}
+.g4{grid-column:span 2}
+.g5{grid-column:span 2}
+.g6{grid-column:span 3}
+.g7{grid-column:span 3}
+.gallery .slot{height:100%}
+.gallery .slot .ph,.gallery .slot{transition:transform .6s var(--ease)}
+.gallery .g:hover .ph{transform:scale(1.04)}
+.gallery .g:focus-within .ph{transform:scale(1.04)}
+
+/* ── Closing — calm dark image band + simple CTA ────────────────────────────── */
+#closing{position:relative;overflow:hidden;background:var(--ink);color:var(--paper-on-dark)}
+#closing .ph{position:absolute;inset:0;z-index:0;opacity:.5}
+#closing .close-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(27,23,20,.7),rgba(27,23,20,.92))}
+.close-inner{position:relative;z-index:2;text-align:center;max-width:30ch;margin:0 auto}
+.close-inner .kicker{color:var(--brass-bright)}
+.close-inner h2{color:var(--bone);font-size:clamp(2.4rem,1.6rem + 3.6vw,4.6rem);margin:1rem 0 0;text-wrap:balance}
+.close-inner p{color:rgba(239,233,223,.82);margin:1.2rem auto 0;max-width:40ch}
+.close-inner .hero-actions{justify-content:center}
+
+/* ── Contact (inert demo form) ──────────────────────────────────────────────── */
+#contact{background:var(--bone-2);border-top:1px solid var(--line)}
+.contact-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(2rem,5vw,4.5rem);align-items:start}
+.contact-intro{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+  font-size:clamp(1.5rem,1.2rem + 1.4vw,2.3rem);line-height:1.28;color:var(--ink);margin-bottom:1.8rem}
+.form-row{margin-bottom:1.2rem}
+.form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:0}
+.form-row.two .form-row{margin-bottom:1.2rem}
+label{display:block;font-family:var(--kicker);font-weight:500;font-size:.66rem;letter-spacing:.16em;
+  text-transform:uppercase;margin-bottom:.5rem;color:var(--ink-soft)}
+label .opt{text-transform:none;letter-spacing:0;color:var(--muted)}
+input,textarea{width:100%;font-family:'Mulish',sans-serif;font-size:1rem;color:var(--ink);background:var(--bone);
+  border:1px solid var(--line);border-radius:4px;padding:.78rem .9rem;transition:border-color .3s var(--ease)}
+input:hover,textarea:hover{border-color:var(--muted)}
+input:focus,textarea:focus{outline:none;border-color:var(--brass)}
+textarea{resize:vertical;min-height:120px}
+.form-note{margin-top:1rem;font-weight:600;font-size:.92rem;color:var(--brass);display:none}
+.form-note.show{display:block}
+.contact-details dl{margin:0}
+.contact-details dt{font-family:var(--kicker);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:1.4rem}
+.contact-details dt:first-child{margin-top:0}
+.contact-details dd{margin:.3rem 0 0;font-size:1.02rem}
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+.foot{background:var(--ink);color:var(--paper-on-dark)}
+.foot-top{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:2rem;padding:clamp(3rem,6vw,4.5rem) 0 clamp(2rem,4vw,3rem)}
+.foot-brand .brand{color:var(--bone)}
+.foot-tag{margin-top:1rem;max-width:32ch;color:rgba(239,233,223,.66);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem}
+.foot-col h4{font-family:var(--kicker);font-weight:500;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(239,233,223,.6);margin:0 0 1rem}
+.foot-col ul{list-style:none;margin:0;padding:0}
+.foot-col li{margin-bottom:.6rem}
+.foot-col a{text-decoration:none;color:rgba(239,233,223,.86);font-size:.95rem;transition:color .3s}
+.foot-col a:hover,.foot-col a:focus-visible{color:var(--brass-bright)}
+.foot-bottom{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;
+  border-top:1px solid rgba(239,233,223,.16);padding:1.4rem 0 2.4rem;font-size:.85rem;color:rgba(239,233,223,.55)}
+.demo-flag{display:inline-block;font-family:var(--kicker);font-size:.66rem;font-weight:500;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--brass-bright);background:rgba(196,154,90,.12);
+  border:1px solid rgba(196,154,90,.3);border-radius:100px;padding:.32rem .8rem}
+.socials{display:flex;gap:.7rem}
+.socials a{width:38px;height:38px;border:1px solid rgba(239,233,223,.22);border-radius:50%;display:flex;
+  align-items:center;justify-content:center;color:rgba(239,233,223,.7);transition:color .3s,border-color .3s}
+.socials a:hover,.socials a:focus-visible{color:var(--brass-bright);border-color:var(--brass-bright)}
+.socials svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── Reveal-on-scroll (visible-by-default if JS/IO never fires) ──────────────── */
+.rv{opacity:0;transform:translateY(28px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.rv.on{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}.d5{transition-delay:.4s}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width:980px){
+  .intro-grid{grid-template-columns:1fr;gap:2rem}
+  .intro-grid .lhs{position:static}
+  .feat-grid{grid-template-columns:repeat(2,1fr)}
+  .gallery{grid-template-columns:repeat(4,1fr)}
+  .g1{grid-column:span 4}.g2,.g3,.g4,.g5{grid-column:span 2}.g6,.g7{grid-column:span 2}
+  .contact-grid{grid-template-columns:1fr;gap:2.5rem}
+  .foot-top{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .nav-links,.nav-cta{display:none}
+  .hamb{display:flex}
+  .feat-grid{grid-template-columns:1fr}
+  .gallery{grid-template-columns:repeat(2,1fr)}
+  .g1,.g2,.g3,.g4,.g5,.g6,.g7{grid-column:span 1}
+  .form-row.two{grid-template-columns:1fr;gap:0}
+  .foot-top{grid-template-columns:1fr;gap:1.6rem}
+  .foot-brand{grid-column:1}
+}
+
+/* ── Reduced motion: freeze EVERYTHING, reveal all content ───────────────────── */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1!important;transform:none!important}
+}
+</style>
+
+<!-- No-JS safety: never leave revealed content hidden -->
+<noscript><style>.rv{opacity:1;transform:none}.hamb{display:none!important}</style></noscript>
+</head>
+
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ════════ Reusable inline-SVG placeholder "photographs" ════════
+     Each <symbol> is a soft duotone scene (gradient + faint motif). They are
+     decorative stand-ins — swap any .slot's <use> for <img loading="lazy" alt="…">. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- warm coastal / horizon -->
+    <linearGradient id="ph-a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#caa86f"/><stop offset=".5" stop-color="#9c7a3e"/><stop offset="1" stop-color="#5a4a36"/>
+    </linearGradient>
+    <!-- cool dusk / interior -->
+    <linearGradient id="ph-b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6e7b80"/><stop offset="1" stop-color="#2c3036"/>
+    </linearGradient>
+    <!-- bone / soft daylight -->
+    <linearGradient id="ph-c" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#efe7d9"/><stop offset="1" stop-color="#cdbfa6"/>
+    </linearGradient>
+    <!-- deep ink / night -->
+    <linearGradient id="ph-d" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2a241f"/><stop offset="1" stop-color="#100d0b"/>
+    </linearGradient>
+
+    <symbol id="scene-horizon" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice">
+      <rect width="1200" height="700" fill="url(#ph-a)"/>
+      <circle cx="860" cy="220" r="120" fill="#f4e3c0" opacity=".7"/>
+      <path d="M0 470 Q 300 420 600 460 T 1200 450 V700 H0 Z" fill="#4a3c2c" opacity=".55"/>
+      <path d="M0 540 Q 350 500 700 535 T 1200 525 V700 H0 Z" fill="#33291e" opacity=".6"/>
+      <g stroke="#f4e3c0" stroke-width="2" opacity=".18">
+        <line x1="0" y1="430" x2="1200" y2="430"/>
+      </g>
+    </symbol>
+
+    <symbol id="scene-interior" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice">
+      <rect width="1200" height="900" fill="url(#ph-b)"/>
+      <rect x="120" y="120" width="320" height="520" fill="#f0e6d2" opacity=".10"/>
+      <rect x="150" y="150" width="260" height="220" fill="#f0e6d2" opacity=".14"/>
+      <g stroke="#0d0f12" stroke-width="3" opacity=".3">
+        <line x1="120" y1="640" x2="1080" y2="640"/><line x1="600" y1="120" x2="600" y2="640"/>
+      </g>
+      <circle cx="860" cy="300" r="60" fill="#f4ead2" opacity=".22"/>
+    </symbol>
+
+    <symbol id="scene-detail" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice">
+      <rect width="900" height="900" fill="url(#ph-c)"/>
+      <g fill="none" stroke="#7a6646" stroke-width="2" opacity=".4">
+        <circle cx="450" cy="450" r="120"/><circle cx="450" cy="450" r="210"/><circle cx="450" cy="450" r="300"/>
+      </g>
+      <path d="M450 150 A300 300 0 0 1 750 450" fill="none" stroke="#9c7a3e" stroke-width="4" opacity=".6"/>
+    </symbol>
+
+    <symbol id="scene-figure" viewBox="0 0 900 1100" preserveAspectRatio="xMidYMid slice">
+      <rect width="900" height="1100" fill="url(#ph-a)"/>
+      <ellipse cx="450" cy="430" rx="150" ry="170" fill="#33291e" opacity=".45"/>
+      <rect x="320" y="560" width="260" height="540" rx="120" fill="#33291e" opacity=".5"/>
+      <circle cx="650" cy="220" r="80" fill="#f4e3c0" opacity=".55"/>
+    </symbol>
+
+    <symbol id="scene-arch" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice">
+      <rect width="900" height="900" fill="url(#ph-b)"/>
+      <path d="M250 760 V420 A200 200 0 0 1 650 420 V760" fill="none" stroke="#e9dcc2" stroke-width="6" opacity=".25"/>
+      <path d="M330 760 V470 A120 120 0 0 1 570 470 V760" fill="none" stroke="#e9dcc2" stroke-width="4" opacity=".18"/>
+      <line x1="150" y1="760" x2="750" y2="760" stroke="#0d0f12" stroke-width="6" opacity=".3"/>
+    </symbol>
+
+    <symbol id="scene-table" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice">
+      <rect width="900" height="900" fill="url(#ph-c)"/>
+      <ellipse cx="450" cy="500" rx="300" ry="180" fill="#bda77f" opacity=".5"/>
+      <circle cx="360" cy="470" r="55" fill="#8a7350" opacity=".55"/>
+      <circle cx="520" cy="520" r="40" fill="#7a6646" opacity=".5"/>
+      <rect x="430" y="420" width="120" height="20" rx="10" fill="#6f5b3c" opacity=".5"/>
+    </symbol>
+
+    <symbol id="scene-night" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice">
+      <rect width="1200" height="700" fill="url(#ph-d)"/>
+      <g fill="#c49a5a" opacity=".7">
+        <circle cx="220" cy="160" r="2"/><circle cx="420" cy="120" r="1.6"/><circle cx="640" cy="180" r="2.4"/>
+        <circle cx="880" cy="120" r="1.8"/><circle cx="1040" cy="200" r="2"/><circle cx="320" cy="260" r="1.6"/>
+      </g>
+      <path d="M0 520 L200 460 L420 510 L640 440 L880 500 L1100 430 L1200 470 V700 H0 Z" fill="#1a1512" opacity=".7"/>
+    </symbol>
+
+    <!-- header / shared icons -->
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<!-- ════════ HEADER / NAV ════════ -->
+<header class="head" id="top">
+  <nav class="nav" aria-label="Primary">
+    <!-- SWAP: brand name (no logo image by design — a small dot + wordmark only) -->
+    <a class="brand" href="#top" aria-label="[Company Name] — home"><span class="dot" aria-hidden="true"></span>[Company&nbsp;Name]</a>
+    <ul class="nav-links">
+      <li><a href="#story">Story</a></li>
+      <li><a href="#features">Spaces</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#contact">Visit</a></li>
+    </ul>
+    <a class="nav-cta" href="#contact">Enquire</a>
+    <button class="hamb" id="hamb" aria-label="Menu" aria-expanded="false" aria-controls="mobile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </nav>
+  <div class="mobile" id="mobile" hidden>
+    <a href="#story">Story</a>
+    <a href="#features">Spaces</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#contact">Visit</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ════════ 1 · HERO — full-bleed image slot ════════ -->
+  <section id="hero" aria-labelledby="hero-h1">
+    <!-- SWAP: replace this placeholder scene with a real photo:
+         <img class="ph" src="hero.jpg" loading="eager" alt="Wide view of the coastline at dusk"> -->
+    <svg class="ph" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder hero photograph: a warm coastal horizon at golden hour">
+      <use href="#scene-horizon"/>
+    </svg>
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <!-- SWAP: kicker (place + discipline) -->
+      <p class="kicker hero-kicker rv">Coastal retreat · Est. 1924</p>
+      <!-- SWAP: hero headline — keep it short; the image does the work -->
+      <h1 class="hero-h1 rv d1" id="hero-h1">Where the light <em>stays</em> a little longer.</h1>
+      <!-- SWAP: one supporting line -->
+      <p class="hero-sub rv d2">A quiet house above the water — rooms, a kitchen and a stretch of shore, kept simple on purpose.</p>
+      <div class="hero-actions rv d3">
+        <!-- SWAP: CTA labels + destinations (clean routes, not .html) -->
+        <a class="btn btn-light" href="#contact">Plan a stay <span class="arr" aria-hidden="true">→</span></a>
+        <a class="btn btn-outline-light" href="#gallery">View the gallery</a>
+      </div>
+    </div>
+    <div class="hero-scroll" aria-hidden="true"><span>Scroll</span><span class="ln"></span></div>
+  </section>
+
+  <!-- ════════ 2 · INTRO STATEMENT ════════ -->
+  <section id="intro" class="section" aria-labelledby="intro-h">
+    <div class="wrap">
+      <div class="intro-grid">
+        <div class="lhs">
+          <p class="kicker rv"><span class="n">01</span> — The place</p>
+        </div>
+        <div>
+          <!-- SWAP: the one-paragraph statement that sets the mood -->
+          <p class="intro-statement rv d1" id="intro-h">Built for slow mornings and long views. We keep the rooms few, the materials honest, and the <em>noise outside</em> the door.</p>
+          <dl class="intro-meta rv d2">
+            <!-- SWAP: three small facts -->
+            <div><dt>Location</dt><dd>Cape Marenne</dd></div>
+            <div><dt>Rooms</dt><dd>Six</dd></div>
+            <div><dt>Open</dt><dd>Mar — Oct</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 3 · VISUAL STORY — large image blocks + short captions ════════ -->
+  <section id="story" class="section rule-top" aria-labelledby="story-h">
+    <div class="wrap">
+      <h2 class="serif rv" id="story-h" style="position:absolute;left:-9999px">A visual story</h2>
+      <div class="story">
+
+        <!-- Row 1 -->
+        <div class="story-row">
+          <div class="s-media rv">
+            <!-- SWAP: replace with a real photo — keep loading="lazy" + descriptive alt -->
+            <!-- SWAP: replace with a real photo (loading=lazy) -->
+            <div class="slot dark ratio-16x10">
+              <svg class="ph" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: morning light across an open interior">
+                <use href="#scene-interior"/>
+              </svg>
+              <div class="scrim" aria-hidden="true"></div>
+              <span class="tag" aria-hidden="true">Image</span>
+            </div>
+          </div>
+          <div class="s-text rv d1">
+            <span class="num" aria-hidden="true">01</span>
+            <!-- SWAP: caption heading + line -->
+            <h3>The mornings</h3>
+            <p>Light comes in low and slow. Coffee on the terrace, the tide on its way out, no rush to be anywhere.</p>
+            <a class="underlink" href="#gallery">See the rooms <span class="arr" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+
+        <!-- Row 2 (flipped) -->
+        <div class="story-row flip">
+          <div class="s-media rv">
+            <!-- SWAP: replace with a real photo (loading=lazy) -->
+            <div class="slot dark ratio-16x10">
+              <svg class="ph" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: a long table set for a shared meal">
+                <use href="#scene-table"/>
+              </svg>
+              <div class="scrim" aria-hidden="true"></div>
+              <span class="tag" aria-hidden="true">Image</span>
+            </div>
+          </div>
+          <div class="s-text rv d1">
+            <span class="num" aria-hidden="true">02</span>
+            <!-- SWAP: caption heading + line -->
+            <h3>The table</h3>
+            <p>One long table, whatever the garden gave us that week, and the kind of dinner that runs late on purpose.</p>
+            <a class="underlink" href="#features">About the kitchen <span class="arr" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="story-row">
+          <div class="s-media rv">
+            <!-- SWAP: replace with a real photo (loading=lazy) -->
+            <div class="slot dark ratio-16x10">
+              <svg class="ph" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: the shoreline after sunset">
+                <use href="#scene-night"/>
+              </svg>
+              <div class="scrim" aria-hidden="true"></div>
+              <span class="tag" aria-hidden="true">Image</span>
+            </div>
+          </div>
+          <div class="s-text rv d1">
+            <span class="num" aria-hidden="true">03</span>
+            <!-- SWAP: caption heading + line -->
+            <h3>The evenings</h3>
+            <p>When the light goes, the shore stays warm a while longer. A glass, a low fire, the quiet you came for.</p>
+            <a class="underlink" href="#contact">Plan a stay <span class="arr" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 4 · FEATURE SPLIT — image-led cards ════════ -->
+  <section id="features" class="section" aria-labelledby="feat-h">
+    <div class="wrap">
+      <div class="feat-head">
+        <div>
+          <p class="kicker rv"><span class="n">02</span> — The spaces</p>
+          <h2 class="rv d1" id="feat-h">Three ways to spend the day.</h2>
+        </div>
+        <p class="lead rv d2">Each space stands on its own. Take one, take all three — the house bends to the week you need.</p>
+      </div>
+
+      <!-- SWAP: feature cards — each is an image slot + short label. Add/remove freely. -->
+      <div class="feat-grid">
+        <a class="feat rv" href="#contact">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot dark ratio-4x3">
+            <svg class="ph" viewBox="0 0 900 1100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: a corner room with afternoon light">
+              <use href="#scene-figure"/>
+            </svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+          </div>
+          <span class="meta">01 · Stay (placeholder)</span>
+          <h3>The rooms</h3>
+          <p>Six rooms, linen and timber, windows that open all the way. Nothing you don't need.</p>
+        </a>
+
+        <a class="feat rv d1" href="#contact">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot dark ratio-4x3">
+            <svg class="ph" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: the open kitchen at midday">
+              <use href="#scene-detail"/>
+            </svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+          </div>
+          <span class="meta">02 · Eat (placeholder)</span>
+          <h3>The kitchen</h3>
+          <p>A short menu that changes with the market. Long lunches, slow service, the good kind.</p>
+        </a>
+
+        <a class="feat rv d2" href="#contact">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot dark ratio-4x3">
+            <svg class="ph" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: an arched terrace facing the water">
+              <use href="#scene-arch"/>
+            </svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+          </div>
+          <span class="meta">03 · Roam (placeholder)</span>
+          <h3>The shore</h3>
+          <p>A private stretch of coast, a boat if you want one, and a path that goes nowhere fast.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 5 · GALLERY — editorial masonry of image slots ════════ -->
+  <section id="gallery" class="section rule-top" aria-labelledby="gal-h">
+    <div class="wrap">
+      <div class="gal-head">
+        <p class="kicker rv"><span class="n">03</span> — Gallery</p>
+        <h2 class="rv d1" id="gal-h">A look around.</h2>
+      </div>
+
+      <!-- SWAP: gallery — each .g is one image slot. To use real photos, replace the inner
+           <svg class="ph">…</svg> with <img class="ph" loading="lazy" alt="…">. -->
+      <div class="gallery">
+        <figure class="g g1 rv">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot dark ratio-16x10">
+            <svg class="ph" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: the house seen from the water at golden hour"><use href="#scene-horizon"/></svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+            <figcaption class="cap"><span class="ttl">From the water</span><span class="sub">Exterior · placeholder</span></figcaption>
+          </div>
+        </figure>
+        <figure class="g g2 rv d1">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot dark ratio-3x4">
+            <svg class="ph" viewBox="0 0 900 1100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: a figure on the terrace at sunrise"><use href="#scene-figure"/></svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+            <figcaption class="cap"><span class="ttl">First light</span><span class="sub">Terrace · placeholder</span></figcaption>
+          </div>
+        </figure>
+        <figure class="g g3 rv d2">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot ratio-1x1">
+            <svg class="ph" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: a still life on the kitchen table"><use href="#scene-table"/></svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+            <figcaption class="cap"><span class="ttl">The table</span><span class="sub">Detail · placeholder</span></figcaption>
+          </div>
+        </figure>
+        <figure class="g g4 rv">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot ratio-1x1">
+            <svg class="ph" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: concentric detail of a brass fixture"><use href="#scene-detail"/></svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+            <figcaption class="cap"><span class="ttl">Details</span><span class="sub">Interior · placeholder</span></figcaption>
+          </div>
+        </figure>
+        <figure class="g g5 rv d1">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot dark ratio-1x1">
+            <svg class="ph" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: the arched terrace facing the sea"><use href="#scene-arch"/></svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+            <figcaption class="cap"><span class="ttl">The arch</span><span class="sub">Terrace · placeholder</span></figcaption>
+          </div>
+        </figure>
+        <figure class="g g6 rv">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot dark ratio-16x10">
+            <svg class="ph" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: an interior bathed in afternoon light"><use href="#scene-interior"/></svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+            <figcaption class="cap"><span class="ttl">Inside</span><span class="sub">Rooms · placeholder</span></figcaption>
+          </div>
+        </figure>
+        <figure class="g g7 rv d1">
+          <!-- SWAP: replace with a real photo (loading=lazy) -->
+          <div class="slot dark ratio-16x10">
+            <svg class="ph" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: the shoreline under a starlit sky"><use href="#scene-night"/></svg>
+            <div class="scrim" aria-hidden="true"></div>
+            <span class="tag" aria-hidden="true">Image</span>
+            <figcaption class="cap"><span class="ttl">After dark</span><span class="sub">Shore · placeholder</span></figcaption>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 6 · CLOSING — calm dark image band + simple CTA ════════ -->
+  <section id="closing" class="section" aria-labelledby="close-h">
+    <!-- SWAP: replace with a real, quiet closing photo (loading=lazy) -->
+    <svg class="ph" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder photograph: a calm dark seascape at night">
+      <use href="#scene-night"/>
+    </svg>
+    <div class="close-scrim" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="close-inner">
+        <p class="kicker rv">Stay with us</p>
+        <!-- SWAP: closing headline + line -->
+        <h2 class="rv d1" id="close-h">Come for the quiet. Stay for the light.</h2>
+        <p class="rv d2">Tell us when you'd like to come. We'll keep a room and the rest takes care of itself.</p>
+        <div class="hero-actions rv d3">
+          <a class="btn btn-light" href="#contact">Enquire <span class="arr" aria-hidden="true">→</span></a>
+          <a class="btn btn-outline-light" href="#gallery">See more</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 7 · CONTACT (inert demo form) ════════ -->
+  <section id="contact" class="section" aria-labelledby="contact-h">
+    <div class="wrap">
+      <div class="contact-grid">
+        <div>
+          <p class="kicker rv"><span class="n">04</span> — Visit</p>
+          <!-- SWAP: contact intro -->
+          <p class="contact-intro rv d1" id="contact-h">Planning a stay, a dinner, or a quiet week? Send a note and we'll write back.</p>
+
+          <!-- INERT demo form: no action/endpoint, JS preventDefault, no network requests -->
+          <form id="contact-form" novalidate>
+            <div class="form-row two">
+              <div class="form-row">
+                <label for="cf-name">Name</label>
+                <input type="text" id="cf-name" name="name" autocomplete="name" placeholder="Your name">
+              </div>
+              <div class="form-row">
+                <label for="cf-email">Email</label>
+                <input type="email" id="cf-email" name="email" autocomplete="email" placeholder="you@example.com">
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="cf-dates">Dates <span class="opt">(optional)</span></label>
+              <input type="text" id="cf-dates" name="dates" placeholder="e.g. early June, 3 nights">
+            </div>
+            <div class="form-row">
+              <label for="cf-message">Message</label>
+              <textarea id="cf-message" name="message" placeholder="A line or two about what you have in mind."></textarea>
+            </div>
+            <button class="btn btn-solid" type="submit">Send a note <span class="arr" aria-hidden="true">→</span></button>
+            <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <div class="contact-details">
+          <!-- SWAP: contact details -->
+          <p class="kicker rv">Find us</p>
+          <dl class="rv d1">
+            <dt>Email</dt><dd>[stay@company.example]</dd>
+            <dt>Phone</dt><dd>[+1 (555) 010-0000]</dd>
+            <dt>Address</dt><dd>[12 Shoreline Path,<br>Cape Marenne]</dd>
+            <dt>Season</dt><dd>[March — October]</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ════════ FOOTER ════════ -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <!-- SWAP: brand name (no logo image by design) + footer tagline -->
+        <a class="brand" href="#top" aria-label="[Company Name] — back to top"><span class="dot" aria-hidden="true"></span>[Company&nbsp;Name]</a>
+        <p class="foot-tag">A small coastal house, kept simple, open to the season.</p>
+      </div>
+      <nav class="foot-col" aria-label="Explore">
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="#story">Story</a></li>
+          <li><a href="#features">Spaces</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#contact">Visit</a></li>
+        </ul>
+      </nav>
+      <nav class="foot-col" aria-label="More">
+        <h4>More</h4>
+        <ul>
+          <li><a href="#">Journal</a></li>
+          <li><a href="#">Rates</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="foot-bottom">
+      <!-- SWAP: footer legal -->
+      <span>© [2026] [Company Name]. A demonstration site by [Studio].</span>
+      <span class="demo-flag">Demo template — placeholder content</span>
+      <div class="socials" aria-label="Social links (placeholder)">
+        <a href="#" aria-label="Instagram (placeholder)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".7" fill="currentColor"/></svg>
+        </a>
+        <a href="#" aria-label="Newsletter (placeholder)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M4 8l8 5 8-5"/></svg>
+        </a>
+        <a href="#" aria-label="Map (placeholder)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.4 7-11a7 7 0 0 0-14 0c0 4.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  /* Mobile menu */
+  var hamb = document.getElementById("hamb"), mobile = document.getElementById("mobile");
+  if(hamb && mobile){
+    hamb.addEventListener("click", function(){
+      var open = mobile.hasAttribute("hidden") === false;
+      if(open){ mobile.setAttribute("hidden",""); hamb.setAttribute("aria-expanded","false"); }
+      else { mobile.removeAttribute("hidden"); hamb.setAttribute("aria-expanded","true"); }
+    });
+    mobile.addEventListener("click", function(e){
+      if(e.target.tagName === "A"){ mobile.setAttribute("hidden",""); hamb.setAttribute("aria-expanded","false"); }
+    });
+  }
+
+  /* Sticky-header: switch to solid/ink once scrolled off the hero */
+  var head = document.querySelector(".head");
+  var onScroll = function(){ if(head) head.classList.toggle("scrolled", window.scrollY > 60); };
+  window.addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+  /* Reveal-on-scroll — visible-by-default if IO is unavailable or reduced-motion */
+  var rv = Array.prototype.slice.call(document.querySelectorAll(".rv"));
+  if(reduce || !("IntersectionObserver" in window)){
+    rv.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add("on"); io.unobserve(en.target); }
+      });
+    }, {threshold:0.12, rootMargin:"0px 0px -8% 0px"});
+    rv.forEach(function(el){ io.observe(el); });
+  }
+
+  /* INERT contact form: never sends; shows an inline demo notice only */
+  var form = document.getElementById("contact-form");
+  var note = document.getElementById("form-note");
+  if(form && note){
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      note.textContent = "Thanks — this is a demonstration form, so nothing was sent.";
+      note.classList.add("show");
+    });
+  }
+})();
+</script>
+</body>
+</html>
