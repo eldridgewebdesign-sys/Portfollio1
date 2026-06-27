@@ -123,13 +123,13 @@ body.ready #hero .anim{opacity:1;transform:none}
 
 /* ── WHY CHOOSE US — three plain text columns (as in the reference) ────────── */
 /* weathered plank sits behind the heading like a sunken sign, blended into the water */
-#why .sec-title{position:relative;z-index:0;display:inline-block;padding:clamp(2.6rem,6vw,4.4rem) clamp(2.8rem,8vw,6rem)}
+#why .sec-title{position:relative;z-index:0;display:inline-block;padding:clamp(2.6rem,6vw,4.4rem) clamp(2.8rem,8vw,6rem);color:#f1e8d4;text-shadow:0 2px 5px rgba(0,0,0,.85)}
 #why .sec-title::before{content:'';position:absolute;z-index:-1;left:50%;top:50%;transform:translate(-50%,-50%);width:clamp(320px,118%,1000px);max-width:96vw;aspect-ratio:1536/1024;background:url(images/long-plank.png) center/contain no-repeat;opacity:.9;filter:brightness(.86) saturate(1.05) drop-shadow(0 16px 34px rgba(2,10,18,.55));-webkit-mask-image:radial-gradient(116% 70% at 50% 50%,#000 54%,transparent 90%);mask-image:radial-gradient(116% 70% at 50% 50%,#000 54%,transparent 90%);pointer-events:none}
 /* WHY section spread wide — the three columns push out almost to the page edges */
 #why .wrap{max-width:1500px}
 .why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(3rem,6vw,7rem);max-width:1500px;margin:clamp(3rem,5vw,4.2rem) auto 0;align-items:start}
-.why-col h3{font-family:'Distillery Display','Playfair Display',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:var(--foam);margin-bottom:2.4rem}
-.why-col p{font-family:'Playfair Display',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:.95rem;line-height:1.8}
+.why-col h3{font-family:'Distillery Display','Playfair Display',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:#e6dcc6;margin-bottom:2.4rem;text-shadow:0 2px 5px rgba(0,0,0,.85)}
+.why-col p{font-family:'Playfair Display',sans-serif;font-weight:400;color:#e6dcc6;font-size:.95rem;line-height:1.8;text-shadow:0 2px 5px rgba(0,0,0,.85)}
 /* SIMPLICITY card only — framed by the taller weathered plank. Its wood-and-drips band is cropped + stretched to fill the frame (bg 46% 42%/142% 220%) so the board scales cleanly behind the full text at any width, edges dissolved into the water like the heading sign. Behind content (z-index:-1, pointer-events:none) so it never blocks clicks or readability. */
 .simplicity-card{position:relative;z-index:0;padding:2rem .6rem 3.4rem}
 .simplicity-card h3{margin-bottom:1.5rem}
@@ -140,6 +140,11 @@ body.ready #hero .anim{opacity:1;transform:none}
 .integration-card h3{margin-bottom:1.5rem}
 .integration-card p{max-width:300px;margin-left:auto;margin-right:auto;line-height:1.62}
 .integration-card::before{content:'';position:absolute;z-index:-1;left:50%;top:0;transform:translate(-50%,18px);width:clamp(330px,150%,540px);max-width:95vw;aspect-ratio:7/3;background:url(images/taller-plank2.png) 50% 40%/150% 200% no-repeat;opacity:.95;filter:brightness(.93) saturate(1.05) drop-shadow(0 16px 34px rgba(2,10,18,.55));-webkit-mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);pointer-events:none}
+/* HONEST card — same masked-wood frame system, reusing taller-plank.png (the same weathered board as the Simplicity card), so it carries Simplicity's tuned framing (bg 46% 42%/142% 220%). The 18px downward nudge centres the text on the visible log. */
+.honest-card{position:relative;z-index:0;padding:2rem .6rem 3.4rem}
+.honest-card h3{margin-bottom:1.5rem}
+.honest-card p{max-width:300px;margin-left:auto;margin-right:auto;line-height:1.62}
+.honest-card::before{content:'';position:absolute;z-index:-1;left:50%;top:0;transform:translate(-50%,18px);width:clamp(330px,150%,540px);max-width:95vw;aspect-ratio:7/3;background:url(images/taller-plank.png) 46% 42%/142% 220% no-repeat;opacity:.95;filter:brightness(.93) saturate(1.05) drop-shadow(0 16px 34px rgba(2,10,18,.55));-webkit-mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);pointer-events:none}
 
 /* ── STYLES — placeholder windows (future examples go here) ────────────────── */
 .style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-top:clamp(2.4rem,4.5vw,3.4rem);text-align:left}
@@ -170,9 +175,9 @@ body.lock{overflow:hidden;height:100vh}
 /* ── RESPONSIVE (desktop-first) ──────────────────────────────────────────── */
 @media(max-width:900px){
   .why-cols{grid-template-columns:1fr;gap:3.4rem;max-width:470px}
-  .simplicity-card,.integration-card{padding:1.7rem .4rem 3rem}
-  .simplicity-card p,.integration-card p{max-width:322px}
-  .simplicity-card::before,.integration-card::before{width:min(95vw,480px);aspect-ratio:2/1}
+  .simplicity-card,.integration-card,.honest-card{padding:1.7rem .4rem 3rem}
+  .simplicity-card p,.integration-card p,.honest-card p{max-width:322px}
+  .simplicity-card::before,.integration-card::before,.honest-card::before{width:min(95vw,480px);aspect-ratio:2/1}
   .style-grid{grid-template-columns:1fr 1fr}
 }
 @media(max-width:680px){
@@ -240,7 +245,7 @@ body.lock{overflow:hidden;height:100vh}
         <h3>Integration</h3>
         <p>No need to scatter your site accross five different places. We do the heavy lifting for you so you can focus on what you do best.</p>
       </div>
-      <div class="why-col rv d3">
+      <div class="why-col honest-card rv d3">
         <h3>Honest</h3>
         <p>Not going to tell you things that don't apply to your business. We tell you what everything does and how you can apply it, the rest is up to you.</p>
       </div>

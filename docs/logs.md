@@ -6,6 +6,83 @@
 
 ---
 
+## 2026-06-27 16:05 - Developer / Implementation - why-section-text-color
+
+Action:
+Finished
+
+Task:
+Per user direct request: in `index.html`'s "Why WebSharke" section, give all three sub-element cards the
+text color `#e6dcc6` and `text-shadow:0 2px 5px rgba(0,0,0,.85)`, and give the section heading the same
+text-shadow with color `#f1e8d4`.
+
+Files claimed / changed:
+
+- index.html — three scoped CSS edits inside the existing `#why` / `.why-col` rules (no markup changes):
+  1. `#why .sec-title` (line 126) — added `color:#f1e8d4` + `text-shadow:0 2px 5px rgba(0,0,0,.85)`
+     (id+class specificity overrides the base `.sec-title` foam color / 26px shadow, so only the Why
+     heading changes; other section titles untouched).
+  2. `.why-col h3` (line 131) — `color:var(--foam)` → `color:#e6dcc6`; added the text-shadow.
+  3. `.why-col p` (line 132) — `color:rgba(240,248,250,.8)` → `color:#e6dcc6`; added the text-shadow.
+
+Summary:
+The three `.why-col` cards (Simplicity / Integration / Honest) each contain an `<h3>` + `<p>`; both now
+render `#e6dcc6` with the drop shadow across all three cards. The per-card rules
+(`.simplicity-card`/`.integration-card`/`.honest-card` h3/p) only set margin/max-width/line-height — they
+declare no `color`/`text-shadow`, so the `.why-col` changes apply cleanly to all three. Hex written
+lowercase + compact rgba to match the file's CSS style.
+
+Testing:
+Static check only — pure CSS property additions, no JS touched (no `node --check` target). Verified via
+grep that lines 126/131/132 hold the new values and that no other `#why`/`.why-col`/per-card/responsive
+rule overrides `color` or `text-shadow`. Live in-browser eyeball (contrast of the shadow over the plank
+backgrounds, mobile reflow) still advised per the usual non-GUI caveat.
+
+Risks / Notes:
+Scoped to the Why section only; no other section, payment/auth/Stripe/vendor file touched. Not on the
+board — owner-direct change; the Manager should mirror it onto `docs/taskboard.md` if it wants a record
+(the Developer does not edit the board).
+
+## 2026-06-27 15:25 - Developer / Implementation - honest-card-wood-frame
+
+Action:
+Finished
+
+Task:
+Give the third "Why WebSharke" column ("Honest") the same masked-wood plank frame the Simplicity and
+Integration cards already have. Per-user direct request ("third box, same rules as the other 2 elements").
+Final image (after a same-turn correction): `images/taller-plank.png` — the same board the Simplicity
+card uses (user's first call was the non-existent `taller-wood.png`, then corrected to taller-plank).
+
+Files claimed / changed:
+
+- index.html — three scoped edits, all mirroring the existing `.simplicity-card` / `.integration-card`
+  pattern:
+  1. Added the `honest-card` class to the third `.why-col` (`<div class="why-col honest-card rv d3">`).
+  2. Added a `.honest-card` CSS block (base padding, `h3`/`p` rules, and a `::before` masked-wood frame)
+     immediately after `.integration-card::before`. The `::before` reuses `taller-plank.png` and so
+     carries Simplicity's tuned framing `background:url(images/taller-plank.png) 46% 42%/142% 220%
+     no-repeat` (those crop values were tuned for that specific board); same z-index:-1, radial mask,
+     drop-shadow, opacity, and 18px downward nudge so it sits behind the text and never blocks clicks
+     (pointer-events:none).
+  3. Added `.honest-card` to the three `@media(max-width:900px)` selector groups (padding, `p` max-width,
+     and `::before` width/aspect-ratio) so its mobile behaviour matches the other two.
+
+Testing:
+- Visual/CSS-only change; no JS touched, so `node --check` is N/A.
+- `git diff --stat` confirms only index.html changed — no unrelated files.
+- Structure verified identical to `.simplicity-card` (same properties + same `taller-plank.png` framing
+  values; only the selector name differs).
+
+Risks / Notes:
+- Image asset exists (`images/taller-plank.png`, present in the repo), so the frame renders immediately —
+  no missing-file dependency. Because the Honest card now reuses the Simplicity board, those two cards
+  show the *same* plank; if visual variety is wanted later, swap in a distinct board image (e.g. a future
+  `taller-plank3.png`) and re-tune the one background line. A deploy-preview / live check is still the
+  only way to confirm final on-screen framing.
+
+---
+
 ## 2026-06-27 - Developer / Implementation - recurring-invoice-price-labels
 
 Action:
