@@ -45,7 +45,36 @@ The admin API reuses the same secrets the existing functions already need:
 | `SUPABASE_URL` | `api/admin.js`, `api/webhook.js`, `api/customer-portal.js` | Project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | same | **Server only.** Never in the browser. |
 | `ADMIN_EMAIL` | `api/admin.js` | Optional; defaults to `weeldridge09@gmail.com` |
-| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Stripe functions | Already configured |
+| `STRIPE_SECRET_KEY` | all Stripe functions | **Server only.** Secret key (`sk_…`). |
+| `STRIPE_WEBHOOK_SECRET` | `api/webhook.js` | Signing secret (`whsec_…`) for the `/api/webhook` endpoint. |
+| `STRIPE_PUBLISHABLE_KEY` | `api/subscriptions/activate.js`, `api/invoices/pay.js` | **Required** for the client-side Payment Element. Returned to the browser (`pk_…`, safe to expose). Without it the card form never mounts → "Payments aren't available right now." |
+| `STRIPE_SUBSCRIPTION_PRODUCT_ID` | `api/subscriptions/activate.js`, `api/invoices/pay.js` (monthly/annual) | **Required** to activate a subscription / pay a recurring invoice. The shared Stripe **Product** (`prod_…`) the inline recurring `price_data` attaches to (see §2a). Without it, activation returns 500 "Subscription billing is not configured yet." and **no card form appears.** |
+
+> **All Stripe values must be in the SAME mode** — either all **Test** (`sk_test_…` /
+> `pk_test_…` + a test-mode Product + a test-mode webhook) or all **Live**. Mixing a test
+> publishable key with a live Product (or vice-versa) → "No such product" / mode errors.
+
+### 2a. Create the shared Stripe Product (`STRIPE_SUBSCRIPTION_PRODUCT_ID`)
+
+Custom subscriptions and monthly/annual invoices bill an **inline price** that Stripe requires
+to reference a Product. You create that Product once:
+
+1. Stripe Dashboard → confirm the **mode** (Test/Live) matches your keys (toggle, top-right).
+2. **Products → Add product** → name it e.g. `WebSharke Hosting`. **No price is needed** — the
+   code supplies the amount + interval inline per subscription/invoice. Save.
+3. Copy the **product id** (`prod_…`) and set it as `STRIPE_SUBSCRIPTION_PRODUCT_ID` in Vercel,
+   then **redeploy** (env-var changes only take effect on a new deployment).
+
+### 2b. Stripe webhook events
+
+Register the endpoint **`https://<your-domain>/api/webhook`** in Stripe (Developers → Webhooks),
+copy its signing secret into `STRIPE_WEBHOOK_SECRET`, and enable these events. The webhook is the
+**only** writer of `status='active'` / invoice `paid` — without `invoice.paid`, a card charges but
+the dashboard never reflects it:
+
+`invoice.paid` · `invoice.payment_failed` · `customer.subscription.created` ·
+`customer.subscription.updated` · `customer.subscription.deleted` ·
+`payment_intent.succeeded` · `payment_intent.payment_failed`
 
 ## 3. Payment data
 

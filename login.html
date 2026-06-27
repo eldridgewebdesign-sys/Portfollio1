@@ -9,9 +9,17 @@
 
   <style>
     /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
-    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cormorantgaramond-600.woff2) format('woff2')}
     @font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
-    @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/playfair-display/latin-400-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/playfair-display/latin-500-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/playfair-display/latin-600-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/playfair-display/latin-700-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/playfair-display/latin-800-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:900;font-display:swap;src:url(fonts/playfair-display/latin-900-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:italic;font-weight:400;font-display:swap;src:url(fonts/playfair-display/latin-400-italic.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:italic;font-weight:500;font-display:swap;src:url(fonts/playfair-display/latin-500-italic.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:italic;font-weight:600;font-display:swap;src:url(fonts/playfair-display/latin-600-italic.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:italic;font-weight:700;font-display:swap;src:url(fonts/playfair-display/latin-700-italic.woff2) format('woff2')}
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
       --ink:#11364c;            /* deep navy — primary text */
@@ -22,7 +30,7 @@
     }
     html{scroll-behavior:smooth}
     body{
-      font-family:'Mulish',system-ui,sans-serif;color:var(--ink);
+      font-family:'Playfair Display',system-ui,sans-serif;color:var(--ink);
       min-height:100vh;position:relative;overflow-x:hidden;
       -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
       background:#36a1b3;
@@ -59,19 +67,19 @@
     }
 
     .login-title{
-      font-family:'Distillery Display','Cormorant Garamond',serif;font-weight:400;font-size:1.9rem;
+      font-family:'Distillery Display','Playfair Display',serif;font-weight:400;font-size:1.9rem;
       color:#0e2f44;letter-spacing:.02em;margin-bottom:1.4rem;
     }
 
     .field{margin-bottom:1.4rem}
     .lbl{
-      display:block;font-family:'Cormorant Garamond',serif;font-weight:600;
+      display:block;font-family:'Playfair Display',serif;font-weight:600;
       font-size:1.2rem;color:var(--ink);margin-bottom:.35rem;
     }
     /* Underline-only inputs (transparent, single bottom rule) */
     .fi{
       width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--ink);
-      color:var(--ink);font-family:'Mulish',sans-serif;font-size:1rem;
+      color:var(--ink);font-family:'Playfair Display',sans-serif;font-size:1rem;
       padding:.35rem .1rem;outline:none;border-radius:0;
     }
     .fi::placeholder{color:rgba(17,54,76,.45)}
@@ -80,7 +88,7 @@
     /* ── Navy Sign In button ───────────────────────────────────────────────── */
     .btn-signin{
       display:block;width:100%;cursor:pointer;border:none;margin-top:.4rem;
-      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.15rem;
+      font-family:'Playfair Display',serif;font-weight:600;font-size:1.15rem;
       color:#eaf2ff;padding:.6rem 1.5rem;border-radius:9px;
       background:linear-gradient(160deg,#16465f,#0c2636);
       box-shadow:0 8px 20px rgba(8,40,55,.36),inset 0 1px 0 rgba(255,255,255,.16);
@@ -94,7 +102,7 @@
     .new-here{margin-top:1.5rem;font-size:.95rem;color:var(--ink)}
     .btn-new{
       display:inline-block;margin-top:.55rem;cursor:pointer;text-decoration:none;
-      font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.05rem;
+      font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;
       color:var(--ink);padding:.35rem 1rem;border-radius:8px;
       background:rgba(255,255,255,.22);border:1.5px solid var(--ink);
       transition:background .25s,transform .25s;
