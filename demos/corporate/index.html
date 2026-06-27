@@ -13,7 +13,7 @@
 /* ── Fonts: reuse the already-vendored studio woff2 (root-absolute, no CDN) ───── */
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/cormorantgaramond-600.woff2) format('woff2')}
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/cormorantgaramond-700.woff2) format('woff2')}
-@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorantgaramond-500i.woff2) format('woff2')}
+
 @font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/mulish-400.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/mulish-500.woff2) format('woff2')}
 @font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/mulish-600.woff2) format('woff2')}
@@ -69,7 +69,7 @@ a{color:inherit}
 .eyebrow.neutral{color:var(--muted)}
 .eyebrow-idx{color:var(--muted);font-variant-numeric:tabular-nums}
 .std{color:var(--muted);max-width:46ch;font-size:clamp(1.02rem,.98rem + .25vw,1.15rem)}
-em{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;font-size:1.04em;color:var(--accent)}
+em{font-family:'Cormorant Garamond',Georgia,serif;font-style:normal;font-weight:500;font-size:1.04em;color:var(--accent)}
 
 /* ── Layout helpers ───────────────────────────────────────────────────────── */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);position:relative;z-index:1}
@@ -99,7 +99,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .monogram text{fill:var(--ink);font-family:'Cormorant Garamond',serif;font-weight:600}
 .wordmark{display:flex;flex-direction:column;line-height:1.05}
 .wordmark .name{font-family:'Mulish',sans-serif;font-weight:600;font-size:1rem;letter-spacing:.01em}
-.wordmark .tag{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:.85rem;color:var(--muted)}
+.wordmark .tag{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;font-size:.85rem;color:var(--muted)}
 .nav-links{display:flex;align-items:center;gap:1.6rem;margin-left:auto;list-style:none;padding:0}
 .nav-links a{position:relative;text-decoration:none;color:var(--ink);font-weight:500;font-size:.92rem;padding:.2rem 0}
 .nav-links a::after{content:'';position:absolute;left:0;bottom:-2px;height:1.5px;width:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
@@ -119,7 +119,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .hero-h1{font-size:clamp(2.7rem,1.6rem + 5.4vw,5.2rem);font-weight:700;margin:0;letter-spacing:-.02em}
 .hero-h1 .ln{display:block}
 .hero-h1 em{color:var(--accent);font-size:1em}
-.hero-std{margin-top:clamp(1.5rem,3vw,2.2rem);font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+.hero-std{margin-top:clamp(1.5rem,3vw,2.2rem);font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;
   font-size:clamp(1.25rem,1.05rem + .8vw,1.6rem);line-height:1.4;color:var(--ink);max-width:46ch}
 .hero-actions{margin-top:clamp(1.8rem,3.5vw,2.6rem);display:flex;align-items:center;gap:1.6rem;flex-wrap:wrap}
 .ghost-link{display:inline-flex;align-items:center;gap:.4rem;color:var(--accent);font-weight:600;font-size:.95rem;text-decoration:none;position:relative}
@@ -178,7 +178,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 
 /* ── Approach (pull-quote + steps) ────────────────────────────────────────── */
 .approach-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,4.5rem);align-items:start}
-.pull{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(1.6rem,1.2rem + 1.8vw,2.5rem);line-height:1.28;letter-spacing:-.01em;color:var(--ink);margin:0}
+.pull{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;font-size:clamp(1.6rem,1.2rem + 1.8vw,2.5rem);line-height:1.28;letter-spacing:-.01em;color:var(--ink);margin:0}
 .pull .attr{display:block;margin-top:1.4rem;font-family:'Mulish',sans-serif;font-style:normal;font-weight:500;font-size:.9rem;color:var(--muted);letter-spacing:.02em}
 .steps{list-style:none;margin:0;padding:0}
 .step{display:grid;grid-template-columns:auto 1fr;gap:1.1rem;padding:1.2rem 0;border-bottom:1px solid var(--line)}
@@ -212,7 +212,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 /* ── Testimonial ──────────────────────────────────────────────────────────── */
 #testimonial{background:var(--surface-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .quote{max-width:42ch;margin:0 auto;text-align:center}
-.quote .q{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(1.6rem,1.2rem + 2vw,2.6rem);line-height:1.3;color:var(--ink)}
+.quote .q{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;font-size:clamp(1.6rem,1.2rem + 2vw,2.6rem);line-height:1.3;color:var(--ink)}
 .quote .who{margin-top:1.6rem;font-weight:600;font-size:.95rem}
 .quote .role{color:var(--muted);font-size:.88rem;margin-top:.2rem}
 
@@ -236,7 +236,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 /* ── Contact ──────────────────────────────────────────────────────────────── */
 #contact{background:var(--surface-2);border-top:1px solid var(--line)}
 .contact-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(2rem,5vw,4.5rem);align-items:start}
-.contact-intro{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(1.5rem,1.2rem + 1.4vw,2.2rem);line-height:1.3;color:var(--ink);margin-bottom:2rem}
+.contact-intro{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;font-size:clamp(1.5rem,1.2rem + 1.4vw,2.2rem);line-height:1.3;color:var(--ink);margin-bottom:2rem}
 .form-row{margin-bottom:1.2rem}
 .form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:0}
 .form-row.two .form-row{margin-bottom:1.2rem}
@@ -258,7 +258,7 @@ textarea{resize:vertical;min-height:120px}
 /* ── Footer ───────────────────────────────────────────────────────────────── */
 .site-foot{border-top:1px solid var(--line);background:var(--bg)}
 .foot-top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:2rem;padding:clamp(3rem,6vw,4.5rem) 0 clamp(2rem,4vw,3rem)}
-.foot-brand .tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:1.1rem;color:var(--muted);margin-top:1rem;max-width:30ch}
+.foot-brand .tagline{font-family:'Cormorant Garamond',serif;font-style:normal;font-weight:500;font-size:1.1rem;color:var(--muted);margin-top:1rem;max-width:30ch}
 .foot-col h4{font-family:'Mulish',sans-serif;font-weight:600;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 1rem}
 .foot-col ul{list-style:none;margin:0;padding:0}
 .foot-col li{margin-bottom:.6rem}
@@ -441,7 +441,7 @@ textarea{resize:vertical;min-height:120px}
           <svg viewBox="0 0 165 30" role="img"><path d="M18 9 A8 8 0 1 0 18 21" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><text x="34" y="22" font-family="Cormorant Garamond,serif" font-weight="600" font-size="20" fill="currentColor">Calder &amp; Vance</text></svg>
         </span>
         <span class="mk" aria-label="Ardent (placeholder client)">
-          <svg viewBox="0 0 110 30" role="img"><text x="2" y="23" font-family="Cormorant Garamond,serif" font-style="italic" font-weight="600" font-size="24" fill="currentColor">Ardent</text></svg>
+          <svg viewBox="0 0 110 30" role="img"><text x="2" y="23" font-family="Cormorant Garamond,serif" font-weight="600" font-size="24" fill="currentColor">Ardent</text></svg>
         </span>
         <span class="mk" aria-label="Meridian Labs (placeholder client)">
           <svg viewBox="0 0 175 30" role="img"><circle cx="13" cy="15" r="8" stroke="currentColor" stroke-width="1.5" fill="none"/><line x1="13" y1="3" x2="13" y2="27" stroke="currentColor" stroke-width="1.5"/><text x="30" y="21" font-family="Mulish,sans-serif" font-weight="600" font-size="13" letter-spacing="1.2" fill="currentColor">MERIDIAN LABS</text></svg>
