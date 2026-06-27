@@ -1656,6 +1656,44 @@
       return money + " every " + n + " months";
     }
 
+    // ── Invoice billing type → recurring price suffix + Pay-button label ──────
+    // invoices.billing_type (db/invoices-schema.sql: 'one_time' | 'monthly' |
+    // 'annual') is the AUTHORITATIVE source for whether an invoice is a recurring
+    // hosting subscription — we NEVER infer recurring-ness from the dollar amount.
+    // A monthly/annual invoice starts a Stripe subscription when paid, so it reads
+    // "$25.00/month" / "$250.00/year" + a "Start Hosting" button; a one-time invoice
+    // stays a plain total + "Pay Invoice". Normalize ONCE per card (warns at most
+    // once); a missing / unrecognized value falls back to safe one-time behaviour.
+    function invoiceBillingType(iv) {
+      const t = String((iv && iv.billing_type) || "").toLowerCase();
+      if (t === "one_time" || t === "monthly" || t === "annual") return t;
+      console.warn("Unable to determine invoice billing type. Falling back to one-time display.", iv);
+      return "one_time";
+    }
+    function isRecurringInvoice(billingType) {
+      return billingType === "monthly" || billingType === "annual";
+    }
+    // "/month" or "/year" for a recurring interval, "" for one-time. Accepts the
+    // billing_type values plus the common interval synonyms (month/monthly,
+    // year/yearly/annual/annually) so it is robust to either source.
+    function billingIntervalSuffix(interval) {
+      switch (String(interval || "").toLowerCase()) {
+        case "monthly": case "month": return "/month";
+        case "annual": case "annually": case "year": case "yearly": return "/year";
+        default: return "";
+      }
+    }
+    // Invoice price the client sees: "$750.00" one-time, "$25.00/month" monthly,
+    // "$250.00/year" annual. cinvMoney returns only the amount and the interval is
+    // appended exactly once here, so re-rendering can never yield "$25.00/month/month".
+    function invoicePriceLabel(cents, billingType) {
+      return cinvMoney(cents) + billingIntervalSuffix(billingType);
+    }
+    // Pay-button label: a recurring invoice starts hosting; a one-time invoice pays once.
+    function invoicePayLabel(billingType) {
+      return isRecurringInvoice(billingType) ? "Start Hosting" : "Pay Invoice";
+    }
+
     // Fetch + render the signed-in client's CURRENT invoice (the most recent
     // UNPAID, payable one — issued or overdue). The Invoices tab is a brief summary
     // only: Name, ID, Total, and a "Pay Invoice" button that LINKS to the payments
@@ -1674,7 +1712,7 @@
         // newest first. Paid / draft / void / canceled never qualify as "current".
         const { data: invoices, error: invErr } = await db
           .from("invoices")
-          .select("id,title,status,total_amount_cents")
+          .select("id,title,status,total_amount_cents,billing_type")
           .eq("client_user_id", user.id)
           .in("status", PAYABLE_STATUSES)
           .order("created_at", { ascending: false })
@@ -1705,6 +1743,9 @@
     // is written via cinvEl/textContent, so admin-entered text can't inject markup.
     function buildCurrentInvoiceCard(iv) {
       const status = String(iv.status || "").toLowerCase();
+      // Recurring (monthly/annual) vs one-time is read from billing_type, never
+      // inferred from the amount. Normalized once so a bad value warns at most once.
+      const billingType = invoiceBillingType(iv);
       const card = cinvEl("article", "cinv-card");
       card.setAttribute("aria-label", "Current invoice " + cinvRef(iv.id));
 
@@ -1717,16 +1758,19 @@
       head.appendChild(cinvEl("span", "cinv-badge " + status, CLIENT_STATUS_LABEL[status] || (status || "—")));
       card.appendChild(head);
 
-      // Total — the only money figure shown in the dashboard summary.
+      // Total — the only money figure shown in the dashboard summary. A recurring
+      // invoice carries its interval ("$25.00/month"); one-time stays a plain total.
       const summary = cinvEl("div", "cinv-summary");
       summary.appendChild(cinvEl("span", "lbl", "Total"));
-      summary.appendChild(cinvEl("span", "amt", cinvMoney(iv.total_amount_cents)));
+      summary.appendChild(cinvEl("span", "amt", invoicePriceLabel(iv.total_amount_cents, billingType)));
       card.appendChild(summary);
 
-      // Pay Invoice → the dedicated payments page for THIS invoice. The dashboard
-      // never charges a card; /payment?invoice_id=… runs the Stripe Payment Element.
+      // Action → the dedicated payments page for THIS invoice. The dashboard never
+      // charges a card; /payment?invoice_id=… runs the Stripe Payment Element. A
+      // recurring invoice starts a hosting subscription, so the button reads "Start
+      // Hosting"; a one-time invoice keeps "Pay Invoice".
       const actions = cinvEl("div", "cinv-actions");
-      const pay = cinvEl("a", "ws-btn cinv-pay", "Pay Invoice");
+      const pay = cinvEl("a", "ws-btn cinv-pay", invoicePayLabel(billingType));
       pay.href = "/payment?invoice_id=" + encodeURIComponent(iv.id);
       actions.appendChild(pay);
       card.appendChild(actions);

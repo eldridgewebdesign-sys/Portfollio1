@@ -6,6 +6,73 @@
 
 ---
 
+## 2026-06-27 - Developer / Implementation - recurring-invoice-price-labels
+
+Action:
+Finished
+
+Task:
+Make recurring hosting subscriptions visually + textually distinct from one-time invoices across the
+client-facing surfaces. Recurring (`billing_type` monthly/annual) invoices now show the interval after the
+price ("$25.00/month" / "$250.00/year") and a "Start Hosting" button; one-time invoices stay a plain total
+("$750.00") with the existing "Pay Invoice" / "Pay invoice" button. Recurring-ness is read from
+`invoices.billing_type` (db/invoices-schema.sql: one_time|monthly|annual), never inferred from the dollar
+amount. Display/label only — no Stripe / payment-intent / subscription-creation / webhook / schema changes.
+
+Files claimed / changed:
+
+- dashboard.html — client Invoices-tab summary (`buildCurrentInvoiceCard`). Added the shared billing-type
+  helper block after `recurringLabel`; added `billing_type` to the invoice `.select(...)` (~:1672); the
+  Total now uses `invoicePriceLabel(total, billingType)` and the button uses `invoicePayLabel(billingType)`
+  ("Start Hosting" recurring / "Pay Invoice" one-time). Admin builder/region, Hosting tab + pending-sub
+  cards (already correct via `recurringLabel`/`subRecurringLabel`), and all payment/auth/Stripe code
+  untouched.
+- payment.html — client invoice card (`buildClientInvoiceCard` / `buildClientTotals`). Added the same helper
+  block; added `billing_type` to the invoice `.select(...)` (~:434); the grand Total row carries the interval
+  for recurring; the pay button uses `invoicePayLabel` ("Start Hosting" / "Pay invoice"); the pay-modal title
+  shows the interval too (reads `billing_type` already returned by `/api/invoices/pay` — display only). The
+  Stripe Payment Element flow, the `payInvoice(id, …)` call, and `/api/invoices/pay` itself are unchanged.
+- prev-inv.html — read-only history card (`buildHistoryCard`). Added the same helper block; added
+  `billing_type` to the invoice `.select(...)` (~:348); the Total meta shows the interval; the Pay link uses
+  `invoicePayLabel` ("Start Hosting" / "Pay invoice").
+
+How recurring vs one-time is detected:
+`invoices.billing_type` only. `invoiceBillingType(iv)` lowercases + whitelists to one_time|monthly|annual;
+anything missing/unrecognized → returns "one_time" AND emits the required
+`console.warn("Unable to determine invoice billing type. Falling back to one-time display.", iv)`. It is
+called ONCE per card so a bad row warns at most once. No price-based or name-based inference anywhere.
+
+Interval suffix:
+`billingIntervalSuffix()` maps monthly|month → "/month" and annual|annually|year|yearly → "/year", else "".
+`invoicePriceLabel(cents, type) = cinvMoney(cents) + suffix` — `cinvMoney` returns only the amount so the
+suffix is appended exactly once (no "$25.00/month/month" even on re-render). Money keeps the app's standard
+2-decimal `Intl` currency format ("$25.00/month"), matching the existing `recurringLabel`/`subRecurringLabel`.
+
+Testing:
+- Syntax: extracted every inline `<script>` block (no `src`) from all three pages and compiled each with
+  `vm.Script` (parse-only) — 4/4 OK, 0 failures.
+- Behaviour: replicated the shipped helpers and asserted the task cases — one_time $750→"$750.00",
+  $1500→"$1,500.00"; monthly $25→"$25.00/month", $49.99→"$49.99/month"; annual $250→"$250.00/year",
+  $500→"$500.00/year"; buttons one_time→"Pay Invoice"/"Pay invoice", monthly/annual→"Start Hosting";
+  null/undefined/garbage billing_type → plain total + one-time button + exactly one warn each; no double
+  suffix; interval synonyms normalize. 20/20 PASS.
+- Scope: `git diff --stat` = dashboard.html, payment.html, prev-inv.html, docs/logs.md only. (The untracked
+  `fonts/Examples/*.pdf` predates this session and was not touched.)
+- NOT run (no GUI/deploy here): live browser eyeball with a real seeded monthly/annual + one-time invoice on
+  /dashboard, /payment, /prev-inv (Reviewer, against `vercel dev` or a preview) — recommended before close.
+
+Risks / Notes:
+- Pure display layer. No change to Stripe checkout, PaymentIntent/subscription creation, the webhook, RLS, or
+  the schema. The `/payment?invoice_id=…` deep-link target and `payInvoice(id, …)` arg are unchanged, so the
+  actual pay flow is identical for both billing types.
+- One-time wording deliberately preserved per file (dashboard "Pay Invoice", payment/prev-inv "Pay invoice")
+  to honour "do not change one-time invoice wording".
+- Depends on `invoices.billing_type` being populated in the live DB (schema default is NOT NULL 'one_time',
+  and `/api/admin/invoices` writes it). Legacy rows missing it degrade safely to one-time + a console warning.
+- Admin-side invoice rendering intentionally out of scope (the builder has its own explicit billing_type
+  selector; changing admin labels would be unrelated). Flag for the Manager if a consistent admin display is
+  wanted as a follow-up.
+
 ## 2026-06-24 - Developer / Implementation - custom-recurring-subscriptions
 
 Action:

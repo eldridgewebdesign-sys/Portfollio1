@@ -424,6 +424,45 @@
       return n;
     }
 
+    // ── Invoice billing type → recurring price suffix + Pay-button label ──────
+    // invoices.billing_type (db/invoices-schema.sql: 'one_time' | 'monthly' |
+    // 'annual') is the AUTHORITATIVE source for whether an invoice is a recurring
+    // hosting subscription — we NEVER infer recurring-ness from the dollar amount.
+    // A monthly/annual invoice starts a Stripe subscription when paid, so its total
+    // reads "$25.00/month" / "$250.00/year" + a "Start Hosting" button; a one-time
+    // invoice stays a plain total + "Pay invoice". Normalize ONCE per card (warns at
+    // most once); a missing / unrecognized value falls back to safe one-time behaviour.
+    function invoiceBillingType(iv) {
+      const t = String((iv && iv.billing_type) || "").toLowerCase();
+      if (t === "one_time" || t === "monthly" || t === "annual") return t;
+      console.warn("Unable to determine invoice billing type. Falling back to one-time display.", iv);
+      return "one_time";
+    }
+    function isRecurringInvoice(billingType) {
+      return billingType === "monthly" || billingType === "annual";
+    }
+    // "/month" or "/year" for a recurring interval, "" for one-time. Accepts the
+    // billing_type values plus the common interval synonyms (month/monthly,
+    // year/yearly/annual/annually) so it is robust to either source.
+    function billingIntervalSuffix(interval) {
+      switch (String(interval || "").toLowerCase()) {
+        case "monthly": case "month": return "/month";
+        case "annual": case "annually": case "year": case "yearly": return "/year";
+        default: return "";
+      }
+    }
+    // Invoice price the client sees: "$750.00" one-time, "$25.00/month" monthly,
+    // "$250.00/year" annual. cinvMoney returns only the amount and the interval is
+    // appended exactly once here, so re-rendering can never yield "$25.00/month/month".
+    function invoicePriceLabel(cents, billingType) {
+      return cinvMoney(cents) + billingIntervalSuffix(billingType);
+    }
+    // Pay-button label: a recurring invoice starts hosting; a one-time invoice pays
+    // once (keeps this page's existing "Pay invoice" wording for one-time).
+    function invoicePayLabel(billingType) {
+      return isRecurringInvoice(billingType) ? "Start Hosting" : "Pay invoice";
+    }
+
     // Fetch + render the signed-in client's invoices. Self-contained: own
     // loading / error / empty / list states.
     async function loadClientInvoices(user) {
@@ -438,7 +477,7 @@
         //    also enforces this) and to client-visible statuses (drafts hidden).
         const { data: invoices, error: invErr } = await db
           .from("invoices")
-          .select("id,title,notes,due_date,status,subtotal_amount_cents,discount_amount_cents,tax_amount_cents,total_amount_cents,created_at")
+          .select("id,title,notes,due_date,status,billing_type,subtotal_amount_cents,discount_amount_cents,tax_amount_cents,total_amount_cents,created_at")
           .eq("client_user_id", user.id)
           .in("status", CLIENT_VISIBLE_STATUSES)
           .order("created_at", { ascending: false });
@@ -482,6 +521,9 @@
     // Build one read-only invoice card (all text via cinvEl/textContent).
     function buildClientInvoiceCard(iv, items) {
       const status = String(iv.status || "").toLowerCase();
+      // Recurring (monthly/annual) vs one-time from billing_type — never from the
+      // amount. Normalized once and shared by the totals + the Pay button below.
+      const billingType = invoiceBillingType(iv);
       const card = cinvEl("article", "cinv-card");
       card.setAttribute("aria-label", "Invoice " + cinvRef(iv.id));
 
@@ -513,8 +555,8 @@
       // Line items.
       if (items.length) card.appendChild(buildClientItemsTable(items));
 
-      // Totals.
-      card.appendChild(buildClientTotals(iv));
+      // Totals (the grand total carries the billing interval for recurring invoices).
+      card.appendChild(buildClientTotals(iv, billingType));
 
       // Notes (optional).
       const notes = show(iv.notes, "");
@@ -525,13 +567,15 @@
         card.appendChild(box);
       }
 
-      // Actions: a real "Pay invoice" button for unpaid, actionable invoices. It
-      // opens the Stripe Payment Element (server-created PaymentIntent for the DB
-      // amount via /api/invoices/pay); the webhook — not this click — is what
-      // marks the invoice paid.
+      // Actions: a real pay button for unpaid, actionable invoices. It opens the
+      // Stripe Payment Element (server-created PaymentIntent for one-time, or a
+      // subscription for monthly/annual, via /api/invoices/pay); the webhook — not
+      // this click — is what marks the invoice paid. A recurring invoice reads
+      // "Start Hosting"; a one-time invoice keeps "Pay invoice". The id passed to
+      // payInvoice is unchanged, so the Stripe flow itself is untouched.
       if (PAYABLE_STATUSES.indexOf(status) !== -1) {
         const actions = cinvEl("div", "cinv-actions");
-        const pay = cinvEl("button", "ws-btn cinv-pay", "Pay invoice");
+        const pay = cinvEl("button", "ws-btn cinv-pay", invoicePayLabel(billingType));
         pay.type = "button";
         pay.addEventListener("click", () => payInvoice(iv.id, pay));
         actions.appendChild(pay);
@@ -583,14 +627,16 @@
       return td;
     }
 
-    function buildClientTotals(iv) {
+    function buildClientTotals(iv, billingType) {
       const wrap = cinvEl("div", "cinv-totals");
       const disc = Number(iv.discount_amount_cents) || 0;
       const tax = Number(iv.tax_amount_cents) || 0;
       wrap.appendChild(cinvTotalRow("Subtotal", cinvMoney(iv.subtotal_amount_cents), false));
       if (disc > 0) wrap.appendChild(cinvTotalRow("Discount", "−" + cinvMoney(disc), false));
       if (tax > 0) wrap.appendChild(cinvTotalRow("Tax", cinvMoney(tax), false));
-      wrap.appendChild(cinvTotalRow("Total", cinvMoney(iv.total_amount_cents), true));
+      // The grand total carries the billing interval for recurring invoices
+      // ("$25.00/month"); subtotal/discount/tax stay plain component amounts.
+      wrap.appendChild(cinvTotalRow("Total", invoicePriceLabel(iv.total_amount_cents, billingType), true));
       return wrap;
     }
     function cinvTotalRow(label, value, grand) {
@@ -719,9 +765,13 @@
         }
         if (!stripe) throw new Error("Payments aren’t available right now. Please contact " + SUPPORT_EMAIL + ".");
 
-        // Title the modal with the amount (display only — server is the source of truth).
+        // Title the modal with the amount (display only — server is the source of
+        // truth). Recurring invoices carry the interval ("$25.00/month"); the
+        // /api/invoices/pay response already includes billing_type, so this reads an
+        // existing field and never affects the payment itself.
         if (data.invoice && data.invoice.total_amount_cents != null) {
-          $("pay-title").textContent = "Pay invoice — " + cinvMoney(data.invoice.total_amount_cents);
+          $("pay-title").textContent =
+            "Pay invoice — " + invoicePriceLabel(data.invoice.total_amount_cents, invoiceBillingType(data.invoice));
         }
         payInvoiceId = invoiceId;
         mountPayment(data.clientSecret);
