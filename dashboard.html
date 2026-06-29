@@ -148,18 +148,56 @@
       color:#0e2f44;background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.55);
     }
 
-    /* domain preview card */
-    .domain-preview{
-      display:flex;align-items:center;justify-content:center;text-align:center;
-      margin-top:1.2rem;min-height:clamp(180px,34vh,300px);padding:2rem;
-      background:#fff;border-radius:16px;text-decoration:none;color:#1d4257;
-      box-shadow:0 16px 40px rgba(0,40,55,.22);transition:transform .3s,box-shadow .3s;
+    /* domain — live website preview (browser-window thumbnail) */
+    .dp-empty{
+      margin-top:1.2rem;padding:1.1rem 1.25rem;border-radius:12px;line-height:1.6;
+      color:var(--ink-soft);background:rgba(255,255,255,.3);border:1px solid var(--panel-bd);
     }
-    a.domain-preview{cursor:pointer}
-    a.domain-preview:hover{transform:translateY(-3px);box-shadow:0 24px 52px rgba(0,40,55,.3)}
-    .dp-inner{max-width:34ch}
-    .dp-name{font-family:'Playfair Display',serif;font-weight:600;font-size:1.5rem;color:#11364c;word-break:break-word}
-    .dp-hint{display:block;margin-top:.5rem;font-size:.85rem;letter-spacing:.04em;color:#5a7e8c}
+    .dp-card{
+      margin-top:1.2rem;border-radius:16px;overflow:hidden;
+      background:rgba(255,255,255,.34);border:1px solid var(--panel-bd);
+      box-shadow:0 16px 40px rgba(0,40,55,.2),inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .dp-head{
+      display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+      padding:1rem 1.2rem;background:rgba(255,255,255,.22);border-bottom:1px solid var(--panel-bd);
+    }
+    .dp-head-text{display:flex;flex-direction:column;gap:.18rem;min-width:0}
+    .dp-label{
+      font-family:'Playfair Display',sans-serif;font-weight:600;font-size:.7rem;
+      letter-spacing:.16em;text-transform:uppercase;color:#0f6f86;
+    }
+    .dp-name{
+      font-family:'Playfair Display',serif;font-weight:600;font-size:1.18rem;color:#11364c;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+    }
+    .dp-open{margin-top:0;flex:0 0 auto;white-space:nowrap}
+    .dp-frame{padding:.75rem .75rem .9rem}
+    .dp-chrome{
+      display:flex;align-items:center;gap:.45rem;padding:.55rem .75rem;
+      background:rgba(13,49,66,.07);border:1px solid var(--panel-bd);border-bottom:none;
+      border-radius:10px 10px 0 0;
+    }
+    .dp-chrome span{width:10px;height:10px;border-radius:50%;background:rgba(13,49,66,.22)}
+    .dp-viewport{
+      position:relative;overflow:hidden;aspect-ratio:16/10;
+      border:1px solid var(--panel-bd);border-radius:0 0 10px 10px;
+      background:linear-gradient(135deg,#dceef1,#eef6f7);
+    }
+    .dp-viewport iframe{
+      position:absolute;top:0;left:0;width:1280px;height:800px;border:0;
+      transform-origin:top left;pointer-events:none;
+    }
+    .dp-fallback{
+      position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:.45rem;text-align:center;padding:1.4rem;color:#5a7e8c;font-size:.9rem;line-height:1.55;
+    }
+    .dp-fallback strong{font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:#11364c;word-break:break-word}
+    .dp-overlay{position:absolute;inset:0;z-index:2;display:block;cursor:pointer}
+    @media(max-width:520px){
+      .dp-head{flex-direction:column;align-items:flex-start}
+      .dp-open{align-self:stretch;text-align:center}
+    }
 
     /* ── Plan buttons (Billing) ────────────────────────────────────────────── */
     .plan-row{display:flex;flex-wrap:wrap;gap:.7rem;margin:.6rem 0 .4rem}
@@ -850,12 +888,31 @@
       <div class="tab" id="tab-domain" role="tabpanel">
         <h2 class="tab-title">Domain</h2>
         <p class="field"><span class="f-label">Current domain:</span> <span class="f-value" id="dom-name">…</span></p>
-        <a class="domain-preview" id="dom-preview" target="_blank" rel="noopener">
-          <span class="dp-inner">
-            <span class="dp-name" id="dom-preview-name">…</span>
-            <span class="dp-hint" id="dom-preview-hint"></span>
-          </span>
-        </a>
+
+        <p class="dp-empty hidden" id="dom-empty">No domain on file yet — use “Change Domain” below to add one.</p>
+
+        <div class="dp-card hidden" id="dom-preview-card">
+          <div class="dp-head">
+            <span class="dp-head-text">
+              <span class="dp-label">Website Preview</span>
+              <span class="dp-name" id="dom-preview-name">…</span>
+            </span>
+            <a class="ws-btn dp-open" id="dom-open" target="_blank" rel="noopener">Open Website ↗</a>
+          </div>
+          <div class="dp-frame">
+            <div class="dp-chrome"><span></span><span></span><span></span></div>
+            <div class="dp-viewport">
+              <div class="dp-fallback" id="dom-fallback">
+                <strong id="dom-fallback-name">your site</strong>
+                <span>Loading live preview… if it doesn’t appear, your site may block embedding — use “Open Website”.</span>
+              </div>
+              <iframe id="dom-iframe" title="Live preview of your website" loading="lazy"
+                      referrerpolicy="no-referrer" sandbox="allow-same-origin allow-scripts"></iframe>
+              <a class="dp-overlay" id="dom-overlay" target="_blank" rel="noopener" aria-label="Open your website in a new tab"></a>
+            </div>
+          </div>
+        </div>
+
         <button class="ws-btn" id="change-domain">Change Domain</button>
       </div>
 
@@ -1148,8 +1205,17 @@
         document.querySelectorAll(".tab").forEach((t) => {
           t.classList.toggle("active", t.id === "tab-" + tab);
         });
+        if (tab === "domain") scaleDomainPreview();
       });
     });
+
+    // ---- Domain preview: keep the scaled thumbnail crisp as its viewport
+    //      resizes (incl. 0→visible when the Domain tab is first opened). ----
+    (function () {
+      const vp = document.querySelector(".dp-viewport");
+      if (vp && window.ResizeObserver) new ResizeObserver(scaleDomainPreview).observe(vp);
+      window.addEventListener("resize", scaleDomainPreview);
+    })();
 
     // ---- Sign out -------------------------------------------------------
     $("signout").addEventListener("click", async () => {
@@ -1345,6 +1411,15 @@
       if (!d) return null;
       return /^https?:\/\//i.test(d) ? d : "https://" + d;
     }
+    // Scale the live website preview so a full-width desktop render (1280px)
+    // fits the responsive browser-window viewport as a clean thumbnail.
+    function scaleDomainPreview() {
+      const vp = document.querySelector(".dp-viewport");
+      const fr = document.getElementById("dom-iframe");
+      if (!vp || !fr) return;
+      const w = vp.clientWidth;
+      if (w) fr.style.transform = "scale(" + (w / 1280) + ")";
+    }
     function fmtDate(value) {
       if (!value) return null;
       // Accept unix seconds (Stripe) or ISO strings.
@@ -1372,19 +1447,27 @@
       // 4) Domain -------------------------------------------------------
       // Source of truth: subscriptions.domain (set by the admin dashboard,
       // keyed on this user's auth id). `sub` is fetched fresh on page load.
-      const domain = (sub.domain && String(sub.domain).trim()) ? sub.domain : null;
+      // Only render the live preview when a real, non-empty domain exists;
+      // otherwise show a clean empty state (no iframe, no preview box).
+      const domain = (sub.domain && String(sub.domain).trim()) ? String(sub.domain).trim() : null;
       const url = normalizeUrl(domain);
       $("dom-name").textContent = domain || "No domain on file yet.";
-      const preview = $("dom-preview");
+      const domCard = $("dom-preview-card"), domEmpty = $("dom-empty"), domIframe = $("dom-iframe");
       if (url) {
-        preview.setAttribute("href", url);
         $("dom-preview-name").textContent = domain;
-        $("dom-preview-hint").textContent = "Click to open your live site ↗";
+        $("dom-fallback-name").textContent = domain;
+        $("dom-open").setAttribute("href", url);
+        $("dom-overlay").setAttribute("href", url);
+        // Some sites block embedding (X-Frame-Options/CSP); the iframe may stay
+        // blank, but the header + "Open Website" link keep the card usable.
+        if (domIframe.getAttribute("src") !== url) domIframe.setAttribute("src", url);
+        domEmpty.classList.add("hidden");
+        domCard.classList.remove("hidden");
+        scaleDomainPreview();
       } else {
-        preview.removeAttribute("href");
-        preview.style.cursor = "default";
-        $("dom-preview-name").textContent = "No domain on file yet";
-        $("dom-preview-hint").textContent = "Use “Change Domain” below to add one.";
+        domIframe.removeAttribute("src");
+        domCard.classList.add("hidden");
+        domEmpty.classList.remove("hidden");
       }
 
       // 5) Privacy ------------------------------------------------------

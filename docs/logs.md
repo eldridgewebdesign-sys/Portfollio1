@@ -6,6 +6,64 @@
 
 ---
 
+## 2026-06-28 - Developer / Implementation - why-section-frosted-glass
+
+Action:
+Finished
+
+Task:
+Per user request: redesign the "Why WebSharke" section cards (Simplicity / Integration / Honest) from the
+old weathered-wood/plank treatment to frosted underwater glass panels — semi-transparent dark teal,
+`backdrop-filter` blur (ocean shows faintly through), a 1px cyan/teal gradient border brighter at the top,
+a soft teal outer glow, a small thin-line underwater icon above each header, glowing (bioluminescent)
+headers with calm non-glowing body text, and a gentle hover float. Reduced-motion respected.
+
+Files claimed / changed:
+
+- index.html — scoped entirely to the `#why` section (CSS + that section's markup). No other section,
+  and no JS / payment / auth / Supabase / Stripe code touched.
+  1. CSS comment header (line 124) retitled "WHY WEBSHARKE — frosted underwater glass panels".
+  2. Removed ALL wood styling for this section: the `#why .sec-title::before` `long-plank.png` sign and
+     the `.simplicity-card` / `.integration-card` / `.honest-card` rules + their `taller-plank(2).png`
+     `::before` frames (and their responsive overrides). Confirmed via grep: zero `*-card` / `*-plank`
+     references remain in index.html.
+  3. `#why .sec-title` now sits clean in the water with a faint teal bioluminescent halo (no wood) — kept
+     the title coherent with the new glass cards (the title is not technically a "card", flagged to user).
+  4. New `.why-col` = frosted glass card: `linear-gradient(rgba(14,49,62,.46)→rgba(6,27,37,.34))` +
+     `backdrop-filter:blur(15px) saturate(135%)` (+ `-webkit-` prefix), inset top highlight, soft teal
+     outer glow box-shadow. `.why-col::before` draws the 1px top-bright→bottom-soft cyan gradient frame
+     via the mask-composite border trick.
+  5. `.why-ic` (44px, `--aqua`, drop-shadow glow) holds an inline thin-line SVG per card: stacked waves
+     (Simplicity), connected nodes (Integration), shield+check (Honest). Headers glow via text-shadow;
+     body `<p>` stays calm/readable with only a faint legibility shadow (no glow).
+  6. Hover: `translateY(-8px)` + intensified glow (float-in-water feel). `@media(prefers-reduced-motion)`
+     disables the card transition + hover transform.
+  7. Layout: `.why-cols` tightened from the old edge-to-edge `max-width:1500px` / `gap:7rem` spread to a
+     clean even row (`max-width:1100px`, `gap:clamp(1.5rem,2.6vw,2.4rem)`, `align-items:stretch` for equal
+     heights). Body copy unchanged (kept owner's original wording/typos). Mobile (≤900px) → single column,
+     `max-width:440px`; the old `width:150%` plank overflow risk is gone.
+
+Summary:
+The section now reads as three glass panels sitting *in* the water rather than wood signs pasted on top.
+The existing background image, marine snow (`#snow`) and fish (`#fish`, both behind the z:1 section) show
+faintly through the blur. Only the headers + icons glow; body text is deliberately calm so the effect
+isn't ruined. Palette stays inside the existing ocean tokens (`--aqua #62b6c6` etc.) — no purple/blue tech
+gradients, no new dependencies, no extra fish/sharks.
+
+Testing:
+Static review only (no GUI session available to me). Verified: grep shows no leftover wood class/image
+refs; `.rv`/`.d1`–`.d3` reveal classes preserved on the cards (scroll-reveal observer still targets them);
+no JS references the removed classes; SVG paths well-formed; mask-composite border has a graceful
+fallback. Live in-browser eyeball (desktop hover, mobile stack/no-overflow, backdrop-filter on Safari)
+still advised per the usual non-GUI caveat.
+
+Risks / Notes:
+One scope judgment flagged to the user: the section *title*'s wood plank was also removed (replaced with a
+teal halo) so it wouldn't clash with the glass cards — slightly beyond the literal "cards" wording but in
+line with "clean up old wood styling in this section." Easy to revert if the wood title was wanted. Header
+text kept as existing "Honest" (user's list said "HONESTY" but body/header copy was left unchanged). Not
+on the board — owner-direct change.
+
 ## 2026-06-27 16:05 - Developer / Implementation - why-section-text-color
 
 Action:

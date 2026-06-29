@@ -121,30 +121,25 @@ body.ready #hero .anim{opacity:1;transform:none}
 .how-body p{font-family:'Playfair Display',sans-serif;font-weight:400;color:rgba(240,248,250,.8);font-size:clamp(1rem,1.4vw,1.16rem);line-height:1.9;margin-bottom:1.4rem}
 .how-close{font-family:'Distillery Display','Playfair Display',serif;font-weight:500;color:var(--foam);font-size:clamp(1.5rem,2.8vw,2.1rem);line-height:1.4;margin-top:1.8rem;text-shadow:0 2px 22px rgba(2,10,18,.45)}
 
-/* ── WHY CHOOSE US — three plain text columns (as in the reference) ────────── */
-/* weathered plank sits behind the heading like a sunken sign, blended into the water */
-#why .sec-title{position:relative;z-index:0;display:inline-block;padding:clamp(2.6rem,6vw,4.4rem) clamp(2.8rem,8vw,6rem);color:#f1e8d4;text-shadow:0 2px 5px rgba(0,0,0,.85)}
-#why .sec-title::before{content:'';position:absolute;z-index:-1;left:50%;top:50%;transform:translate(-50%,-50%);width:clamp(320px,118%,1000px);max-width:96vw;aspect-ratio:1536/1024;background:url(images/long-plank.png) center/contain no-repeat;opacity:.9;filter:brightness(.86) saturate(1.05) drop-shadow(0 16px 34px rgba(2,10,18,.55));-webkit-mask-image:radial-gradient(116% 70% at 50% 50%,#000 54%,transparent 90%);mask-image:radial-gradient(116% 70% at 50% 50%,#000 54%,transparent 90%);pointer-events:none}
-/* WHY section spread wide — the three columns push out almost to the page edges */
-#why .wrap{max-width:1500px}
-.why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(3rem,6vw,7rem);max-width:1500px;margin:clamp(3rem,5vw,4.2rem) auto 0;align-items:start}
-.why-col h3{font-family:'Distillery Display','Playfair Display',serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:clamp(1.5rem,2.4vw,2rem);color:#e6dcc6;margin-bottom:2.4rem;text-shadow:0 2px 5px rgba(0,0,0,.85)}
-.why-col p{font-family:'Playfair Display',sans-serif;font-weight:400;color:#e6dcc6;font-size:.95rem;line-height:1.8;text-shadow:0 2px 5px rgba(0,0,0,.85)}
-/* SIMPLICITY card only — framed by the taller weathered plank. Its wood-and-drips band is cropped + stretched to fill the frame (bg 46% 42%/142% 220%) so the board scales cleanly behind the full text at any width, edges dissolved into the water like the heading sign. Behind content (z-index:-1, pointer-events:none) so it never blocks clicks or readability. */
-.simplicity-card{position:relative;z-index:0;padding:2rem .6rem 3.4rem}
-.simplicity-card h3{margin-bottom:1.5rem}
-.simplicity-card p{max-width:300px;margin-left:auto;margin-right:auto;line-height:1.62}
-.simplicity-card::before{content:'';position:absolute;z-index:-1;left:50%;top:0;transform:translate(-50%,18px);width:clamp(330px,150%,540px);max-width:95vw;aspect-ratio:7/3;background:url(images/taller-plank.png) 46% 42%/142% 220% no-repeat;opacity:.95;filter:brightness(.93) saturate(1.05) drop-shadow(0 16px 34px rgba(2,10,18,.55));-webkit-mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);pointer-events:none}
-/* INTEGRATION card — same masked-wood frame system using taller-plank2.png (a different weathered board, for variety). Wood-and-drips band cropped + stretched to fill (bg 50% 40%/150% 200%); the 18px downward nudge centres the text on the visible log. */
-.integration-card{position:relative;z-index:0;padding:2rem .6rem 3.4rem}
-.integration-card h3{margin-bottom:1.5rem}
-.integration-card p{max-width:300px;margin-left:auto;margin-right:auto;line-height:1.62}
-.integration-card::before{content:'';position:absolute;z-index:-1;left:50%;top:0;transform:translate(-50%,18px);width:clamp(330px,150%,540px);max-width:95vw;aspect-ratio:7/3;background:url(images/taller-plank2.png) 50% 40%/150% 200% no-repeat;opacity:.95;filter:brightness(.93) saturate(1.05) drop-shadow(0 16px 34px rgba(2,10,18,.55));-webkit-mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);pointer-events:none}
-/* HONEST card — same masked-wood frame system, reusing taller-plank.png (the same weathered board as the Simplicity card), so it carries Simplicity's tuned framing (bg 46% 42%/142% 220%). The 18px downward nudge centres the text on the visible log. */
-.honest-card{position:relative;z-index:0;padding:2rem .6rem 3.4rem}
-.honest-card h3{margin-bottom:1.5rem}
-.honest-card p{max-width:300px;margin-left:auto;margin-right:auto;line-height:1.62}
-.honest-card::before{content:'';position:absolute;z-index:-1;left:50%;top:0;transform:translate(-50%,18px);width:clamp(330px,150%,540px);max-width:95vw;aspect-ratio:7/3;background:url(images/taller-plank.png) 46% 42%/142% 220% no-repeat;opacity:.95;filter:brightness(.93) saturate(1.05) drop-shadow(0 16px 34px rgba(2,10,18,.55));-webkit-mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);mask-image:radial-gradient(120% 92% at 50% 46%,#000 72%,transparent 100%);pointer-events:none}
+/* ── WHY WEBSHARKE — frosted underwater glass panels ────────── */
+/* Section title rests in the water with a faint bioluminescent halo (no wood). */
+#why .sec-title{position:relative;color:var(--foam);text-shadow:0 2px 26px rgba(2,10,18,.5),0 0 32px rgba(98,182,198,.22)}
+#why .wrap{max-width:1180px}
+.why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.5rem,2.6vw,2.4rem);max-width:1100px;margin:clamp(3rem,5vw,4.2rem) auto 0;align-items:stretch}
+/* frosted glass card — semi-transparent dark teal that blurs the ocean behind it */
+.why-col{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(2.2rem,3.2vw,3rem) clamp(1.5rem,2.4vw,2.2rem) clamp(2.4rem,3.4vw,3.2rem);border-radius:20px;background:linear-gradient(160deg,rgba(14,49,62,.46),rgba(6,27,37,.34));backdrop-filter:blur(15px) saturate(135%);-webkit-backdrop-filter:blur(15px) saturate(135%);box-shadow:inset 0 1px 0 rgba(173,224,233,.22),0 18px 48px rgba(2,12,20,.42),0 0 34px -10px rgba(98,182,198,.32);transition:transform .55s cubic-bezier(.16,1,.3,1),box-shadow .55s cubic-bezier(.16,1,.3,1)}
+/* 1px gradient frame — brighter at the top edge, softer toward the bottom, like light catching a submerged surface */
+.why-col::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(180deg,rgba(150,229,242,.62),rgba(98,182,198,.20) 42%,rgba(98,182,198,.07));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;pointer-events:none;transition:background .55s}
+/* thin-line underwater UI icon above each header — the only other element that glows */
+.why-ic{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin-bottom:1.15rem;color:var(--aqua)}
+.why-ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 7px rgba(98,182,198,.5))}
+/* headers: cream display type with a soft bioluminescent glow */
+.why-col h3{font-family:'Distillery Display','Playfair Display',serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(1.45rem,2.2vw,1.85rem);color:#efe6d2;margin-bottom:1.05rem;text-shadow:0 0 20px rgba(98,182,198,.5),0 0 7px rgba(150,229,242,.32)}
+/* body: calm and readable — no glow */
+.why-col p{font-family:'Playfair Display',sans-serif;font-weight:400;color:rgba(224,238,240,.82);font-size:.96rem;line-height:1.78;max-width:34ch;margin:0 auto;text-shadow:0 1px 2px rgba(2,12,20,.45)}
+/* hover: the card floats gently upward and its glow lifts with it */
+.why-col:hover{transform:translateY(-8px);box-shadow:inset 0 1px 0 rgba(173,224,233,.3),0 30px 62px rgba(2,12,20,.5),0 0 46px -6px rgba(98,182,198,.46)}
+.why-col:hover::before{background:linear-gradient(180deg,rgba(170,236,247,.78),rgba(98,182,198,.26) 42%,rgba(98,182,198,.09))}
 
 /* ── STYLES — placeholder windows (future examples go here) ────────────────── */
 .style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin-top:clamp(2.4rem,4.5vw,3.4rem);text-align:left}
@@ -169,15 +164,14 @@ body.lock{overflow:hidden;height:100vh}
 @media(prefers-reduced-motion:reduce){
   .fish,.fish>i,.mote,.school,.school .sf{animation:none!important}
   #snow{display:none}
+  .why-col,.why-col::before{transition:none}
+  .why-col:hover{transform:none}
   html{scroll-behavior:auto}
 }
 
 /* ── RESPONSIVE (desktop-first) ──────────────────────────────────────────── */
 @media(max-width:900px){
-  .why-cols{grid-template-columns:1fr;gap:3.4rem;max-width:470px}
-  .simplicity-card,.integration-card,.honest-card{padding:1.7rem .4rem 3rem}
-  .simplicity-card p,.integration-card p,.honest-card p{max-width:322px}
-  .simplicity-card::before,.integration-card::before,.honest-card::before{width:min(95vw,480px);aspect-ratio:2/1}
+  .why-cols{grid-template-columns:1fr;gap:1.7rem;max-width:440px}
   .style-grid{grid-template-columns:1fr 1fr}
 }
 @media(max-width:680px){
@@ -237,15 +231,18 @@ body.lock{overflow:hidden;height:100vh}
   <div class="wrap">
     <h2 class="sec-title rv">Why WebSharke</h2>
     <div class="why-cols">
-      <div class="why-col simplicity-card rv d1">
+      <div class="why-col rv d1">
+        <span class="why-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 8.6c1.4-2.2 2.8-2.2 4.2 0s2.8 2.2 4.2 0 2.8-2.2 4.2 0 2.8 2.2 4.2 0"/><path d="M3.6 15.4c1.4-2.2 2.8-2.2 4.2 0s2.8 2.2 4.2 0 2.8-2.2 4.2 0 2.8 2.2 4.2 0"/></svg></span>
         <h3>Simplicity</h3>
         <p>Wheather your a software developer or still own a phone, everything is designed to be as simple and as intuitive as possible</p>
       </div>
-      <div class="why-col integration-card rv d2">
+      <div class="why-col rv d2">
+        <span class="why-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="6" r="2.3"/><circle cx="18.5" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><path d="M7.5 7.4 10.5 16M16.5 7.4 13.5 16M7.8 6h8.4"/></svg></span>
         <h3>Integration</h3>
         <p>No need to scatter your site accross five different places. We do the heavy lifting for you so you can focus on what you do best.</p>
       </div>
-      <div class="why-col honest-card rv d3">
+      <div class="why-col rv d3">
+        <span class="why-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6l-7-3Z"/><path d="M9 11.6 11.2 14 15 9.4"/></svg></span>
         <h3>Honest</h3>
         <p>Not going to tell you things that don't apply to your business. We tell you what everything does and how you can apply it, the rest is up to you.</p>
       </div>
