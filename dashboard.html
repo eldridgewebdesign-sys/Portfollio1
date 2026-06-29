@@ -415,24 +415,41 @@
     .adm-h1 .adm-sub{display:block;font-family:'Playfair Display',sans-serif;font-size:.85rem;font-weight:500;
       color:var(--adm-muted);margin-top:.1rem}
 
-    /* ── Cards / metric grid ──────────────────────────────────────────────── */
-    .adm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem;margin-bottom:1.5rem}
-    .adm-card{background:var(--adm-panel);border:1px solid var(--adm-bd);border-radius:13px;
-      padding:1rem 1.1rem;box-shadow:0 14px 34px rgba(0,40,55,.16),inset 0 1px 0 rgba(255,255,255,.4);
-      backdrop-filter:blur(10px) saturate(1.15);-webkit-backdrop-filter:blur(10px) saturate(1.15)}
-    .adm-card .lbl{font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--adm-muted)}
-    .adm-card .val{font-size:1.85rem;font-weight:800;margin-top:.35rem;line-height:1;font-family:'Playfair Display',sans-serif}
-    .adm-card .val.danger{color:var(--adm-danger)}
-    .adm-card .val.warn{color:var(--adm-warn)}
-    .adm-card .val.good{color:var(--adm-good)}
-    .adm-card .val.turq{color:var(--adm-turq-deep)}
-
+    /* ── Panels ───────────────────────────────────────────────────────────── */
     .adm-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-bottom:1.4rem}
     .adm-panel-box{background:var(--adm-panel);border:1px solid var(--adm-bd);border-radius:13px;
       padding:1.1rem 1.2rem;box-shadow:0 16px 40px rgba(0,40,55,.16),inset 0 1px 0 rgba(255,255,255,.4);
       backdrop-filter:blur(11px) saturate(1.15);-webkit-backdrop-filter:blur(11px) saturate(1.15)}
     .adm-panel-box h3{font-family:'Playfair Display',serif;font-weight:700;font-size:1.3rem;margin-bottom:.85rem}
-    .adm-chart-wrap{position:relative;height:230px}
+
+    /* ── Overview lists (New Onboarding · Current Projects · This Month) ───── */
+    .ov-panel{margin-bottom:1.25rem}
+    .ov-panel:last-child{margin-bottom:0}
+    .ov-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.5rem}
+    .ov-head h3{margin-bottom:0}
+    .ov-link{background:none;border:none;color:var(--adm-turq-deep);font-weight:700;font-size:.8rem;
+      cursor:pointer;letter-spacing:.02em;padding:.25rem .4rem;border-radius:7px;
+      transition:background .12s,color .12s;white-space:nowrap}
+    .ov-link:hover{background:rgba(16,182,204,.12);color:var(--adm-text)}
+    .ov-list{display:flex;flex-direction:column}
+    .ov-item{display:flex;align-items:center;justify-content:space-between;gap:1rem;width:100%;
+      text-align:left;background:none;border:none;border-bottom:1px solid var(--adm-bd);
+      padding:.8rem .3rem;cursor:pointer;transition:background .12s;border-radius:8px}
+    .ov-item:last-child{border-bottom:none}
+    .ov-item:hover{background:rgba(16,182,204,.09)}
+    .ov-main{display:flex;flex-direction:column;gap:.22rem;flex:1 1 auto;min-width:0}
+    .ov-primary{font-family:'Playfair Display',sans-serif;font-weight:700;font-size:.95rem;
+      color:var(--adm-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ov-secondary{font-size:.8rem;color:var(--adm-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ov-meta{display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;flex:0 0 auto}
+    .ov-date{font-size:.76rem;color:var(--adm-faint);white-space:nowrap}
+    .ov-empty{padding:1.7rem .3rem;color:var(--adm-muted);font-size:.88rem;text-align:center}
+
+    /* ── Drawer danger zone (destructive actions, clearly separated) ──────── */
+    .adm-danger-zone{border:1px solid rgba(192,57,47,.38);background:rgba(192,57,47,.05);
+      border-radius:12px;padding:1rem 1.1rem;margin-top:1.7rem}
+    .adm-section.adm-danger-zone>h4{color:var(--adm-danger);border-bottom:1px solid rgba(192,57,47,.3)}
+    .adm-danger-note{font-size:.78rem;color:var(--adm-muted);line-height:1.5;margin:-.15rem 0 .75rem}
 
     /* ── Toolbar (search + filters + export) ──────────────────────────────── */
     .adm-toolbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
@@ -494,6 +511,7 @@
     .badge.b-past_due,.badge.b-suspended,.badge.b-waiting_on_client{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
     .badge.b-canceled,.badge.b-not_started{background:rgba(44,84,104,.12);color:#2c5468;border-color:rgba(44,84,104,.32)}
     .badge.b-in_progress{background:rgba(45,111,199,.16);color:#2d6fc7;border-color:rgba(45,111,199,.42)}
+    .badge.b-new,.badge.b-new_lead{background:rgba(16,182,204,.16);color:var(--adm-turq-deep);border-color:rgba(16,182,204,.42)}
     .badge.b-none{background:rgba(44,84,104,.08);color:var(--adm-faint);border-color:var(--adm-bd-2)}
 
     /* ── Skeleton loaders + empty states ──────────────────────────────────── */
@@ -501,9 +519,6 @@
     .adm-skel{height:13px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.32) 25%,rgba(255,255,255,.7) 37%,rgba(255,255,255,.32) 63%);
       background-size:400% 100%;animation:admshimmer 1.3s ease infinite}
     @keyframes admshimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
-    .adm-skel-card{height:84px;border-radius:13px;border:1px solid var(--adm-bd);
-      background:linear-gradient(90deg,rgba(255,255,255,.28) 25%,rgba(255,255,255,.6) 37%,rgba(255,255,255,.28) 63%);
-      background-size:400% 100%;animation:admshimmer 1.3s ease infinite}
     .adm-empty{text-align:center;padding:3rem 1.5rem;color:var(--adm-muted)}
     .adm-empty svg{width:46px;height:46px;stroke:var(--adm-faint);fill:none;stroke-width:1.4;margin-bottom:.8rem}
     .adm-empty h4{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--adm-text);margin-bottom:.3rem}
@@ -971,23 +986,33 @@
 
       <div class="adm-views" id="admViews">
 
-        <!-- OVERVIEW -->
+        <!-- OVERVIEW — three focused sections only -->
         <section class="adm-view active" id="view-overview">
-          <div class="adm-view-head"><h1 class="adm-h1">Overview<span class="adm-sub">Command center — everything that needs your attention</span></h1></div>
-          <div class="adm-cards" id="ovCards"></div>
-          <div class="adm-grid-2">
-            <div class="adm-panel-box"><h3>Subscription breakdown</h3><div class="adm-chart-wrap"><canvas id="chPlans"></canvas></div></div>
-            <div class="adm-panel-box"><h3>Payment status</h3><div class="adm-chart-wrap"><canvas id="chPay"></canvas></div></div>
-            <div class="adm-panel-box"><h3>Website type</h3><div class="adm-chart-wrap"><canvas id="chType"></canvas></div></div>
-            <div class="adm-panel-box">
-              <h3 style="display:flex;justify-content:space-between;align-items:center">Site purchases over time
-                <select id="ovTimeframe" style="background:var(--adm-input);border:1px solid var(--adm-bd-2);color:var(--adm-text);border-radius:8px;padding:.3rem .5rem;font-size:.8rem">
-                  <option value="6">Last 6 months</option><option value="12">Last 12 months</option><option value="0">All time</option>
-                </select></h3>
-              <div class="adm-chart-wrap"><canvas id="chSites"></canvas></div>
+          <div class="adm-view-head"><h1 class="adm-h1">Overview<span class="adm-sub">New onboarding, current projects, and this month's websites</span></h1></div>
+
+          <div class="adm-panel-box ov-panel">
+            <div class="ov-head">
+              <h3>New Onboarding</h3>
+              <button class="ov-link" data-ov-goto="onboarding" type="button">View all →</button>
             </div>
+            <div class="ov-list" id="ovOnboarding"></div>
           </div>
-          <div class="adm-panel-box"><h3>Recent activity</h3><div id="ovActivity"></div></div>
+
+          <div class="adm-panel-box ov-panel">
+            <div class="ov-head">
+              <h3>Current Projects</h3>
+              <button class="ov-link" data-ov-goto="websites" type="button">View all →</button>
+            </div>
+            <div class="ov-list" id="ovProjects"></div>
+          </div>
+
+          <div class="adm-panel-box ov-panel">
+            <div class="ov-head">
+              <h3>Websites This Month</h3>
+              <button class="ov-link" data-ov-goto="websites" type="button">View all →</button>
+            </div>
+            <div class="ov-list" id="ovMonth"></div>
+          </div>
         </section>
 
         <!-- Generic data views (toolbar + table injected by JS) -->
@@ -1166,8 +1191,6 @@
   <!-- ── Supabase (shared client `db`) — same config every page uses ────────── -->
   <script src="js/vendor/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
-  <!-- Chart.js v4.4.1, vendored locally (no CDN) — only used by the admin Overview charts. -->
-  <script src="js/vendor/chart.umd.min.js"></script>
 
   <script>
     // =================================================================
@@ -2157,19 +2180,30 @@
           { key: "domain", label: "Domain", options: [["assigned", "Assigned"], ["missing", "Missing"]] },
           { key: "plan", label: "Plan", dynamicFrom: "plan_name" },
         ],
+        // Preview rows stay clean: name, business, email, phone + an Edit
+        // action only. Every other field and all advanced/destructive actions
+        // live in the user drawer (rowClick / Edit opens it).
         columns: [
           { key: "full_name", label: "Name", sortable: true },
           { key: "business_name", label: "Business", sortable: true },
           { key: "email", label: "Email", sortable: true },
           { key: "cell_phone", label: "Phone" },
-          { key: "account_status", label: "Status", render: (r) => badge(r.account_status || "active") },
-          { key: "payment_status", label: "Payment", render: (r) => badge(r.payment_status) },
-          { key: "plan_name", label: "Plan", render: (r) => esc(r.plan_name || "—") },
-          { key: "domain", label: "Domain", render: (r) => esc(r.domain || "—") },
-          { key: "website_type", label: "Type", render: (r) => r.website_type ? esc(pretty(r.website_type)) : "—" },
-          { key: "business_description", label: "Description", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.business_description, 60)) + "</span>" },
-          { key: "created_at", label: "Created", sortable: true, render: (r) => fmtDate(r.created_at) },
           { key: "_actions", label: "", render: (r) => userActionsHtml(r) },
+        ],
+        // CSV export keeps the full record set even though the table preview
+        // is trimmed — admins still get complete data on export.
+        exportColumns: [
+          { key: "full_name", label: "Name" },
+          { key: "business_name", label: "Business" },
+          { key: "email", label: "Email" },
+          { key: "cell_phone", label: "Phone" },
+          { key: "account_status", label: "Status" },
+          { key: "payment_status", label: "Payment" },
+          { key: "plan_name", label: "Plan" },
+          { key: "domain", label: "Domain" },
+          { key: "website_type", label: "Type" },
+          { key: "business_description", label: "Description" },
+          { key: "created_at", label: "Created" },
         ],
         emptyTitle: "No users found", emptyMsg: "No client records match your filters yet.",
       },
@@ -2300,11 +2334,8 @@
     };
 
     function userActionsHtml() {
-      return '<div class="adm-row-actions">' +
-        '<button class="adm-mini" data-act="edit">Edit</button>' +
-        '<button class="adm-mini" data-act="suspend">Suspend</button>' +
-        '<button class="adm-mini danger" data-act="ban">Ban</button>' +
-        '<button class="adm-mini danger" data-act="delete">Delete</button></div>';
+      // Edit only — Suspend / Ban / Delete live in the drawer's Danger Zone.
+      return '<div class="adm-row-actions"><button class="adm-mini" data-act="edit">Edit</button></div>';
     }
     function paymentActionsHtml() {
       return '<div class="adm-row-actions">' +
@@ -2576,7 +2607,7 @@
       } catch (e) { toast("Export failed", e.message, true); return; }
       if (!rows.length) { toast("Nothing to export", "There are no rows for this selection.", true); return; }
 
-      const cols = cfg.columns.filter((c) => c.key !== "_actions");
+      const cols = (cfg.exportColumns || cfg.columns).filter((c) => c.key !== "_actions");
       const header = cols.map((c) => csvCell(c.label)).join(",");
       const lines = rows.map((r) => cols.map((c) => csvCell(r[c.key])).join(","));
       const blob = new Blob([[header].concat(lines).join("\n")], { type: "text/csv;charset=utf-8" });
@@ -2633,22 +2664,32 @@
       aq("admDrawerTitle").innerHTML = esc(inq.full_name || inq.business_name || "User") + "<small>" + esc(inq.email || "") + "</small>";
 
       let h = "";
-      // Profile
-      h += '<div class="adm-section"><h4>Profile</h4>';
-      PROFILE_FIELDS.forEach((f) => h += field("dk-" + f[0], f[1], inq[f[0]]));
-      h += field("dk-domain", "Domain", inq.domain);
-      h += '<div class="adm-fld"><label>Account status</label><select id="dk-account_status">' +
-        ["active", "suspended", "banned"].map((s) => '<option value="' + s + '"' + ((inq.account_status || "active") === s ? " selected" : "") + ">" + pretty(s) + "</option>").join("") + "</select></div>";
+
+      // ── Contact Info ─────────────────────────────────────────────────
+      h += '<div class="adm-section"><h4>Contact Info</h4>';
+      h += field("dk-full_name", "Full name", inq.full_name);
+      h += field("dk-email", "Email", inq.email);
+      h += field("dk-cell_phone", "Phone", inq.cell_phone);
+      h += field("dk-business_address", "Business address", inq.business_address);
       h += "</div>";
 
-      // Onboarding answers
-      h += '<div class="adm-section"><h4>Onboarding Answers</h4>';
-      ONB_FIELDS.forEach((f) => h += field("dk-" + f[0], f[1], inq[f[0]], "textarea"));
-      const styles = Array.isArray(inq.preferred_styles) ? inq.preferred_styles.join(", ") : (inq.preferred_styles || "—");
-      h += '<div class="adm-kv"><span class="k">Preferred styles</span><span class="v">' + esc(styles) + "</span></div></div>";
+      // ── Business Info ────────────────────────────────────────────────
+      h += '<div class="adm-section"><h4>Business Info</h4>';
+      h += field("dk-business_name", "Business name", inq.business_name);
+      h += field("dk-business_description", "Business description", inq.business_description, "textarea");
+      h += field("dk-products_services", "Products / Services", inq.products_services, "textarea");
+      h += "</div>";
 
-      // Subscription
-      h += '<div class="adm-section"><h4>Subscription</h4>';
+      // ── Project Info (onboarding answers) ────────────────────────────
+      h += '<div class="adm-section"><h4>Project Info</h4>';
+      [["website_goals", "Website goals"], ["visitor_actions", "Visitor actions"], ["websites_liked", "Websites liked"], ["color_preferences", "Color preferences"], ["design_notes", "Design notes"], ["additional_info", "Additional info"]]
+        .forEach((f) => h += field("dk-" + f[0], f[1], inq[f[0]], "textarea"));
+      const styles = Array.isArray(inq.preferred_styles) ? inq.preferred_styles.join(", ") : (inq.preferred_styles || "—");
+      h += '<div class="adm-kv"><span class="k">Preferred styles</span><span class="v">' + esc(styles) + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Submitted</span><span class="v">' + fmtDate(inq.created_at) + "</span></div></div>";
+
+      // ── Hosting / Subscription ───────────────────────────────────────
+      h += '<div class="adm-section"><h4>Hosting / Subscription</h4>';
       h += '<div class="adm-kv"><span class="k">Plan</span><span class="v">' + esc(sub.plan_name || sub.website_type || "—") + "</span></div>";
       h += '<div class="adm-kv"><span class="k">Status</span><span class="v">' + badge(sub.status) + "</span></div>";
       h += '<div class="adm-kv"><span class="k">Amount</span><span class="v">' + money(sub.amount) + "</span></div>";
@@ -2659,7 +2700,6 @@
           '<button class="adm-btn" data-sub="active">Mark Active</button>' +
           '<button class="adm-btn danger" data-sub="unpaid">Mark Unpaid</button>' +
           '<button class="adm-btn" data-sub="past_due">Past Due</button>' +
-          '<button class="adm-btn danger" data-sub="cancel">Cancel</button>' +
           '<button class="adm-btn" data-sub="editplan">Edit Plan</button></div>';
         h += '<div id="dk-planedit" style="display:none;margin-top:.7rem">' +
           field("dk-plan_name", "Plan name", sub.plan_name) +
@@ -2671,8 +2711,8 @@
       }
       h += "</div>";
 
-      // Website
-      h += '<div class="adm-section"><h4>Website</h4>';
+      // ── Website / Domain ─────────────────────────────────────────────
+      h += '<div class="adm-section"><h4>Website / Domain</h4>';
       if (site && site.id) {
         h += '<div class="adm-kv"><span class="k">Type</span><span class="v">' + esc(pretty(site.website_type)) + "</span></div>";
         h += '<div class="adm-kv"><span class="k">Status</span><span class="v">' + badge(site.status) + "</span></div>";
@@ -2682,23 +2722,21 @@
         h += '<p style="color:var(--adm-muted);font-size:.84rem">No website record yet.</p>' +
           '<div class="adm-actions-row"><button class="adm-btn" data-web="create">Create website for this user</button></div>';
       }
+      h += field("dk-domain", "Domain on file", inq.domain);
+      h += '<div class="adm-fld"><label>Assign / update domain</label><input id="dk-assign-domain" value="' + esc(data.domain || "") + '" placeholder="example.com" /></div>' +
+        '<div class="adm-actions-row"><button class="adm-btn primary" data-act="assign-domain">Assign domain</button></div>';
       h += "</div>";
 
-      // Domain
-      h += '<div class="adm-section"><h4>Domain</h4>' +
-        '<div class="adm-fld"><label>Assign / update domain</label><input id="dk-assign-domain" value="' + esc(data.domain || "") + '" placeholder="example.com" /></div>' +
-        '<div class="adm-actions-row"><button class="adm-btn primary" data-act="assign-domain">Assign domain</button></div></div>';
-
-      // Admin Actions
+      // ── Admin Actions ────────────────────────────────────────────────
       h += '<div class="adm-section"><h4>Admin Actions</h4>' +
         '<div class="adm-kv"><span class="k">Current status</span><span class="v">' + badge(inq.account_status || "active") + "</span></div>" +
+        '<div class="adm-fld"><label>Account status</label><select id="dk-account_status">' +
+        ["active", "suspended", "banned"].map((s) => '<option value="' + s + '"' + ((inq.account_status || "active") === s ? " selected" : "") + ">" + pretty(s) + "</option>").join("") + "</select></div>" +
         '<div class="adm-actions-row">' +
         '<button class="adm-btn" data-act="reactivate">Reactivate</button>' +
-        '<button class="adm-btn danger" data-act="suspend">Suspend</button>' +
-        '<button class="adm-btn danger" data-act="ban">Ban</button>' +
-        '<button class="adm-btn danger" data-act="delete">Delete user</button></div></div>';
+        '<button class="adm-btn" data-act="suspend">Suspend</button></div></div>';
 
-      // Recent Activity Timeline
+      // ── Recent Activity Timeline ─────────────────────────────────────
       h += '<div class="adm-section"><h4>Recent Activity</h4>';
       if (data.activity && data.activity.length) {
         h += '<ul class="adm-timeline">' + data.activity.map((a) =>
@@ -2709,6 +2747,14 @@
         h += '<p style="color:var(--adm-muted);font-size:.84rem">No recorded activity yet.</p>';
       }
       h += "</div>";
+
+      // ── Danger Zone (destructive, irreversible actions) ──────────────
+      h += '<div class="adm-section adm-danger-zone"><h4>Danger Zone</h4>' +
+        '<p class="adm-danger-note">These actions are destructive. Banning blocks access; canceling ends Stripe billing; deleting is permanent.</p>' +
+        '<div class="adm-actions-row">' +
+        '<button class="adm-btn danger" data-act="ban">Ban user</button>' +
+        (sub.id || sub.user_id ? '<button class="adm-btn danger" data-sub="cancel">Cancel subscription</button>' : "") +
+        '<button class="adm-btn danger" data-act="delete">Delete user</button></div></div>';
 
       aq("admDrawerBody").innerHTML = h;
       wireUserDrawer(data);
@@ -3285,87 +3331,68 @@
     }
 
     // =====================================================================
-    // OVERVIEW + CHARTS
+    // OVERVIEW — New Onboarding · Current Projects · Websites This Month
+    // (Three focused lists. No stat-card wall, no charts.)
     // =====================================================================
-    let overviewData = null;
-    const charts = {};
-    const CHART_COLORS = ["#19c2d8", "#3fb98a", "#f5a524", "#e5484d", "#3d7bd9", "#9b6dff", "#15707f", "#c2506a"];
+    function ovSkeleton() {
+      let s = "";
+      for (let i = 0; i < 3; i++)
+        s += '<div class="ov-item"><div class="ov-main"><div class="adm-skel" style="width:42%;height:14px"></div>' +
+          '<div class="adm-skel" style="width:62%;height:11px;margin-top:.55rem"></div></div></div>';
+      return s;
+    }
+    function ovEmpty(msg) { return '<div class="ov-empty">' + esc(msg) + "</div>"; }
 
-    function chartDefaults() {
-      if (window.Chart) {
-        Chart.defaults.color = "#2c5468";
-        Chart.defaults.borderColor = "rgba(17,54,76,.12)";
-        Chart.defaults.font.family = "Playfair Display, system-ui, sans-serif";
-      }
+    // Build one clickable list row: a bold primary line, a muted secondary
+    // line, then a date + status badge on the right.
+    function ovItem(i, primary, secondary, date, status) {
+      return '<button class="ov-item" type="button" data-i="' + i + '">' +
+        '<div class="ov-main"><span class="ov-primary">' + esc(primary) + "</span>" +
+        '<span class="ov-secondary">' + esc(secondary) + "</span></div>" +
+        '<div class="ov-meta"><span class="ov-date">' + fmtDate(date) + "</span>" + badge(status) + "</div></button>";
     }
-    function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
-    function setChartEmpty(id, isEmpty, msg) {
-      const ctx = aq(id); if (!ctx) return;
-      const wrap = ctx.parentElement;
-      let ov = wrap.querySelector(".chart-empty");
-      ctx.style.display = isEmpty ? "none" : "";
-      if (isEmpty) {
-        if (!ov) { ov = ce("div", "chart-empty"); ov.style.cssText = "position:absolute;inset:0;display:grid;place-items:center;color:var(--adm-muted);font-size:.85rem"; wrap.appendChild(ov); }
-        ov.textContent = msg || "No data yet.";
-      } else if (ov) ov.remove();
+
+    function renderOvOnboarding(rows) {
+      const el = aq("ovOnboarding");
+      if (!rows.length) { el.innerHTML = ovEmpty("No new onboarding submissions."); return; }
+      el.innerHTML = rows.map((r, i) =>
+        ovItem(i, r.business_name || r.full_name || r.email || "—",
+          [r.full_name, r.email].filter(Boolean).join(" · ") || "—", r.created_at, r.status || "new")).join("");
+      el.querySelectorAll(".ov-item").forEach((b) =>
+        b.onclick = () => { const r = rows[Number(b.dataset.i)]; openUserDrawer(r.user_id, r.id); });
     }
-    function doughnut(id, labelsObj) {
-      if (!window.Chart) return;
-      destroyChart(id);
-      const labels = Object.keys(labelsObj).filter((k) => labelsObj[k] > 0);
-      const values = labels.map((k) => labelsObj[k]);
-      const ctx = aq(id); if (!ctx) return;
-      if (!labels.length) { setChartEmpty(id, true, "No data yet."); return; }
-      setChartEmpty(id, false);
-      charts[id] = new Chart(ctx, {
-        type: "doughnut",
-        data: { labels: labels.map(pretty), datasets: [{ data: values, backgroundColor: CHART_COLORS, borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom", labels: { boxWidth: 12, padding: 12 } } } },
-      });
+
+    function renderOvProjects(rows) {
+      const el = aq("ovProjects");
+      if (!rows.length) { el.innerHTML = ovEmpty("No current projects yet."); return; }
+      // Only the four requested fields: owner, business, date purchased, status.
+      el.innerHTML = rows.map((r, i) =>
+        ovItem(i, r.owner_name || "—", r.business_name || "—", r.purchase_date, r.status)).join("");
+      el.querySelectorAll(".ov-item").forEach((b) =>
+        b.onclick = () => openWebsiteDrawer(rows[Number(b.dataset.i)]));
     }
-    function renderSitesChart(months) {
-      if (!window.Chart) return;
-      destroyChart("chSites");
-      const data = overviewData ? overviewData.charts.sitesByMonth : {};
-      let keys = Object.keys(data).sort();
-      if (months > 0) keys = keys.slice(-months);
-      const ctx = aq("chSites"); if (!ctx) return;
-      if (!keys.length) { setChartEmpty("chSites", true, "No site purchases recorded yet."); return; }
-      setChartEmpty("chSites", false);
-      charts.chSites = new Chart(ctx, {
-        type: "bar",
-        data: { labels: keys, datasets: [{ label: "Sites purchased", data: keys.map((k) => data[k]), backgroundColor: "#19c2d8", borderRadius: 5 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
-      });
+
+    function renderOvMonth(rows) {
+      const el = aq("ovMonth");
+      if (!rows.length) { el.innerHTML = ovEmpty("No websites created this month yet."); return; }
+      el.innerHTML = rows.map((r, i) =>
+        ovItem(i, r.domain || "No domain yet", r.business_name || r.owner_name || "—", r.created_at, r.status)).join("");
+      el.querySelectorAll(".ov-item").forEach((b) =>
+        b.onclick = () => openWebsiteDrawer(rows[Number(b.dataset.i)]));
     }
 
     async function loadOverview() {
-      aq("ovCards").innerHTML = Array(12).fill('<div class="adm-skel-card"></div>').join("");
+      ["ovOnboarding", "ovProjects", "ovMonth"].forEach((id) => { const el = aq(id); if (el) el.innerHTML = ovSkeleton(); });
+      document.querySelectorAll("#view-overview [data-ov-goto]").forEach((b) =>
+        b.onclick = () => switchView(b.dataset.ovGoto));
       try {
         const data = await adminApi("overview");
-        overviewData = data;
-        const c = data.cards;
-        const cards = [
-          ["Total users", c.totalUsers, ""], ["New this week", c.newUsersWeek, "turq"], ["New this month", c.newUsersMonth, "turq"],
-          ["Active subscriptions", c.activeSubscriptions, "good"], ["Unpaid clients", c.unpaidClients, "danger"], ["Past due", c.pastDueClients, "warn"],
-          ["Canceled", c.canceledSubscriptions, ""], ["Total websites", c.totalWebsites, ""], ["In progress", c.websitesInProgress, "blue"],
-          ["Waiting on client", c.websitesWaitingClient, "warn"], ["Live websites", c.liveWebsites, "good"], ["Missing domains", c.missingDomains, "danger"],
-          ["New onboarding", c.newOnboarding, "turq"], ["Suspended", c.suspended, "warn"], ["Banned", c.banned, "danger"],
-        ];
-        aq("ovCards").innerHTML = cards.map((k) => '<div class="adm-card"><div class="lbl">' + esc(k[0]) + '</div><div class="val ' + k[2] + '">' + (k[1] != null ? k[1] : 0) + "</div></div>").join("");
-
-        chartDefaults();
-        doughnut("chPlans", data.charts.planCounts);
-        doughnut("chPay", data.charts.payStatusCounts);
-        doughnut("chType", data.charts.siteTypeCounts);
-        renderSitesChart(Number(aq("ovTimeframe").value) || 6);
-
-        const act = data.recentActivity || [];
-        aq("ovActivity").innerHTML = act.length
-          ? '<ul class="adm-timeline">' + act.map((a) => '<li><div class="tl-action">' + esc(pretty(a.action)) + ' <span style="color:var(--adm-muted);font-weight:400">by ' + esc(a.admin_email) + '</span></div><div class="tl-meta">' + (a.changed_field ? esc(a.changed_field) + " · " : "") + fmtDateTime(a.created_at) + "</div></li>").join("") + "</ul>"
-          : '<div class="adm-empty" style="padding:1.5rem"><p>No admin activity recorded yet.</p></div>';
+        renderOvOnboarding(data.recentOnboarding || []);
+        renderOvProjects(data.projects || []);
+        renderOvMonth(data.websitesThisMonth || []);
       } catch (e) {
-        aq("ovCards").innerHTML = '<div class="adm-empty" style="grid-column:1/-1"><h4>Couldn’t load overview</h4><p>' + esc(e.message) + "</p></div>";
+        const msg = ovEmpty("Couldn’t load: " + e.message);
+        ["ovOnboarding", "ovProjects", "ovMonth"].forEach((id) => { const el = aq(id); if (el) el.innerHTML = msg; });
       }
     }
 
@@ -3441,7 +3468,6 @@
       aq("admDrawerOv").addEventListener("click", closeDrawer);
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
       aq("admSignout").addEventListener("click", async () => { try { await db.auth.signOut(); } catch (e) {} document.cookie = "ws_session=; path=/; SameSite=Lax; Secure; max-age=0"; window.location.replace("/login"); });
-      aq("ovTimeframe").addEventListener("change", () => renderSitesChart(Number(aq("ovTimeframe").value) || 0));
       aq("setDensity").addEventListener("change", (e) => {
         document.querySelectorAll("table.adm-table").forEach((t) => t.style.fontSize = e.target.value === "compact" ? ".78rem" : ".84rem");
       });

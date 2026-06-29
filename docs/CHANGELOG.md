@@ -2,6 +2,32 @@
 
 All notable changes to the WebSharke site. Newest first.
 
+## 2026-06-29
+
+### Changed
+- **Admin dashboard decluttered — Overview, Users tab, and the detail drawer.** Reworked `dashboard.html` (admin
+  SPA) + `api/admin.js` so the main admin screens read cleaner and scan faster. _(Files: `dashboard.html`,
+  `api/admin.js`.)_
+  - **Overview** stripped from a 15-stat-card wall + four Chart.js charts + a recent-activity panel down to
+    **exactly three lists**: **New Onboarding** (`#ovOnboarding`), **Current Projects** (`#ovProjects` — shows
+    only owner name, business name, date purchased, status), and **Websites This Month** (`#ovMonth` — a real
+    list of this-month site records with domain, owner/business, date, status — not a number). Each list row
+    opens the relevant drawer; each section has a **View all →** link to the full view. Removed the now-unused
+    chart helpers, the `chart.umd.min.js` `<script>` include, and the dead `.adm-cards`/`.adm-card`/
+    `.adm-chart-wrap`/`.adm-skel-card` CSS.
+  - **`api/admin.js` `getOverview`** now also returns `recentOnboarding`, `projects`, and `websitesThisMonth`,
+    built **from the data it already fetches in-memory** (no new queries, no schema change); the existing
+    `cards`/`charts`/`recentActivity` keys are untouched.
+  - **Users tab** preview rows trimmed to **Name · Business · Email · Phone + an Edit button only**. Suspend/Ban/
+    Delete were removed from the row (they live in the drawer now). CSV export keeps the full record set via a new
+    `exportColumns` config, so exports lose nothing.
+  - **User drawer** reorganised into labelled sections — **Contact Info · Business Info · Project Info · Hosting /
+    Subscription · Website / Domain · Admin Actions · Recent Activity** — with destructive actions (Ban · Cancel
+    subscription · Delete) grouped in a clearly-labelled red **Danger Zone**. No admin feature was removed; every
+    advanced/destructive action moved into the drawer. All saved field ids + action wiring preserved.
+- Reviewed via a 4-dimension adversarial workflow (reference integrity, API/data-shape, requirements,
+  CSS/responsive); two CSS findings fixed (Danger-Zone heading specificity, orphaned skeleton rule).
+
 ## 2026-06-21
 
 ### Changed

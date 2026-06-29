@@ -210,6 +210,83 @@ async function getOverview(supa) {
 
   const missingDomains = inq.filter((r) => !r.domain || String(r.domain).trim() === "").length;
 
+  // -------------------------------------------------------------------
+  // Overview lists (built from the data already fetched above — no extra
+  // queries). These power the redesigned Overview: New Onboarding,
+  // Current Projects, and Websites This Month.
+  // -------------------------------------------------------------------
+  const inqByUser = indexBy(inq, "user_id");
+  const byDateDesc = (a, b) =>
+    String(b).localeCompare(String(a));
+
+  // New onboarding — most recent project intake submissions.
+  const recentOnboarding = inq
+    .slice()
+    .sort((a, b) => byDateDesc(a.created_at || "", b.created_at || ""))
+    .slice(0, 8)
+    .map((r) => ({
+      id: r.id,
+      user_id: r.user_id,
+      full_name: r.full_name || null,
+      business_name: r.business_name || null,
+      email: r.email || null,
+      status: r.status || "new",
+      created_at: r.created_at || null,
+    }));
+
+  // Current projects — website build records, newest purchase first.
+  // Owner + business name are joined from the matching inquiry by user_id.
+  const projects = siteList
+    .slice()
+    .sort((a, b) =>
+      byDateDesc(a.purchase_date || a.created_at || "", b.purchase_date || b.created_at || ""))
+    .slice(0, 8)
+    .map((w) => {
+      const u = inqByUser[w.user_id] || {};
+      return {
+        id: w.id,
+        user_id: w.user_id,
+        owner_name: w.client_name || u.full_name || u.business_name || u.email || null,
+        business_name: u.business_name || w.client_name || null,
+        purchase_date: w.purchase_date || w.created_at || null,
+        status: w.status || "not_started",
+        domain: w.domain || u.domain || null,
+        website_type: w.website_type || null,
+        client_name: w.client_name || null,
+        client_email: w.client_email || null,
+        notes: w.notes || null,
+      };
+    });
+
+  // Websites this month — actual site records created/purchased in the
+  // current calendar month (UTC), newest first. A real activity list, not
+  // a count.
+  const monthKey = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const websitesThisMonth = siteList
+    .filter((w) => {
+      const d = w.purchase_date || w.created_at;
+      return d && String(d).slice(0, 7) === monthKey;
+    })
+    .sort((a, b) =>
+      byDateDesc(a.purchase_date || a.created_at || "", b.purchase_date || b.created_at || ""))
+    .map((w) => {
+      const u = inqByUser[w.user_id] || {};
+      return {
+        id: w.id,
+        user_id: w.user_id,
+        domain: w.domain || u.domain || null,
+        owner_name: w.client_name || u.full_name || u.business_name || u.email || null,
+        business_name: u.business_name || w.client_name || null,
+        created_at: w.purchase_date || w.created_at || null,
+        purchase_date: w.purchase_date || null,
+        status: w.status || "not_started",
+        website_type: w.website_type || null,
+        client_name: w.client_name || null,
+        client_email: w.client_email || null,
+        notes: w.notes || null,
+      };
+    });
+
   return {
     cards: {
       totalUsers: inq.length,
@@ -236,6 +313,9 @@ async function getOverview(supa) {
       sitesByMonth: byMonth,
     },
     recentActivity: recent || [],
+    recentOnboarding,
+    projects,
+    websitesThisMonth,
   };
 }
 
