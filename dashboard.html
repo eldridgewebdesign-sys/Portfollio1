@@ -184,10 +184,12 @@
       border:1px solid var(--panel-bd);border-radius:0 0 10px 10px;
       background:linear-gradient(135deg,#dceef1,#eef6f7);
     }
-    .dp-viewport iframe{
-      position:absolute;top:0;left:0;width:1280px;height:800px;border:0;
-      transform-origin:top left;pointer-events:none;
+    .dp-viewport #dom-shot{
+      position:absolute;inset:0;width:100%;height:100%;border:0;
+      object-fit:cover;object-position:top center;pointer-events:none;
+      opacity:0;transition:opacity .5s ease;
     }
+    .dp-viewport #dom-shot.loaded{opacity:1}
     .dp-fallback{
       position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
       gap:.45rem;text-align:center;padding:1.4rem;color:#5a7e8c;font-size:.9rem;line-height:1.55;
@@ -451,6 +453,37 @@
     .adm-section.adm-danger-zone>h4{color:var(--adm-danger);border-bottom:1px solid rgba(192,57,47,.3)}
     .adm-danger-note{font-size:.78rem;color:var(--adm-muted);line-height:1.5;margin:-.15rem 0 .75rem}
 
+    /* ── Settings: platform kill switch ───────────────────────────────────── */
+    .set-killbox{max-width:580px}
+    .set-warn{color:var(--adm-muted);font-size:.92rem;line-height:1.65;margin-bottom:1.3rem}
+    .set-status{font-size:.86rem;color:var(--adm-text);line-height:1.6;display:flex;align-items:center;
+      gap:.5rem;flex-wrap:wrap;padding:.8rem .95rem;border:1px solid var(--adm-bd-2);border-radius:11px;
+      background:rgba(255,255,255,.4);margin-bottom:2rem}
+    .set-kill-btn{display:block;width:100%;padding:1.15rem 1.2rem;border-radius:13px;cursor:pointer;
+      border:1px solid var(--adm-danger-deep);color:#fff;font-weight:800;font-size:1.05rem;
+      letter-spacing:.05em;text-transform:uppercase;font-family:'Playfair Display',sans-serif;
+      background:linear-gradient(160deg,var(--adm-danger),var(--adm-danger-deep));
+      box-shadow:0 16px 38px rgba(192,57,47,.32),inset 0 1px 0 rgba(255,255,255,.25);
+      transition:transform .12s,box-shadow .15s,filter .15s}
+    .set-kill-btn:hover:not([disabled]){filter:brightness(1.06);box-shadow:0 20px 46px rgba(192,57,47,.42)}
+    .set-kill-btn:active:not([disabled]){transform:translateY(1px)}
+    .set-kill-btn[disabled]{opacity:.55;cursor:progress}
+    /* Re-enable state — calm green, clearly not the destructive default. */
+    .set-kill-btn.live{border-color:#15707f;
+      background:linear-gradient(160deg,var(--adm-turq),var(--adm-turq-deep));color:#06141b;
+      box-shadow:0 14px 34px rgba(16,182,204,.3),inset 0 1px 0 rgba(255,255,255,.35)}
+    .set-kill-btn.live:hover:not([disabled]){box-shadow:0 18px 42px rgba(16,182,204,.4)}
+
+    /* ── Client maintenance screen (platform kill switch is ON) ───────────── */
+    .maint-screen{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:1.5rem;text-align:center}
+    .maint-card{max-width:520px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.55);
+      border-radius:18px;padding:clamp(2rem,5vw,2.8rem) clamp(1.4rem,4vw,2.4rem);
+      backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);
+      box-shadow:0 24px 60px rgba(0,40,55,.22)}
+    .maint-card h1{font-family:'Distillery Display','Playfair Display',serif;font-weight:400;
+      font-size:clamp(1.8rem,5vw,2.4rem);color:#11364c;margin-bottom:.7rem}
+    .maint-card p{font-family:'Playfair Display',sans-serif;color:#2c5468;font-size:1rem;line-height:1.65;margin:0}
+
     /* ── Toolbar (search + filters + export) ──────────────────────────────── */
     .adm-toolbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
     .adm-toolbar input.adm-tsearch,.adm-toolbar select{background:var(--adm-input);
@@ -691,6 +724,16 @@
   <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
   <a class="ws-logo" href="/" aria-label="WebSharke — home"></a>
 
+  <!-- Maintenance notice — shown to NON-admin clients only when the admin has
+       flipped the platform kill switch (platform_settings.disabled). No data is
+       touched; this is purely a friendly "we're offline" screen. -->
+  <div class="maint-screen hidden" id="maintScreen" role="alert" aria-live="assertive">
+    <div class="maint-card">
+      <h1>We’ll be right back</h1>
+      <p>WebSharke is temporarily offline for maintenance. Your account and data are safe — please check back soon.</p>
+    </div>
+  </div>
+
   <!-- Stays hidden until a logged-in session is confirmed (no flash of the
        dashboard before the redirect to login.html runs). -->
   <main class="portal hidden" id="dash">
@@ -919,10 +962,9 @@
             <div class="dp-viewport">
               <div class="dp-fallback" id="dom-fallback">
                 <strong id="dom-fallback-name">your site</strong>
-                <span>Loading live preview… if it doesn’t appear, your site may block embedding — use “Open Website”.</span>
+                <span id="dom-fallback-msg">Generating a preview of your site…</span>
               </div>
-              <iframe id="dom-iframe" title="Live preview of your website" loading="lazy"
-                      referrerpolicy="no-referrer" sandbox="allow-same-origin allow-scripts"></iframe>
+              <img id="dom-shot" alt="" decoding="async" />
               <a class="dp-overlay" id="dom-overlay" target="_blank" rel="noopener" aria-label="Open your website in a new tab"></a>
             </div>
           </div>
@@ -1137,24 +1179,14 @@
           </div>
         </section>
 
-        <!-- SETTINGS -->
+        <!-- SETTINGS — admin-only platform kill switch (reversible, no data loss) -->
         <section class="adm-view" id="view-settings">
-          <div class="adm-view-head"><h1 class="adm-h1">Settings<span class="adm-sub">Admin-only preferences</span></h1></div>
-          <div class="adm-grid-2">
-            <div class="adm-panel-box">
-              <h3>Admin account</h3>
-              <div class="adm-kv"><span class="k">Admin email</span><span class="v" id="setEmail">—</span></div>
-              <div class="adm-kv"><span class="k">Supabase connection</span><span class="v" id="setConn">Checking…</span></div>
-              <div class="adm-kv"><span class="k">Admin API</span><span class="v" id="setApi">Checking…</span></div>
-            </div>
-            <div class="adm-panel-box">
-              <h3>Display preferences</h3>
-              <div class="adm-fld">
-                <label for="setDensity">Table density</label>
-                <select id="setDensity"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select>
-              </div>
-              <p style="color:var(--adm-muted);font-size:.82rem;line-height:1.5">Table columns are fixed by design and cannot be customised, keeping every record consistent and exportable.</p>
-            </div>
+          <div class="adm-view-head"><h1 class="adm-h1">Settings<span class="adm-sub">Admin-only platform control</span></h1></div>
+          <div class="adm-panel-box set-killbox">
+            <h3>Platform power</h3>
+            <p class="set-warn">This action disables the WebSharke platform without deleting data. Users, payments, websites, and every record are kept — clients simply see a temporary maintenance notice. You can re-enable at any time.</p>
+            <div class="set-status" id="setStatus" aria-live="polite">Checking platform status…</div>
+            <button class="set-kill-btn" id="setKillBtn" type="button" disabled>Disable Everything</button>
           </div>
         </section>
 
@@ -1228,17 +1260,9 @@
         document.querySelectorAll(".tab").forEach((t) => {
           t.classList.toggle("active", t.id === "tab-" + tab);
         });
-        if (tab === "domain") scaleDomainPreview();
+        if (tab === "domain") showDomainPreview();
       });
     });
-
-    // ---- Domain preview: keep the scaled thumbnail crisp as its viewport
-    //      resizes (incl. 0→visible when the Domain tab is first opened). ----
-    (function () {
-      const vp = document.querySelector(".dp-viewport");
-      if (vp && window.ResizeObserver) new ResizeObserver(scaleDomainPreview).observe(vp);
-      window.addEventListener("resize", scaleDomainPreview);
-    })();
 
     // ---- Sign out -------------------------------------------------------
     $("signout").addEventListener("click", async () => {
@@ -1434,14 +1458,44 @@
       if (!d) return null;
       return /^https?:\/\//i.test(d) ? d : "https://" + d;
     }
-    // Scale the live website preview so a full-width desktop render (1280px)
-    // fits the responsive browser-window viewport as a clean thumbnail.
-    function scaleDomainPreview() {
-      const vp = document.querySelector(".dp-viewport");
-      const fr = document.getElementById("dom-iframe");
-      if (!vp || !fr) return;
-      const w = vp.clientWidth;
-      if (w) fr.style.transform = "scale(" + (w / 1280) + ")";
+    // ---- Website preview (screenshot, NOT a live iframe) ----------------
+    // A live <iframe> stays blank for most real sites: they send
+    // X-Frame-Options / CSP frame-ancestors that forbid embedding (apple.com,
+    // Squarespace, Wix, Shopify, …). A server-rendered screenshot always
+    // displays. We use WordPress mShots (free, keyless). It 307-redirects to
+    // /mshots/v1/default while it generates the shot, then serves the JPEG;
+    // CORS is open, so we poll with fetch() until it stops redirecting, then
+    // fade the real screenshot in. Loaded lazily on first Domain-tab open.
+    let domPreviewUrl = null;
+    let domPreviewLoaded = false;
+    function showDomainPreview() {
+      if (!domPreviewUrl || domPreviewLoaded) return;
+      domPreviewLoaded = true;
+      loadDomainShot(domPreviewUrl);
+    }
+    async function loadDomainShot(url) {
+      const shot = $("dom-shot"), fb = $("dom-fallback"), msg = $("dom-fallback-msg");
+      const base = "https://s0.wp.com/mshots/v1/" + encodeURIComponent(url) + "?w=1280";
+      const MAX = 8;
+      let tries = 0;
+      async function attempt() {
+        tries++;
+        try {
+          const res = await fetch(base + "&vh=" + tries, { cache: "no-store" });
+          const generating = !res.ok || res.redirected || /\/mshots\/v1\/default\b/.test(res.url);
+          if (!generating) {
+            const blob = await res.blob();
+            if (blob.size > 1200) {
+              shot.onload = () => { shot.classList.add("loaded"); fb.classList.add("hidden"); };
+              shot.src = URL.createObjectURL(blob);
+              return;
+            }
+          }
+        } catch (_) { /* transient network/CORS hiccup → retry below */ }
+        if (tries < MAX) setTimeout(attempt, 2500);
+        else if (msg) msg.textContent = "Preview unavailable right now — use “Open Website”.";
+      }
+      attempt();
     }
     function fmtDate(value) {
       if (!value) return null;
@@ -1470,25 +1524,58 @@
       // 4) Domain -------------------------------------------------------
       // Source of truth: subscriptions.domain (set by the admin dashboard,
       // keyed on this user's auth id). `sub` is fetched fresh on page load.
-      // Only render the live preview when a real, non-empty domain exists;
-      // otherwise show a clean empty state (no iframe, no preview box).
+      // Only render the preview when a real, non-empty domain exists;
+      // otherwise show a clean empty state (no preview box). The preview is a
+      // screenshot, loaded lazily on first Domain-tab open (see loadDomainShot).
+      // An admin-uploaded preview image (subscriptions.preview_image) wins over
+      // the auto screenshot; the auto screenshot (mShots) is the fallback when
+      // none has been uploaded. The card shows if either a domain or a manual
+      // preview exists; the "Open Website" link only when there's a real URL.
       const domain = (sub.domain && String(sub.domain).trim()) ? String(sub.domain).trim() : null;
       const url = normalizeUrl(domain);
+      const preview = (sub.preview_image && String(sub.preview_image).trim()) ? String(sub.preview_image).trim() : null;
       $("dom-name").textContent = domain || "No domain on file yet.";
-      const domCard = $("dom-preview-card"), domEmpty = $("dom-empty"), domIframe = $("dom-iframe");
-      if (url) {
-        $("dom-preview-name").textContent = domain;
-        $("dom-fallback-name").textContent = domain;
-        $("dom-open").setAttribute("href", url);
-        $("dom-overlay").setAttribute("href", url);
-        // Some sites block embedding (X-Frame-Options/CSP); the iframe may stay
-        // blank, but the header + "Open Website" link keep the card usable.
-        if (domIframe.getAttribute("src") !== url) domIframe.setAttribute("src", url);
+      const domCard = $("dom-preview-card"), domEmpty = $("dom-empty"), domShot = $("dom-shot");
+      if (url || preview) {
+        $("dom-preview-name").textContent = domain || "Your website";
+        $("dom-fallback-name").textContent = domain || "your site";
+        if (url) {
+          $("dom-open").setAttribute("href", url);
+          $("dom-overlay").setAttribute("href", url);
+          $("dom-open").classList.remove("hidden");
+        } else {
+          $("dom-open").classList.add("hidden");
+          $("dom-overlay").removeAttribute("href");
+        }
         domEmpty.classList.add("hidden");
         domCard.classList.remove("hidden");
-        scaleDomainPreview();
+        domShot.classList.remove("loaded");
+        if (preview) {
+          // Manual upload — show it directly, no auto-screenshot request.
+          domPreviewUrl = null;
+          domPreviewLoaded = true;
+          $("dom-fallback").classList.remove("hidden");
+          $("dom-fallback-msg").textContent = "Loading preview…";
+          domShot.onload = () => { domShot.classList.add("loaded"); $("dom-fallback").classList.add("hidden"); };
+          domShot.onerror = () => {
+            // Uploaded image failed → fall back to the auto screenshot if we
+            // have a URL, otherwise leave a clean message + the Open link.
+            if (url) { domPreviewUrl = url; domPreviewLoaded = false; showDomainPreview(); }
+            else { $("dom-fallback-msg").textContent = "Preview unavailable right now."; }
+          };
+          domShot.src = preview;
+        } else {
+          // No upload — auto screenshot (mShots), loaded lazily on tab open.
+          domShot.onerror = null;
+          domPreviewUrl = url;
+          domPreviewLoaded = false;
+          domShot.removeAttribute("src");
+          $("dom-fallback").classList.remove("hidden");
+          $("dom-fallback-msg").textContent = "Generating a preview of your site…";
+          if ($("tab-domain").classList.contains("active")) showDomainPreview();
+        }
       } else {
-        domIframe.removeAttribute("src");
+        domPreviewUrl = null;
         domCard.classList.add("hidden");
         domEmpty.classList.remove("hidden");
       }
@@ -1960,6 +2047,19 @@
         return; // skip the regular client dashboard entirely
       }
 
+      // ---- Platform kill switch (maintenance mode) -------------------
+      // If the admin disabled the platform, non-admin clients see a
+      // friendly maintenance notice instead of the dashboard. Fail-open:
+      // if the flag table is missing or the read errors, clients pass
+      // through normally so a hiccup can never lock everyone out.
+      try {
+        const { data: ps } = await db.from("platform_settings").select("disabled").eq("id", 1).maybeSingle();
+        if (ps && ps.disabled) {
+          document.getElementById("maintScreen").classList.remove("hidden");
+          return;
+        }
+      } catch (e) { /* fail open */ }
+
       document.getElementById("dash").classList.remove("hidden");
 
       // Most-recent intake row for this user (business + contact details).
@@ -2003,6 +2103,12 @@
         if (sub && (!sub.domain || !String(sub.domain).trim())) {
           const withDom = (rows || []).find((r) => r.domain && String(r.domain).trim());
           if (withDom) sub.domain = withDom.domain;
+        }
+        // Same idea for the admin-uploaded preview image — surface it from
+        // whichever row carries one so the Domain tab can prefer it.
+        if (sub && (!sub.preview_image || !String(sub.preview_image).trim())) {
+          const withPrev = (rows || []).find((r) => r.preview_image && String(r.preview_image).trim());
+          if (withPrev) sub.preview_image = withPrev.preview_image;
         }
         console.log("[dashboard] subscription/domain query result:", { user_id: user.id, rows, domain: sub && sub.domain }); // TEMP debug
       } catch (e) { console.error("Could not load subscription:", e.message); subError = true; }
@@ -2216,16 +2322,32 @@
           { key: "from", label: "From", type: "date" },
           { key: "to", label: "To", type: "date" },
         ],
+        // Preview shows only name / business / email / phone + Edit. Every
+        // onboarding answer (goals, styles, notes, etc.) lives in the drawer.
         columns: [
           { key: "full_name", label: "Name", sortable: true },
           { key: "business_name", label: "Business", sortable: true },
           { key: "email", label: "Email", sortable: true },
-          { key: "status", label: "Status", render: (r) => badge(r.status || "new") },
-          { key: "business_description", label: "Business", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.business_description, 70)) + "</span>" },
-          { key: "website_goals", label: "Goals", render: (r) => '<span class="adm-trunc">' + esc(truncate(r.website_goals, 70)) + "</span>" },
-          { key: "preferred_styles", label: "Styles", render: (r) => esc(Array.isArray(r.preferred_styles) ? r.preferred_styles.join(", ") : (r.preferred_styles || "—")) },
-          { key: "created_at", label: "Submitted", sortable: true, render: (r) => fmtDate(r.created_at) },
+          { key: "cell_phone", label: "Phone" },
           { key: "_actions", label: "", render: () => '<button class="adm-mini" data-act="edit">Edit</button>' },
+        ],
+        // CSV export keeps the full intake record even though the preview is trimmed.
+        exportColumns: [
+          { key: "full_name", label: "Name" },
+          { key: "business_name", label: "Business" },
+          { key: "email", label: "Email" },
+          { key: "cell_phone", label: "Phone" },
+          { key: "status", label: "Status" },
+          { key: "business_description", label: "Business description" },
+          { key: "products_services", label: "Products / Services" },
+          { key: "website_goals", label: "Website goals" },
+          { key: "visitor_actions", label: "Visitor actions" },
+          { key: "websites_liked", label: "Websites liked" },
+          { key: "preferred_styles", label: "Preferred styles" },
+          { key: "color_preferences", label: "Color preferences" },
+          { key: "design_notes", label: "Design notes" },
+          { key: "additional_info", label: "Additional info" },
+          { key: "created_at", label: "Submitted" },
         ],
         emptyTitle: "No onboarding forms yet", emptyMsg: "New project intake submissions will show up here.",
       },
@@ -2240,18 +2362,27 @@
           { key: "from", label: "From", type: "date" },
           { key: "to", label: "To", type: "date" },
         ],
+        // Preview answers only: who is it for, which business, what status.
+        // Amount / plan / billing / website / domain + payment actions all
+        // live in the drawer (row click opens it).
         columns: [
-          { key: "client_name", label: "Client" },
-          { key: "client_email", label: "Email" },
-          { key: "plan_name", label: "Plan", render: (r) => esc(r.plan_name || "—") },
+          { key: "user_name", label: "Name", render: (r) => esc(r.user_name || r.client_name || "—") },
+          { key: "business_name", label: "Client", render: (r) => esc(r.business_name || "—") },
           { key: "status", label: "Status", render: (r) => badge(r.status) },
-          { key: "amount", label: "Amount", render: (r) => money(r.amount) },
-          { key: "plan_interval", label: "Billing", render: (r) => r.plan_interval ? (/year|annual/i.test(r.plan_interval) ? "Annual" : "Monthly") : "—" },
-          { key: "last_payment_date", label: "Last Paid", sortable: true, render: (r) => fmtDate(r.last_payment_date) },
-          { key: "current_period_end", label: "Next Billing", render: (r) => fmtDate(r.current_period_end) },
-          { key: "linked_website", label: "Website", render: (r) => r.linked_website ? esc(pretty(r.linked_website)) : "—" },
-          { key: "linked_domain", label: "Domain", render: (r) => esc(r.linked_domain || "—") },
-          { key: "_actions", label: "", render: (r) => paymentActionsHtml(r) },
+        ],
+        // CSV export keeps the full payment record even though the preview is trimmed.
+        exportColumns: [
+          { key: "user_name", label: "Name" },
+          { key: "business_name", label: "Client" },
+          { key: "client_email", label: "Email" },
+          { key: "plan_name", label: "Plan" },
+          { key: "status", label: "Status" },
+          { key: "amount", label: "Amount" },
+          { key: "plan_interval", label: "Billing" },
+          { key: "last_payment_date", label: "Last Paid" },
+          { key: "current_period_end", label: "Next Billing" },
+          { key: "linked_website", label: "Website" },
+          { key: "linked_domain", label: "Domain" },
         ],
         emptyTitle: "No payments found", emptyMsg: "No subscriptions match your filters.",
       },
@@ -2336,12 +2467,6 @@
     function userActionsHtml() {
       // Edit only — Suspend / Ban / Delete live in the drawer's Danger Zone.
       return '<div class="adm-row-actions"><button class="adm-mini" data-act="edit">Edit</button></div>';
-    }
-    function paymentActionsHtml() {
-      return '<div class="adm-row-actions">' +
-        '<button class="adm-mini" data-act="view">View</button>' +
-        '<button class="adm-mini danger" data-act="unpaid">Mark Unpaid</button>' +
-        '<button class="adm-mini" data-act="active">Mark Active</button></div>';
     }
 
     // =====================================================================
@@ -2539,10 +2664,6 @@
         if (act === "ban") return doStatus(r, "banned");
         if (act === "delete") return doDelete(r);
       }
-      if (viewId === "payments") {
-        if (act === "unpaid") return doPayStatus(r, "unpaid");
-        if (act === "active") return doPayStatus(r, "active");
-      }
     }
 
     async function doStatus(r, status) {
@@ -2563,17 +2684,6 @@
         toast("User deleted");
         refreshCurrent();
       } catch (e) { toast("Couldn’t delete user", e.message, true); }
-    }
-    async function doPayStatus(r, status) {
-      if (status === "unpaid") {
-        const ok = await confirmAction("Mark unpaid", "Marking this client unpaid may affect their access. Continue?", "Mark Unpaid");
-        if (!ok) return;
-      }
-      try {
-        await adminApi("set_payment_status", { id: r.id, user_id: r.user_id, status });
-        toast(status === "unpaid" ? "Payment marked unpaid" : "Payment marked active");
-        refreshCurrent();
-      } catch (e) { toast("Couldn’t update payment", e.message, true); }
     }
 
     function refreshCurrent() {
@@ -2680,8 +2790,8 @@
       h += field("dk-products_services", "Products / Services", inq.products_services, "textarea");
       h += "</div>";
 
-      // ── Project Info (onboarding answers) ────────────────────────────
-      h += '<div class="adm-section"><h4>Project Info</h4>';
+      // ── Onboarding Details (full intake answers) ─────────────────────
+      h += '<div class="adm-section"><h4>Onboarding Details</h4>';
       [["website_goals", "Website goals"], ["visitor_actions", "Visitor actions"], ["websites_liked", "Websites liked"], ["color_preferences", "Color preferences"], ["design_notes", "Design notes"], ["additional_info", "Additional info"]]
         .forEach((f) => h += field("dk-" + f[0], f[1], inq[f[0]], "textarea"));
       const styles = Array.isArray(inq.preferred_styles) ? inq.preferred_styles.join(", ") : (inq.preferred_styles || "—");
@@ -2695,6 +2805,9 @@
       h += '<div class="adm-kv"><span class="k">Amount</span><span class="v">' + money(sub.amount) + "</span></div>";
       h += '<div class="adm-kv"><span class="k">Billing</span><span class="v">' + (sub.plan_interval ? (/year|annual/i.test(sub.plan_interval) ? "Annual" : "Monthly") : "—") + "</span></div>";
       h += '<div class="adm-kv"><span class="k">Next billing</span><span class="v">' + fmtDate(sub.current_period_end) + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Last payment</span><span class="v">' + fmtDate(sub.last_payment_date) + "</span></div>";
+      if (sub.stripe_customer_id) h += '<div class="adm-kv"><span class="k">Stripe customer</span><span class="v" style="font-family:monospace;font-size:.78rem">' + esc(sub.stripe_customer_id) + "</span></div>";
+      if (sub.stripe_subscription_id) h += '<div class="adm-kv"><span class="k">Stripe subscription</span><span class="v" style="font-family:monospace;font-size:.78rem">' + esc(sub.stripe_subscription_id) + "</span></div>";
       if (sub.id || sub.user_id) {
         h += '<div class="adm-actions-row">' +
           '<button class="adm-btn" data-sub="active">Mark Active</button>' +
@@ -2843,6 +2956,27 @@
     }
 
     // ---- Website drawer (create / edit) --------------------------------
+    // Downscale a chosen image to <= maxW wide and return base64 JPEG, so the
+    // upload stays small and matches the Domain tab's 16:10 preview frame.
+    function resizePreview(file, maxW, quality) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(objUrl);
+          const scale = Math.min(1, maxW / (img.naturalWidth || maxW));
+          const w = Math.max(1, Math.round(img.naturalWidth * scale));
+          const hgt = Math.max(1, Math.round(img.naturalHeight * scale));
+          const c = document.createElement("canvas"); c.width = w; c.height = hgt;
+          c.getContext("2d").drawImage(img, 0, 0, w, hgt);
+          const dataUrl = c.toDataURL("image/jpeg", quality);
+          resolve({ base64: dataUrl.split(",")[1], type: "image/jpeg" });
+        };
+        img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error("Could not read that image file.")); };
+        img.src = objUrl;
+      });
+    }
+
     function openWebsiteDrawer(site) {
       site = site || {};
       const isNew = !site.id;
@@ -2860,6 +2994,23 @@
       h += field("wk-purchase_date", "Purchase date", (site.purchase_date || "").slice(0, 10));
       h += field("wk-notes", "Notes", site.notes, "textarea");
       h += "</div>";
+      // Website preview image — admin-uploaded screenshot shown on the client's
+      // Domain tab. Only offered for a saved website (needs an id to attach to).
+      if (site.id) {
+        const cur = site.preview_image
+          ? '<img src="' + esc(site.preview_image) + '" alt="" style="width:100%;max-width:340px;display:block;border-radius:10px;border:1px solid var(--adm-bd-2)" />'
+          : '<p style="font-size:.78rem;color:var(--adm-muted);margin:0">No preview uploaded yet.</p>';
+        h += '<div class="adm-section"><h4>Website preview image</h4>' +
+          '<p style="font-size:.78rem;color:var(--adm-muted);line-height:1.5;margin:0 0 .7rem">Shown on the client’s Domain tab in place of the auto screenshot. Any size — it’s resized to ~1280px wide automatically.</p>' +
+          '<div id="wk-preview-current" style="margin-bottom:.7rem">' + cur + '</div>' +
+          '<div class="adm-fld"><input type="file" id="wk-preview-file" accept="image/png,image/jpeg,image/webp" /></div>' +
+          '<div class="adm-actions-row"><button class="adm-btn primary" id="wk-preview-upload">Upload preview</button>' +
+          (site.preview_image ? '<button class="adm-btn danger" id="wk-preview-remove">Remove</button>' : '') +
+          '</div><p id="wk-preview-status" style="font-size:.78rem;color:var(--adm-muted);margin:.5rem 0 0"></p></div>';
+      } else {
+        h += '<div class="adm-section"><h4>Website preview image</h4>' +
+          '<p style="font-size:.78rem;color:var(--adm-muted);line-height:1.5;margin:0">Save this website first, then reopen it to upload a preview screenshot.</p></div>';
+      }
       aq("admDrawerBody").innerHTML = h;
       const pd = aq("wk-purchase_date"); if (pd) pd.type = "date";
 
@@ -2889,6 +3040,35 @@
           refreshCurrent();
         } catch (e) { toast("Couldn’t save website", e.message, true); }
       };
+
+      // ---- Preview image upload / remove (saved websites only) ----------
+      if (site.id) {
+        const upBtn = aq("wk-preview-upload"), fileIn = aq("wk-preview-file"), stat = aq("wk-preview-status");
+        upBtn.onclick = async () => {
+          const f = fileIn.files && fileIn.files[0];
+          if (!f) { stat.textContent = "Choose an image file first."; return; }
+          upBtn.disabled = true; stat.textContent = "Resizing & uploading…";
+          try {
+            const { base64, type } = await resizePreview(f, 1280, 0.85);
+            const res = await adminApi("set_website_preview", { id: site.id, user_id: site.user_id || null, dataBase64: base64, contentType: type });
+            toast("Preview uploaded");
+            openWebsiteDrawer({ ...site, preview_image: res.url });
+            const s2 = aq("wk-preview-status");
+            if (s2) s2.textContent = res.propagated
+              ? "Uploaded ✓ — now showing on the client’s Domain tab."
+              : "Uploaded ✓ — it’ll appear once the client has a domain/subscription on file.";
+          } catch (e) { stat.textContent = ""; upBtn.disabled = false; toast("Upload failed", e.message, true); }
+        };
+        const rmBtn = aq("wk-preview-remove");
+        if (rmBtn) rmBtn.onclick = async () => {
+          rmBtn.disabled = true;
+          try {
+            await adminApi("set_website_preview", { id: site.id, user_id: site.user_id || null, remove: true });
+            toast("Preview removed");
+            openWebsiteDrawer({ ...site, preview_image: null });
+          } catch (e) { rmBtn.disabled = false; toast("Couldn’t remove", e.message, true); }
+        };
+      }
     }
 
     // =====================================================================
@@ -3407,6 +3587,76 @@
     }
 
     // =====================================================================
+    // SETTINGS — "Disable Everything" platform kill switch.
+    // Flips a single reversible Supabase flag (platform_settings.disabled)
+    // via the admin API. Never deletes data; admin-only; needs confirmation.
+    // =====================================================================
+    let platformDisabled = false;
+    let platformBusy = false;
+
+    function applyPlatformStatus(st) {
+      platformDisabled = !!(st && st.disabled);
+      const status = aq("setStatus");
+      const btn = aq("setKillBtn");
+      if (!status || !btn) return;
+      if (platformDisabled) {
+        const when = st && st.disabled_at ? " since " + fmtDate(st.disabled_at) : "";
+        const who = st && st.disabled_by ? " by " + esc(st.disabled_by) : "";
+        status.innerHTML = '<span class="badge b-unpaid">Platform disabled</span> Maintenance mode is ON' + esc(when) + who + ".";
+        btn.textContent = "Re-enable Platform";
+        btn.classList.add("live");
+      } else {
+        status.innerHTML = '<span class="badge b-active">Platform live</span> Everything is running normally.';
+        btn.textContent = "Disable Everything";
+        btn.classList.remove("live");
+      }
+      btn.disabled = false;
+    }
+
+    async function loadPlatformStatus() {
+      const status = aq("setStatus");
+      const btn = aq("setKillBtn");
+      if (btn) btn.disabled = true;
+      if (status) status.textContent = "Checking platform status…";
+      try {
+        const st = await adminApi("get_platform_status");
+        applyPlatformStatus(st);
+        if (st && st.configured === false && status) {
+          status.innerHTML += ' <span style="color:var(--adm-warn)">(run db/platform-settings-schema.sql to enable)</span>';
+        }
+      } catch (e) {
+        if (status) status.innerHTML = '<span class="badge b-unpaid">Error</span> ' + esc(e.message);
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function togglePlatform() {
+      if (platformBusy) return;
+      const turnOff = !platformDisabled;
+      const ok = await confirmAction(
+        turnOff ? "Disable the entire platform?" : "Re-enable the platform?",
+        turnOff
+          ? "Every client will see WebSharke as temporarily offline for maintenance. NO data is deleted — users, payments, websites, and records are all kept, and you can re-enable this at any time."
+          : "This brings WebSharke back online for all clients immediately.",
+        turnOff ? "Disable Everything" : "Re-enable Platform"
+      );
+      if (!ok) return;
+      platformBusy = true;
+      const btn = aq("setKillBtn");
+      if (btn) btn.disabled = true;
+      try {
+        const res = await adminApi("set_platform_disabled", { disabled: turnOff });
+        applyPlatformStatus({ disabled: res.disabled, disabled_at: res.row && res.row.disabled_at, disabled_by: res.row && res.row.disabled_by });
+        toast(turnOff ? "Platform disabled" : "Platform re-enabled", turnOff ? "Clients now see maintenance mode." : "WebSharke is back online.");
+      } catch (e) {
+        toast("Couldn’t update platform", e.message, true);
+        loadPlatformStatus();
+      } finally {
+        platformBusy = false;
+      }
+    }
+
+    // =====================================================================
     // GLOBAL SEARCH
     // =====================================================================
     const searchInput = aq("admSearch");
@@ -3443,7 +3693,7 @@
       if (viewId === "overview") { loadOverview(); return; }
       if (viewId === "invoices") { initInvoices(); return; }
       if (viewId === "subscriptions") { initSubs(); return; }
-      if (viewId === "settings") { return; }
+      if (viewId === "settings") { loadPlatformStatus(); return; }
       if (VIEWS[viewId]) {
         if (!state[viewId] || !state[viewId].built) buildView(viewId);
         loadView(viewId, true);
@@ -3459,7 +3709,6 @@
       aq("admin").classList.remove("hidden");
       aq("admin").setAttribute("aria-hidden", "false");
       aq("admWho").textContent = user.email;
-      aq("setEmail").textContent = user.email;
 
       // Nav
       document.querySelectorAll(".adm-nav button").forEach((b) => b.addEventListener("click", () => switchView(b.dataset.view)));
@@ -3468,14 +3717,7 @@
       aq("admDrawerOv").addEventListener("click", closeDrawer);
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
       aq("admSignout").addEventListener("click", async () => { try { await db.auth.signOut(); } catch (e) {} document.cookie = "ws_session=; path=/; SameSite=Lax; Secure; max-age=0"; window.location.replace("/login"); });
-      aq("setDensity").addEventListener("change", (e) => {
-        document.querySelectorAll("table.adm-table").forEach((t) => t.style.fontSize = e.target.value === "compact" ? ".78rem" : ".84rem");
-      });
-
-      // Settings connection indicators
-      aq("setConn").innerHTML = '<span class="badge b-active">Connected</span>';
-      adminApi("overview").then(() => { aq("setApi").innerHTML = '<span class="badge b-active">Authorized</span>'; })
-        .catch(() => { aq("setApi").innerHTML = '<span class="badge b-unpaid">Error</span>'; });
+      aq("setKillBtn").addEventListener("click", togglePlatform);
 
       loadOverview();
       loadAlertBadge();

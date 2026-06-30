@@ -5,6 +5,28 @@ All notable changes to the WebSharke site. Newest first.
 ## 2026-06-29
 
 ### Changed
+- **Admin declutter pass 2 — Onboarding/Payments previews + a Settings kill switch.** Continued the cleanup
+  across the remaining tabs. _(Files: `dashboard.html`, `api/admin.js`, new `db/platform-settings-schema.sql`.)_
+  - **Onboarding Forms** preview trimmed to **Name · Business · Email · Phone + Edit** (every intake answer —
+    description, goals, styles, notes, etc. — now lives only in the drawer); CSV export keeps the full record via
+    `exportColumns`.
+  - **Payments** preview trimmed to **Name (the user) · Client (business name) · Status** — removed the plan,
+    amount, billing, website, domain columns and the inline Mark Active/Unpaid/View buttons. The row opens the
+    full user drawer (which carries amount/plan/billing + the payment actions). `api/admin.js` `listPayments` now
+    returns `user_name` + `business_name`; CSV keeps the full record via `exportColumns`. Removed the now-dead
+    `paymentActionsHtml` + `doPayStatus`.
+  - **Settings** tab gutted (removed the admin-account + table-density panels) and replaced with a single large
+    red **"Disable Everything"** platform kill switch: heading + warning + status line + button, with a required
+    confirmation modal. It flips one **reversible** Supabase flag (`platform_settings.disabled`) via two new
+    admin-only API actions (`get_platform_status` / `set_platform_disabled`) — **never deletes data**, is logged
+    to `admin_activity_log`, and becomes a green **"Re-enable Platform"** when on. New `db/platform-settings-schema.sql`
+    creates a single-row `platform_settings` table (public read, `is_admin()`-only write). Non-admin clients hitting
+    the dashboard while disabled see a friendly `#maintScreen` maintenance notice (fail-open; the admin gate runs
+    first so the admin can never lock himself out).
+  - **Drawer** renamed "Project Info" → **Onboarding Details** and added Stripe customer/subscription id +
+    last-payment rows to **Hosting / Subscription**.
+  - Reviewed via a second 4-dimension adversarial workflow (kill switch · previews/data-shape · reference
+    integrity · requirements); **0 real issues** found.
 - **Admin dashboard decluttered — Overview, Users tab, and the detail drawer.** Reworked `dashboard.html` (admin
   SPA) + `api/admin.js` so the main admin screens read cleaner and scan faster. _(Files: `dashboard.html`,
   `api/admin.js`.)_

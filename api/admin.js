@@ -32,11 +32,19 @@ const USER_EDITABLE_FIELDS = [
   "additional_info", "domain", "status", "terms_agreed",
 ];
 
-// Editable website fields.
+// Editable website fields. NOTE: preview_image is deliberately NOT here — it
+// is set only by the dedicated set_website_preview action, so a normal
+// website save never clears it.
 const WEBSITE_EDITABLE_FIELDS = [
   "user_id", "client_name", "client_email", "domain", "website_type",
   "status", "notes", "purchase_date",
 ];
+
+// Public Storage bucket holding admin-uploaded website preview screenshots.
+const PREVIEW_BUCKET = "website-previews";
+// Max decoded image size accepted (the browser resizes to ~1280px wide first,
+// so real uploads are well under this — it's a safety cap, not the norm).
+const MAX_PREVIEW_BYTES = 3 * 1024 * 1024;
 
 function adminClient() {
   return createClient(
@@ -119,6 +127,8 @@ module.exports = async (req, res) => {
       case "list_activity":     return res.status(200).json(await listActivity(supa, p));
       case "search":            return res.status(200).json(await globalSearch(supa, p));
       case "get_user":          return res.status(200).json(await getUser(supa, p));
+      case "get_platform_status":   return res.status(200).json(await getPlatformStatus(supa));
+      case "set_platform_disabled": return res.status(200).json(await setPlatformDisabled(supa, caller, p));
 
       case "update_user":       return res.status(200).json(await updateUser(supa, caller, p));
       case "set_user_status":   return res.status(200).json(await setUserStatus(supa, caller, p));
@@ -127,6 +137,7 @@ module.exports = async (req, res) => {
 
       case "create_website":    return res.status(200).json(await createWebsite(supa, caller, p));
       case "update_website":    return res.status(200).json(await updateWebsite(supa, caller, p));
+      case "set_website_preview":return res.status(200).json(await setWebsitePreview(supa, caller, p));
 
       case "assign_domain":     return res.status(200).json(await assignDomain(supa, caller, p));
 
@@ -439,6 +450,8 @@ async function listPayments(supa, p) {
     const site = siteMap[s.user_id] || {};
     return {
       ...s,
+      user_name: u.full_name || u.email || "—",      // the person (Payments "Name")
+      business_name: u.business_name || "—",          // the client/business (Payments "Client")
       client_name: u.full_name || u.business_name || "—",
       client_email: u.email || "—",
       linked_domain: s.domain || u.domain || site.domain || null,
@@ -450,7 +463,7 @@ async function listPayments(supa, p) {
   if (p.search) {
     const s = p.search.toLowerCase();
     rows = rows.filter((r) =>
-      [r.client_name, r.client_email, r.plan_name, r.linked_domain]
+      [r.user_name, r.business_name, r.client_name, r.client_email, r.plan_name, r.linked_domain]
         .some((v) => v && String(v).toLowerCase().includes(s)));
   }
   return { rows, hasMore: (data || []).length === (Number(p.limit) || 50) };
@@ -661,6 +674,56 @@ async function getUser(supa, p) {
   };
 }
 
+// ---------------------------------------------------------------------
+// Platform kill switch — read the global maintenance flag. Fails soft:
+// if the platform_settings table doesn't exist yet, report "enabled" so
+// nothing is accidentally treated as disabled.
+// ---------------------------------------------------------------------
+async function getPlatformStatus(supa) {
+  const { data, error } = await supa
+    .from("platform_settings")
+    .select("disabled, disabled_at, disabled_by")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) {
+    return { disabled: false, configured: false, message: error.message };
+  }
+  return {
+    disabled: !!(data && data.disabled),
+    disabled_at: data ? data.disabled_at : null,
+    disabled_by: data ? data.disabled_by : null,
+    configured: true,
+  };
+}
+
+// Flip the global maintenance flag. Reversible; deletes nothing. Only the
+// already-verified admin caller can reach this (see the auth gate above).
+async function setPlatformDisabled(supa, caller, p) {
+  const disabled = !!p.disabled;
+  const now = new Date().toISOString();
+  const row = {
+    id: 1,
+    disabled,
+    disabled_at: disabled ? now : null,
+    disabled_by: disabled ? caller.email : null,
+    updated_at: now,
+  };
+  const { data, error } = await supa
+    .from("platform_settings")
+    .upsert(row, { onConflict: "id" })
+    .select()
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+
+  await logActivity(supa, {
+    admin_email: caller.email,
+    action: disabled ? "platform_disabled" : "platform_enabled",
+    entity_type: "platform", entity_id: "1", affected_user_id: null,
+    changed_field: "disabled", old_value: String(!disabled), new_value: String(disabled),
+  });
+  return { row: data, disabled };
+}
+
 // =====================================================================
 // WRITE actions (each logs to admin_activity_log)
 // =====================================================================
@@ -777,6 +840,66 @@ async function updateWebsite(supa, caller, p) {
     }
   }
   return { row: data };
+}
+
+// Upload (or remove) the admin-chosen preview screenshot for a website.
+// Writes the public image URL to the websites row (admin record) AND to the
+// client's subscriptions row(s) by user_id (the Domain tab's source of truth),
+// mirroring assignDomain. The browser sends a base64 JPEG it already resized.
+async function setWebsitePreview(supa, caller, p) {
+  if (!p.id) throw new Error("A website id is required.");
+  const { data: site } = await supa.from("websites").select("*").eq("id", p.id).maybeSingle();
+  if (!site) throw new Error("Website not found.");
+  const userId = p.user_id || site.user_id || null;
+
+  // --- Remove an existing preview. ---
+  if (p.remove) {
+    await supa.from("websites").update({ preview_image: null, updated_at: new Date().toISOString() }).eq("id", p.id);
+    if (userId) await supa.from("subscriptions").update({ preview_image: null }).eq("user_id", userId);
+    await logActivity(supa, {
+      admin_email: caller.email, action: "website_preview_removed", entity_type: "website",
+      entity_id: String(p.id), affected_user_id: userId,
+      changed_field: "preview_image", old_value: site.preview_image || "", new_value: null,
+    });
+    return { url: null, removed: true, propagated: !!userId };
+  }
+
+  // --- Upload a new preview. ---
+  if (!p.dataBase64) throw new Error("No image data was provided.");
+  const ct = String(p.contentType || "image/jpeg").toLowerCase();
+  if (!/^image\/(jpeg|png|webp)$/.test(ct)) throw new Error("Preview must be a JPEG, PNG, or WebP image.");
+  const buf = Buffer.from(p.dataBase64, "base64");
+  if (!buf.length) throw new Error("The image data was empty.");
+  if (buf.length > MAX_PREVIEW_BYTES) throw new Error("Image is too large (max 3 MB).");
+
+  const ext = ct === "image/png" ? "png" : ct === "image/webp" ? "webp" : "jpg";
+  const path = (userId || "site") + "/" + p.id + "-" + Date.now() + "." + ext;
+  const { error: upErr } = await supa.storage.from(PREVIEW_BUCKET)
+    .upload(path, buf, { contentType: ct, upsert: true });
+  if (upErr) throw new Error("Upload failed: " + upErr.message + " — is the 'website-previews' Storage bucket created? (run db/website-previews-schema.sql)");
+
+  const { data: pub } = supa.storage.from(PREVIEW_BUCKET).getPublicUrl(path);
+  const url = pub && pub.publicUrl;
+  if (!url) throw new Error("Could not resolve the uploaded image URL.");
+
+  await supa.from("websites").update({ preview_image: url, updated_at: new Date().toISOString() }).eq("id", p.id);
+
+  // Propagate to the client's subscription row(s) so the Domain tab shows it.
+  let propagated = false;
+  if (userId) {
+    const { data: rows, error: subErr } = await supa.from("subscriptions")
+      .update({ preview_image: url }).eq("user_id", userId).select("id");
+    if (subErr) throw new Error(subErr.message);
+    propagated = !!(rows && rows.length);
+  }
+
+  await logActivity(supa, {
+    admin_email: caller.email, action: "website_preview_uploaded", entity_type: "website",
+    entity_id: String(p.id), affected_user_id: userId,
+    changed_field: "preview_image", old_value: site.preview_image || "", new_value: url,
+  });
+
+  return { url, propagated, hasUser: !!userId };
 }
 
 async function assignDomain(supa, caller, p) {
