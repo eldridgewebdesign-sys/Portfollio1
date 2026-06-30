@@ -539,7 +539,7 @@
     /* ── Badges ───────────────────────────────────────────────────────────── */
     .badge{display:inline-block;padding:.2rem .55rem;border-radius:20px;font-size:.7rem;font-weight:800;
       letter-spacing:.03em;white-space:nowrap;border:1px solid transparent}
-    .badge.b-active,.badge.b-live,.badge.b-complete{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
+    .badge.b-active,.badge.b-live,.badge.b-complete,.badge.b-paid{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
     .badge.b-unpaid,.badge.b-banned{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
     .badge.b-past_due,.badge.b-suspended,.badge.b-waiting_on_client{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
     .badge.b-canceled,.badge.b-not_started{background:rgba(44,84,104,.12);color:#2c5468;border-color:rgba(44,84,104,.32)}
@@ -1000,7 +1000,7 @@
         <button class="active" data-view="overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="adm-nav-label">Overview</span></button>
         <button data-view="users"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg><span class="adm-nav-label">Users</span></button>
         <button data-view="onboarding"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg><span class="adm-nav-label">Onboarding Forms</span></button>
-        <button data-view="payments"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="adm-nav-label">Payments</span></button>
+        <button data-view="payments"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="adm-nav-label">Recent Payments</span></button>
         <button data-view="invoices"><svg viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span class="adm-nav-label">Invoices</span></button>
         <button data-view="subscriptions"><svg viewBox="0 0 24 24"><path d="M3 4h18v6H3z"/><path d="M3 14h11v6H3z"/><path d="M18 13.5v7M14.5 17h7"/></svg><span class="adm-nav-label">Subscriptions</span></button>
         <button data-view="websites"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span class="adm-nav-label">Websites</span></button>
@@ -1083,14 +1083,6 @@
                   <div class="adm-fld">
                     <label for="inv-due">Due date <span class="inv-opt">(optional)</span></label>
                     <input id="inv-due" type="date" />
-                  </div>
-                  <div class="adm-fld">
-                    <label for="inv-billing">Billing type</label>
-                    <select id="inv-billing">
-                      <option value="one_time">One-time</option>
-                      <option value="monthly">Monthly (recurring)</option>
-                      <option value="annual">Annual (recurring)</option>
-                    </select>
                   </div>
                 </div>
                 <div class="adm-fld">
@@ -1804,11 +1796,6 @@
       draft: "Draft", issued: "Issued", paid: "Paid",
       overdue: "Overdue", void: "Void", canceled: "Canceled",
     };
-    // How the invoice is billed (kept in sync with db/invoices-schema.sql
-    // billing_type + api/admin/invoices.js ALLOWED_BILLING_TYPES). Shown on the
-    // card so a client knows a "monthly"/"annual" invoice starts a subscription.
-    const BILLING_LABEL = { one_time: "One-time", monthly: "Monthly", annual: "Annual" };
-
     const clientMoneyFmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
     // Amounts are stored as integer cents; format defensively.
     function cinvMoney(cents) {
@@ -1849,43 +1836,9 @@
       return money + " every " + n + " months";
     }
 
-    // ── Invoice billing type → recurring price suffix + Pay-button label ──────
-    // invoices.billing_type (db/invoices-schema.sql: 'one_time' | 'monthly' |
-    // 'annual') is the AUTHORITATIVE source for whether an invoice is a recurring
-    // hosting subscription — we NEVER infer recurring-ness from the dollar amount.
-    // A monthly/annual invoice starts a Stripe subscription when paid, so it reads
-    // "$25.00/month" / "$250.00/year" + a "Start Hosting" button; a one-time invoice
-    // stays a plain total + "Pay Invoice". Normalize ONCE per card (warns at most
-    // once); a missing / unrecognized value falls back to safe one-time behaviour.
-    function invoiceBillingType(iv) {
-      const t = String((iv && iv.billing_type) || "").toLowerCase();
-      if (t === "one_time" || t === "monthly" || t === "annual") return t;
-      console.warn("Unable to determine invoice billing type. Falling back to one-time display.", iv);
-      return "one_time";
-    }
-    function isRecurringInvoice(billingType) {
-      return billingType === "monthly" || billingType === "annual";
-    }
-    // "/month" or "/year" for a recurring interval, "" for one-time. Accepts the
-    // billing_type values plus the common interval synonyms (month/monthly,
-    // year/yearly/annual/annually) so it is robust to either source.
-    function billingIntervalSuffix(interval) {
-      switch (String(interval || "").toLowerCase()) {
-        case "monthly": case "month": return "/month";
-        case "annual": case "annually": case "year": case "yearly": return "/year";
-        default: return "";
-      }
-    }
-    // Invoice price the client sees: "$750.00" one-time, "$25.00/month" monthly,
-    // "$250.00/year" annual. cinvMoney returns only the amount and the interval is
-    // appended exactly once here, so re-rendering can never yield "$25.00/month/month".
-    function invoicePriceLabel(cents, billingType) {
-      return cinvMoney(cents) + billingIntervalSuffix(billingType);
-    }
-    // Pay-button label: a recurring invoice starts hosting; a one-time invoice pays once.
-    function invoicePayLabel(billingType) {
-      return isRecurringInvoice(billingType) ? "Start Hosting" : "Pay Invoice";
-    }
+    // Invoices are always one-time charges (recurring billing lives in the
+    // Subscriptions tab), so an invoice total is a plain amount and the action is
+    // always "Pay Invoice".
 
     // Fetch + render the signed-in client's CURRENT invoice (the most recent
     // UNPAID, payable one — issued or overdue). The Invoices tab is a brief summary
@@ -1905,7 +1858,7 @@
         // newest first. Paid / draft / void / canceled never qualify as "current".
         const { data: invoices, error: invErr } = await db
           .from("invoices")
-          .select("id,title,status,total_amount_cents,billing_type")
+          .select("id,title,status,total_amount_cents")
           .eq("client_user_id", user.id)
           .in("status", PAYABLE_STATUSES)
           .order("created_at", { ascending: false })
@@ -1936,9 +1889,6 @@
     // is written via cinvEl/textContent, so admin-entered text can't inject markup.
     function buildCurrentInvoiceCard(iv) {
       const status = String(iv.status || "").toLowerCase();
-      // Recurring (monthly/annual) vs one-time is read from billing_type, never
-      // inferred from the amount. Normalized once so a bad value warns at most once.
-      const billingType = invoiceBillingType(iv);
       const card = cinvEl("article", "cinv-card");
       card.setAttribute("aria-label", "Current invoice " + cinvRef(iv.id));
 
@@ -1951,19 +1901,17 @@
       head.appendChild(cinvEl("span", "cinv-badge " + status, CLIENT_STATUS_LABEL[status] || (status || "—")));
       card.appendChild(head);
 
-      // Total — the only money figure shown in the dashboard summary. A recurring
-      // invoice carries its interval ("$25.00/month"); one-time stays a plain total.
+      // Total — the only money figure shown in the dashboard summary. Invoices are
+      // one-time charges, so this is a plain total.
       const summary = cinvEl("div", "cinv-summary");
       summary.appendChild(cinvEl("span", "lbl", "Total"));
-      summary.appendChild(cinvEl("span", "amt", invoicePriceLabel(iv.total_amount_cents, billingType)));
+      summary.appendChild(cinvEl("span", "amt", cinvMoney(iv.total_amount_cents)));
       card.appendChild(summary);
 
       // Action → the dedicated payments page for THIS invoice. The dashboard never
-      // charges a card; /payment?invoice_id=… runs the Stripe Payment Element. A
-      // recurring invoice starts a hosting subscription, so the button reads "Start
-      // Hosting"; a one-time invoice keeps "Pay Invoice".
+      // charges a card; /payment?invoice_id=… runs the Stripe Payment Element.
       const actions = cinvEl("div", "cinv-actions");
-      const pay = cinvEl("a", "ws-btn cinv-pay", invoicePayLabel(billingType));
+      const pay = cinvEl("a", "ws-btn cinv-pay", "Pay Invoice");
       pay.href = "/payment?invoice_id=" + encodeURIComponent(iv.id);
       actions.appendChild(pay);
       card.appendChild(actions);
@@ -2352,39 +2300,39 @@
         emptyTitle: "No onboarding forms yet", emptyMsg: "New project intake submissions will show up here.",
       },
       payments: {
-        action: "list_payments", title: "Payments", subtitle: "Subscription & payment state from Supabase",
+        action: "list_payments", title: "Recent Payments", subtitle: "Payments that have actually been paid — newest first",
         searchPlaceholder: "Search client, email, plan, domain…",
         rowClick: (r) => r.user_id ? openUserDrawer(r.user_id) : null,
+        // Only paid records reach this view (filtered server-side), so there is no
+        // status filter — just narrow by source and paid date.
         filters: [
-          { key: "status", label: "Status", options: STATUS_OPT_PAY },
-          { key: "billing", label: "Billing", options: [["month", "Monthly"], ["year", "Annual"]] },
-          { key: "plan", label: "Plan", dynamicFrom: "plan_name" },
+          { key: "kind", label: "Type", options: [["invoice", "One-time invoice"], ["subscription", "Subscription"]] },
           { key: "from", label: "From", type: "date" },
           { key: "to", label: "To", type: "date" },
         ],
-        // Preview answers only: who is it for, which business, what status.
-        // Amount / plan / billing / website / domain + payment actions all
-        // live in the drawer (row click opens it).
+        // Clean paid-payment preview: when, who, what kind, how much. Everything
+        // is paid, so the badge is a uniform "Paid". Row click opens the client.
         columns: [
+          { key: "paid_at", label: "Paid", render: (r) => fmtDate(r.paid_at) },
           { key: "user_name", label: "Name", render: (r) => esc(r.user_name || r.client_name || "—") },
           { key: "business_name", label: "Client", render: (r) => esc(r.business_name || "—") },
-          { key: "status", label: "Status", render: (r) => badge(r.status) },
+          { key: "type_label", label: "Type", render: (r) => esc(r.type_label || "—") },
+          { key: "amount", label: "Amount", render: (r) => money(r.amount) },
+          { key: "status", label: "Status", render: () => badge("paid") },
         ],
-        // CSV export keeps the full payment record even though the preview is trimmed.
+        // CSV export keeps the full paid-payment record.
         exportColumns: [
+          { key: "paid_at", label: "Paid" },
           { key: "user_name", label: "Name" },
           { key: "business_name", label: "Client" },
           { key: "client_email", label: "Email" },
+          { key: "type_label", label: "Type" },
           { key: "plan_name", label: "Plan" },
-          { key: "status", label: "Status" },
           { key: "amount", label: "Amount" },
-          { key: "plan_interval", label: "Billing" },
-          { key: "last_payment_date", label: "Last Paid" },
-          { key: "current_period_end", label: "Next Billing" },
-          { key: "linked_website", label: "Website" },
+          { key: "currency", label: "Currency" },
           { key: "linked_domain", label: "Domain" },
         ],
-        emptyTitle: "No payments found", emptyMsg: "No subscriptions match your filters.",
+        emptyTitle: "No recent paid payments yet", emptyMsg: "Paid one-time invoices and subscription payments will show up here.",
       },
       websites: {
         action: "list_websites", title: "Websites", subtitle: "Site purchases & build tracking",
@@ -3200,10 +3148,9 @@
       if (notes) body.notes = notes;
       const due = aq("inv-due").value; // type=date → "YYYY-MM-DD" (or "")
       if (due) body.due_date = due;
-      // Billing cadence: one_time | monthly | annual. monthly/annual start a Stripe
-      // subscription when the client pays (api/invoices/pay). The server re-validates.
-      const billing = aq("inv-billing").value;
-      body.billing_type = ["one_time", "monthly", "annual"].indexOf(billing) !== -1 ? billing : "one_time";
+      // Invoices are always one-time charges; recurring billing lives in the
+      // Subscriptions tab (api/admin/subscriptions). The server pays them via a
+      // single Stripe PaymentIntent.
       return { ok: true, body: body };
     }
 
@@ -3276,7 +3223,6 @@
       aq("inv-title").value = "";
       aq("inv-notes").value = "";
       aq("inv-due").value = "";
-      aq("inv-billing").value = "one_time";
       aq("inv-items").innerHTML = "";
       addInvItem();
       recomputeInvoice();

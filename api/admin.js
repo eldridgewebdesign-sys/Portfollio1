@@ -417,24 +417,102 @@ async function listOnboarding(supa, p) {
   return { rows: data || [], hasMore: (data || []).length === (Number(p.limit) || 50) };
 }
 
+// ---- The admin "Recent Payments" feed. -------------------------------------
+// This is a READ-ONLY log of payments that ACTUALLY went through — not an
+// invoice/subscription management center (those are the separate Invoices and
+// Subscriptions tabs). It unions the only two places a successful payment is
+// recorded and shows the newest first:
+//   • invoices with status='paid'  — one-time invoices, paid via a Stripe
+//     PaymentIntent (api/webhook.js sets status='paid' + paid_at).
+//   • subscriptions that have been paid at least once — Stripe marks a sub
+//     'active' only after its first invoice is paid; 'past_due'/'unpaid' still
+//     had that first successful charge. 'canceled'/'trialing' count ONLY when a
+//     real payment timestamp exists. 'pending_activation'/'incomplete' (and any
+//     other not-yet-paid state) are EXCLUDED — no money has changed hands.
+// A subscription's most accurate paid timestamp is last_payment_date (stamped on
+// every invoice.paid), then activated_at; an invoice's is paid_at.
+function subPaymentLabel(s) {
+  const iv = String(s.plan_interval || "").toLowerCase();
+  if (iv === "month") return "Subscription · Monthly";
+  if (iv === "year") return "Subscription · Annual";
+  const m = Number(s.interval_months);
+  if (m === 1) return "Subscription · Monthly";
+  if (m === 12) return "Subscription · Annual";
+  if (m > 0) return "Subscription · Every " + m + " mo";
+  return "Subscription";
+}
+function invPaymentLabel(iv) {
+  const t = String(iv.billing_type || "").toLowerCase();
+  if (t === "monthly") return "Subscription invoice · Monthly";
+  if (t === "annual") return "Subscription invoice · Annual";
+  return "One-time invoice";
+}
+
 async function listPayments(supa, p) {
   const f = p.filters || {};
-  let q = supa.from("subscriptions").select("*");
-  if (f.status) q = q.eq("status", f.status);
-  if (f.plan) q = q.eq("plan_name", f.plan);
-  if (f.billing) q = q.eq("plan_interval", f.billing);
-  if (f.from) q = q.gte("created_at", f.from);
-  if (f.to) q = q.lte("created_at", f.to);
+  // f.kind narrows to one source; default shows both.
+  const wantInvoices = !f.kind || f.kind === "invoice";
+  const wantSubs = !f.kind || f.kind === "subscription";
 
-  q = applyListOpts(q, {
-    search: null, searchCols: [],
-    sortBy: p.sortBy, sortDir: p.sortDir, limit: p.limit, offset: p.offset,
-  });
-  const { data, error } = await q;
-  if (error) throw new Error(error.message);
+  const [invRes, subRes] = await Promise.all([
+    wantInvoices
+      ? supa.from("invoices").select("*").eq("status", "paid")
+      : Promise.resolve({ data: [], error: null }),
+    wantSubs
+      ? supa.from("subscriptions").select("*")
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (invRes.error) throw new Error(invRes.error.message);
+  if (subRes.error) throw new Error(subRes.error.message);
+
+  // Normalise paid invoices into payment rows.
+  const invoiceRows = (invRes.data || []).map((iv) => ({
+    kind: "invoice",
+    id: iv.id,
+    user_id: iv.client_user_id,
+    paid_at: iv.paid_at || iv.created_at,
+    amount: iv.total_amount_cents != null ? Number(iv.total_amount_cents) / 100 : null,
+    currency: (iv.currency || "usd").toUpperCase(),
+    type_label: invPaymentLabel(iv),
+    plan_name: iv.title || null,
+    domain: null,
+    status: "paid",
+  }));
+
+  // Keep only subscriptions that a payment actually went through for.
+  const subRows = (subRes.data || [])
+    .filter((s) => {
+      const st = String(s.status || "").toLowerCase();
+      // active/past_due/unpaid all imply the first invoice was paid. For
+      // canceled/trialing, require last_payment_date — the only field set
+      // exclusively on a real payment (activated_at is also stamped at
+      // trial/active START, so it is NOT proof a charge went through).
+      if (st === "active" || st === "past_due" || st === "unpaid") return true;
+      if ((st === "canceled" || st === "trialing") && s.last_payment_date) return true;
+      return false; // pending_activation / incomplete / anything not yet paid
+    })
+    .map((s) => ({
+      kind: "subscription",
+      id: s.id,
+      user_id: s.user_id,
+      paid_at: s.last_payment_date || s.activated_at || s.current_period_start || s.created_at,
+      amount: s.amount != null ? Number(s.amount)
+            : s.amount_cents != null ? Number(s.amount_cents) / 100 : null,
+      currency: (s.currency || "usd").toUpperCase(),
+      type_label: subPaymentLabel(s),
+      plan_name: s.plan_name || s.category || null,
+      domain: s.domain || null,
+      status: "paid",
+    }));
+
+  let rows = invoiceRows.concat(subRows);
+
+  // Date-range filter on the actual paid date (inputs are yyyy-mm-dd).
+  if (f.from) rows = rows.filter((r) => r.paid_at && String(r.paid_at) >= f.from);
+  if (f.to) rows = rows.filter((r) => r.paid_at && String(r.paid_at) <= f.to + "T23:59:59.999Z");
 
   // Attach client name/email + linked website/domain by user_id.
-  const ids = (data || []).map((r) => r.user_id).filter(Boolean);
+  const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
   let inqMap = {}, siteMap = {};
   if (ids.length) {
     const [{ data: inq }, { data: sites }] = await Promise.all([
@@ -444,18 +522,17 @@ async function listPayments(supa, p) {
     inqMap = indexBy(inq, "user_id");
     siteMap = indexBy(sites, "user_id");
   }
-
-  let rows = (data || []).map((s) => {
-    const u = inqMap[s.user_id] || {};
-    const site = siteMap[s.user_id] || {};
+  rows = rows.map((r) => {
+    const u = inqMap[r.user_id] || {};
+    const site = siteMap[r.user_id] || {};
     return {
-      ...s,
-      user_name: u.full_name || u.email || "—",      // the person (Payments "Name")
-      business_name: u.business_name || "—",          // the client/business (Payments "Client")
+      ...r,
+      user_name: u.full_name || u.email || "—",      // the person ("Name")
+      business_name: u.business_name || "—",          // the client/business ("Client")
       client_name: u.full_name || u.business_name || "—",
       client_email: u.email || "—",
-      linked_domain: s.domain || u.domain || site.domain || null,
-      linked_website: site.website_type || s.website_type || null,
+      linked_domain: r.domain || u.domain || site.domain || null,
+      linked_website: site.website_type || null,
     };
   });
 
@@ -463,10 +540,14 @@ async function listPayments(supa, p) {
   if (p.search) {
     const s = p.search.toLowerCase();
     rows = rows.filter((r) =>
-      [r.user_name, r.business_name, r.client_name, r.client_email, r.plan_name, r.linked_domain]
+      [r.user_name, r.business_name, r.client_name, r.client_email, r.plan_name, r.type_label, r.linked_domain]
         .some((v) => v && String(v).toLowerCase().includes(s)));
   }
-  return { rows, hasMore: (data || []).length === (Number(p.limit) || 50) };
+
+  // Newest paid first. Returns the full paid set (no DB paging) — like the other
+  // aggregated admin views — so the generic table renders one clean list.
+  rows.sort((a, b) => String(b.paid_at || "").localeCompare(String(a.paid_at || "")));
+  return { rows, hasMore: false };
 }
 
 async function listWebsites(supa, p) {

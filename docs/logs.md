@@ -6,6 +6,59 @@
 
 ---
 
+## 2026-06-30 - Developer / Implementation - admin-recent-payments-paid-only
+
+Action:
+Finished
+
+Task:
+Per user request: make the admin dashboard "Payments" tab a clean, read-only **Recent Payments** feed that
+shows ONLY payments that actually went through — never unpaid / pending / open / draft / failed / canceled-
+without-payment / incomplete records. It must surface both paid one-time invoices and paid subscription
+payments, newest first. (Full invoice/subscription management stays on the separate Invoices and
+Subscriptions tabs — untouched.)
+
+Files changed:
+
+- **api/admin.js** — rewrote `listPayments()`. It no longer dumps every `subscriptions` row. It now unions
+  the only two places a successful payment is recorded and returns the newest first:
+  - `invoices` filtered server-side to `status = 'paid'` (one-time invoice payments; `paid_at` is the paid
+    timestamp).
+  - `subscriptions` filtered to states that imply a real charge: `active` / `past_due` / `unpaid` always
+    (their first invoice was paid), plus `canceled` / `trialing` ONLY when `last_payment_date` is set.
+    `pending_activation` / `incomplete` (and anything else not paid) are excluded. `last_payment_date` is the
+    payment proof — NOT `activated_at`, which the webhook also stamps at trial/active START.
+  - Sort: newest first by the most accurate paid timestamp (`paid_at` for invoices; `last_payment_date` →
+    `activated_at` → `current_period_start` → `created_at` for subscriptions). Joins client name/email/site
+    by `user_id` (invoices key on `client_user_id`). Date `from`/`to` filter now applies to the paid date.
+    Returns `hasMore:false` (full paid set, like the other aggregated admin views).
+- **dashboard.html** — Payments view config + chrome:
+  1. Nav label "Payments" → "**Recent Payments**"; view `title` → "Recent Payments", subtitle "Payments that
+     have actually been paid — newest first".
+  2. Columns now paid-appropriate: Paid (date) · Name · Client · Type (One-time invoice / Subscription · …) ·
+     Amount · Status (uniform green **Paid** badge). Dropped the old Status filter (everything is paid);
+     filters are now Type (invoice/subscription) + From/To date. Empty state → "**No recent paid payments
+     yet**".
+  3. CSV export columns updated to the paid-payment shape (Paid, Name, Client, Email, Type, Plan, Amount,
+     Currency, Domain).
+  4. Added `b-paid` to the green badge CSS rule.
+
+### Scope / safety
+- Display + query change only. No DB rows deleted or mutated. `api/webhook.js`, `payment.html`, the Stripe
+  flow, Supabase auth/RLS, and every other admin tab (Users / Onboarding / Invoices / Subscriptions /
+  Websites / Domains / Alerts / Activity / Settings) and the client dashboard are untouched. `list_payments`
+  has no other consumer (the global search uses the separate `search` action). `node --check api/admin.js`
+  passes.
+
+### Notes / assumptions
+- Invoices are one-time only in current code (`api/invoices/pay.js` creates a single PaymentIntent; the
+  recurring branch was removed earlier), so a paid invoice never also appears as a subscription → no double-
+  counting. The `monthly`/`annual` label branches in `listPayments` are defensive only, to render any legacy
+  recurring invoice rows still in the live DB gracefully.
+- No commit made (none requested).
+
+---
+
 ## 2026-06-28 - Developer / Implementation - why-section-frosted-glass
 
 Action:
@@ -4881,3 +4934,51 @@ disk; I verified + ratified + recorded it.
 **Suggested next task:** **Task E** — vendor Google Fonts on those 6 remaining pages (same pattern as
 Task C, reuses `/fonts`; needs a per-page weight audit, since some pages may use faces not yet in `/fonts`,
 e.g. Mulish-700 / CG-italic). Task A (GUI live-verify) is the other open item but needs a browser session.
+
+---
+
+## 2026-06-30 — Worker (Opus) — Separate Invoices (one-time) from Subscriptions (recurring)
+
+**Why:** Invoices and the Subscriptions tab overlapped — an invoice with `billing_type` monthly/annual
+started a Stripe subscription, so "invoices" could secretly be recurring. Owner wants a hard split:
+**Invoices = one-time fees only**, **Subscriptions = recurring only** (which already say `$/month`,
+`$/year`, or `every N months` via `recurringLabel`/`subRecurringLabel`), and the redundant invoice
+billing data removed from Supabase.
+
+### Files changed (production code)
+- **dashboard.html** — removed the "Billing type" select from the admin invoice form; dropped
+  `billing_type` from `collectInvoice`/`resetInvoiceForm`; deleted the client-side recurring-invoice
+  display helpers (`invoiceBillingType`/`isRecurringInvoice`/`billingIntervalSuffix`/`invoicePriceLabel`/
+  `invoicePayLabel`) + the orphaned `BILLING_LABEL`; invoice totals now render a plain `cinvMoney(...)` and
+  the action is always "Pay Invoice". Subscription labels untouched.
+- **api/admin/invoices.js** — removed `ALLOWED_BILLING_TYPES`, the `billing_type` validation/field, and the
+  `p_billing_type` RPC arg.
+- **api/invoices/pay.js** — deleted the entire monthly/annual subscription branch + `BILLING_INTERVAL`/
+  `REUSABLE_SUB`; invoices are paid by a single PaymentIntent only.
+- **api/webhook.js** — removed all recurring-invoice handling (the `metadata.invoice_id` subscription
+  branches, `invoice_payments` writes, `next_payment_at`/`stripe_invoice_id`-on-invoices reconciliation,
+  and the now-unused helpers `subscriptionNextChargeUnix`/`invoicePaymentIntentId`/`recordInvoicePayment`).
+  Kept the hosting-subscription sync and the one-time `payment_intent.succeeded` invoice path.
+- **payment.html** + **prev-inv.html** — same client-side simplification (plain one-time totals + "Pay
+  invoice"); dropped `billing_type` from their `invoices` selects. Subscription activation flow untouched.
+
+### Supabase (schema)
+- **db/invoices-schema.sql** — updated to the one-time target: dropped `billing_type` + recurring `stripe_*`
+  / `next_payment_at` columns, removed the `invoice_payments` table + its RLS, and rebuilt
+  `create_invoice_with_items()` without `p_billing_type`.
+- **db/invoices-one-time-cleanup.sql** (NEW) — standalone, idempotent teardown to run in the Supabase SQL
+  editor: drops the redundant invoice columns, drops `invoice_payments`, and replaces the RPC.
+
+**⚠ Not yet applied to the live DB.** This environment has **no Supabase CLI, no psql, no `.env.local`, no
+DB credentials**, so I could not push the schema change from the terminal (every schema change in this repo
+is run by hand in the Supabase SQL editor). The owner must paste `db/invoices-one-time-cleanup.sql` into the
+SQL editor and run it. Until then the dropped columns simply sit unused — the app code no longer reads or
+writes them, so nothing breaks in the interim.
+
+### Notes
+- No commit made (none requested). The recurring-display logic for **subscriptions** was intentionally left
+  exactly as-is — that's where `/month` `/year` lives, and it already keys off `interval_months`.
+
+### Suggested next task
+Run `db/invoices-one-time-cleanup.sql` in Supabase, then live-verify in a browser: create a one-time invoice
+(no billing selector), pay it, and confirm the Subscriptions tab still shows recurring prices correctly.
