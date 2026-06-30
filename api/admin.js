@@ -121,6 +121,7 @@ module.exports = async (req, res) => {
       case "list_users":        return res.status(200).json(await listUsers(supa, p));
       case "list_onboarding":   return res.status(200).json(await listOnboarding(supa, p));
       case "list_payments":     return res.status(200).json(await listPayments(supa, p));
+      case "list_invoices":     return res.status(200).json(await listInvoices(supa, p));
       case "list_websites":     return res.status(200).json(await listWebsites(supa, p));
       case "list_domains":      return res.status(200).json(await listDomains(supa, p));
       case "list_alerts":       return res.status(200).json(await listAlerts(supa, p));
@@ -547,6 +548,53 @@ async function listPayments(supa, p) {
   // Newest paid first. Returns the full paid set (no DB paging) — like the other
   // aggregated admin views — so the generic table renders one clean list.
   rows.sort((a, b) => String(b.paid_at || "").localeCompare(String(a.paid_at || "")));
+  return { rows, hasMore: false };
+}
+
+// ---- The admin "Invoices" list — EVERY invoice, all time, all statuses. ------
+// Deliberately UNFILTERED: draft / issued / paid / overdue / void / canceled —
+// one-time and (legacy) subscription invoices — all appear. Newest first by
+// created_at (the invoice creation date). Joins client name/business/email by
+// client_user_id so the table can show who each invoice is for. This is a
+// display query only; it never writes or mutates invoice data.
+async function listInvoices(supa, p) {
+  const { data, error } = await supa
+    .from("invoices")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+
+  const ids = [...new Set((data || []).map((r) => r.client_user_id).filter(Boolean))];
+  let inqMap = {};
+  if (ids.length) {
+    const { data: inq } = await supa
+      .from("project_inquiries")
+      .select("user_id, full_name, business_name, email")
+      .in("user_id", ids);
+    inqMap = indexBy(inq, "user_id");
+  }
+
+  let rows = (data || []).map((iv) => {
+    const u = inqMap[iv.client_user_id] || {};
+    return {
+      ...iv,
+      user_id: iv.client_user_id,                    // for the drawer / row click
+      user_name: u.full_name || u.email || "—",      // the person ("Name")
+      business_name: u.business_name || "—",          // the client/business ("Client")
+      client_name: u.full_name || u.business_name || "—",
+      client_email: u.email || "—",
+      amount: iv.total_amount_cents != null ? Number(iv.total_amount_cents) / 100 : null,
+    };
+  });
+
+  // Optional free-text search across the joined client fields + title.
+  if (p && p.search) {
+    const s = String(p.search).toLowerCase();
+    rows = rows.filter((r) =>
+      [r.user_name, r.business_name, r.client_email, r.title, r.status]
+        .some((v) => v && String(v).toLowerCase().includes(s)));
+  }
+
   return { rows, hasMore: false };
 }
 

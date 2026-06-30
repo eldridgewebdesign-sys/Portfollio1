@@ -1117,6 +1117,11 @@
               </div>
             </aside>
           </div>
+
+          <div class="adm-panel-box">
+            <h3>All invoices</h3>
+            <div id="inv-list">Loading…</div>
+          </div>
         </section>
 
         <!-- SUBSCRIPTIONS — create a custom recurring hosting subscription for a -->
@@ -3209,6 +3214,7 @@
         showInvMsg("ok", "Invoice " + label + (total ? " — server total " + total : "") + idText + ". The form has been cleared for the next invoice.");
         toast("Invoice " + label, (inv.title || "") + (total ? " · " + total : ""), false);
         resetInvoiceForm();
+        loadInvoiceList();
       } catch (e) {
         showInvMsg("err", e.message || "Could not create the invoice.");
         toast("Couldn’t create invoice", e.message, true);
@@ -3260,6 +3266,28 @@
       }
     }
 
+    // ALL invoices, every status, newest first. Display-only summary table
+    // (Name · Client · Title · Amount · Status · Created) — full detail/actions
+    // are not part of this list. Server query lives in api/admin.js (list_invoices).
+    async function loadInvoiceList() {
+      const wrap = aq("inv-list");
+      wrap.textContent = "Loading…";
+      try {
+        const data = await adminApi("list_invoices", {});
+        const rows = (data && data.rows) || [];
+        if (!rows.length) { wrap.innerHTML = '<p class="inv-note">No invoices found.</p>'; return; }
+        const head = "<thead><tr><th>Name</th><th>Client</th><th>Title</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>";
+        const body = rows.map((r) =>
+          "<tr><td>" + esc(r.user_name || "—") + "</td><td>" + esc(r.business_name || "—") + "</td><td>" +
+          esc(r.title || "—") + "</td><td>" + money(r.amount) + "</td><td>" + badge(r.status) + "</td><td>" +
+          (fmtDate(r.created_at) || "—") + "</td></tr>"
+        ).join("");
+        wrap.innerHTML = '<table class="adm-table">' + head + "<tbody>" + body + "</tbody></table>";
+      } catch (e) {
+        wrap.innerHTML = '<p class="inv-note" style="color:var(--adm-danger)">Couldn’t load invoices: ' + esc(e.message) + "</p>";
+      }
+    }
+
     function initInvoices() {
       if (!INV.built) {
         addInvItem();
@@ -3270,6 +3298,7 @@
         INV.built = true;
       }
       loadInvoiceClients(false);
+      loadInvoiceList();
     }
 
     // =====================================================================
