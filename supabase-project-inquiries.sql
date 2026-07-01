@@ -49,7 +49,22 @@ create table if not exists public.project_inquiries (
   preferred_styles      text[],   -- multi-select "Preferred Style" checkboxes
   color_preferences     text,
   design_notes          text,
-  additional_info       text
+  additional_info       text,
+
+  -- ---- feature-driven intake (see the redesigned onboarding.html) ----
+  -- The client picks "extensions"; the checked ones reveal conditional
+  -- questions whose answers land in the columns below.
+  selected_extensions    text[],   -- e.g. {Authentication, Payment Integration}
+  client_name            text,     -- "Name" base question (mirrored into full_name)
+  key_points             text,     -- "What is everything I should know?"
+  style_preferences      text,     -- "How should the style look?" (free text, ranked list)
+  auth_sign_in_method    text,     -- Authentication → how users sign in
+  auth_account_creation  text,     -- Authentication → how accounts are created
+  auth_user_capabilities text,     -- Authentication → what users can do
+  admin_dashboard_needs  text,     -- Administrator Dashboard → what the admin can do
+  spreadsheet_needs      text,     -- Spreadsheets → what data to connect
+  payment_embedded       text,     -- Payment Integration → 'Yes' / 'No'
+  payment_products       jsonb     -- Payment Integration → [{name, price, description}, …]
 );
 
 -- Backfill columns if an older version of the table already exists.
@@ -69,6 +84,20 @@ alter table public.project_inquiries add column if not exists preferred_styles  
 alter table public.project_inquiries add column if not exists color_preferences    text;
 alter table public.project_inquiries add column if not exists design_notes         text;
 alter table public.project_inquiries add column if not exists additional_info      text;
+
+-- Feature-driven intake columns (redesigned onboarding.html). Idempotent, so
+-- running this on an existing table just adds whatever is missing.
+alter table public.project_inquiries add column if not exists selected_extensions    text[];
+alter table public.project_inquiries add column if not exists client_name            text;
+alter table public.project_inquiries add column if not exists key_points             text;
+alter table public.project_inquiries add column if not exists style_preferences      text;
+alter table public.project_inquiries add column if not exists auth_sign_in_method    text;
+alter table public.project_inquiries add column if not exists auth_account_creation  text;
+alter table public.project_inquiries add column if not exists auth_user_capabilities text;
+alter table public.project_inquiries add column if not exists admin_dashboard_needs  text;
+alter table public.project_inquiries add column if not exists spreadsheet_needs      text;
+alter table public.project_inquiries add column if not exists payment_embedded       text;
+alter table public.project_inquiries add column if not exists payment_products       jsonb;
 
 -- Helpful indexes for the dashboard (newest-first per user).
 create index if not exists project_inquiries_user_id_idx    on public.project_inquiries (user_id);

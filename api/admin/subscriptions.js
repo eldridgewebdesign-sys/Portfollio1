@@ -247,17 +247,15 @@ module.exports = async (req, res) => {
     }
 
     // ================= LIST =================
-    // EVERY subscription, all time, all statuses — active / trialing / past_due /
-    // unpaid / incomplete / pending_activation / canceled, and BOTH admin-created
-    // 'hosting' rows and legacy plan rows (category NULL). No category or status
-    // filter: the admin table shows the complete history. Newest first by
-    // created_at. amount/plan_interval are included so legacy rows (which store a
-    // dollar amount + 'month'/'year' interval instead of amount_cents/
-    // interval_months) render their price too.
+    // Returns the category='hosting' rows. (All payments — invoices AND
+    // subscriptions, every status — are now viewed in the admin Recent Payments
+    // tab, which queries them directly via api/admin.js → listPayments. This
+    // action remains for completeness / future use.)
     if (action === "list") {
       const { data: rows, error: listErr } = await supa
         .from("subscriptions")
-        .select("id, user_id, plan_name, amount, amount_cents, interval_months, plan_interval, currency, status, created_at, activated_at, canceled_at, stripe_subscription_id")
+        .select("id, user_id, plan_name, amount_cents, interval_months, currency, status, created_at, activated_at, canceled_at, stripe_subscription_id")
+        .eq("category", "hosting")
         .order("created_at", { ascending: false });
       if (listErr) throw new Error(listErr.message);
       return res.status(200).json({ subscriptions: rows || [] });

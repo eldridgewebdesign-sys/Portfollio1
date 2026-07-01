@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Start Your Project — WebSharke</title>
-  <meta name="description" content="Tell WebSharke about your business and we build and run your website end to end — design, hosting, backend, forms, and payments. No agency price tag, no DIY headache." />
+  <meta name="description" content="Tell WebSharke about your business and the features you want, and we build and run your website end to end — design, hosting, backend, forms, and payments. No agency price tag, no DIY headache." />
 
   <style>
     /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
@@ -125,6 +125,7 @@
       padding:.7rem .85rem;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;
     }
     textarea.fi{min-height:100px;resize:vertical;line-height:1.6}
+    textarea.fi.tall{min-height:150px}
     .fi::placeholder{color:rgba(17,54,76,.5)}
     .fi:focus{border-color:var(--turq);background:rgba(255,255,255,.9);box-shadow:0 0 0 2px rgba(16,182,204,.3)}
     .fi.invalid{border-color:#c2506a;background:rgba(255,235,238,.5)}
@@ -133,17 +134,70 @@
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem}
     .grid-2 .field{margin-bottom:0}
 
-    /* Preferred-style checkboxes */
-    .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:.5rem}
+    /* Checkbox / choice groups (extensions, yes-no) */
+    .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.6rem}
     .check{
-      display:flex;align-items:center;gap:.55rem;cursor:pointer;font-size:.92rem;color:var(--ink);
-      background:rgba(255,255,255,.6);border:1px solid rgba(17,54,76,.18);border-radius:8px;
-      padding:.55rem .75rem;transition:border-color .2s,background .2s,color .2s;
+      display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:1rem;color:var(--ink);
+      background:rgba(255,255,255,.6);border:1px solid rgba(17,54,76,.18);border-radius:10px;
+      padding:.7rem .85rem;transition:border-color .2s,background .2s,color .2s;
     }
     .check:hover{border-color:var(--turq);background:rgba(255,255,255,.75)}
-    .check input{accent-color:#15707f;width:1.05rem;height:1.05rem;flex-shrink:0}
+    .check input{accent-color:#15707f;width:1.15rem;height:1.15rem;flex-shrink:0}
     .check:has(input:checked){border-color:#15707f;background:rgba(16,182,204,.2);color:#0e2f44}
     .check:has(input:focus-visible){outline:2px solid var(--turq);outline-offset:2px}
+    .checks.invalid .check,.yesno.invalid .check{border-color:#c2506a;background:rgba(255,235,238,.5)}
+
+    /* Yes / No choice — inline pills */
+    .yesno{display:flex;gap:.6rem;flex-wrap:wrap}
+    .yesno .check{min-width:110px;justify-content:center}
+
+    /* ── Conditional feature sections (revealed by the extension checkboxes) ── */
+    .cond{display:none;margin-top:1.1rem}
+    .cond.show{display:block;animation:condIn .28s ease}
+    @keyframes condIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+    .cond-card{
+      padding:1.15rem 1.25rem;background:var(--inner);border:1px solid var(--inner-bd);
+      border-left:3px solid var(--turq);border-radius:12px;
+    }
+    .cond-card .field:last-child{margin-bottom:0}
+    .cond-title{font-family:'Distillery Display','Playfair Display',serif;font-weight:400;font-size:1.25rem;color:#0e2f44;letter-spacing:.02em}
+    .cond-note{font-size:.85rem;color:var(--ink-soft);margin:.15rem 0 1rem;line-height:1.5}
+
+    /* "How spreadsheets work" helper link */
+    .help-link{
+      display:inline-flex;align-items:center;gap:.35rem;margin-top:.2rem;
+      font-family:'Playfair Display',serif;font-weight:600;font-size:.92rem;
+      color:#0f6b79;text-decoration:none;border-bottom:1px solid rgba(15,107,121,.4);
+      padding-bottom:1px;transition:color .2s,border-color .2s;
+    }
+    .help-link:hover{color:#0a4f5a;border-color:#0a4f5a}
+    .help-link:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+
+    /* ── Repeatable product blocks ─────────────────────────────────────────── */
+    .product-list{display:flex;flex-direction:column;gap:.85rem}
+    .product-block{
+      position:relative;background:rgba(255,255,255,.5);
+      border:1px solid rgba(17,54,76,.18);border-radius:11px;padding:1rem 1rem 1.05rem;
+    }
+    .product-grid{display:grid;grid-template-columns:1fr 150px;gap:.85rem}
+    .product-block .lbl{font-size:.98rem;margin-bottom:.3rem}
+    .product-remove{
+      position:absolute;top:.7rem;right:.7rem;cursor:pointer;
+      font-family:'Playfair Display',serif;font-size:.8rem;font-weight:600;color:#8a2d3c;
+      background:rgba(255,255,255,.6);border:1px solid rgba(150,40,52,.35);
+      border-radius:7px;padding:.25rem .55rem;transition:background .2s,color .2s;
+    }
+    .product-remove:hover{background:rgba(194,80,106,.15);color:#7c1d29}
+    .product-remove:focus-visible{outline:2px solid var(--turq);outline-offset:2px}
+    .product-block.only .product-remove{display:none}
+    .btn-add{
+      margin-top:.9rem;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;
+      font-family:'Playfair Display',serif;font-weight:600;font-size:.98rem;color:#0e3a44;
+      background:rgba(255,255,255,.62);border:1px dashed rgba(21,112,127,.6);
+      border-radius:9px;padding:.6rem 1rem;transition:background .2s,border-color .2s;
+    }
+    .btn-add:hover{background:rgba(255,255,255,.82);border-color:#15707f}
+    .btn-add:focus-visible{outline:2px solid var(--turq);outline-offset:2px}
 
     /* ── Submit + status ───────────────────────────────────────────────────── */
     .submit-row{margin-top:1.4rem}
@@ -173,12 +227,14 @@
     @media(max-width:600px){
       .ws-logo{width:120px;height:67px;top:14px;left:16px}
       .ob-signin{top:20px;right:16px;font-size:.95rem;padding:.36rem .8rem}
-      /* Drop the "Already a client?" prefix so the fixed pill can't collide with the logo on phones */
+      /* Drop the "Already a client" prefix so the fixed pill can't collide with the logo on phones */
       .ob-signin-pre{display:none}
       .ob-shell{padding:6rem 1.1rem 2.5rem}
       .ob-card{padding:1.5rem 1.25rem 1.8rem}
       .grid-2{grid-template-columns:1fr;gap:0}
       .grid-2 .field{margin-bottom:1.3rem}
+      .product-grid{grid-template-columns:1fr;gap:0}
+      .product-grid .field{margin-bottom:.85rem}
     }
   </style>
 </head>
@@ -210,13 +266,12 @@
         <h1 class="ob-title">Let's build <em>your website</em></h1>
       </div>
 
-      <!-- ---------- Intro callout (verbatim copy) ---------- -->
+      <!-- ---------- Intro callout ---------- -->
       <div class="intro">
         <strong>The more detail you provide, the better.</strong>
-        The more I know about your business, goals, and preferences, the less
-        guesswork is involved. Detailed answers help me create a website that
-        accurately represents your business and saves time during the planning
-        process.
+        The more I know about your business, goals, and the features you want, the
+        less guesswork is involved. Detailed answers help me build a website that
+        accurately represents your business and saves time during planning.
       </div>
 
       <!-- =============================================================
@@ -253,126 +308,157 @@
           </div>
         </section>
 
-        <!-- ============ SECTION 2 — CONTACT INFORMATION ============ -->
+        <!-- ============ SECTION 2 — EXTENSIONS ============ -->
+        <!-- The extensions the client selects here reveal the matching
+             conditional questions further down the form. -->
         <section class="section">
           <div class="section-head">
-            <h2 class="section-title">Contact Information</h2>
+            <h2 class="section-title">Website Features</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl">What extensions do you want on your site?</label>
+            <span class="hint">Select any that apply. Choosing one reveals a few extra questions about it below. You can leave them all unchecked for a standard website.</span>
+            <div class="checks" id="extensions">
+              <label class="check"><input type="checkbox" value="Authentication" /> Authentication</label>
+              <label class="check"><input type="checkbox" value="Administrator Dashboard" /> Administrator Dashboard</label>
+              <label class="check"><input type="checkbox" value="Spreadsheets" /> Spreadsheets</label>
+              <label class="check"><input type="checkbox" value="Payment Integration" /> Payment Integration</label>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SECTION 3 — ABOUT YOU (BASE QUESTIONS) ============ -->
+        <!-- Always shown, no matter which extensions are selected. -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">About You &amp; Your Site</h2>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="client_name">Name <span class="req">*</span></label>
+            <input id="client_name" class="fi" type="text" autocomplete="name" />
           </div>
 
           <div class="grid-2">
             <div class="field">
-              <label class="lbl" for="full_name">Full Name <span class="req">*</span></label>
-              <input id="full_name" class="fi" type="text" autocomplete="name" />
-            </div>
-            <div class="field">
-              <label class="lbl" for="business_name">Business Name <span class="req">*</span></label>
+              <label class="lbl" for="business_name">Business Name</label>
               <input id="business_name" class="fi" type="text" autocomplete="organization" />
             </div>
-          </div>
-
-          <div class="grid-2" style="margin-top:1.3rem">
             <div class="field">
-              <label class="lbl" for="cell_phone">Cell Phone Number <span class="req">*</span></label>
+              <label class="lbl" for="cell_phone">Cell Phone Number</label>
               <input id="cell_phone" class="fi" type="tel" autocomplete="tel" />
             </div>
-            <div class="field">
-              <label class="lbl" for="business_address">Business Address</label>
-              <input id="business_address" class="fi" type="text" autocomplete="street-address" />
-            </div>
-          </div>
-        </section>
-
-        <!-- ============ SECTION 3 — BUSINESS INFORMATION ============ -->
-        <section class="section">
-          <div class="section-head">
-            <h2 class="section-title">Business Information</h2>
           </div>
 
-          <div class="field">
-            <label class="lbl" for="business_description">Tell me about your business</label>
-            <span class="hint">What do you do? Who are your customers? What makes your business different?</span>
+          <div class="field" style="margin-top:1.05rem">
+            <label class="lbl" for="business_description">What do you do? <span class="req">*</span></label>
+            <span class="hint">Tell me about your business — what you offer and who your customers are.</span>
             <textarea id="business_description" class="fi"></textarea>
           </div>
 
           <div class="field">
-            <label class="lbl" for="products_services">Products and Services</label>
-            <span class="hint">What products or services do you offer?</span>
-            <textarea id="products_services" class="fi"></textarea>
+            <label class="lbl" for="key_points">What is everything I should know? <span class="req">*</span></label>
+            <span class="hint">What points do you want to get across with the site?</span>
+            <textarea id="key_points" class="fi tall"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="style_preferences">How should the style look? <span class="req">*</span></label>
+            <span class="hint">Any specific features, styles, or websites you like? List them in order from 1 being your favorite to 5 being your least favorite.</span>
+            <textarea id="style_preferences" class="fi tall"></textarea>
           </div>
         </section>
 
-        <!-- ============ SECTION 4 — WEBSITE GOALS ============ -->
-        <section class="section">
+        <!-- ============ SECTION 4 — CONDITIONAL FEATURE QUESTIONS ============ -->
+        <!-- Each block reveals itself when its matching extension checkbox above
+             is ticked (data-ext must equal the checkbox value). Answers stay in
+             the DOM while hidden, so unchecking then re-checking keeps them. -->
+        <section class="section" id="feature-questions">
           <div class="section-head">
-            <h2 class="section-title">Website Goals</h2>
+            <h2 class="section-title">Feature Details</h2>
           </div>
+          <span class="hint" id="fq-empty">Select one or more extensions above to answer a few questions about them.</span>
 
-          <div class="field">
-            <label class="lbl" for="website_goals">What do you want your website to accomplish?</label>
-            <span class="hint">For example: generate leads, accept bookings, sell products, showcase past work, provide business information, collect contact requests.</span>
-            <textarea id="website_goals" class="fi"></textarea>
-          </div>
+          <!-- ── Authentication ── -->
+          <div class="cond" data-ext="Authentication">
+            <div class="cond-card">
+              <h3 class="cond-title">Authentication</h3>
+              <p class="cond-note">Let people sign in to your site and have their own account.</p>
 
-          <div class="field">
-            <label class="lbl" for="visitor_actions">What actions do you want visitors to take?</label>
-            <span class="hint">For example: call you, submit a form, request a quote, book an appointment, purchase a product.</span>
-            <textarea id="visitor_actions" class="fi"></textarea>
-          </div>
-        </section>
+              <div class="field">
+                <label class="lbl" for="auth_sign_in_method">How should users sign in? <span class="req">*</span></label>
+                <span class="hint">For example: email and password, Google login, magic link, phone number, etc.</span>
+                <textarea id="auth_sign_in_method" class="fi"></textarea>
+              </div>
 
-        <!-- ============ SECTION 5 — DESIGN PREFERENCES ============ -->
-        <section class="section">
-          <div class="section-head">
-            <h2 class="section-title">Design Preferences</h2>
-          </div>
+              <div class="field">
+                <label class="lbl" for="auth_account_creation">How should users create an account? <span class="req">*</span></label>
+                <span class="hint">For example: anyone can sign up, invite-only, admin creates accounts, paid users only, etc.</span>
+                <textarea id="auth_account_creation" class="fi"></textarea>
+              </div>
 
-          <div class="field">
-            <label class="lbl" for="websites_liked">Websites you like</label>
-            <span class="hint">Include links and explain what you like about them.</span>
-            <textarea id="websites_liked" class="fi"></textarea>
-          </div>
-
-          <div class="field">
-            <label class="lbl">Preferred Style</label>
-            <span class="hint">Select all that apply.</span>
-            <!-- Multi-select checkboxes. JS gathers the checked values into
-                 an array stored in the `preferred_styles` column. -->
-            <div class="checks" id="preferred_styles">
-              <label class="check"><input type="checkbox" value="Modern" /> Modern</label>
-              <label class="check"><input type="checkbox" value="Luxury" /> Luxury</label>
-              <label class="check"><input type="checkbox" value="Minimalist" /> Minimalist</label>
-              <label class="check"><input type="checkbox" value="Professional" /> Professional</label>
-              <label class="check"><input type="checkbox" value="Bold" /> Bold</label>
-              <label class="check"><input type="checkbox" value="Creative" /> Creative</label>
-              <label class="check"><input type="checkbox" value="Industrial" /> Industrial</label>
-              <label class="check"><input type="checkbox" value="Corporate" /> Corporate</label>
-              <label class="check"><input type="checkbox" value="High-End" /> High-End</label>
-              <label class="check"><input type="checkbox" value="Friendly" /> Friendly</label>
-              <label class="check"><input type="checkbox" value="Other" /> Other</label>
+              <div class="field">
+                <label class="lbl" for="auth_user_capabilities">What should users be able to do? <span class="req">*</span></label>
+                <span class="hint">For example: view account info, upload files, manage a profile, access private pages, etc.</span>
+                <textarea id="auth_user_capabilities" class="fi"></textarea>
+              </div>
             </div>
           </div>
 
-          <div class="field">
-            <label class="lbl" for="color_preferences">Color Preferences</label>
-            <input id="color_preferences" class="fi" type="text" placeholder="e.g. navy & gold, earthy tones, bright and colorful" />
+          <!-- ── Administrator Dashboard ── -->
+          <div class="cond" data-ext="Administrator Dashboard">
+            <div class="cond-card">
+              <h3 class="cond-title">Administrator Dashboard</h3>
+              <p class="cond-note">A private control panel where you manage the site behind the scenes.</p>
+
+              <div class="field">
+                <label class="lbl" for="admin_dashboard_needs">What should you be able to do inside the administrator dashboard? <span class="req">*</span></label>
+                <span class="hint">For example: manage users, view orders, edit website content, see form submissions, manage payments, update project statuses, etc.</span>
+                <textarea id="admin_dashboard_needs" class="fi tall"></textarea>
+              </div>
+            </div>
           </div>
 
-          <div class="field">
-            <label class="lbl" for="design_notes">Additional Design Notes</label>
-            <textarea id="design_notes" class="fi"></textarea>
-          </div>
-        </section>
+          <!-- ── Spreadsheets ── -->
+          <div class="cond" data-ext="Spreadsheets">
+            <div class="cond-card">
+              <h3 class="cond-title">Spreadsheets</h3>
+              <p class="cond-note">Store and manage your website data like a familiar spreadsheet.</p>
 
-        <!-- ============ SECTION 6 — ADDITIONAL INFORMATION ============ -->
-        <section class="section">
-          <div class="section-head">
-            <h2 class="section-title">Additional Information</h2>
+              <div class="field">
+                <label class="lbl" for="spreadsheet_needs">What spreadsheets do you want connected to your site? <span class="req">*</span></label>
+                <span class="hint">Explain what data should be stored, displayed, edited, imported, exported, or synced.</span>
+                <textarea id="spreadsheet_needs" class="fi tall"></textarea>
+                <a class="help-link" href="how-to-sheets.html" target="_blank" rel="noopener">How spreadsheets work →</a>
+              </div>
+            </div>
           </div>
 
-          <div class="field">
-            <label class="lbl" for="additional_info">Anything else I should know?</label>
-            <span class="hint">Goals, deadlines, branding, logos, special features, or any other project information.</span>
-            <textarea id="additional_info" class="fi"></textarea>
+          <!-- ── Payment Integration ── -->
+          <div class="cond" data-ext="Payment Integration">
+            <div class="cond-card">
+              <h3 class="cond-title">Payment Integration</h3>
+              <p class="cond-note">Take payments and sell products directly through your site.</p>
+
+              <div class="field">
+                <label class="lbl">Do you want embedded payment? <span class="req">*</span></label>
+                <span class="hint">Embedded payment means users pay directly on your site instead of being taken to a separate checkout page.</span>
+                <div class="yesno" id="payment_embedded">
+                  <label class="check"><input type="radio" name="payment_embedded" value="Yes" /> Yes</label>
+                  <label class="check"><input type="radio" name="payment_embedded" value="No" /> No</label>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="lbl">What products do you want to sell on your site? <span class="req">*</span></label>
+                <span class="hint">Add a product name, description, and price in USD. Use "Add product" for as many as you need.</span>
+                <div class="product-list" id="product-list">
+                  <!-- Product blocks are generated by JS (one to start). -->
+                </div>
+                <button type="button" class="btn-add" id="add-product">+ Add product</button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -417,9 +503,6 @@
     const thanksP = document.getElementById("thanks-p");
     const thanksLink = document.getElementById("thanks-link");
 
-    // Text fields that must be filled in (password is checked separately).
-    const REQUIRED_FIELDS = ["email", "full_name", "business_name", "cell_phone"];
-
     // ---- Helpers ----
     function showMessage(text, type) {
       messageEl.textContent = text;
@@ -430,19 +513,100 @@
     }
     // Trimmed value from a text/textarea field.
     function val(id) {
-      return document.getElementById(id).value.trim();
-    }
-    // Checked "Preferred Style" values as an array.
-    function selectedStyles() {
-      const boxes = document.querySelectorAll("#preferred_styles input:checked");
-      return Array.from(boxes).map((b) => b.value);
+      const el = document.getElementById(id);
+      return el ? el.value.trim() : "";
     }
 
-    // ---- CLIENT-SIDE VALIDATION (required fields, email, passwords) ----
+    // ---- Extensions ↔ conditional questions ----
+    const extBoxes = Array.from(document.querySelectorAll("#extensions input[type=checkbox]"));
+    // Which text-field ids are required when each extension is selected.
+    const COND_REQUIRED = {
+      "Authentication": ["auth_sign_in_method", "auth_account_creation", "auth_user_capabilities"],
+      "Administrator Dashboard": ["admin_dashboard_needs"],
+      "Spreadsheets": ["spreadsheet_needs"],
+      // "Payment Integration" is validated separately (radio + product blocks).
+    };
+
+    function selectedExtensions() {
+      return extBoxes.filter((b) => b.checked).map((b) => b.value);
+    }
+    function isSelected(ext) {
+      return extBoxes.some((b) => b.checked && b.value === ext);
+    }
+
+    // Show/hide each conditional block based on its matching checkbox. Values
+    // stay in the DOM while hidden, so re-checking restores what was typed.
+    function syncConditionals() {
+      const checked = new Set(selectedExtensions());
+      document.querySelectorAll(".cond").forEach((sec) => {
+        sec.classList.toggle("show", checked.has(sec.dataset.ext));
+      });
+      // The "select an extension" hint hides once anything is chosen.
+      document.getElementById("fq-empty").style.display = checked.size ? "none" : "block";
+    }
+    extBoxes.forEach((b) => b.addEventListener("change", syncConditionals));
+
+    // ---- Repeatable product blocks (Payment Integration) ----
+    const productList = document.getElementById("product-list");
+
+    function productBlockHTML() {
+      return (
+        '<div class="product-grid">' +
+          '<div class="field" style="margin-bottom:0">' +
+            '<label class="lbl">Product name</label>' +
+            '<input class="fi p-name" type="text" placeholder="e.g. Signature Candle" />' +
+          "</div>" +
+          '<div class="field" style="margin-bottom:0">' +
+            '<label class="lbl">Price (USD)</label>' +
+            '<input class="fi p-price" type="text" inputmode="decimal" placeholder="e.g. 24.99" />' +
+          "</div>" +
+        "</div>" +
+        '<div class="field" style="margin:.85rem 0 0">' +
+          '<label class="lbl">Description</label>' +
+          '<textarea class="fi p-desc" style="min-height:64px" placeholder="A short description of this product."></textarea>' +
+        "</div>" +
+        '<button type="button" class="product-remove" aria-label="Remove product">Remove</button>'
+      );
+    }
+    function addProduct(focus) {
+      const block = document.createElement("div");
+      block.className = "product-block";
+      block.innerHTML = productBlockHTML();
+      block.querySelector(".product-remove").addEventListener("click", () => {
+        block.remove();
+        refreshProductBlocks();
+      });
+      productList.appendChild(block);
+      refreshProductBlocks();
+      if (focus) block.querySelector(".p-name").focus();
+    }
+    // The lone remaining block can't be removed (there's always at least one).
+    function refreshProductBlocks() {
+      const blocks = productList.querySelectorAll(".product-block");
+      blocks.forEach((b) => b.classList.toggle("only", blocks.length === 1));
+    }
+    function gatherProducts() {
+      const out = [];
+      productList.querySelectorAll(".product-block").forEach((b) => {
+        const name = b.querySelector(".p-name").value.trim();
+        const price = b.querySelector(".p-price").value.trim();
+        const description = b.querySelector(".p-desc").value.trim();
+        if (name || price || description) out.push({ name, price, description });
+      });
+      return out;
+    }
+    document.getElementById("add-product").addEventListener("click", () => addProduct(true));
+    addProduct(false); // start with one empty product block
+
+    // ---- CLIENT-SIDE VALIDATION ----
+    // Base required fields (account + the always-on questions). Conditional
+    // fields are only required when their extension is selected.
+    const BASE_REQUIRED = ["email", "client_name", "business_description", "key_points", "style_preferences"];
+
     function validate() {
-      // Clear previous error highlights.
-      ["email", "full_name", "business_name", "cell_phone", "password", "confirm_password"]
-        .forEach((id) => document.getElementById(id).classList.remove("invalid"));
+      // Clear previous highlights everywhere we might mark.
+      document.querySelectorAll(".fi.invalid").forEach((el) => el.classList.remove("invalid"));
+      document.getElementById("payment_embedded").classList.remove("invalid");
 
       const pw = document.getElementById("password").value;   // not trimmed
       const cpw = document.getElementById("confirm_password").value;
@@ -450,45 +614,64 @@
       let firstInvalid = null;
       let message = "Please fill in all required fields with valid information.";
       const mark = (id) => {
-        document.getElementById(id).classList.add("invalid");
-        if (!firstInvalid) firstInvalid = id;
+        const el = document.getElementById(id);
+        if (el) el.classList.add("invalid");
+        if (!firstInvalid) firstInvalid = el;
       };
 
-      // Required text fields.
-      REQUIRED_FIELDS.forEach((id) => { if (!val(id)) mark(id); });
+      // Base required text fields.
+      BASE_REQUIRED.forEach((id) => { if (!val(id)) mark(id); });
 
       // Email format.
       if (val("email") && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val("email"))) {
-        document.getElementById("email").classList.add("invalid");
-        if (!firstInvalid) { firstInvalid = "email"; message = "Please enter a valid email address."; }
+        const el = document.getElementById("email");
+        el.classList.add("invalid");
+        if (!firstInvalid) { firstInvalid = el; message = "Please enter a valid email address."; }
       }
 
       // Password present + long enough (Supabase requires 6+).
       if (!pw) {
         mark("password");
       } else if (pw.length < 6) {
-        document.getElementById("password").classList.add("invalid");
-        if (!firstInvalid) { firstInvalid = "password"; message = "Password must be at least 6 characters."; }
+        const el = document.getElementById("password");
+        el.classList.add("invalid");
+        if (!firstInvalid) { firstInvalid = el; message = "Password must be at least 6 characters."; }
       }
 
       // Confirm present + matching.
       if (!cpw) {
         mark("confirm_password");
       } else if (pw && pw !== cpw) {
-        document.getElementById("confirm_password").classList.add("invalid");
-        if (!firstInvalid) { firstInvalid = "confirm_password"; message = "Passwords do not match."; }
+        const el = document.getElementById("confirm_password");
+        el.classList.add("invalid");
+        if (!firstInvalid) { firstInvalid = el; message = "Passwords do not match."; }
       }
 
-      // Keep aria-invalid in sync with the visual state so screen readers
-      // announce exactly which fields need fixing.
-      ["email", "full_name", "business_name", "cell_phone", "password", "confirm_password"]
-        .forEach((id) => {
-          const el = document.getElementById(id);
-          el.setAttribute("aria-invalid", el.classList.contains("invalid") ? "true" : "false");
-        });
+      // Conditional text fields — required only when their extension is selected.
+      Object.keys(COND_REQUIRED).forEach((ext) => {
+        if (isSelected(ext)) COND_REQUIRED[ext].forEach((id) => { if (!val(id)) mark(id); });
+      });
+
+      // Payment Integration — the yes/no choice + at least one named product.
+      if (isSelected("Payment Integration")) {
+        const embedded = document.querySelector('input[name="payment_embedded"]:checked');
+        if (!embedded) {
+          const box = document.getElementById("payment_embedded");
+          box.classList.add("invalid");
+          if (!firstInvalid) firstInvalid = box;
+        }
+        const named = gatherProducts().some((p) => p.name);
+        if (!named) {
+          const firstName = productList.querySelector(".p-name");
+          if (firstName) firstName.classList.add("invalid");
+          if (!firstInvalid) { firstInvalid = firstName; }
+          if (message === "Please fill in all required fields with valid information.")
+            message = "Please add at least one product name for Payment Integration.";
+        }
+      }
 
       if (firstInvalid) {
-        document.getElementById(firstInvalid).focus();
+        try { firstInvalid.focus(); firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
         showMessage(message, "error");
         return false;
       }
@@ -531,22 +714,29 @@
 
       // 2. SAVE THE INTAKE, LINKED TO THE NEW USER ------------------
       // `status` ('New Lead') and `created_at` come from DB defaults.
+      // Conditional answers are only saved for extensions the client selected,
+      // so unchecking an extension never leaves stale answers behind.
+      const clientName = val("client_name");
       const inquiry = {
         user_id: user ? user.id : null,
-        full_name: val("full_name"),
-        business_name: val("business_name"),
         email: val("email"),
+        client_name: clientName,
+        full_name: clientName,            // mirrored so the admin's name column/search keep working
+        business_name: val("business_name"),
         cell_phone: val("cell_phone"),
-        business_address: val("business_address"),
+        selected_extensions: selectedExtensions(),
         business_description: val("business_description"),
-        products_services: val("products_services"),
-        website_goals: val("website_goals"),
-        visitor_actions: val("visitor_actions"),
-        websites_liked: val("websites_liked"),
-        preferred_styles: selectedStyles(),
-        color_preferences: val("color_preferences"),
-        design_notes: val("design_notes"),
-        additional_info: val("additional_info"),
+        key_points: val("key_points"),
+        style_preferences: val("style_preferences"),
+        auth_sign_in_method:    isSelected("Authentication")          ? val("auth_sign_in_method")    : null,
+        auth_account_creation:  isSelected("Authentication")          ? val("auth_account_creation")  : null,
+        auth_user_capabilities: isSelected("Authentication")          ? val("auth_user_capabilities") : null,
+        admin_dashboard_needs:  isSelected("Administrator Dashboard") ? val("admin_dashboard_needs")  : null,
+        spreadsheet_needs:      isSelected("Spreadsheets")            ? val("spreadsheet_needs")      : null,
+        payment_embedded:       isSelected("Payment Integration")
+          ? (document.querySelector('input[name="payment_embedded"]:checked') || {}).value || null
+          : null,
+        payment_products:       isSelected("Payment Integration") ? gatherProducts() : null,
       };
 
       const { error: insertError } = await db.from("project_inquiries").insert(inquiry);

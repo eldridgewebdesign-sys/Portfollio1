@@ -121,10 +121,11 @@ module.exports = async (req, res) => {
       case "list_users":        return res.status(200).json(await listUsers(supa, p));
       case "list_onboarding":   return res.status(200).json(await listOnboarding(supa, p));
       case "list_payments":     return res.status(200).json(await listPayments(supa, p));
-      case "list_invoices":     return res.status(200).json(await listInvoices(supa, p));
+      case "set_invoice_status":return res.status(200).json(await setInvoiceStatus(supa, caller, p));
       case "list_websites":     return res.status(200).json(await listWebsites(supa, p));
       case "list_domains":      return res.status(200).json(await listDomains(supa, p));
       case "list_alerts":       return res.status(200).json(await listAlerts(supa, p));
+      case "list_requests":     return res.status(200).json(await listRequests(supa, p));
       case "list_activity":     return res.status(200).json(await listActivity(supa, p));
       case "search":            return res.status(200).json(await globalSearch(supa, p));
       case "get_user":          return res.status(200).json(await getUser(supa, p));
@@ -133,6 +134,7 @@ module.exports = async (req, res) => {
 
       case "update_user":       return res.status(200).json(await updateUser(supa, caller, p));
       case "set_user_status":   return res.status(200).json(await setUserStatus(supa, caller, p));
+      case "set_user_password": return res.status(200).json(await setUserPassword(supa, caller, p));
       case "delete_user":       return res.status(200).json(await deleteUser(supa, caller, p));
       case "update_onboarding": return res.status(200).json(await updateUser(supa, caller, p));
 
@@ -141,6 +143,8 @@ module.exports = async (req, res) => {
       case "set_website_preview":return res.status(200).json(await setWebsitePreview(supa, caller, p));
 
       case "assign_domain":     return res.status(200).json(await assignDomain(supa, caller, p));
+
+      case "set_request_status":return res.status(200).json(await setRequestStatus(supa, caller, p));
 
       case "set_payment_status":return res.status(200).json(await setPaymentStatus(supa, caller, p));
       case "update_plan":       return res.status(200).json(await updatePlan(supa, caller, p));
@@ -442,22 +446,28 @@ function subPaymentLabel(s) {
   if (m > 0) return "Subscription · Every " + m + " mo";
   return "Subscription";
 }
-function invPaymentLabel(iv) {
-  const t = String(iv.billing_type || "").toLowerCase();
-  if (t === "monthly") return "Subscription invoice · Monthly";
-  if (t === "annual") return "Subscription invoice · Annual";
+function invPaymentLabel() {
+  // Invoices are one-time only now (recurring billing lives in subscriptions).
   return "One-time invoice";
 }
 
+// ---- The admin "Recent Payments" feed — the single place that shows EVERY
+// payment record: ALL invoices (every status — draft / issued / paid / overdue /
+// void / canceled / in_progress / finished / live) AND ALL subscriptions (every
+// status). Invoice rows carry an editable status (the dashboard renders a <select>
+// → set_invoice_status); subscription rows are read-only with a Cancel action.
+// Newest first by the row's date (an invoice's paid_at or, if unpaid, its
+// created_at; a subscription's last_payment_date / activated_at / created_at).
+// Filters: kind (invoice|subscription), status (an invoice workflow status), and
+// a paid/created date range. Display query only — it never mutates payment data.
 async function listPayments(supa, p) {
   const f = p.filters || {};
-  // f.kind narrows to one source; default shows both.
   const wantInvoices = !f.kind || f.kind === "invoice";
   const wantSubs = !f.kind || f.kind === "subscription";
 
   const [invRes, subRes] = await Promise.all([
     wantInvoices
-      ? supa.from("invoices").select("*").eq("status", "paid")
+      ? supa.from("invoices").select("*")
       : Promise.resolve({ data: [], error: null }),
     wantSubs
       ? supa.from("subscriptions").select("*")
@@ -466,51 +476,45 @@ async function listPayments(supa, p) {
   if (invRes.error) throw new Error(invRes.error.message);
   if (subRes.error) throw new Error(subRes.error.message);
 
-  // Normalise paid invoices into payment rows.
+  // EVERY invoice, whatever its status — the admin can edit the status here.
   const invoiceRows = (invRes.data || []).map((iv) => ({
     kind: "invoice",
     id: iv.id,
     user_id: iv.client_user_id,
-    paid_at: iv.paid_at || iv.created_at,
+    date: iv.paid_at || iv.created_at,        // paid date if paid, else created
     amount: iv.total_amount_cents != null ? Number(iv.total_amount_cents) / 100 : null,
     currency: (iv.currency || "usd").toUpperCase(),
     type_label: invPaymentLabel(iv),
     plan_name: iv.title || null,
     domain: null,
-    status: "paid",
+    status: String(iv.status || "").toLowerCase(),
   }));
 
-  // Keep only subscriptions that a payment actually went through for.
-  const subRows = (subRes.data || [])
-    .filter((s) => {
-      const st = String(s.status || "").toLowerCase();
-      // active/past_due/unpaid all imply the first invoice was paid. For
-      // canceled/trialing, require last_payment_date — the only field set
-      // exclusively on a real payment (activated_at is also stamped at
-      // trial/active START, so it is NOT proof a charge went through).
-      if (st === "active" || st === "past_due" || st === "unpaid") return true;
-      if ((st === "canceled" || st === "trialing") && s.last_payment_date) return true;
-      return false; // pending_activation / incomplete / anything not yet paid
-    })
-    .map((s) => ({
-      kind: "subscription",
-      id: s.id,
-      user_id: s.user_id,
-      paid_at: s.last_payment_date || s.activated_at || s.current_period_start || s.created_at,
-      amount: s.amount != null ? Number(s.amount)
-            : s.amount_cents != null ? Number(s.amount_cents) / 100 : null,
-      currency: (s.currency || "usd").toUpperCase(),
-      type_label: subPaymentLabel(s),
-      plan_name: s.plan_name || s.category || null,
-      domain: s.domain || null,
-      status: "paid",
-    }));
+  // EVERY subscription, whatever its status (active / trialing / past_due /
+  // unpaid / incomplete / pending_activation / canceled).
+  const subRows = (subRes.data || []).map((s) => ({
+    kind: "subscription",
+    id: s.id,
+    user_id: s.user_id,
+    date: s.last_payment_date || s.activated_at || s.current_period_start || s.created_at,
+    amount: s.amount != null ? Number(s.amount)
+          : s.amount_cents != null ? Number(s.amount_cents) / 100 : null,
+    currency: (s.currency || "usd").toUpperCase(),
+    type_label: subPaymentLabel(s),
+    plan_name: s.plan_name || s.category || null,
+    domain: s.domain || null,
+    status: String(s.status || "").toLowerCase(),
+    stripe_subscription_id: s.stripe_subscription_id || null,
+  }));
 
   let rows = invoiceRows.concat(subRows);
 
-  // Date-range filter on the actual paid date (inputs are yyyy-mm-dd).
-  if (f.from) rows = rows.filter((r) => r.paid_at && String(r.paid_at) >= f.from);
-  if (f.to) rows = rows.filter((r) => r.paid_at && String(r.paid_at) <= f.to + "T23:59:59.999Z");
+  // Status filter — matches whichever rows carry that status (invoice workflow
+  // statuses won't match subscription rows, so picking one focuses on invoices).
+  if (f.status) rows = rows.filter((r) => r.status === String(f.status).toLowerCase());
+  // Date-range filter on the row date (inputs are yyyy-mm-dd).
+  if (f.from) rows = rows.filter((r) => r.date && String(r.date) >= f.from);
+  if (f.to) rows = rows.filter((r) => r.date && String(r.date) <= f.to + "T23:59:59.999Z");
 
   // Attach client name/email + linked website/domain by user_id.
   const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
@@ -545,56 +549,9 @@ async function listPayments(supa, p) {
         .some((v) => v && String(v).toLowerCase().includes(s)));
   }
 
-  // Newest paid first. Returns the full paid set (no DB paging) — like the other
-  // aggregated admin views — so the generic table renders one clean list.
-  rows.sort((a, b) => String(b.paid_at || "").localeCompare(String(a.paid_at || "")));
-  return { rows, hasMore: false };
-}
-
-// ---- The admin "Invoices" list — EVERY invoice, all time, all statuses. ------
-// Deliberately UNFILTERED: draft / issued / paid / overdue / void / canceled —
-// one-time and (legacy) subscription invoices — all appear. Newest first by
-// created_at (the invoice creation date). Joins client name/business/email by
-// client_user_id so the table can show who each invoice is for. This is a
-// display query only; it never writes or mutates invoice data.
-async function listInvoices(supa, p) {
-  const { data, error } = await supa
-    .from("invoices")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-
-  const ids = [...new Set((data || []).map((r) => r.client_user_id).filter(Boolean))];
-  let inqMap = {};
-  if (ids.length) {
-    const { data: inq } = await supa
-      .from("project_inquiries")
-      .select("user_id, full_name, business_name, email")
-      .in("user_id", ids);
-    inqMap = indexBy(inq, "user_id");
-  }
-
-  let rows = (data || []).map((iv) => {
-    const u = inqMap[iv.client_user_id] || {};
-    return {
-      ...iv,
-      user_id: iv.client_user_id,                    // for the drawer / row click
-      user_name: u.full_name || u.email || "—",      // the person ("Name")
-      business_name: u.business_name || "—",          // the client/business ("Client")
-      client_name: u.full_name || u.business_name || "—",
-      client_email: u.email || "—",
-      amount: iv.total_amount_cents != null ? Number(iv.total_amount_cents) / 100 : null,
-    };
-  });
-
-  // Optional free-text search across the joined client fields + title.
-  if (p && p.search) {
-    const s = String(p.search).toLowerCase();
-    rows = rows.filter((r) =>
-      [r.user_name, r.business_name, r.client_email, r.title, r.status]
-        .some((v) => v && String(v).toLowerCase().includes(s)));
-  }
-
+  // Newest first. Returns the full set (no DB paging) — like the other aggregated
+  // admin views — so the generic table renders one clean list.
+  rows.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
   return { rows, hasMore: false };
 }
 
@@ -715,6 +672,51 @@ async function listAlerts(supa, p) {
   rows.sort((a, b) => (order[a.severity] - order[b.severity]) ||
     String(b.created_at || "").localeCompare(String(a.created_at || "")));
   return { rows, hasMore: false };
+}
+
+// Client → admin requests (the dashboard "Requests" section). Domain-change
+// requests filed by clients from the Domain tab. Joins live client identity
+// from project_inquiries so the names stay current even if the denormalised
+// copy on the row is stale. Filters: status, type, date range; free-text search.
+async function listRequests(supa, p) {
+  const f = p.filters || {};
+  let q = supa.from("client_requests").select("*");
+  if (f.status) q = q.eq("status", f.status);
+  if (f.type) q = q.eq("type", f.type);
+  if (f.from) q = q.gte("created_at", f.from);
+  if (f.to) q = q.lte("created_at", f.to + "T23:59:59.999Z");
+
+  q = applyListOpts(q, {
+    search: p.search,
+    searchCols: ["client_name", "client_email", "current_domain", "requested_domain"],
+    sortBy: p.sortBy || "created_at", sortDir: p.sortDir, limit: p.limit, offset: p.offset,
+  });
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+
+  let rows = data || [];
+  const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+  let inqMap = {};
+  if (ids.length) {
+    const { data: inq } = await supa
+      .from("project_inquiries")
+      .select("user_id, full_name, business_name, email")
+      .in("user_id", ids);
+    inqMap = indexBy(inq, "user_id");
+  }
+  rows = rows.map((r) => {
+    const u = inqMap[r.user_id] || {};
+    // Prefer the LIVE linked account over the row's denormalised copy: those
+    // columns are client-settable on a direct insert, so the admin must never
+    // be shown a name/email the client could have spoofed. Fall back to the
+    // stored value only when there's no linked inquiry row.
+    return {
+      ...r,
+      client_name: u.full_name || u.business_name || r.client_name || "—",
+      client_email: u.email || r.client_email || "—",
+    };
+  });
+  return { rows, hasMore: (data || []).length === (Number(p.limit) || 50) };
 }
 
 async function listActivity(supa, p) {
@@ -909,6 +911,80 @@ async function setUserStatus(supa, caller, p) {
     changed_field: "account_status", old_value: before.account_status || "active", new_value: p.status,
   });
   return { row: data };
+}
+
+// Update a client request's status (pending → approved / rejected / completed)
+// and/or attach an admin note. Status is the source of truth for the Requests
+// inbox; changing it never auto-applies the domain — the admin still assigns the
+// domain through the existing Domains / drawer flow. Every change is audited.
+async function setRequestStatus(supa, caller, p) {
+  const allowed = ["pending", "approved", "rejected", "completed"];
+  if (!p.id) throw new Error("A request id is required.");
+  const hasStatus = p.status !== undefined && p.status !== null && p.status !== "";
+  const hasNote = p.admin_notes !== undefined;
+  if (hasStatus && !allowed.includes(p.status)) throw new Error("A valid status is required.");
+  if (!hasStatus && !hasNote) throw new Error("Nothing to update.");
+
+  const { data: before } = await supa.from("client_requests").select("*").eq("id", p.id).maybeSingle();
+  if (!before) throw new Error("Request not found.");
+
+  const updates = { updated_at: new Date().toISOString() };
+  if (hasStatus) updates.status = p.status;
+  if (hasNote) updates.admin_notes = p.admin_notes == null ? null : String(p.admin_notes);
+
+  const { data, error } = await supa.from("client_requests")
+    .update(updates).eq("id", p.id).select().maybeSingle();
+  if (error) throw new Error(error.message);
+
+  if (hasStatus && p.status !== before.status) {
+    await logActivity(supa, {
+      admin_email: caller.email, action: "request_" + p.status, entity_type: "request",
+      entity_id: String(p.id), affected_user_id: before.user_id,
+      changed_field: "status", old_value: before.status || "pending", new_value: p.status,
+    });
+  }
+  if (hasNote && (before.admin_notes || "") !== (updates.admin_notes || "")) {
+    await logActivity(supa, {
+      admin_email: caller.email, action: "request_note", entity_type: "request",
+      entity_id: String(p.id), affected_user_id: before.user_id,
+      changed_field: "admin_notes", old_value: before.admin_notes || "", new_value: updates.admin_notes || "",
+    });
+  }
+  return { row: data };
+}
+
+// Set a NEW password for a client's auth account (admin-only). Uses the Supabase
+// Admin API (service role) — the only way to change another user's password
+// without their current one. The plaintext password is sent straight to GoTrue
+// and is NEVER stored in our tables, logged, or echoed back.
+async function setUserPassword(supa, caller, p) {
+  const userId = typeof p.user_id === "string" ? p.user_id.trim() : "";
+  if (!userId) throw new Error("This client has no linked login account, so a password can’t be set.");
+
+  // Safety: the admin can’t change their OWN password here (it would risk a
+  // self-lockout / session mismatch). They use normal account settings for that.
+  if (caller.id && userId === caller.id) {
+    throw new Error("You can’t change your own password from the admin panel.");
+  }
+
+  const password = typeof p.password === "string" ? p.password : "";
+  if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+  if (password.length > 72) throw new Error("Password must be at most 72 characters.");
+
+  // Confirm the target is a real auth user before attempting the change.
+  const { data: target, error: lookupErr } = await supa.auth.admin.getUserById(userId);
+  if (lookupErr || !target || !target.user) throw new Error("No login account found for this client.");
+
+  const { error } = await supa.auth.admin.updateUserById(userId, { password });
+  if (error) throw new Error(error.message);
+
+  // Audit trail — record THAT it changed, never the password itself.
+  await logActivity(supa, {
+    admin_email: caller.email, action: "user_password_changed", entity_type: "user",
+    entity_id: userId, affected_user_id: userId,
+    changed_field: "password", old_value: null, new_value: "(updated)",
+  });
+  return { updated: true };
 }
 
 async function deleteUser(supa, caller, p) {
@@ -1136,6 +1212,41 @@ async function setPaymentStatus(supa, caller, p) {
     action: p.status === "unpaid" ? "payment_marked_unpaid" : p.status === "active" ? "payment_marked_active" : "payment_status_changed",
     entity_type: "payment", entity_id: String(sub.id), affected_user_id: sub.user_id,
     changed_field: "status", old_value: sub.status || "", new_value: p.status,
+  });
+  return { row: data };
+}
+
+// Admin edits an invoice's status from the Recent Payments tab. Whitelisted set
+// includes the build-workflow stages (in_progress / finished / live) plus the
+// original invoice lifecycle states so existing rows stay editable. Display-state
+// only — it does NOT touch paid_at or any Stripe object (the webhook stays the
+// authority for real payment state); this status is the admin's manual label.
+const INVOICE_STATUSES = ["draft", "issued", "paid", "overdue", "void", "canceled", "in_progress", "finished", "live"];
+async function setInvoiceStatus(supa, caller, p) {
+  const id = typeof p.id === "string" ? p.id.trim() : "";
+  if (!id) throw new Error("An invoice id is required.");
+  const status = typeof p.status === "string" ? p.status.trim().toLowerCase() : "";
+  if (!INVOICE_STATUSES.includes(status)) throw new Error("A valid invoice status is required.");
+
+  const { data: before, error: loadErr } = await supa
+    .from("invoices").select("id, status, client_user_id").eq("id", id).maybeSingle();
+  if (loadErr) throw new Error(loadErr.message);
+  if (!before) throw new Error("Invoice not found.");
+
+  const { data, error } = await supa
+    .from("invoices").update({ status }).eq("id", id).select().maybeSingle();
+  if (error) {
+    // The DB CHECK constraint may not yet allow the new workflow statuses.
+    if (/check constraint|invoices_status_check|violates check/i.test(error.message || "")) {
+      throw new Error("That status isn't enabled in the database yet — run db/invoices-status-workflow.sql in Supabase to allow In progress / Finished / Live.");
+    }
+    throw new Error(error.message);
+  }
+
+  await logActivity(supa, {
+    admin_email: caller.email, action: "invoice_status_changed", entity_type: "invoice",
+    entity_id: String(id), affected_user_id: before.client_user_id ? String(before.client_user_id) : null,
+    changed_field: "status", old_value: before.status || "", new_value: status,
   });
   return { row: data };
 }

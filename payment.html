@@ -961,8 +961,8 @@
       // opens that specific invoice's Stripe payment straight away. The amount and
       // whether it is payable are enforced server-side by /api/invoices/pay, so an
       // unknown / already-paid / not-yours id just surfaces a safe error banner.
-      // (This also drives monthly/annual invoices — the route starts a subscription
-      // and the webhook marks the invoice paid; the client code is the same.)
+      // Invoices are ALWAYS one-time charges (a single Stripe PaymentIntent);
+      // recurring billing is the separate subscription_id flow just below.
       const UUID_DEEP_LINK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const requestedInvoice = (new URLSearchParams(window.location.search).get("invoice_id") || "").trim();
       const invoiceMatch = UUID_DEEP_LINK.test(requestedInvoice);

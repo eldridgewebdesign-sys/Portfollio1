@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
+  <title>How Spreadsheets Work — WebSharke</title>
+  <meta name="description" content="A plain-English guide to how spreadsheet integrations work on your WebSharke website — store and manage leads, orders, bookings, form submissions, inventory, and more." />
+
+  <style>
+    /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+    @font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/playfair-display/latin-400-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/playfair-display/latin-600-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/playfair-display/latin-700-normal.woff2) format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:italic;font-weight:400;font-display:swap;src:url(fonts/playfair-display/latin-400-italic.woff2) format('woff2')}
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --ink:#11364c;
+      --ink-soft:#2c5468;
+      --turq:#10b6cc;
+      --card:rgba(224,241,243,.82);
+      --card-bd:rgba(255,255,255,.6);
+      --inner:rgba(255,255,255,.52);
+      --inner-bd:rgba(255,255,255,.6);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Playfair Display',system-ui,sans-serif;color:var(--ink);
+      min-height:100vh;position:relative;overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+      background:#36a1b3;
+    }
+
+    /* ── Layered turquoise ocean waves (fixed, behind everything) ───────────── */
+    .ocean{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .ocean svg{width:100%;height:100%;display:block}
+    .ocean::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(18,58,73,.16),rgba(18,58,73,.24))}
+
+    /* ── WebSharke logo, top-left ────────────── */
+    .ws-logo{
+      position:fixed;top:20px;left:26px;z-index:20;display:block;
+      width:170px;height:95px;background:var(--ink);
+      -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;
+              mask:url(images/Main-Logo.png) left center/contain no-repeat;
+      filter:drop-shadow(0 1px 2px rgba(4,30,40,.25));
+      transition:transform .3s ease;
+    }
+    .ws-logo:hover{transform:translateY(-1px)}
+
+    /* ── Page shell ────────────────────────────────────────────────────────── */
+    .shell{
+      min-height:100vh;display:flex;justify-content:center;
+      padding:clamp(7rem,13vh,8.5rem) clamp(1.1rem,4vw,3rem) 3.5rem;
+    }
+    .card{
+      width:100%;max-width:720px;
+      background:var(--card);border:1px solid var(--card-bd);border-radius:16px;
+      padding:clamp(1.9rem,3.6vw,3rem) clamp(1.5rem,3.6vw,3rem) clamp(2.2rem,3.6vw,3rem);
+      backdrop-filter:blur(5px) saturate(1.05);-webkit-backdrop-filter:blur(5px) saturate(1.05);
+      box-shadow:0 16px 38px rgba(0,40,55,.22);
+    }
+
+    .eyebrow{
+      font-family:'Playfair Display',sans-serif;font-weight:600;font-size:.74rem;
+      letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);
+    }
+    h1.title{
+      font-family:'Distillery Display','Playfair Display',serif;font-weight:400;
+      font-size:clamp(2.1rem,5.2vw,3.2rem);color:#0e2f44;line-height:1.08;
+      letter-spacing:.01em;margin:.5rem 0 0;
+    }
+    .lede{margin:1.2rem 0 0;font-size:1.05rem;line-height:1.75;color:var(--ink-soft)}
+    .lede strong{color:#0e2f44;font-weight:700}
+
+    h2.sub{
+      font-family:'Distillery Display','Playfair Display',serif;font-weight:400;font-size:1.5rem;
+      color:#0e2f44;letter-spacing:.02em;margin:2rem 0 .9rem;
+      padding-top:1.5rem;border-top:1px solid rgba(17,54,76,.18);
+    }
+    p.body{font-size:1rem;line-height:1.75;color:var(--ink-soft);margin-bottom:1rem}
+
+    /* Examples — light glass tiles */
+    .examples{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem;margin-top:.3rem}
+    .ex{
+      background:var(--inner);border:1px solid var(--inner-bd);border-left:3px solid var(--turq);
+      border-radius:12px;padding:1rem 1.1rem;
+    }
+    .ex h3{font-family:'Playfair Display',serif;font-weight:700;font-size:1.02rem;color:#0e2f44;margin-bottom:.3rem}
+    .ex p{font-size:.9rem;line-height:1.55;color:var(--ink-soft)}
+
+    /* Simple numbered "how it works" steps */
+    .steps{list-style:none;counter-reset:step;margin-top:.3rem}
+    .steps li{
+      position:relative;padding:.55rem 0 .55rem 2.4rem;font-size:1rem;line-height:1.65;color:var(--ink-soft);
+      counter-increment:step;
+    }
+    .steps li::before{
+      content:counter(step);position:absolute;left:0;top:.5rem;
+      width:1.7rem;height:1.7rem;border-radius:50%;
+      background:#15707f;color:#eaf6f8;font-family:'Playfair Display',serif;font-weight:700;font-size:.9rem;
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    .back-row{margin-top:2.1rem;padding-top:1.6rem;border-top:1px solid rgba(17,54,76,.18)}
+    .btn{
+      display:inline-block;cursor:pointer;border:none;
+      font-family:'Playfair Display',serif;font-weight:600;font-size:1.1rem;
+      color:#eaf6f8;padding:.8rem 1.7rem;border-radius:10px;
+      background:#15707f;box-shadow:0 6px 16px rgba(8,70,84,.28);
+      transition:transform .25s,filter .25s,box-shadow .25s;text-decoration:none;text-align:center;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 10px 22px rgba(8,70,84,.34)}
+    .btn:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+
+    @media(max-width:600px){
+      .ws-logo{width:120px;height:67px;top:14px;left:16px}
+      .shell{padding:6rem 1.1rem 2.5rem}
+      .card{padding:1.6rem 1.3rem 2rem}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Layered turquoise ocean waves ──────────────────────────────────────── -->
+  <div class="ocean" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="900" fill="#39a4b6"/>
+      <path d="M0 96 C240 58 480 134 720 96 C960 58 1200 134 1440 96 L1440 900 L0 900 Z" fill="#5ec3d1"/>
+      <path d="M0 222 C240 184 480 260 720 222 C960 184 1200 260 1440 222 L1440 900 L0 900 Z" fill="#2f9aac"/>
+      <path d="M0 348 C240 388 480 312 720 348 C960 388 1200 312 1440 348 L1440 900 L0 900 Z" fill="#6fcdd9"/>
+      <path d="M0 474 C240 436 480 512 720 474 C960 436 1200 512 1440 474 L1440 900 L0 900 Z" fill="#37a2b4"/>
+      <path d="M0 600 C240 640 480 564 720 600 C960 640 1200 564 1440 600 L1440 900 L0 900 Z" fill="#63c5d3"/>
+      <path d="M0 726 C240 688 480 764 720 726 C960 688 1200 764 1440 726 L1440 900 L0 900 Z" fill="#2c92a4"/>
+      <path d="M0 822 C240 856 480 792 720 822 C960 856 1200 792 1440 822 L1440 900 L0 900 Z" fill="#57bccb"/>
+    </svg>
+  </div>
+
+  <!-- ── Brand logo, top-left → back to the landing page ────────────────────── -->
+  <a class="ws-logo" href="/" aria-label="WebSharke — home"></a>
+
+  <main class="shell">
+    <div class="card">
+
+      <p class="eyebrow">A quick guide</p>
+      <h1 class="title">How spreadsheets work</h1>
+
+      <p class="lede">
+        <strong>A spreadsheet connection turns your website into your business's filing cabinet.</strong>
+        Instead of information living in someone's inbox or a notebook, everything your site
+        collects and manages is kept in a clean, organized table — just like the spreadsheets
+        you already know. No formulas or technical setup required from you.
+      </p>
+
+      <h2 class="sub">What a spreadsheet can hold</h2>
+      <p class="body">
+        Think of each spreadsheet as one list of things you care about. Every new entry becomes a
+        row, and every detail about it becomes a column. Your website reads from and writes to that
+        list automatically, so your records stay up to date without any copy-and-paste.
+      </p>
+
+      <div class="examples">
+        <div class="ex"><h3>Leads &amp; enquiries</h3><p>Everyone who contacts you, with their name, message, and date — ready to follow up.</p></div>
+        <div class="ex"><h3>Orders &amp; sales</h3><p>What was bought, by whom, for how much, and whether it has shipped.</p></div>
+        <div class="ex"><h3>Bookings &amp; appointments</h3><p>Dates, times, and customer details for anything people can reserve.</p></div>
+        <div class="ex"><h3>Form submissions</h3><p>Every quote request, sign-up, or contact form neatly collected in one place.</p></div>
+        <div class="ex"><h3>Inventory &amp; products</h3><p>Items you sell, their prices, and how many you have left in stock.</p></div>
+        <div class="ex"><h3>Client &amp; member info</h3><p>Details about the people you work with, kept tidy and easy to search.</p></div>
+      </div>
+
+      <h2 class="sub">How it comes together</h2>
+      <ol class="steps">
+        <li>You tell me what information you want to keep track of.</li>
+        <li>I set up a spreadsheet with the right columns for it, connected straight to your website.</li>
+        <li>As people use your site, entries are added to the spreadsheet on their own.</li>
+        <li>You can view, edit, import, export, or sort that information whenever you like — no technical work needed.</li>
+      </ol>
+
+      <p class="body" style="margin-top:1.4rem">
+        In short: if it's the kind of thing you'd normally track in a list, a spreadsheet connection
+        can store and manage it for you — quietly, in the background, while your website does the work.
+      </p>
+
+      <div class="back-row">
+        <a class="btn" href="onboarding.html">← Back to your project form</a>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

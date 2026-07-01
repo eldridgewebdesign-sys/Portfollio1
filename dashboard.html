@@ -139,7 +139,6 @@
     .ws-btn:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 12px 26px rgba(8,70,84,.38)}
     .ws-btn:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
     .ws-btn[disabled]{opacity:.55;cursor:not-allowed;transform:none;filter:none}
-    #manage-sub{margin-top:1.3rem}
     .bill-error{display:block;margin-top:1.1rem;padding:.7rem .95rem;border-radius:10px;font-size:.92rem;line-height:1.5;color:#7c1d29;background:rgba(255,255,255,.44);border:1px solid rgba(150,40,52,.4)}
 
     /* privacy warning */
@@ -201,6 +200,51 @@
       .dp-open{align-self:stretch;text-align:center}
     }
 
+    /* ── Domain change request popup (client → admin) ───────────────────────── */
+    .dmod-ov{
+      position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:1.4rem;
+      background:rgba(7,30,40,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    }
+    .dmod-ov.show{display:flex}
+    .dmod{
+      position:relative;width:100%;max-width:440px;border-radius:18px;padding:1.9rem 1.7rem 1.6rem;
+      background:rgba(238,248,250,.97);border:1px solid var(--panel-bd);
+      box-shadow:0 24px 60px rgba(0,40,55,.32),inset 0 1px 0 rgba(255,255,255,.6);
+    }
+    .dmod-x{
+      position:absolute;top:.6rem;right:.8rem;border:none;background:none;font-size:1.55rem;line-height:1;
+      color:#5a7e8c;cursor:pointer;padding:.1rem .4rem;border-radius:8px;
+    }
+    .dmod-x:hover{color:#11364c;background:rgba(13,49,66,.07)}
+    .dmod-title{
+      font-family:'Distillery Display','Playfair Display',serif;font-weight:400;font-size:1.55rem;
+      color:#0e2f44;margin-bottom:.8rem;letter-spacing:.01em;
+    }
+    .dmod-warn{
+      color:#0e2f44;background:rgba(181,116,10,.1);border:1px solid rgba(181,116,10,.32);
+      border-radius:11px;padding:.85rem 1rem;font-size:.92rem;line-height:1.55;
+    }
+    .dmod-ok{background:rgba(31,140,99,.1);border-color:rgba(31,140,99,.34)}
+    .dmod-lbl{
+      display:block;font-family:'Playfair Display',sans-serif;font-weight:600;font-size:.7rem;letter-spacing:.14em;
+      text-transform:uppercase;color:#0f6f86;margin:1rem 0 .4rem;
+    }
+    .dmod-input{
+      width:100%;border:1px solid var(--panel-bd);border-radius:10px;padding:.7rem .85rem;font-size:.95rem;
+      font-family:'Playfair Display',serif;color:#11364c;background:rgba(255,255,255,.72);box-sizing:border-box;
+    }
+    .dmod-input:focus{outline:none;border-color:var(--turq);box-shadow:0 0 0 3px rgba(16,182,204,.18)}
+    .dmod-input.bad{border-color:rgba(192,57,47,.6);box-shadow:0 0 0 3px rgba(192,57,47,.14)}
+    .dmod-err{
+      margin:.95rem 0 0;color:#7c1d29;background:rgba(192,57,47,.1);border:1px solid rgba(192,57,47,.34);
+      border-radius:10px;padding:.6rem .8rem;font-size:.88rem;line-height:1.5;
+    }
+    .dmod-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.5rem}
+    .dmod-actions .ws-btn{margin-top:0}
+    .ws-btn.ghost{background:rgba(13,49,66,.06);color:#2c5468;box-shadow:none;border:1px solid var(--panel-bd)}
+    .ws-btn.ghost:hover{background:rgba(13,49,66,.1);filter:none;box-shadow:none}
+    @media(max-width:520px){ .dmod-actions{flex-direction:column-reverse} .dmod-actions .ws-btn{width:100%;text-align:center} }
+
     /* ── Plan buttons (Billing) ────────────────────────────────────────────── */
     .plan-row{display:flex;flex-wrap:wrap;gap:.7rem;margin:.6rem 0 .4rem}
     .plan-row .ws-btn{margin-top:0}
@@ -251,10 +295,12 @@
       flex:0 0 auto;font-family:'Playfair Display',sans-serif;font-weight:700;font-size:.66rem;letter-spacing:.1em;
       text-transform:uppercase;padding:.34rem .72rem;border-radius:999px;white-space:nowrap;border:1px solid transparent;
     }
-    .cinv-badge.issued{color:#1f4f8a;background:rgba(45,111,199,.14);border-color:rgba(45,111,199,.42)}
-    .cinv-badge.paid{color:#0c5a40;background:rgba(31,140,99,.16);border-color:rgba(31,140,99,.45)}
+    .cinv-badge.issued,.cinv-badge.in_progress{color:#1f4f8a;background:rgba(45,111,199,.14);border-color:rgba(45,111,199,.42)}
+    .cinv-badge.paid,.cinv-badge.finished,.cinv-badge.live{color:#0c5a40;background:rgba(31,140,99,.16);border-color:rgba(31,140,99,.45)}
     .cinv-badge.overdue{color:#7c1d29;background:rgba(192,57,47,.14);border-color:rgba(192,57,47,.48)}
     .cinv-badge.void,.cinv-badge.canceled,.cinv-badge.draft{color:#41606e;background:rgba(90,126,140,.15);border-color:rgba(90,126,140,.4)}
+    .cinv-badge.active,.cinv-badge.trialing{color:#0c5a40;background:rgba(31,140,99,.16);border-color:rgba(31,140,99,.45)}
+    .cinv-badge.past_due,.cinv-badge.unpaid{color:#7c1d29;background:rgba(192,57,47,.14);border-color:rgba(192,57,47,.48)}
     .cinv-meta{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem;margin-top:.9rem;font-size:.92rem;color:var(--ink-soft)}
     .cinv-meta .f-label{font-size:1rem}
     .cinv-items{width:100%;border-collapse:collapse;margin:1rem 0 .2rem;font-size:.92rem}
@@ -539,13 +585,34 @@
     /* ── Badges ───────────────────────────────────────────────────────────── */
     .badge{display:inline-block;padding:.2rem .55rem;border-radius:20px;font-size:.7rem;font-weight:800;
       letter-spacing:.03em;white-space:nowrap;border:1px solid transparent}
-    .badge.b-active,.badge.b-live,.badge.b-complete,.badge.b-paid{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
+    .badge.b-active,.badge.b-live,.badge.b-complete,.badge.b-paid,.badge.b-finished{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
     .badge.b-unpaid,.badge.b-banned{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
-    .badge.b-past_due,.badge.b-suspended,.badge.b-waiting_on_client{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
-    .badge.b-canceled,.badge.b-not_started{background:rgba(44,84,104,.12);color:#2c5468;border-color:rgba(44,84,104,.32)}
-    .badge.b-in_progress{background:rgba(45,111,199,.16);color:#2d6fc7;border-color:rgba(45,111,199,.42)}
+    .badge.b-past_due,.badge.b-suspended,.badge.b-waiting_on_client,.badge.b-overdue{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
+    .badge.b-canceled,.badge.b-not_started,.badge.b-void,.badge.b-draft{background:rgba(44,84,104,.12);color:#2c5468;border-color:rgba(44,84,104,.32)}
+    .badge.b-in_progress,.badge.b-issued{background:rgba(45,111,199,.16);color:#2d6fc7;border-color:rgba(45,111,199,.42)}
     .badge.b-new,.badge.b-new_lead{background:rgba(16,182,204,.16);color:var(--adm-turq-deep);border-color:rgba(16,182,204,.42)}
     .badge.b-none{background:rgba(44,84,104,.08);color:var(--adm-faint);border-color:var(--adm-bd-2)}
+    /* Inline editable invoice-status dropdown in the Recent Payments table. */
+    .adm-pay-status{appearance:none;-webkit-appearance:none;background:var(--adm-panel);color:var(--adm-text);
+      border:1px solid var(--adm-bd-2);border-radius:8px;padding:.28rem 1.5rem .28rem .55rem;font-size:.74rem;
+      font-weight:700;letter-spacing:.02em;cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237b94a3' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right .4rem center;background-size:12px}
+    .adm-pay-status:hover{border-color:var(--adm-turq-deep)}
+    .adm-pay-status:disabled{opacity:.55;cursor:default}
+    .adm-pay-status.b-paid,.adm-pay-status.b-live,.adm-pay-status.b-finished{color:#177a55;border-color:rgba(31,140,99,.5)}
+    .adm-pay-status.b-issued,.adm-pay-status.b-in_progress{color:#2d6fc7;border-color:rgba(45,111,199,.5)}
+    .adm-pay-status.b-overdue{color:#9a6406;border-color:rgba(181,116,10,.5)}
+    .adm-pay-status.b-canceled,.adm-pay-status.b-void,.adm-pay-status.b-draft{color:#2c5468;border-color:rgba(44,84,104,.4)}
+    /* Client → admin request statuses (Requests view). */
+    .badge.b-pending{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
+    .badge.b-approved{background:rgba(45,111,199,.16);color:#2d6fc7;border-color:rgba(45,111,199,.42)}
+    .badge.b-rejected{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
+    .badge.b-completed{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
+    .adm-pay-status.b-pending{color:#9a6406;border-color:rgba(181,116,10,.5)}
+    .adm-pay-status.b-approved{color:#2d6fc7;border-color:rgba(45,111,199,.5)}
+    .adm-pay-status.b-rejected{color:#b3322a;border-color:rgba(192,57,47,.5)}
+    .adm-pay-status.b-completed{color:#177a55;border-color:rgba(31,140,99,.5)}
 
     /* ── Skeleton loaders + empty states ──────────────────────────────────── */
     .adm-skel-row td{padding:.7rem .85rem;border-bottom:1px solid var(--adm-bd)}
@@ -746,7 +813,7 @@
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="business">Business info</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="project">Project details</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="billing">Invoices</button>
-        <button class="nav-item"        role="tab" aria-selected="false" data-tab="hosting">Hosting</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="hosting">Subscriptions</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="domain">Domain</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="privacy">Privacy</button>
       </nav>
@@ -804,9 +871,22 @@
         <p class="field hidden" id="proj-empty">No project details on file yet.</p>
 
         <!-- The intake fields (hidden until a record is present). -->
+        <!-- Rows with no answer hide themselves (see renderProject), so a client
+             only sees the questions they actually answered. -->
         <div id="proj-fields" class="hidden">
+          <p class="field"><span class="f-label">Name:</span> <span class="f-value" id="pd-name">…</span></p>
           <p class="field"><span class="f-label">Business name:</span> <span class="f-value" id="pd-business-name">…</span></p>
-          <p class="field"><span class="f-label">Business description:</span> <span class="f-value block" id="pd-business-desc">…</span></p>
+          <p class="field"><span class="f-label">What you do:</span> <span class="f-value block" id="pd-business-desc">…</span></p>
+          <p class="field"><span class="f-label">Key points:</span> <span class="f-value block" id="pd-key-points">…</span></p>
+          <p class="field"><span class="f-label">Style preferences:</span> <span class="f-value block" id="pd-style">…</span></p>
+          <p class="field"><span class="f-label">Extensions:</span> <span class="f-value" id="pd-extensions">…</span></p>
+          <p class="field"><span class="f-label">How users sign in:</span> <span class="f-value block" id="pd-auth-signin">…</span></p>
+          <p class="field"><span class="f-label">How accounts are created:</span> <span class="f-value block" id="pd-auth-accounts">…</span></p>
+          <p class="field"><span class="f-label">What users can do:</span> <span class="f-value block" id="pd-auth-caps">…</span></p>
+          <p class="field"><span class="f-label">Admin dashboard needs:</span> <span class="f-value block" id="pd-admin-needs">…</span></p>
+          <p class="field"><span class="f-label">Spreadsheet needs:</span> <span class="f-value block" id="pd-sheet-needs">…</span></p>
+          <p class="field"><span class="f-label">Embedded payment:</span> <span class="f-value" id="pd-pay-embedded">…</span></p>
+          <p class="field"><span class="f-label">Products to sell:</span> <span class="f-value block" id="pd-pay-products">…</span></p>
           <p class="field"><span class="f-label">Products / Service:</span> <span class="f-value block" id="pd-products">…</span></p>
           <p class="field"><span class="f-label">Website goals:</span> <span class="f-value block" id="pd-goals">…</span></p>
           <p class="field"><span class="f-label">Visitor actions:</span> <span class="f-value block" id="pd-actions">…</span></p>
@@ -817,44 +897,11 @@
         </div>
       </div>
 
-      <!-- 3 ── Invoices (subscription state + the client's current invoice).
-           The ACTIVE subscription block (#bill-active) shows only when the client
-           has an active/trialing subscription; otherwise nothing renders there. The
-           old "no website yet / View Plans" empty state was removed — the "not
-           hosting" message now lives on the Hosting tab. See renderBilling(). -->
+      <!-- 3 ── Invoices — ONE-TIME payments only. Recurring subscriptions live in
+           the Subscriptions tab, so no subscription / hosting state renders here. -->
       <div class="tab" id="tab-billing" role="tabpanel">
         <h2 class="tab-title">Invoices</h2>
-
-        <!-- Shown only if the billing data fails to load. -->
-        <p class="bill-error hidden" id="bill-load-error" role="alert">We couldn’t load your billing information right now. Please refresh the page or try again later.</p>
-
-        <!-- ACTIVE STATE — current subscription details + management. Shown only when
-             the client has an active/trialing subscription; otherwise it stays hidden
-             and no empty-state message renders here. -->
-        <div class="hidden" id="bill-active">
-          <p class="field"><span class="f-label">Current payment method:</span> <span class="f-value" id="bill-method">…</span></p>
-          <p class="field"><span class="f-label">Hosting status:</span> <span class="f-value" id="bill-hosting">…</span>
-            <span class="f-sub" id="bill-plan"></span></p>
-          <p class="field"><span class="f-label">Current plan:</span> <span class="f-value" id="bill-plan-name">…</span></p>
-          <p class="field"><span class="f-label">Next payment due:</span> <span class="f-value" id="bill-due">…</span></p>
-          <button class="ws-btn" id="manage-sub">Manage My Subscription</button>
-          <button class="ws-btn" id="cancel-hosting">Cancel Hosting Services</button>
-        </div>
-
-        <!-- Shared, always-in-DOM error line for billing actions. -->
-        <p class="bill-error hidden" id="bill-error" role="alert"></p>
-
-        <!-- ── Pending subscriptions (client) ─────────────────────────────────
-             Custom recurring subscriptions the admin created for this client that
-             are still PENDING activation. Each shows the recurring price and an
-             "Activate Subscription" button that LINKS to /payment?subscription_id=…
-             (NEVER "Pay Invoice", and the dashboard never charges a card). Hidden
-             entirely when there are none. Populated by renderClientPendingSubs()
-             from the subscription rows already fetched at page load. -->
-        <div class="cinv-block hidden" id="csub-block">
-          <h3 class="cinv-heading">Subscriptions</h3>
-          <div class="cinv-list" id="csub-list" aria-live="polite"></div>
-        </div>
+        <p class="f-sub">One-time payments only — recurring hosting is under the Subscriptions tab.</p>
 
         <!-- ── Invoices (client) ──────────────────────────────────────────────
              A brief summary of the client's CURRENT (most recent unpaid) invoice:
@@ -890,26 +937,26 @@
         </div>
       </div>
 
-      <!-- 3b ── Hosting.
-           Shows whether the client currently hosts with WebSharke. Three states,
-           rendered by renderHosting() (active > pending > none):
-             • ACTIVE  (any active/trialing subscription) → thank-you + the recurring
-               price (for custom subscriptions) + "Manage Billing" → Stripe portal.
-             • PENDING (a custom 'hosting' subscription awaiting activation) → "ready
-               to activate" + the recurring price + "Activate Subscription" →
-               /payment?subscription_id=… (no charge happens on the dashboard).
-             • NONE    → "not hosting" + a "Request Hosting" PLACEHOLDER (client→admin
-               messaging isn't built — it only shows an inline note, never submits).
-           The Stripe portal button is the ONLY thing here that can send the user off
-           websharke.com; activation/payment happens on /payment, never on this tab. -->
+      <!-- 3b ── Subscriptions — recurring hosting payments ONLY.
+           Rendered by renderSubscriptions() from the user's own subscription rows.
+           Each active / past_due / canceled / pending subscription becomes one card
+           (buildSubscriptionCard) showing the plan name, price + interval, status,
+           the next-payment date (when live), and its own actions:
+             • Change Payment Info → Stripe Customer Portal (secure card update).
+             • Cancel Subscription → /api/subscriptions/cancel (ownership-checked
+               server route; the browser never touches a Stripe secret key).
+             • Activate Subscription (pending only) → /payment?subscription_id=… .
+           No subscriptions at all → "not hosting" + a "Request Hosting" PLACEHOLDER
+           (client→admin messaging isn't built — it only shows an inline note). The
+           Stripe portal is the one action here that can send the user off websharke.com. -->
       <div class="tab" id="tab-hosting" role="tabpanel">
-        <h2 class="tab-title">Hosting</h2>
+        <h2 class="tab-title">Subscriptions</h2>
 
-        <!-- Shown only if the subscription/hosting data failed to load (so we never
-             claim a wrong "not hosting" status when we simply couldn't read it). -->
-        <p class="bill-error hidden" id="host-load-error" role="alert">We couldn’t load your hosting status right now. Please refresh the page or try again later.</p>
+        <!-- Shown only if the subscription data failed to load (so we never claim a
+             wrong "not hosting" status when we simply couldn't read it). -->
+        <p class="bill-error hidden" id="host-load-error" role="alert">We couldn’t load your subscriptions right now. Please refresh the page or try again later.</p>
 
-        <!-- NOT hosting with WebSharke. -->
+        <!-- No subscriptions at all. -->
         <div class="hidden" id="host-none">
           <p class="field">You are currently not hosting with WebSharke</p>
           <button class="ws-btn" id="request-hosting" type="button">Request Hosting</button>
@@ -918,27 +965,11 @@
           <p class="f-sub hidden" id="host-request-note" role="status"></p>
         </div>
 
-        <!-- Pending: the admin created a custom recurring subscription this client
-             can activate. The recurring price is shown clearly; "Activate
-             Subscription" LINKS to /payment?subscription_id=… (the dashboard never
-             charges a card). Set up by renderHosting(). -->
-        <div class="hidden" id="host-pending">
-          <p class="field">You have a hosting subscription ready to activate</p>
-          <p class="field"><span class="f-label">Recurring payment:</span> <span class="f-value" id="host-pending-amount">…</span></p>
-          <a class="ws-btn" id="host-activate" href="#">Activate Subscription</a>
-        </div>
+        <!-- One card per recurring subscription (renderSubscriptions). -->
+        <div class="cinv-list hidden" id="sub-list" aria-live="polite"></div>
 
-        <!-- Currently hosting (active / trialing subscription). -->
-        <div class="hidden" id="host-active">
-          <p class="field">Thank you for hosting with WebSharke</p>
-          <!-- Recurring price (shown only for custom subscriptions that carry
-               amount_cents + interval_months; legacy plans just show the thank-you). -->
-          <p class="field hidden" id="host-active-amount-row"><span class="f-label">Recurring payment:</span> <span class="f-value" id="host-active-amount">…</span></p>
-          <button class="ws-btn" id="manage-hosting" type="button">Manage Billing</button>
-        </div>
-
-        <!-- Clean error line for the "Manage Hosting Services" portal action
-             (raw API errors are never surfaced to the user). -->
+        <!-- Clean error line for subscription actions (portal / cancel);
+             raw API errors are never surfaced to the user. -->
         <p class="bill-error hidden" id="host-error" role="alert"></p>
       </div>
 
@@ -985,6 +1016,51 @@
   </main>
 
   <!-- ===================================================================== -->
+  <!-- DOMAIN CHANGE REQUEST POPUP (client → admin). Opened from the Domain  -->
+  <!-- tab's "Change Domain" button: a warning screen, then a password +     -->
+  <!-- new-domain form. The server checks the domain isn't already taken     -->
+  <!-- before filing the request (shown to the admin under "Requests").      -->
+  <!-- ===================================================================== -->
+  <div class="dmod-ov" id="domReqOv" aria-hidden="true">
+    <div class="dmod" role="dialog" aria-modal="true" aria-labelledby="domReqTitle">
+      <button class="dmod-x" id="domReqClose" type="button" aria-label="Close">&times;</button>
+
+      <!-- Step 1 — warning -->
+      <div class="dmod-step" id="domReqWarn">
+        <h3 class="dmod-title" id="domReqTitle">Before you request a domain change</h3>
+        <p class="dmod-warn">Domain change prices may vary depending on the domain. Make sure you include the domain extension (.com, .net, etc.).</p>
+        <div class="dmod-actions">
+          <button class="ws-btn ghost" id="domReqCancel" type="button">Cancel</button>
+          <button class="ws-btn" id="domReqContinue" type="button">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 2 — form -->
+      <div class="dmod-step hidden" id="domReqForm">
+        <h3 class="dmod-title">Request a domain change</h3>
+        <label class="dmod-lbl" for="domReqPass">Current password</label>
+        <input class="dmod-input" id="domReqPass" type="password" autocomplete="current-password" placeholder="Your current password" />
+        <label class="dmod-lbl" for="domReqDomain">New domain</label>
+        <input class="dmod-input" id="domReqDomain" type="text" autocomplete="off" spellcheck="false" placeholder="yoursite.com" />
+        <p class="dmod-err hidden" id="domReqErr" role="alert"></p>
+        <div class="dmod-actions">
+          <button class="ws-btn ghost" id="domReqBack" type="button">Back</button>
+          <button class="ws-btn" id="domReqSend" type="button">Send Request</button>
+        </div>
+      </div>
+
+      <!-- Step 3 — sent -->
+      <div class="dmod-step hidden" id="domReqDone">
+        <h3 class="dmod-title">Request sent</h3>
+        <p class="dmod-warn dmod-ok">Thanks — we've received your domain change request and will review it shortly. We'll be in touch about pricing and the next steps.</p>
+        <div class="dmod-actions">
+          <button class="ws-btn" id="domReqOk" type="button">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
   <!-- ADMIN DASHBOARD — only ever shown to the admin email. Hidden by       -->
   <!-- default; initAdmin() reveals it after a server-verified admin check.  -->
   <!-- ===================================================================== -->
@@ -1006,6 +1082,7 @@
         <button data-view="websites"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span class="adm-nav-label">Websites</span></button>
         <button data-view="domains"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span class="adm-nav-label">Domains</span></button>
         <button data-view="alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="adm-nav-label">Alerts</span><span class="adm-nav-badge" id="admAlertBadge" style="display:none">0</span></button>
+        <button data-view="requests"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="adm-nav-label">Requests</span><span class="adm-nav-badge" id="admRequestBadge" style="display:none">0</span></button>
         <button data-view="activity"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="adm-nav-label">Activity Log</span></button>
         <button data-view="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 6 9.4l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 11 5.6h.09A2 2 0 1 1 15 5.6V5.7a1.65 1.65 0 0 0 2.82-1.17l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9h.1a2 2 0 1 1 0 4h-.1z"/></svg><span class="adm-nav-label">Settings</span></button>
       </nav>
@@ -1064,6 +1141,7 @@
         <section class="adm-view" id="view-websites"></section>
         <section class="adm-view" id="view-domains"></section>
         <section class="adm-view" id="view-alerts"></section>
+        <section class="adm-view" id="view-requests"></section>
         <section class="adm-view" id="view-activity"></section>
 
         <!-- INVOICES — create a draft or issued invoice for a client. -->
@@ -1117,11 +1195,6 @@
               </div>
             </aside>
           </div>
-
-          <div class="adm-panel-box">
-            <h3>All invoices</h3>
-            <div id="inv-list">Loading…</div>
-          </div>
         </section>
 
         <!-- SUBSCRIPTIONS — create a custom recurring hosting subscription for a -->
@@ -1168,11 +1241,6 @@
                 <p class="inv-note">The subscription is saved as <b>Pending activation</b>. The client sees it in their Invoices and Hosting tabs and activates it on the payment page — Stripe charges them immediately, then automatically every N months. The amount is stored in cents on the server; the browser value is only a request. Canceling here cancels the real Stripe subscription.</p>
               </div>
             </aside>
-          </div>
-
-          <div class="adm-panel-box">
-            <h3>All subscriptions</h3>
-            <div id="sub-list">Loading…</div>
           </div>
         </section>
 
@@ -1304,90 +1372,108 @@
       }
     }
 
-    // ---- Change domain / terms of service: contact support (no self-serve
-    //      flow exists yet, so these open a pre-addressed email). ----------
-    $("change-domain").addEventListener("click", () => {
-      window.location.href =
-        "mailto:" + SUPPORT_EMAIL + "?subject=" + encodeURIComponent("WebSharke — domain change request");
-    });
+    // ---- Change domain → in-page request popup ---------------------------
+    //   Step 1 warns about pricing/extensions, step 2 takes the current
+    //   password + new domain. On submit the server re-checks the password,
+    //   confirms the domain isn't already registered (RDAP), and — only then —
+    //   files a request the admin sees under "Requests". A taken domain is
+    //   reported inline and NO request is sent.
+    (function initDomainRequest() {
+      const ov = $("domReqOv");
+      const stepWarn = $("domReqWarn"), stepForm = $("domReqForm"), stepDone = $("domReqDone");
+      const passEl = $("domReqPass"), domEl = $("domReqDomain"), errEl = $("domReqErr"), sendBtn = $("domReqSend");
+
+      const clearErr = () => { errEl.textContent = ""; errEl.classList.add("hidden"); };
+      const showErr = (msg) => { errEl.textContent = msg; errEl.classList.remove("hidden"); };
+      function show(step) {
+        [stepWarn, stepForm, stepDone].forEach((s) => s.classList.add("hidden"));
+        step.classList.remove("hidden");
+      }
+      function open() {
+        clearErr();
+        passEl.value = ""; domEl.value = "";
+        passEl.classList.remove("bad"); domEl.classList.remove("bad");
+        sendBtn.disabled = false; sendBtn.textContent = "Send Request";
+        show(stepWarn);
+        ov.classList.add("show");
+        ov.setAttribute("aria-hidden", "false");
+      }
+      function close() {
+        ov.classList.remove("show");
+        ov.setAttribute("aria-hidden", "true");
+        passEl.value = ""; passEl.classList.remove("bad"); // never leave the password in the DOM
+      }
+
+      async function submit() {
+        if (sendBtn.disabled) return; // guard against double-submit (Enter + click)
+        clearErr();
+        const password = passEl.value;
+        const newDomain = domEl.value.trim();
+        let bad = false;
+        if (!password) { passEl.classList.add("bad"); bad = true; }
+        if (!newDomain) { domEl.classList.add("bad"); bad = true; }
+        if (bad) { showErr("Please enter your current password and the new domain."); return; }
+
+        sendBtn.disabled = true; sendBtn.textContent = "Checking…";
+        try {
+          const { data: sess } = await db.auth.getSession();
+          const token = sess && sess.session && sess.session.access_token;
+          if (!token) throw new Error("Your session expired. Please sign in again.");
+          const res = await fetch("/api/requests/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({ current_password: password, new_domain: newDomain }),
+          });
+          let data = {};
+          try { data = await res.json(); } catch (e) {}
+          if (!res.ok) {
+            if (res.status === 401) passEl.classList.add("bad");
+            else if (res.status === 400) domEl.classList.add("bad");
+            throw new Error(data.error || "We couldn’t send your request right now. Please try again.");
+          }
+          // 200 but the domain is already taken → no request was filed.
+          if (data.ok === false || data.available === false) {
+            domEl.classList.add("bad");
+            showErr(data.message || "That domain appears to be already taken. Please choose a different one.");
+            sendBtn.disabled = false; sendBtn.textContent = "Send Request";
+            return;
+          }
+          passEl.value = ""; // don't keep the password in the DOM after success
+          show(stepDone);
+        } catch (err) {
+          showErr(err.message || "Something went wrong. Please try again.");
+          sendBtn.disabled = false; sendBtn.textContent = "Send Request";
+        }
+      }
+
+      $("change-domain").addEventListener("click", open);
+      $("domReqClose").addEventListener("click", close);
+      $("domReqCancel").addEventListener("click", close);
+      $("domReqOk").addEventListener("click", close);
+      $("domReqContinue").addEventListener("click", () => { show(stepForm); setTimeout(() => passEl.focus(), 40); });
+      $("domReqBack").addEventListener("click", () => { clearErr(); show(stepWarn); });
+      ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ov.classList.contains("show")) close(); });
+      [passEl, domEl].forEach((el) => el.addEventListener("input", () => { el.classList.remove("bad"); clearErr(); }));
+      domEl.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+      $("domReqSend").addEventListener("click", submit);
+    })();
+
+    // ---- Terms of service: contact support (no self-serve flow yet). ------
     $("tos-btn").addEventListener("click", (e) => {
       e.preventDefault();
       window.location.href =
         "mailto:" + SUPPORT_EMAIL + "?subject=" + encodeURIComponent("WebSharke — terms of service request");
     });
 
-    // ---- Cancel hosting → Stripe customer portal ------------------------
-    let stripeCustomerId = null;
-    $("cancel-hosting").addEventListener("click", async () => {
-      const btn = $("cancel-hosting");
-      if (!stripeCustomerId) {
-        alert("No active billing account was found. If you believe this is a mistake, contact " + SUPPORT_EMAIL + ".");
-        return;
-      }
-      const original = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "Opening billing…";
-      try {
-        const { data: sess } = await db.auth.getSession();
-        const token = sess && sess.session && sess.session.access_token;
-        if (!token) throw new Error("You must be signed in to manage billing.");
-        const res = await fetch("/api/customer-portal", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          body: JSON.stringify({}),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.url) throw new Error(data.error || "Could not open the billing portal.");
-        window.location.href = data.url; // Stripe-hosted portal (manage/cancel)
-      } catch (err) {
-        alert(err.message || "Could not open billing right now. Please try again.");
-        btn.disabled = false;
-        btn.textContent = original;
-      }
-    });
+    // ---- Subscription management now lives on the Subscriptions tab --------
+    // The Invoices tab used to carry "Manage My Subscription" / "Cancel Hosting
+    // Services" buttons — those were removed (Invoices is one-time invoices only).
+    // Each subscription card (renderSubscriptions, below) carries its own "Change
+    // Payment Info" (Stripe portal) and "Cancel Subscription" (secure server route)
+    // actions instead.
 
-    // ---- Manage My Subscription → Stripe customer portal (by user id) ----
-    const manageBtn = $("manage-sub");
-    const billError = $("bill-error");
-    function showBillError(msg) {
-      billError.textContent = msg;
-      billError.classList.remove("hidden");
-    }
-    manageBtn.addEventListener("click", async () => {
-      billError.classList.add("hidden");
-      const original = manageBtn.textContent;
-      manageBtn.disabled = true;
-      manageBtn.textContent = "Opening…";
-      try {
-        // 1. Who is logged in? (reuse the existing `db` Supabase client)
-        const { data: userData, error: userErr } = await db.auth.getUser();
-        const user = userData && userData.user;
-        if (userErr) throw new Error("Could not verify your session. Please sign in again.");
-        if (!user) { showBillError("You must be signed in to manage your subscription."); return; }
-
-        // 2-4. Ask the server for a billing-portal URL (resolved from the verified session).
-        const { data: sess } = await db.auth.getSession();
-        const token = sess && sess.session && sess.session.access_token;
-        if (!token) { showBillError("You must be signed in to manage your subscription."); return; }
-        const res = await fetch("/api/customer-portal", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          body: JSON.stringify({}),
-        });
-        const data = await res.json().catch(() => ({}));
-
-        // 5-6. Redirect on success, otherwise surface a visible error.
-        if (!res.ok || !data.url) throw new Error(data.error || "Could not open the subscription portal.");
-        window.location = data.url;
-      } catch (err) {
-        showBillError(err.message || "Something went wrong opening your subscription. Please try again.");
-      } finally {
-        manageBtn.disabled = false;
-        manageBtn.textContent = original;
-      }
-    });
-
-    // ---- Hosting tab: "Request Hosting" placeholder ------------------------
+    // ---- Subscriptions tab: "Request Hosting" placeholder ------------------
     // Client→admin messaging isn't built yet, so this only shows an inline note.
     // It NEVER redirects, submits, or implies a request was actually sent.
     const requestHostingBtn = $("request-hosting");
@@ -1400,54 +1486,50 @@
       });
     }
 
-    // ---- Hosting tab: "Manage Hosting Services" → Stripe customer portal ----
-    // Same secure flow as "Manage My Subscription": POST the verified session token
-    // to /api/customer-portal (the SERVER resolves the Stripe customer from the
-    // AUTHENTICATED user — the browser never sends a customer/user id), then redirect
-    // to the returned portal URL ONLY after a successful response. This is the one
-    // action on the dashboard that sends the user off websharke.com.
-    const manageHostingBtn = $("manage-hosting");
+    // ---- Subscriptions tab: open the Stripe Customer Portal ----------------
+    // "Change Payment Info" (and any manage action) POSTs the verified session token
+    // to /api/customer-portal — the SERVER resolves the Stripe customer from the
+    // AUTHENTICATED user (the browser never sends a customer/user id), then we redirect
+    // to the returned portal URL ONLY after a confirmed response. The hosted portal is
+    // where Stripe securely handles card updates (and cancellation, if the user prefers
+    // it there). This is the one action here that sends the user off websharke.com.
     const hostError = $("host-error");
     function showHostError(msg) {
       if (!hostError) return;
       hostError.textContent = msg;
       hostError.classList.remove("hidden");
     }
-    if (manageHostingBtn) {
-      manageHostingBtn.addEventListener("click", async () => {
-        if (hostError) hostError.classList.add("hidden");
-        const original = manageHostingBtn.textContent;
-        manageHostingBtn.disabled = true;
-        manageHostingBtn.textContent = "Opening…";
-        try {
-          // Confirm a real session (the server re-verifies the token regardless).
-          const { data: userData, error: userErr } = await db.auth.getUser();
-          const user = userData && userData.user;
-          if (userErr) throw new Error("Could not verify your session. Please sign in again.");
-          if (!user) { showHostError("You must be signed in to manage hosting."); return; }
+    async function openBillingPortal(btn) {
+      if (hostError) hostError.classList.add("hidden");
+      const original = btn ? btn.textContent : null;
+      if (btn) { btn.disabled = true; btn.textContent = "Opening…"; }
+      try {
+        // Confirm a real session (the server re-verifies the token regardless).
+        const { data: userData, error: userErr } = await db.auth.getUser();
+        const user = userData && userData.user;
+        if (userErr) throw new Error("Could not verify your session. Please sign in again.");
+        if (!user) { showHostError("You must be signed in to manage billing."); return; }
 
-          const { data: sess } = await db.auth.getSession();
-          const token = sess && sess.session && sess.session.access_token;
-          if (!token) { showHostError("You must be signed in to manage hosting."); return; }
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) { showHostError("You must be signed in to manage billing."); return; }
 
-          const res = await fetch("/api/customer-portal", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-            body: JSON.stringify({}),
-          });
-          const data = await res.json().catch(() => ({}));
+        const res = await fetch("/api/customer-portal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json().catch(() => ({}));
 
-          // Redirect ONLY after a confirmed portal URL; otherwise a clean error.
-          // (data.error is the server's own safe message — never a raw exception.)
-          if (!res.ok || !data.url) throw new Error(data.error || "Could not open the hosting portal. Please try again.");
-          window.location = data.url;
-        } catch (err) {
-          showHostError(err.message || "Something went wrong opening hosting. Please try again.");
-        } finally {
-          manageHostingBtn.disabled = false;
-          manageHostingBtn.textContent = original;
-        }
-      });
+        // Redirect ONLY after a confirmed portal URL; otherwise a clean error.
+        // (data.error is the server's own safe message — never a raw exception.)
+        if (!res.ok || !data.url) throw new Error(data.error || "Could not open the billing portal. Please try again.");
+        window.location = data.url;
+      } catch (err) {
+        showHostError(err.message || "Something went wrong opening billing. Please try again.");
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = original; }
+      }
     }
 
     // ---- Helpers --------------------------------------------------------
@@ -1514,9 +1596,9 @@
       $("acc-email").textContent = show(user.email);
       $("acc-phone").textContent = show(inquiry.cell_phone || user.phone || meta.phone);
 
-      // 3) Billing / Hosting — handled separately in renderBilling() so the
-      //    three account states (no services / project-only / active hosting)
-      //    render from real Supabase booleans instead of inline guesses.
+      // 3) Subscriptions — handled separately in renderSubscriptions() so each
+      //    recurring subscription renders from real Supabase rows in its own tab
+      //    (the Invoices tab is one-time invoices only).
 
       // 4) Domain -------------------------------------------------------
       // Source of truth: subscriptions.domain (set by the admin dashboard,
@@ -1614,16 +1696,27 @@
       if (!inquiry) { emptyEl.classList.remove("hidden"); return; }
 
       fieldsEl.classList.remove("hidden");
-      $("biz-business-name").textContent = businessValue(inquiry.business_name);
-      $("biz-business-description").textContent = businessValue(inquiry.business_description);
-      $("biz-products-services").textContent = businessValue(inquiry.products_services);
-      $("biz-website-goals").textContent = businessValue(inquiry.website_goals);
-      $("biz-visitor-actions").textContent = businessValue(inquiry.visitor_actions);
-      $("biz-websites-liked").textContent = businessValue(inquiry.websites_liked);
-      $("biz-preferred-styles").textContent = businessValue(inquiry.preferred_styles);
-      $("biz-color-preferences").textContent = businessValue(inquiry.color_preferences);
-      $("biz-design-notes").textContent = businessValue(inquiry.design_notes);
-      $("biz-additional-info").textContent = businessValue(inquiry.additional_info);
+      // Show a value and hide its row when there's nothing on file, so the
+      // redesigned intake (which no longer collects every legacy field)
+      // doesn't leave a column of em dashes here.
+      const setBiz = (id, value) => {
+        const el = $(id);
+        if (!el) return;
+        const v = businessValue(value);
+        el.textContent = v;
+        const row = el.closest(".field");
+        if (row) row.style.display = v === "—" ? "none" : "";
+      };
+      setBiz("biz-business-name", inquiry.business_name);
+      setBiz("biz-business-description", inquiry.business_description);
+      setBiz("biz-products-services", inquiry.products_services);
+      setBiz("biz-website-goals", inquiry.website_goals);
+      setBiz("biz-visitor-actions", inquiry.visitor_actions);
+      setBiz("biz-websites-liked", inquiry.websites_liked);
+      setBiz("biz-preferred-styles", inquiry.preferred_styles);
+      setBiz("biz-color-preferences", inquiry.color_preferences);
+      setBiz("biz-design-notes", inquiry.design_notes);
+      setBiz("biz-additional-info", inquiry.additional_info);
     }
 
     // ---- Render the Project details section from the intake record ------
@@ -1642,136 +1735,65 @@
       if (!inquiry) { emptyEl.classList.remove("hidden"); return; }
 
       fieldsEl.classList.remove("hidden");
-      // Empty / null / missing individual fields display as an em dash.
-      const EM = "—";
-      $("pd-business-name").textContent = show(inquiry.business_name, EM);
-      $("pd-business-desc").textContent = show(inquiry.business_description, EM);
-      $("pd-products").textContent      = show(inquiry.products_services, EM);
-      $("pd-goals").textContent         = show(inquiry.website_goals, EM);
-      $("pd-actions").textContent       = show(inquiry.visitor_actions, EM);
-      // preferred_styles may be stored as an array; present it as a readable list.
+
+      // Set a field's value and hide its whole row when there's nothing to
+      // show, so questions the client didn't answer (and legacy fields the
+      // redesigned form no longer collects) don't clutter their view.
+      const setField = (id, value) => {
+        const el = $(id);
+        if (!el) return;
+        const s = value == null ? "" : String(value).trim();
+        el.textContent = s || "—";
+        const row = el.closest(".field");
+        if (row) row.style.display = s ? "" : "none";
+      };
+
+      const name = inquiry.client_name || inquiry.full_name;
+      const exts = Array.isArray(inquiry.selected_extensions)
+        ? inquiry.selected_extensions.filter(Boolean).join(", ")
+        : inquiry.selected_extensions;
+      const products = Array.isArray(inquiry.payment_products)
+        ? inquiry.payment_products.map((p) => {
+            if (!p || typeof p !== "object") return String(p);
+            const price = p.price ? " — $" + p.price : "";
+            const desc = p.description ? " — " + p.description : "";
+            return ((p.name || "") + price + desc).trim();
+          }).filter(Boolean).join(";  ")
+        : "";
+      // preferred_styles (legacy) may be stored as an array; present it as a list.
       const styles = Array.isArray(inquiry.preferred_styles)
         ? inquiry.preferred_styles.filter(Boolean).join(", ")
         : inquiry.preferred_styles;
-      $("pd-styles").textContent        = show(styles, EM);
-      $("pd-colors").textContent        = show(inquiry.color_preferences, EM);
-      $("pd-design-notes").textContent  = show(inquiry.design_notes, EM);
-      $("pd-additional").textContent    = show(inquiry.additional_info, EM);
+
+      // New feature-driven intake fields.
+      setField("pd-name", name);
+      setField("pd-business-name", inquiry.business_name);
+      setField("pd-business-desc", inquiry.business_description);
+      setField("pd-key-points", inquiry.key_points);
+      setField("pd-style", inquiry.style_preferences);
+      setField("pd-extensions", exts);
+      setField("pd-auth-signin", inquiry.auth_sign_in_method);
+      setField("pd-auth-accounts", inquiry.auth_account_creation);
+      setField("pd-auth-caps", inquiry.auth_user_capabilities);
+      setField("pd-admin-needs", inquiry.admin_dashboard_needs);
+      setField("pd-sheet-needs", inquiry.spreadsheet_needs);
+      setField("pd-pay-embedded", inquiry.payment_embedded);
+      setField("pd-pay-products", products);
+
+      // Legacy fields (older submissions) — hidden automatically when empty.
+      setField("pd-products", inquiry.products_services);
+      setField("pd-goals", inquiry.website_goals);
+      setField("pd-actions", inquiry.visitor_actions);
+      setField("pd-styles", styles);
+      setField("pd-colors", inquiry.color_preferences);
+      setField("pd-design-notes", inquiry.design_notes);
+      setField("pd-additional", inquiry.additional_info);
     }
 
-    // ---- Render the Hosting tab from the subscription state ---------------
-    // Three states, exactly one shown (a load failure shows a clean error instead
-    // of a possibly-wrong status):
-    //   • ACTIVE  (activeSub: any row active/trialing) → thank-you + recurring price
-    //     (when it's a custom subscription) + "Manage Billing" → Stripe portal.
-    //   • PENDING (pendingSub: a category 'hosting' row pending_activation/incomplete,
-    //     and no active row) → "ready to activate" + recurring price + "Activate
-    //     Subscription" → /payment?subscription_id=… .
-    //   • NONE    → "not hosting" + the "Request Hosting" placeholder.
-    // Precedence: active > pending > none.
-    function renderHosting(activeSub, pendingSub, billingError) {
-      const loadErr   = $("host-load-error");
-      const noneEl    = $("host-none");
-      const pendingEl = $("host-pending");
-      const activeEl  = $("host-active");
-      const actionErr = $("host-error");
-      if (!noneEl || !activeEl) return;
-
-      // Reset to a clean state every render.
-      loadErr.classList.add("hidden");
-      noneEl.classList.add("hidden");
-      if (pendingEl) pendingEl.classList.add("hidden");
-      activeEl.classList.add("hidden");
-      actionErr.classList.add("hidden");
-
-      // Couldn't read the subscription → don't claim a status either way.
-      if (billingError) { loadErr.classList.remove("hidden"); return; }
-
-      if (activeSub) {
-        activeEl.classList.remove("hidden");
-        // Show the recurring price for a custom subscription (amount_cents +
-        // interval_months). Legacy Stripe-plan rows lack these → just the thank-you.
-        const amtRow = $("host-active-amount-row");
-        const amtEl = $("host-active-amount");
-        if (amtRow && amtEl) {
-          if (activeSub.amount_cents != null && activeSub.interval_months != null) {
-            amtEl.textContent = recurringLabel(activeSub.amount_cents, activeSub.interval_months);
-            amtRow.classList.remove("hidden");
-          } else {
-            amtRow.classList.add("hidden");
-          }
-        }
-      } else if (pendingSub) {
-        if (pendingEl) pendingEl.classList.remove("hidden");
-        const amtEl = $("host-pending-amount");
-        if (amtEl) amtEl.textContent = recurringLabel(pendingSub.amount_cents, pendingSub.interval_months);
-        const actBtn = $("host-activate");
-        if (actBtn) actBtn.href = "/payment?subscription_id=" + encodeURIComponent(pendingSub.id);
-      } else {
-        noneEl.classList.remove("hidden");
-      }
-    }
-
-    // ---- Render the Billing / Hosting section from real Supabase data ----
-    //   hasService → a subscriptions row with status 'active' or 'trialing'
-    //                (i.e. the user has a website/hosting/subscription).
-    // Exactly one state shows; the other stays fully hidden so no empty cards
-    // or placeholder subscription fields are ever displayed.
-    function renderBilling(sub, hasService, billingError) {
-      sub = sub || {};
-      const loadErr  = $("bill-load-error");
-      const activeEl = $("bill-active");
-
-      // Reset to a clean, empty state every render.
-      loadErr.classList.add("hidden");
-      activeEl.classList.add("hidden");
-      $("bill-error").classList.add("hidden");
-
-      // Keep the Stripe customer id current for the manage/cancel handlers.
-      stripeCustomerId = sub.stripe_customer_id || null;
-
-      // If we couldn't reliably load the data, show a clean error only.
-      if (billingError) { loadErr.classList.remove("hidden"); return; }
-
-      // ACTIVE — user has a website/hosting/subscription: show full details.
-      if (hasService) {
-        activeEl.classList.remove("hidden");
-
-        // Payment method (card details aren't always synced; fall back cleanly).
-        let method = NA;
-        if (sub.card_brand && sub.card_last4) {
-          const brand = sub.card_brand.charAt(0).toUpperCase() + sub.card_brand.slice(1);
-          method = brand + " ending in " + sub.card_last4;
-        } else if (sub.payment_method) {
-          method = sub.payment_method;
-        }
-        $("bill-method").textContent = method;
-
-        $("bill-hosting").textContent = "Currently hosting with WebSharke";
-
-        // Optional plan detail line (interval / type) when available.
-        const planBits = [];
-        if (sub.plan_interval) planBits.push(/year|annual/i.test(sub.plan_interval) ? "Annually" : "Monthly");
-        if (sub.plan_type) planBits.push(sub.plan_type.charAt(0).toUpperCase() + sub.plan_type.slice(1));
-        $("bill-plan").textContent = planBits.length ? "(" + planBits.join(" · ") + ")" : "";
-
-        // Current plan name — derive from whatever fields exist, else Not available.
-        const planName =
-          sub.plan_name || sub.plan_nickname ||
-          (sub.plan_interval ? (/year|annual/i.test(sub.plan_interval) ? "Annual Hosting" : "Monthly Hosting") : null);
-        $("bill-plan-name").textContent = show(planName, NA);
-
-        // Next payment due — Not available if missing.
-        $("bill-due").textContent = fmtDate(sub.current_period_end || sub.next_payment_due) || NA;
-
-        $("cancel-hosting").disabled = !stripeCustomerId;
-        return;
-      }
-
-      // Not active/trialing → render nothing here. The old "no website yet /
-      // View Plans" empty state was removed; the "not hosting" message now lives
-      // on the Hosting tab (renderHosting).
-    }
+    // The Subscriptions tab (recurring hosting) is rendered by renderSubscriptions()
+    // — defined below, near the other subscription-card builders. The old
+    // renderHosting()/renderBilling() split (which also polluted the Invoices tab
+    // with subscription state) was removed.
 
     // ====================================================================
     // INVOICES (client, READ-ONLY) — phase 1, NO Stripe.
@@ -1790,16 +1812,19 @@
     // ====================================================================
 
     // Statuses a client may SEE. Draft is admin-only work-in-progress and is
-    // hidden unless the project explicitly opts in.
+    // hidden unless the project explicitly opts in. The admin's build-workflow
+    // stages (in_progress / finished / live) and paid are included so the client
+    // can follow the invoice's progress on their dashboard.
     const SHOW_DRAFTS_TO_CLIENTS = false;
     const CLIENT_VISIBLE_STATUSES =
-      ["issued", "paid", "overdue", "void", "canceled"]
+      ["issued", "paid", "overdue", "void", "canceled", "in_progress", "finished", "live"]
         .concat(SHOW_DRAFTS_TO_CLIENTS ? ["draft"] : []);
     // Unpaid + actionable (issued/overdue) → gets the live "Pay invoice" button.
     const PAYABLE_STATUSES = ["issued", "overdue"];
     const CLIENT_STATUS_LABEL = {
       draft: "Draft", issued: "Issued", paid: "Paid",
       overdue: "Overdue", void: "Void", canceled: "Canceled",
+      in_progress: "In progress", finished: "Finished", live: "Live",
     };
     const clientMoneyFmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
     // Amounts are stored as integer cents; format defensively.
@@ -1845,13 +1870,15 @@
     // Subscriptions tab), so an invoice total is a plain amount and the action is
     // always "Pay Invoice".
 
-    // Fetch + render the signed-in client's CURRENT invoice (the most recent
-    // UNPAID, payable one — issued or overdue). The Invoices tab is a brief summary
-    // only: Name, ID, Total, and a "Pay Invoice" button that LINKS to the payments
-    // page — no charge ever happens on the dashboard. Self-contained: own loading /
-    // error / empty states; a failure here never affects the rest of the dashboard.
-    // RLS (db/invoices-schema.sql) restricts the anon key to the caller's own rows;
-    // we also scope the query to user.id as defence in depth.
+    // Fetch + render the signed-in client's CURRENT invoice (the most recent one
+    // the client may see — see CLIENT_VISIBLE_STATUSES). It shows the invoice's
+    // status (so the admin's edits — issued / paid / in progress / finished /
+    // live — are visible to the client) with Name, ID, Total, and a "Pay Invoice"
+    // button that only appears when the invoice is actually payable. The button
+    // LINKS to the payments page — no charge ever happens on the dashboard.
+    // Self-contained: own loading / error / empty states; a failure here never
+    // affects the rest of the dashboard. RLS (db/invoices-schema.sql) restricts
+    // the anon key to the caller's own rows; we also scope to user.id as defence.
     async function loadClientInvoices(user) {
       const loadingEl = $("cinv-loading");
       const errEl = $("cinv-load-error");
@@ -1859,13 +1886,13 @@
       const listEl = $("cinv-list");
       if (!listEl || !user) return;
       try {
-        // The current invoice = most recent unpaid + payable (issued/overdue),
-        // newest first. Paid / draft / void / canceled never qualify as "current".
+        // The current invoice = the most recent client-visible one, newest first.
+        // Draft (admin-internal) and void / canceled invoices never show.
         const { data: invoices, error: invErr } = await db
           .from("invoices")
           .select("id,title,status,total_amount_cents")
           .eq("client_user_id", user.id)
-          .in("status", PAYABLE_STATUSES)
+          .in("status", CLIENT_VISIBLE_STATUSES)
           .order("created_at", { ascending: false })
           .limit(1);
         if (invErr) throw invErr;
@@ -1913,62 +1940,176 @@
       summary.appendChild(cinvEl("span", "amt", cinvMoney(iv.total_amount_cents)));
       card.appendChild(summary);
 
-      // Action → the dedicated payments page for THIS invoice. The dashboard never
+      // Action → the dedicated payments page for THIS invoice, shown ONLY when the
+      // invoice is actually payable (issued / overdue). Paid, in-progress, finished
+      // and live invoices show their status but no Pay button. The dashboard never
       // charges a card; /payment?invoice_id=… runs the Stripe Payment Element.
-      const actions = cinvEl("div", "cinv-actions");
-      const pay = cinvEl("a", "ws-btn cinv-pay", "Pay Invoice");
-      pay.href = "/payment?invoice_id=" + encodeURIComponent(iv.id);
-      actions.appendChild(pay);
-      card.appendChild(actions);
+      if (PAYABLE_STATUSES.includes(status)) {
+        const actions = cinvEl("div", "cinv-actions");
+        const pay = cinvEl("a", "ws-btn cinv-pay", "Pay Invoice");
+        pay.href = "/payment?invoice_id=" + encodeURIComponent(iv.id);
+        actions.appendChild(pay);
+        card.appendChild(actions);
+      }
       return card;
     }
 
-    // Build a PENDING-subscription card for the Invoices tab: Name (label) + ID, a
-    // "Pending activation" badge, the recurring price (clearly recurring — never a
-    // one-time total), and an "Activate Subscription" LINK to
-    // /payment?subscription_id=… (NEVER "Pay Invoice"; the dashboard never charges
-    // a card). Every value is written via cinvEl/textContent (no markup injection).
-    function buildPendingSubCard(sub) {
+    // ====================================================================
+    // SUBSCRIPTIONS (client) — recurring hosting only, in the Subscriptions tab.
+    //
+    // Every recurring subscription the user owns (active / trialing / past_due /
+    // unpaid / canceled / pending) is shown as its own card. This is the ONLY
+    // place subscriptions appear — the Invoices tab is one-time invoices only.
+    // Values are written via cinvEl/textContent (no innerHTML of DB data), and
+    // the cards reuse the shared `cinv-*` styling so they match the invoice cards.
+    // ====================================================================
+
+    // Client-facing status label + the badge class used for its colour.
+    const SUB_STATUS_LABEL = {
+      active: "Active", trialing: "Trialing", past_due: "Past due", unpaid: "Unpaid",
+      canceled: "Canceled", incomplete: "Pending activation", pending_activation: "Pending activation",
+    };
+    // Live subscriptions the client may cancel / update payment for.
+    const SUB_CANCELABLE = ["active", "trialing", "past_due", "unpaid"];
+    // Admin-created subscriptions the client still has to activate on /payment.
+    const SUB_PENDING = ["pending_activation", "incomplete"];
+    // Sort order for the list: live first, pending next, canceled last.
+    const SUB_SORT_RANK = { active: 0, trialing: 0, past_due: 1, unpaid: 1, pending_activation: 2, incomplete: 2, canceled: 3 };
+    function subRank(r) {
+      const v = SUB_SORT_RANK[String(r.status || "").toLowerCase()];
+      return v === undefined ? 9 : v;
+    }
+
+    // Recurring price text. Custom subscriptions carry amount_cents + interval_months;
+    // legacy Stripe-plan rows carry amount (dollars) + plan_interval (month/year).
+    function subRecurringText(sub) {
+      if (sub.amount_cents != null && sub.interval_months != null)
+        return recurringLabel(sub.amount_cents, sub.interval_months);
+      if (sub.amount != null && sub.plan_interval) {
+        const money = clientMoneyFmt.format(Number(sub.amount) || 0);
+        return /year|annual/i.test(sub.plan_interval) ? money + "/year" : money + "/month";
+      }
+      return null;
+    }
+
+    // A subscription row = a recurring subscription (not a bare domain placeholder).
+    function isSubscriptionRow(r) {
+      if (!r) return false;
+      if (r.category === "hosting") return true;
+      if (r.amount_cents != null && r.interval_months != null) return true;
+      if (r.stripe_subscription_id) return true;
+      const s = String(r.status || "").toLowerCase();
+      return ["active", "trialing", "past_due", "unpaid", "canceled", "incomplete", "pending_activation"].includes(s);
+    }
+
+    // Cancel a subscription through the SECURE server route. The browser sends only
+    // the row id + the session token; the SERVER verifies the caller OWNS that row,
+    // cancels it in Stripe, and marks it canceled (the webhook confirms it too). On
+    // success we reflect "Canceled" on the card in place — we never delete the card
+    // and never fake the status (the row is really canceled server-side).
+    async function cancelSubscription(sub, btn, card) {
+      if (!window.confirm("Cancel this subscription? Your recurring hosting payments will stop.")) return;
+      if (hostError) hostError.classList.add("hidden");
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Canceling…";
+      try {
+        const { data: sess } = await db.auth.getSession();
+        const token = sess && sess.session && sess.session.access_token;
+        if (!token) throw new Error("You must be signed in to cancel a subscription.");
+        const res = await fetch("/api/subscriptions/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ subscription_id: sub.id }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.canceled) throw new Error(data.error || "Could not cancel the subscription. Please try again.");
+        const badge = card.querySelector(".cinv-badge");
+        if (badge) { badge.className = "cinv-badge canceled"; badge.textContent = "Canceled"; }
+        const actions = card.querySelector(".cinv-actions");
+        if (actions) actions.remove();
+      } catch (err) {
+        showHostError(err.message || "Could not cancel the subscription. Please try again.");
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    // Build one subscription card: plan name + ref, status badge, recurring price,
+    // next-payment date (live only), and the actions for its lifecycle stage.
+    function buildSubscriptionCard(sub) {
+      const status = String(sub.status || "").toLowerCase();
       const card = cinvEl("article", "cinv-card");
-      card.setAttribute("aria-label", "Pending subscription " + cinvRef(sub.id));
+      card.setAttribute("aria-label", "Subscription " + cinvRef(sub.id));
 
       const head = cinvEl("div", "cinv-card-head");
       const titleWrap = cinvEl("div");
-      titleWrap.appendChild(cinvEl("h4", "cinv-title", show(sub.plan_name, "Subscription")));
+      titleWrap.appendChild(cinvEl("h4", "cinv-title", show(sub.plan_name, "Hosting Subscription")));
       titleWrap.appendChild(cinvEl("span", "cinv-id", cinvRef(sub.id)));
       head.appendChild(titleWrap);
-      head.appendChild(cinvEl("span", "cinv-badge pending", "Pending activation"));
+      head.appendChild(cinvEl("span", "cinv-badge " + status, SUB_STATUS_LABEL[status] || (status || "—")));
       card.appendChild(head);
 
-      // Recurring price — labelled "Recurring payment", not "Total".
-      const summary = cinvEl("div", "cinv-summary");
-      summary.appendChild(cinvEl("span", "lbl", "Recurring payment"));
-      summary.appendChild(cinvEl("span", "amt", recurringLabel(sub.amount_cents, sub.interval_months)));
-      card.appendChild(summary);
+      // Recurring price — labelled "Recurring payment", never a one-time "Total".
+      const price = subRecurringText(sub);
+      if (price) {
+        const summary = cinvEl("div", "cinv-summary");
+        summary.appendChild(cinvEl("span", "lbl", "Recurring payment"));
+        summary.appendChild(cinvEl("span", "amt", price));
+        card.appendChild(summary);
+      }
 
+      // Next-payment date only matters while the subscription is live.
+      if (status === "active" || status === "trialing" || status === "past_due") {
+        const due = sub.current_period_end ? fmtDate(sub.current_period_end) : "";
+        if (due && due !== "—") card.appendChild(cinvEl("p", "f-sub", "Next payment: " + due));
+      } else if (status === "canceled") {
+        const when = sub.canceled_at ? fmtDate(sub.canceled_at) : "";
+        card.appendChild(cinvEl("p", "f-sub", when && when !== "—" ? "Canceled on " + when : "This subscription has been canceled."));
+      }
+
+      // Actions depend on the lifecycle stage.
       const actions = cinvEl("div", "cinv-actions");
-      const activate = cinvEl("a", "ws-btn cinv-pay", "Activate Subscription");
-      activate.href = "/payment?subscription_id=" + encodeURIComponent(sub.id);
-      actions.appendChild(activate);
-      card.appendChild(actions);
+      if (SUB_PENDING.includes(status)) {
+        const activate = cinvEl("a", "ws-btn cinv-pay", "Activate Subscription");
+        activate.href = "/payment?subscription_id=" + encodeURIComponent(sub.id);
+        actions.appendChild(activate);
+      } else if (SUB_CANCELABLE.includes(status)) {
+        const changeBtn = cinvEl("button", "ws-btn", "Change Payment Info");
+        changeBtn.type = "button";
+        changeBtn.addEventListener("click", () => openBillingPortal(changeBtn));
+        actions.appendChild(changeBtn);
+
+        const cancelBtn = cinvEl("button", "ws-btn ghost", "Cancel Subscription");
+        cancelBtn.type = "button";
+        cancelBtn.addEventListener("click", () => cancelSubscription(sub, cancelBtn, card));
+        actions.appendChild(cancelBtn);
+      }
+      if (actions.childNodes.length) card.appendChild(actions);
       return card;
     }
 
-    // Render any PENDING custom recurring subscriptions into the Invoices tab from
-    // the subscription rows already fetched at page load (no extra query). Pending =
-    // category 'hosting' with status pending_activation / incomplete. The block is
-    // hidden entirely when there are none.
-    function renderClientPendingSubs(rows) {
-      const block = $("csub-block");
-      const listEl = $("csub-list");
-      if (!block || !listEl) return;
-      const pending = (rows || []).filter(
-        (r) => r.category === "hosting" && (r.status === "pending_activation" || r.status === "incomplete")
-      );
+    // Render ALL of the user's recurring subscriptions into the Subscriptions tab
+    // from the rows already fetched at page load (no extra query). Empty → the
+    // "not hosting" placeholder; a load failure → a clean error, never a wrong state.
+    function renderSubscriptions(rows, billingError) {
+      const loadErr = $("host-load-error");
+      const noneEl = $("host-none");
+      const listEl = $("sub-list");
+      if (!listEl || !noneEl) return;
+
+      loadErr.classList.add("hidden");
+      noneEl.classList.add("hidden");
+      listEl.classList.add("hidden");
       listEl.textContent = "";
-      if (!pending.length) { block.classList.add("hidden"); return; }
-      pending.forEach((s) => listEl.appendChild(buildPendingSubCard(s)));
-      block.classList.remove("hidden");
+      if (hostError) hostError.classList.add("hidden");
+
+      if (billingError) { loadErr.classList.remove("hidden"); return; }
+
+      const subs = (rows || []).filter(isSubscriptionRow).slice().sort((a, b) => subRank(a) - subRank(b));
+      if (!subs.length) { noneEl.classList.remove("hidden"); return; }
+      subs.forEach((s) => listEl.appendChild(buildSubscriptionCard(s)));
+      listEl.classList.remove("hidden");
     }
 
     // ---- Page load: gate on a session, then load + render ---------------
@@ -2073,31 +2214,16 @@
       const project = inquiry;
       const projectError = inquiryError;
 
-      // ---- WebSharke data rule → does the user have a website / hosting /
-      // subscription with WebSharke? Billing shows full details only then;
-      // otherwise it shows the "no website yet" message + View Plans link.
-      const hasService = !!(sub && (sub.status === "active" || sub.status === "trialing"));
-      // Can't trust the billing state if the subscription query failed.
+      // Can't trust the subscription state if the query failed.
       const billingError = subError;
-
-      // Hosting state is computed across ALL of the user's subscription rows (a user
-      // may have a legacy plan row AND a newer custom subscription row): active
-      // hosting = any active/trialing row; pending hosting = a category 'hosting' row
-      // awaiting activation. Precedence active > pending is applied in renderHosting.
-      const activeHostingSub =
-        subRows.find((r) => r.status === "active" || r.status === "trialing") || null;
-      const pendingHostingSub =
-        subRows.find((r) => r.category === "hosting" && (r.status === "pending_activation" || r.status === "incomplete")) || null;
 
       render(user, inquiry, sub);
       renderBusiness(inquiry, inquiryError);
       renderProject(project, projectError);
-      renderBilling(sub, hasService, billingError);
-      renderHosting(activeHostingSub, pendingHostingSub, billingError);
+      // All recurring subscriptions (active / past_due / canceled / pending) render
+      // in the Subscriptions tab from the rows already fetched above — no extra query.
+      renderSubscriptions(subRows, billingError);
       renderClientPayBanner(sub);
-      // Pending custom subscriptions show in the Invoices tab too (from the rows
-      // already fetched above — no extra query).
-      renderClientPendingSubs(subRows);
       // Invoices load independently (own states) and never block the dashboard.
       loadClientInvoices(user);
     })();
@@ -2114,7 +2240,7 @@
         el.innerHTML = (status === "unpaid"
           ? "Your account is currently <strong>unpaid</strong>. Some services may be paused until payment is received. "
           : "Your latest payment is <strong>past due</strong>. Please update your billing to avoid interruption. ") +
-          '<a href="/payment">View plans &amp; pay</a> or use “Manage My Subscription” under Billing.';
+          '<a href="/payment">View plans &amp; pay</a> or use “Change Payment Info” under Subscriptions.';
       } else if (status === "canceled") {
         el.className = "pay-banner show warn";
         el.innerHTML = 'Your subscription has been <strong>canceled</strong>. <a href="/payment">Reactivate a plan</a> to restore hosting.';
@@ -2226,6 +2352,73 @@
     // =====================================================================
     const STATUS_OPT_PAY = [["active", "Active"], ["unpaid", "Unpaid"], ["past_due", "Past Due"], ["canceled", "Canceled"]];
     const STATUS_OPT_SITE = [["not_started", "Not Started"], ["in_progress", "In Progress"], ["waiting_on_client", "Waiting On Client"], ["complete", "Complete"], ["live", "Live"]];
+    // The invoice statuses the admin can SET from the Recent Payments tab + the
+    // Status filter there. Legacy lifecycle values (draft/overdue/void/canceled)
+    // stay valid on existing rows and are shown if present, but aren't offered.
+    const STATUS_OPT_INV = [["issued", "Issued"], ["paid", "Paid"], ["in_progress", "In progress"], ["finished", "Finished"], ["live", "Live"]];
+    const INV_STATUS_LABEL = { draft: "Draft", issued: "Issued", paid: "Paid", overdue: "Overdue", void: "Void", canceled: "Canceled", in_progress: "In progress", finished: "Finished", live: "Live" };
+
+    // Editable invoice-status dropdown for an invoice row in the Recent Payments
+    // table. Offers the workflow statuses; if the row's current status is a legacy
+    // value not in that list, it's prepended so it shows correctly and isn't lost.
+    function invoiceStatusSelect(r) {
+      const cur = String(r.status || "").toLowerCase();
+      let opts = STATUS_OPT_INV.slice();
+      if (cur && !opts.some((o) => o[0] === cur)) opts = [[cur, INV_STATUS_LABEL[cur] || pretty(cur)]].concat(opts);
+      const html = opts.map((o) => '<option value="' + esc(o[0]) + '"' + (o[0] === cur ? " selected" : "") + ">" + esc(o[1]) + "</option>").join("");
+      return '<select class="adm-pay-status b-' + esc(cur) + '" data-id="' + esc(r.id) + '" data-prev="' + esc(cur) + '">' + html + "</select>";
+    }
+
+    // Persist an invoice status change (delegated 'change' handler below calls this).
+    async function setInvoiceStatusUI(sel) {
+      const id = sel.getAttribute("data-id");
+      const prev = sel.getAttribute("data-prev") || "";
+      const status = sel.value;
+      if (!id || status === prev) return;
+      sel.disabled = true;
+      try {
+        await adminApi("set_invoice_status", { id: id, status: status });
+        sel.setAttribute("data-prev", status);
+        sel.className = "adm-pay-status b-" + status;
+        const st = state["payments"];
+        if (st && st.rows) { const row = st.rows.find((x) => x.id === id && x.kind === "invoice"); if (row) row.status = status; }
+        toast("Invoice updated", "Status set to " + (INV_STATUS_LABEL[status] || status), false);
+      } catch (e) {
+        sel.value = prev; // revert the dropdown on failure
+        toast("Couldn’t update status", e.message, true);
+      } finally {
+        sel.disabled = false;
+      }
+    }
+
+    // Inline editable status dropdown for a client request (Requests view).
+    const REQ_STATUS_OPT = [["pending", "Pending"], ["approved", "Approved"], ["rejected", "Rejected"], ["completed", "Completed"]];
+    function requestStatusSelect(r) {
+      const cur = String(r.status || "pending").toLowerCase();
+      const html = REQ_STATUS_OPT.map((o) => '<option value="' + esc(o[0]) + '"' + (o[0] === cur ? " selected" : "") + ">" + esc(o[1]) + "</option>").join("");
+      return '<select class="adm-pay-status b-' + esc(cur) + '" data-reqid="' + esc(r.id) + '" data-prev="' + esc(cur) + '">' + html + "</select>";
+    }
+    async function setRequestStatusUI(sel) {
+      const id = sel.getAttribute("data-reqid");
+      const prev = sel.getAttribute("data-prev") || "";
+      const status = sel.value;
+      if (!id || status === prev) return;
+      sel.disabled = true;
+      try {
+        await adminApi("set_request_status", { id: id, status: status });
+        sel.setAttribute("data-prev", status);
+        sel.className = "adm-pay-status b-" + status;
+        const st = state["requests"];
+        if (st && st.rows) { const row = st.rows.find((x) => x.id === id); if (row) row.status = status; }
+        toast("Request updated", "Status set to " + pretty(status), false);
+        loadRequestBadge();
+      } catch (e) {
+        sel.value = prev; // revert on failure
+        toast("Couldn’t update request", e.message, true);
+      } finally {
+        sel.disabled = false;
+      }
+    }
 
     const VIEWS = {
       users: {
@@ -2291,7 +2484,17 @@
           { key: "email", label: "Email" },
           { key: "cell_phone", label: "Phone" },
           { key: "status", label: "Status" },
-          { key: "business_description", label: "Business description" },
+          { key: "selected_extensions", label: "Extensions" },
+          { key: "business_description", label: "What they do" },
+          { key: "key_points", label: "Key points" },
+          { key: "style_preferences", label: "Style preferences" },
+          { key: "auth_sign_in_method", label: "Auth · sign-in" },
+          { key: "auth_account_creation", label: "Auth · account creation" },
+          { key: "auth_user_capabilities", label: "Auth · user capabilities" },
+          { key: "admin_dashboard_needs", label: "Admin dashboard needs" },
+          { key: "spreadsheet_needs", label: "Spreadsheet needs" },
+          { key: "payment_embedded", label: "Embedded payment" },
+          { key: "payment_products", label: "Products" },
           { key: "products_services", label: "Products / Services" },
           { key: "website_goals", label: "Website goals" },
           { key: "visitor_actions", label: "Visitor actions" },
@@ -2305,29 +2508,32 @@
         emptyTitle: "No onboarding forms yet", emptyMsg: "New project intake submissions will show up here.",
       },
       payments: {
-        action: "list_payments", title: "Recent Payments", subtitle: "Payments that have actually been paid — newest first",
+        action: "list_payments", title: "Recent Payments", subtitle: "Every invoice & subscription — edit an invoice's status, newest first",
         searchPlaceholder: "Search client, email, plan, domain…",
         rowClick: (r) => r.user_id ? openUserDrawer(r.user_id) : null,
-        // Only paid records reach this view (filtered server-side), so there is no
-        // status filter — just narrow by source and paid date.
+        // ALL invoices (every status) + ALL subscriptions show here. Filter by
+        // source (Type), invoice status, and date.
         filters: [
-          { key: "kind", label: "Type", options: [["invoice", "One-time invoice"], ["subscription", "Subscription"]] },
+          { key: "kind", label: "Type", options: [["invoice", "Invoice"], ["subscription", "Subscription"]] },
+          { key: "status", label: "Status", options: STATUS_OPT_INV },
           { key: "from", label: "From", type: "date" },
           { key: "to", label: "To", type: "date" },
         ],
-        // Clean paid-payment preview: when, who, what kind, how much. Everything
-        // is paid, so the badge is a uniform "Paid". Row click opens the client.
+        // When · who · what · how much · status. Invoice status is an EDITABLE
+        // dropdown (set_invoice_status); subscriptions show a read-only badge +
+        // a Cancel action. Row click opens the client drawer.
         columns: [
-          { key: "paid_at", label: "Paid", render: (r) => fmtDate(r.paid_at) },
+          { key: "date", label: "Date", render: (r) => fmtDate(r.date) },
           { key: "user_name", label: "Name", render: (r) => esc(r.user_name || r.client_name || "—") },
           { key: "business_name", label: "Client", render: (r) => esc(r.business_name || "—") },
           { key: "type_label", label: "Type", render: (r) => esc(r.type_label || "—") },
           { key: "amount", label: "Amount", render: (r) => money(r.amount) },
-          { key: "status", label: "Status", render: () => badge("paid") },
+          { key: "status", label: "Status", render: (r) => r.kind === "invoice" ? invoiceStatusSelect(r) : badge(r.status) },
+          { key: "_actions", label: "", render: (r) => (r.kind === "subscription" && r.status !== "canceled") ? '<button class="adm-mini danger" data-act="cancel-sub">Cancel</button>' : "" },
         ],
-        // CSV export keeps the full paid-payment record.
+        // CSV export keeps the full payment record.
         exportColumns: [
-          { key: "paid_at", label: "Paid" },
+          { key: "date", label: "Date" },
           { key: "user_name", label: "Name" },
           { key: "business_name", label: "Client" },
           { key: "client_email", label: "Email" },
@@ -2335,9 +2541,10 @@
           { key: "plan_name", label: "Plan" },
           { key: "amount", label: "Amount" },
           { key: "currency", label: "Currency" },
+          { key: "status", label: "Status" },
           { key: "linked_domain", label: "Domain" },
         ],
-        emptyTitle: "No recent paid payments yet", emptyMsg: "Paid one-time invoices and subscription payments will show up here.",
+        emptyTitle: "No payments found", emptyMsg: "Invoices and subscriptions will show up here.",
       },
       websites: {
         action: "list_websites", title: "Websites", subtitle: "Site purchases & build tracking",
@@ -2396,6 +2603,26 @@
         ],
         emptyTitle: "All clear", emptyMsg: "No alerts right now — nothing needs your attention.",
         noScroll: true,
+      },
+      requests: {
+        action: "list_requests", title: "Requests", subtitle: "Client requests — domain changes & more",
+        searchPlaceholder: "Search client, email, domain…",
+        rowClick: (r) => r.user_id ? openUserDrawer(r.user_id) : null,
+        filters: [
+          { key: "status", label: "Status", options: [["pending", "Pending"], ["approved", "Approved"], ["rejected", "Rejected"], ["completed", "Completed"]] },
+          { key: "type", label: "Type", options: [["domain_change", "Domain change"]] },
+          { key: "from", label: "From", type: "date" },
+          { key: "to", label: "To", type: "date" },
+        ],
+        columns: [
+          { key: "created_at", label: "When", sortable: true, render: (r) => fmtDate(r.created_at) },
+          { key: "client_name", label: "Client", render: (r) => esc(r.client_name || r.client_email || "—") },
+          { key: "type", label: "Type", render: (r) => esc(pretty(r.type)) },
+          { key: "current_domain", label: "Current", render: (r) => esc(r.current_domain || "—") },
+          { key: "requested_domain", label: "Requested", render: (r) => '<b>' + esc(r.requested_domain || "—") + '</b>' },
+          { key: "status", label: "Status", render: (r) => requestStatusSelect(r) },
+        ],
+        emptyTitle: "No requests yet", emptyMsg: "Domain changes and other client requests will show up here.",
       },
       activity: {
         action: "list_activity", title: "Activity Log", subtitle: "Audit trail of admin actions",
@@ -2581,10 +2808,11 @@
         td.innerHTML = c.render ? c.render(r) : esc(r[c.key] != null ? r[c.key] : "—");
         tr.appendChild(td);
       });
-      // Row click → drawer (unless a row-action button was clicked)
+      // Row click → drawer (unless a row-action button or an inline control was used)
       tr.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-act]");
         if (btn) { e.stopPropagation(); handleRowAction(viewId, btn.dataset.act, r); return; }
+        if (e.target.closest("select,option")) return; // editing a status, not opening the drawer
         if (cfg.rowClick) cfg.rowClick(r);
       });
       return tr;
@@ -2612,6 +2840,7 @@
         return;
       }
       if (act === "assign") { openUserDrawer(r.user_id); return; }
+      if (act === "cancel-sub") { return cancelSub(r.id); }
       if (viewId === "users") {
         if (act === "suspend") return doStatus(r, "suspended");
         if (act === "ban") return doStatus(r, "banned");
@@ -2646,6 +2875,7 @@
       if (id === "overview") return loadOverview();
       if (VIEWS[id]) loadView(id, true);
       loadAlertBadge();
+      loadRequestBadge();
     }
 
     // =====================================================================
@@ -2653,7 +2883,8 @@
     // =====================================================================
     function csvCell(v) {
       if (v === null || v === undefined) return "";
-      if (Array.isArray(v)) v = v.join("; ");
+      if (Array.isArray(v)) v = v.map((x) => (x && typeof x === "object") ? JSON.stringify(x) : x).join("; ");
+      else if (typeof v === "object") v = JSON.stringify(v);
       const s = String(v).replace(/"/g, '""');
       return /[",\n]/.test(s) ? '"' + s + '"' : s;
     }
@@ -2751,6 +2982,40 @@
       h += '<div class="adm-kv"><span class="k">Preferred styles</span><span class="v">' + esc(styles) + "</span></div>";
       h += '<div class="adm-kv"><span class="k">Submitted</span><span class="v">' + fmtDate(inq.created_at) + "</span></div></div>";
 
+      // ── Website Build Requirements (feature-driven intake) ───────────
+      // Read-only summary of the extensions the client picked and the
+      // answers to the conditional questions those extensions revealed.
+      // Only rows with content render, so this stays clean when unused.
+      {
+        const exts = Array.isArray(inq.selected_extensions) ? inq.selected_extensions.filter(Boolean) : [];
+        const kv = (k, v) => (v == null || String(v).trim() === "")
+          ? ""
+          : '<div class="adm-kv"><span class="k">' + esc(k) + '</span><span class="v">' + esc(String(v)) + "</span></div>";
+        const prods = Array.isArray(inq.payment_products) ? inq.payment_products : [];
+        let prodHtml = "";
+        if (prods.length) {
+          const lines = prods.map((p) => {
+            if (!p || typeof p !== "object") return esc(String(p));
+            const name = esc(p.name || "");
+            const price = p.price ? " — $" + esc(String(p.price)) : "";
+            const desc = p.description ? " — " + esc(String(p.description)) : "";
+            return (name + price + desc).trim();
+          }).filter(Boolean);
+          if (lines.length) prodHtml = '<div class="adm-kv"><span class="k">Products</span><span class="v">' + lines.join("<br>") + "</span></div>";
+        }
+        let bh = '<div class="adm-kv"><span class="k">Extensions</span><span class="v">' + esc(exts.length ? exts.join(", ") : "—") + "</span></div>";
+        bh += kv("Key points", inq.key_points);
+        bh += kv("Style preferences", inq.style_preferences);
+        bh += kv("Auth · sign-in", inq.auth_sign_in_method);
+        bh += kv("Auth · account creation", inq.auth_account_creation);
+        bh += kv("Auth · user capabilities", inq.auth_user_capabilities);
+        bh += kv("Admin dashboard needs", inq.admin_dashboard_needs);
+        bh += kv("Spreadsheet needs", inq.spreadsheet_needs);
+        bh += kv("Embedded payment", inq.payment_embedded);
+        bh += prodHtml;
+        h += '<div class="adm-section"><h4>Website Build Requirements</h4>' + bh + "</div>";
+      }
+
       // ── Hosting / Subscription ───────────────────────────────────────
       h += '<div class="adm-section"><h4>Hosting / Subscription</h4>';
       h += '<div class="adm-kv"><span class="k">Plan</span><span class="v">' + esc(sub.plan_name || sub.website_type || "—") + "</span></div>";
@@ -2800,7 +3065,17 @@
         ["active", "suspended", "banned"].map((s) => '<option value="' + s + '"' + ((inq.account_status || "active") === s ? " selected" : "") + ">" + pretty(s) + "</option>").join("") + "</select></div>" +
         '<div class="adm-actions-row">' +
         '<button class="adm-btn" data-act="reactivate">Reactivate</button>' +
-        '<button class="adm-btn" data-act="suspend">Suspend</button></div></div>';
+        '<button class="adm-btn" data-act="suspend">Suspend</button></div>' +
+        // Set a new password for this client's login (admin-only; server uses the
+        // Supabase Admin API). Only shown when the client has a linked auth account.
+        (inq.user_id
+          ? '<div class="adm-fld" style="margin-top:1rem"><label>Set new password</label>' +
+            '<input id="dk-new-password" type="password" autocomplete="new-password" placeholder="At least 6 characters" /></div>' +
+            '<div class="adm-fld"><label>Confirm new password</label>' +
+            '<input id="dk-new-password2" type="password" autocomplete="new-password" placeholder="Re-enter the new password" /></div>' +
+            '<div class="adm-actions-row"><button class="adm-btn primary" data-act="set-password">Set password</button></div>'
+          : '<p style="color:var(--adm-muted);font-size:.84rem;margin-top:.7rem">This client has no linked login account yet, so a password can’t be set.</p>') +
+        "</div>";
 
       // ── Recent Activity Timeline ─────────────────────────────────────
       h += '<div class="adm-section"><h4>Recent Activity</h4>';
@@ -2885,6 +3160,18 @@
           if (k === "reactivate") { await doStatus(inq, "active"); openUserDrawer(inq.user_id, inq.id); return; }
           if (k === "suspend") { await doStatus(inq, "suspended"); openUserDrawer(inq.user_id, inq.id); return; }
           if (k === "ban") { await doStatus(inq, "banned"); openUserDrawer(inq.user_id, inq.id); return; }
+          if (k === "set-password") {
+            const pw = aq("dk-new-password").value;
+            const pw2 = aq("dk-new-password2").value;
+            if (!pw || pw.length < 6) { toast("Password too short", "Enter at least 6 characters.", true); return; }
+            if (pw !== pw2) { toast("Passwords don’t match", "Re-enter the same password in both fields.", true); return; }
+            const ok = await confirmAction("Set a new password?", "This immediately changes this client’s login password. They’ll need the new password to sign in, so share it with them securely.", "Set password");
+            if (!ok) return;
+            await adminApi("set_user_password", { user_id: inq.user_id, password: pw });
+            aq("dk-new-password").value = ""; aq("dk-new-password2").value = "";
+            toast("Password updated", "This client’s password has been changed.");
+            return;
+          }
           if (k === "delete") { await doDelete(inq); closeDrawer(); return; }
         } catch (e) { toast("Action failed", e.message, true); }
       }));
@@ -3214,7 +3501,6 @@
         showInvMsg("ok", "Invoice " + label + (total ? " — server total " + total : "") + idText + ". The form has been cleared for the next invoice.");
         toast("Invoice " + label, (inv.title || "") + (total ? " · " + total : ""), false);
         resetInvoiceForm();
-        loadInvoiceList();
       } catch (e) {
         showInvMsg("err", e.message || "Could not create the invoice.");
         toast("Couldn’t create invoice", e.message, true);
@@ -3266,28 +3552,6 @@
       }
     }
 
-    // ALL invoices, every status, newest first. Display-only summary table
-    // (Name · Client · Title · Amount · Status · Created) — full detail/actions
-    // are not part of this list. Server query lives in api/admin.js (list_invoices).
-    async function loadInvoiceList() {
-      const wrap = aq("inv-list");
-      wrap.textContent = "Loading…";
-      try {
-        const data = await adminApi("list_invoices", {});
-        const rows = (data && data.rows) || [];
-        if (!rows.length) { wrap.innerHTML = '<p class="inv-note">No invoices found.</p>'; return; }
-        const head = "<thead><tr><th>Name</th><th>Client</th><th>Title</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>";
-        const body = rows.map((r) =>
-          "<tr><td>" + esc(r.user_name || "—") + "</td><td>" + esc(r.business_name || "—") + "</td><td>" +
-          esc(r.title || "—") + "</td><td>" + money(r.amount) + "</td><td>" + badge(r.status) + "</td><td>" +
-          (fmtDate(r.created_at) || "—") + "</td></tr>"
-        ).join("");
-        wrap.innerHTML = '<table class="adm-table">' + head + "<tbody>" + body + "</tbody></table>";
-      } catch (e) {
-        wrap.innerHTML = '<p class="inv-note" style="color:var(--adm-danger)">Couldn’t load invoices: ' + esc(e.message) + "</p>";
-      }
-    }
-
     function initInvoices() {
       if (!INV.built) {
         addInvItem();
@@ -3298,7 +3562,6 @@
         INV.built = true;
       }
       loadInvoiceClients(false);
-      loadInvoiceList();
     }
 
     // =====================================================================
@@ -3385,32 +3648,8 @@
       }
     }
 
-    async function loadSubsList() {
-      const wrap = aq("sub-list");
-      wrap.textContent = "Loading…";
-      try {
-        const data = await subsApi("list", {});
-        const rows = (data && data.subscriptions) || [];
-        if (!rows.length) { wrap.innerHTML = '<p class="inv-note">No subscriptions yet.</p>'; return; }
-        const head = "<thead><tr><th>Name</th><th>Client</th><th>Recurring</th><th>Status</th><th>Created</th><th></th></tr></thead>";
-        const body = rows.map((r) => {
-          const client = SUBS.clientMap[r.user_id] || (r.user_id ? String(r.user_id).slice(0, 8) : "—");
-          const cancelCell = r.status !== "canceled"
-            ? '<button class="adm-mini danger" data-cancel-sub="' + esc(r.id) + '">Cancel Subscription</button>'
-            : "—";
-          return "<tr><td>" + esc(r.plan_name || "—") + "</td><td>" + esc(client) + "</td><td>" +
-            esc(subRecurringLabel(r.amount_cents, r.interval_months)) + "</td><td>" + badge(r.status) +
-            "</td><td>" + (fmtDate(r.created_at) || "—") + "</td><td>" + cancelCell + "</td></tr>";
-        }).join("");
-        wrap.innerHTML = '<table class="adm-table">' + head + "<tbody>" + body + "</tbody></table>";
-        wrap.querySelectorAll("[data-cancel-sub]").forEach((b) => {
-          b.addEventListener("click", () => cancelSub(b.getAttribute("data-cancel-sub")));
-        });
-      } catch (e) {
-        wrap.innerHTML = '<p class="inv-note" style="color:var(--adm-danger)">Couldn’t load subscriptions: ' + esc(e.message) + "</p>";
-      }
-    }
-
+    // Cancel a subscription. Triggered from the Recent Payments tab (the single
+    // place all payments are listed); refreshes whichever admin view is active.
     async function cancelSub(id) {
       const ok = await confirmAction(
         "Cancel this subscription?",
@@ -3421,7 +3660,7 @@
       try {
         await subsApi("cancel", { subscription_id: id });
         toast("Subscription canceled", "", false);
-        loadSubsList();
+        refreshCurrent();
       } catch (e) {
         toast("Couldn’t cancel subscription", e.message, true);
       }
@@ -3459,11 +3698,10 @@
           amount_dollars: cents / 100,
           interval_months: months,
         });
-        showSubMsg("ok", "Subscription created (pending activation). The client can now activate it from their dashboard.");
+        showSubMsg("ok", "Subscription created (pending activation). The client can now activate it from their dashboard. It appears in the Recent Payments tab.");
         toast("Subscription created", name + " · " + subRecurringLabel(cents, months), false);
         nameEl.value = ""; amountEl.value = ""; intervalEl.value = "1"; clientEl.value = "";
         subPreview();
-        loadSubsList();
       } catch (e) {
         showSubMsg("err", e.message || "Could not create the subscription.");
         toast("Couldn’t create subscription", e.message, true);
@@ -3482,7 +3720,6 @@
         SUBS.built = true;
       }
       loadSubClients(false);
-      loadSubsList();
     }
 
     // =====================================================================
@@ -3557,6 +3794,16 @@
         const data = await adminApi("list_alerts", {});
         const n = (data.rows || []).filter((a) => a.severity === "high").length;
         const b = aq("admAlertBadge");
+        if (n > 0) { b.textContent = n; b.style.display = ""; } else b.style.display = "none";
+      } catch (e) { /* non-critical */ }
+    }
+
+    // ---- Requests badge (count of pending client requests) --------------
+    async function loadRequestBadge() {
+      try {
+        const data = await adminApi("list_requests", { filters: { status: "pending" }, limit: 1000 });
+        const n = (data.rows || []).length;
+        const b = aq("admRequestBadge");
         if (n > 0) { b.textContent = n; b.style.display = ""; } else b.style.display = "none";
       } catch (e) { /* non-critical */ }
     }
@@ -3658,6 +3905,13 @@
       if (!e.target.closest(".adm-search-wrap")) searchResults.classList.remove("show");
       if (!e.target.closest(".adm-export")) document.querySelectorAll(".adm-export-menu.show").forEach((m) => m.classList.remove("show"));
     });
+    // Editing an invoice's status inline in the Recent Payments table.
+    document.addEventListener("change", (e) => {
+      const sel = e.target.closest && e.target.closest("select.adm-pay-status");
+      if (!sel) return;
+      if (sel.hasAttribute("data-reqid")) setRequestStatusUI(sel);
+      else setInvoiceStatusUI(sel);
+    });
 
     // =====================================================================
     // NAV / SHELL
@@ -3696,6 +3950,7 @@
 
       loadOverview();
       loadAlertBadge();
+      loadRequestBadge();
     };
   })();
   </script>

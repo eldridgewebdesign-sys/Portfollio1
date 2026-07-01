@@ -26,8 +26,11 @@ create table if not exists public.invoices (
   title text not null,
   notes text,
   due_date date,
+  -- Lifecycle + build-workflow stages. The admin can move an invoice through
+  -- these from the Recent Payments tab (see db/invoices-status-workflow.sql,
+  -- which adds the in_progress/finished/live values to an already-created table).
   status text not null default 'draft'
-    check (status in ('draft','issued','paid','overdue','void','canceled')),
+    check (status in ('draft','issued','paid','overdue','void','canceled','in_progress','finished','live')),
   -- Invoices are ALWAYS one-time charges, paid via a single Stripe PaymentIntent.
   -- Recurring billing is a separate flow (public.subscriptions, created by the
   -- admin Subscriptions tab and activated via api/subscriptions/activate).

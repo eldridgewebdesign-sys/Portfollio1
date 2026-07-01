@@ -62,8 +62,11 @@ const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com")
   .trim()
   .toLowerCase();
 
-// Invoice lifecycle states the route will accept.
-const ALLOWED_STATUS = ["draft", "issued", "paid", "overdue", "void", "canceled"];
+// Invoice lifecycle + build-workflow states the system accepts. Creation only
+// uses draft/issued; the later stages (in_progress/finished/live) are set from
+// the admin Recent Payments tab via api/admin.js (set_invoice_status). Keeping
+// the full set here keeps the allowed-status list in one place.
+const ALLOWED_STATUS = ["draft", "issued", "paid", "overdue", "void", "canceled", "in_progress", "finished", "live"];
 
 // Money sanity cap (cents). Blocks absurd / overflow values while staying
 // comfortably inside JS safe-integer range. $50,000,000.00.
