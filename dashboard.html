@@ -245,6 +245,76 @@
     .ws-btn.ghost:hover{background:rgba(13,49,66,.1);filter:none;box-shadow:none}
     @media(max-width:520px){ .dmod-actions{flex-direction:column-reverse} .dmod-actions .ws-btn{width:100%;text-align:center} }
 
+    /* ── Request-Edit buttons + nav badge ───────────────────────────────────── */
+    .req-edit-btn{margin-top:1.6rem}
+    .nav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;
+      margin-left:.45rem;border-radius:9px;background:var(--turq);color:#04222a;font-size:.7rem;font-weight:700;line-height:1;
+      font-family:'Playfair Display',sans-serif;vertical-align:middle}
+    .nav-badge.hidden{display:none}
+
+    /* ── Client request-edit drawer (slides in from the right) ───────────────── */
+    .cdrawer-ov{position:fixed;inset:0;z-index:1000;background:rgba(7,30,40,.42);
+      backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s}
+    .cdrawer-ov.show{opacity:1;pointer-events:auto}
+    .cdrawer{position:fixed;top:0;right:0;height:100%;width:min(460px,94vw);z-index:1001;display:flex;flex-direction:column;
+      background:rgba(240,249,250,.98);border-left:1px solid var(--panel-bd);box-shadow:-20px 0 60px rgba(0,40,55,.28);
+      transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+    .cdrawer.show{transform:translateX(0)}
+    .cdrawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+      padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--panel-bd)}
+    .cdrawer-eyebrow{display:block;font-family:'Playfair Display',sans-serif;font-weight:600;font-size:.68rem;
+      letter-spacing:.16em;text-transform:uppercase;color:#0f6f86;margin-bottom:.25rem}
+    .cdrawer-title{font-family:'Distillery Display','Playfair Display',serif;font-weight:400;font-size:1.5rem;color:#0e2f44}
+    .cdrawer-x{border:none;background:none;font-size:1.6rem;line-height:1;color:#5a7e8c;cursor:pointer;padding:.1rem .4rem;border-radius:8px}
+    .cdrawer-x:hover{color:#11364c;background:rgba(13,49,66,.07)}
+    .cdrawer-body{flex:1;overflow-y:auto;padding:1.3rem 1.5rem}
+    .cdrawer-intro{font-size:.88rem;line-height:1.55;color:var(--ink-soft);
+      background:rgba(16,182,204,.08);border:1px solid rgba(16,182,204,.28);border-radius:11px;padding:.8rem .95rem;margin-bottom:1.3rem}
+    .cdrawer-cur{border:1px solid var(--panel-bd);border-radius:12px;padding:.9rem 1rem;margin-bottom:1.4rem;background:rgba(255,255,255,.5)}
+    .cdrawer-cur h4{font-family:'Playfair Display',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.14em;
+      text-transform:uppercase;color:#0f6f86;margin-bottom:.5rem}
+    .cdrawer-cur .cc-row{font-size:.88rem;line-height:1.5;color:var(--ink);margin-bottom:.35rem;word-break:break-word}
+    .cdrawer-cur .cc-row:last-child{margin-bottom:0}
+    .cdrawer-cur .cc-row b{color:#0e2f44;font-weight:600}
+    .cdrawer-fnote{font-size:.76rem;color:var(--ink-soft);margin:-.15rem 0 .9rem;line-height:1.45}
+    .cdrawer-success{text-align:center;padding:1.4rem .5rem}
+    .cdrawer-success .cs-ico{font-size:2.2rem;color:#177a55}
+    .cdrawer-success h4{font-family:'Distillery Display','Playfair Display',serif;font-weight:400;font-size:1.4rem;color:#0e2f44;margin:.6rem 0 .5rem}
+    .cdrawer-success p{font-size:.92rem;line-height:1.55;color:var(--ink-soft)}
+    .cdrawer-foot{padding:1rem 1.5rem 1.3rem;border-top:1px solid var(--panel-bd)}
+    .cdrawer-actions{display:flex;gap:.6rem;justify-content:flex-end}
+    .cdrawer-actions .ws-btn{margin-top:0}
+    .cdrawer-msg{margin:0 0 .8rem;font-size:.86rem;line-height:1.5;display:none}
+    .cdrawer-msg.show{display:block}
+    .cdrawer-msg.err{color:#7c1d29}
+    .cdrawer-msg.ok{color:#177a55}
+    textarea.dmod-input{min-height:92px;resize:vertical}
+    @media(max-width:520px){ .cdrawer{width:100vw} .cdrawer-actions{flex-direction:column-reverse} .cdrawer-actions .ws-btn{width:100%;text-align:center} }
+
+    /* ── Messages tab ───────────────────────────────────────────────────────── */
+    .msg-loading{margin-top:1.2rem;color:var(--ink-soft);font-size:.92rem}
+    .msg-list{margin-top:1.2rem;display:flex;flex-direction:column;gap:1rem}
+    .msg-card{border:1px solid var(--panel-bd);border-radius:14px;padding:1.05rem 1.2rem;
+      background:rgba(255,255,255,.5);box-shadow:0 10px 26px rgba(0,40,55,.1),inset 0 1px 0 rgba(255,255,255,.5)}
+    .msg-card.unread{border-color:rgba(16,182,204,.5);background:rgba(198,240,246,.4)}
+    .msg-top{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.55rem}
+    .msg-kind{font-family:'Playfair Display',sans-serif;font-weight:700;font-size:.66rem;letter-spacing:.13em;
+      text-transform:uppercase;color:#0f6f86}
+    .msg-date{margin-left:auto;font-size:.78rem;color:var(--ink-soft)}
+    .msg-title{font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:#11364c;margin-bottom:.3rem}
+    .msg-body{font-size:.92rem;line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+    .msg-sub{margin-top:.5rem;font-size:.85rem;line-height:1.5;color:var(--ink-soft)}
+    .msg-sub b{color:#0e2f44;font-weight:600}
+    .msg-comment{margin-top:.7rem;padding:.7rem .85rem;border-radius:10px;background:rgba(13,49,66,.05);
+      border:1px solid var(--panel-bd);font-size:.88rem;line-height:1.5;color:var(--ink)}
+    .msg-comment .mc-label{display:block;font-family:'Playfair Display',sans-serif;font-weight:700;font-size:.64rem;
+      letter-spacing:.13em;text-transform:uppercase;color:#0f6f86;margin-bottom:.25rem}
+    .msg-pill{display:inline-block;padding:.18rem .55rem;border-radius:20px;font-size:.7rem;font-weight:700;
+      letter-spacing:.02em;border:1px solid transparent}
+    .msg-pill.p-pending{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
+    .msg-pill.p-approved{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
+    .msg-pill.p-denied{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
+
     /* ── Plan buttons (Billing) ────────────────────────────────────────────── */
     .plan-row{display:flex;flex-wrap:wrap;gap:.7rem;margin:.6rem 0 .4rem}
     .plan-row .ws-btn{margin-top:0}
@@ -607,7 +677,7 @@
     /* Client → admin request statuses (Requests view). */
     .badge.b-pending{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
     .badge.b-approved{background:rgba(45,111,199,.16);color:#2d6fc7;border-color:rgba(45,111,199,.42)}
-    .badge.b-rejected{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
+    .badge.b-rejected,.badge.b-denied{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
     .badge.b-completed{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
     .adm-pay-status.b-pending{color:#9a6406;border-color:rgba(181,116,10,.5)}
     .adm-pay-status.b-approved{color:#2d6fc7;border-color:rgba(45,111,199,.5)}
@@ -815,6 +885,7 @@
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="billing">Invoices</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="hosting">Subscriptions</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="domain">Domain</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="messages">Messages<span class="nav-badge hidden" id="msg-badge">0</span></button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="privacy">Privacy</button>
       </nav>
       <button class="signout" id="signout">Sign Out</button>
@@ -838,6 +909,7 @@
           <span class="f-sub hidden" id="pw-verify-status"></span>
         </p>
         <p class="field"><span class="f-label">Phone Number:</span> <span class="f-value" id="acc-phone">…</span></p>
+        <button class="ws-btn ghost req-edit-btn" type="button" data-edit-section="account">Request Edit</button>
       </div>
 
       <!-- 2 ── Business info -->
@@ -857,6 +929,7 @@
           <p class="field"><span class="f-label">Design notes:</span> <span class="f-value block" id="biz-design-notes">…</span></p>
           <p class="field"><span class="f-label">Additional info:</span> <span class="f-value block" id="biz-additional-info">…</span></p>
         </div>
+        <button class="ws-btn ghost req-edit-btn" type="button" data-edit-section="business">Request Edit</button>
       </div>
 
       <!-- 2b ── Project / intake details (from project_inquiries) -->
@@ -894,6 +967,7 @@
           <p class="field"><span class="f-label">Design notes:</span> <span class="f-value block" id="pd-design-notes">…</span></p>
           <p class="field"><span class="f-label">Additional info:</span> <span class="f-value block" id="pd-additional">…</span></p>
         </div>
+        <button class="ws-btn ghost req-edit-btn" type="button" data-edit-section="project">Request Edit</button>
       </div>
 
       <!-- 3 ── Invoices — ONE-TIME payments only. Recurring subscriptions live in
@@ -1011,6 +1085,17 @@
         <a class="ws-btn" id="tos-btn" role="button">terms of service</a>
       </div>
 
+      <!-- 6 ── Messages — edit-request updates + direct messages from the team.
+           Read-only feed; requests are created via the "Request Edit" drawers. -->
+      <div class="tab" id="tab-messages" role="tabpanel">
+        <h2 class="tab-title">Messages</h2>
+        <p class="f-sub">Updates on your edit requests and messages from the WebSharke team.</p>
+        <p class="bill-error hidden" id="msg-error" role="alert">We couldn’t load your messages right now. Please refresh the page or try again later.</p>
+        <div class="msg-loading" id="msg-loading">Loading your messages…</div>
+        <p class="dp-empty hidden" id="msg-empty">You don’t have any messages yet.</p>
+        <div class="msg-list" id="msg-list"></div>
+      </div>
+
     </section>
   </main>
 
@@ -1060,6 +1145,32 @@
   </div>
 
   <!-- ===================================================================== -->
+  <!-- REQUEST-EDIT DRAWER (client → admin). Opened from the "Request Edit"   -->
+  <!-- buttons on Account/Business/Project and "Request Hosting". Slides in    -->
+  <!-- from the right, shows current info + structured fields, and files an    -->
+  <!-- edit_requests row. It NEVER changes the client's real data — the admin  -->
+  <!-- reviews it and the outcome shows in the Messages tab.                   -->
+  <!-- ===================================================================== -->
+  <div class="cdrawer-ov" id="ceOv" aria-hidden="true"></div>
+  <aside class="cdrawer" id="ceDrawer" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="ceTitle">
+    <div class="cdrawer-head">
+      <div>
+        <span class="cdrawer-eyebrow" id="ceEyebrow">Request changes</span>
+        <h3 class="cdrawer-title" id="ceTitle">Section</h3>
+      </div>
+      <button class="cdrawer-x" id="ceClose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="cdrawer-body" id="ceBody"></div>
+    <div class="cdrawer-foot">
+      <p class="cdrawer-msg" id="ceMsg" role="status" aria-live="polite"></p>
+      <div class="cdrawer-actions">
+        <button class="ws-btn ghost" id="ceCancel" type="button">Cancel</button>
+        <button class="ws-btn" id="ceSubmit" type="button">Submit Request</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================================================================== -->
   <!-- ADMIN DASHBOARD — only ever shown to the admin email. Hidden by       -->
   <!-- default; initAdmin() reveals it after a server-verified admin check.  -->
   <!-- ===================================================================== -->
@@ -1081,7 +1192,8 @@
         <button data-view="websites"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span class="adm-nav-label">Websites</span></button>
         <button data-view="domains"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span class="adm-nav-label">Domains</span></button>
         <button data-view="alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="adm-nav-label">Alerts</span><span class="adm-nav-badge" id="admAlertBadge" style="display:none">0</span></button>
-        <button data-view="requests"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="adm-nav-label">Requests</span><span class="adm-nav-badge" id="admRequestBadge" style="display:none">0</span></button>
+        <button data-view="editrequests"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13l2 2 4-4"/></svg><span class="adm-nav-label">Requests</span><span class="adm-nav-badge" id="admEditReqBadge" style="display:none">0</span></button>
+        <button data-view="requests"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="adm-nav-label">Domain Requests</span><span class="adm-nav-badge" id="admRequestBadge" style="display:none">0</span></button>
         <button data-view="activity"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="adm-nav-label">Activity Log</span></button>
         <button data-view="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 6 9.4l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 11 5.6h.09A2 2 0 1 1 15 5.6V5.7a1.65 1.65 0 0 0 2.82-1.17l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9h.1a2 2 0 1 1 0 4h-.1z"/></svg><span class="adm-nav-label">Settings</span></button>
       </nav>
@@ -1140,6 +1252,7 @@
         <section class="adm-view" id="view-websites"></section>
         <section class="adm-view" id="view-domains"></section>
         <section class="adm-view" id="view-alerts"></section>
+        <section class="adm-view" id="view-editrequests"></section>
         <section class="adm-view" id="view-requests"></section>
         <section class="adm-view" id="view-activity"></section>
 
@@ -1311,6 +1424,11 @@
     }
     const $ = (id) => document.getElementById(id);
 
+    // The signed-in user + their most-recent intake row, captured in render()
+    // so the request-edit drawer and Messages tab can read current values.
+    let currentUser = null;
+    let currentInquiry = null;
+
     // ---- Tab switching --------------------------------------------------
     const navItems = document.querySelectorAll(".nav-item");
     navItems.forEach((btn) => {
@@ -1325,6 +1443,7 @@
           t.classList.toggle("active", t.id === "tab-" + tab);
         });
         if (tab === "domain") showDomainPreview();
+        if (tab === "messages") loadMessages();
       });
     });
 
@@ -1455,17 +1574,269 @@
     // Payment Info" (Stripe portal) and "Cancel Subscription" (secure server route)
     // actions instead.
 
-    // ---- Subscriptions tab: "Request Hosting" placeholder ------------------
-    // Client→admin messaging isn't built yet, so this only shows an inline note.
-    // It NEVER redirects, submits, or implies a request was actually sent.
+    // ---- Subscriptions tab: "Request Hosting" → files a hosting request -----
+    // Opens the request-edit drawer in "hosting" mode (see initRequestEdit),
+    // which inserts an edit_requests row the admin reviews. The client sees the
+    // outcome in their Messages tab.
     const requestHostingBtn = $("request-hosting");
-    const hostRequestNote = $("host-request-note");
-    if (requestHostingBtn && hostRequestNote) {
-      requestHostingBtn.addEventListener("click", () => {
-        hostRequestNote.textContent =
-          "Hosting requests are coming soon. Please contact WebSharke directly for now.";
-        hostRequestNote.classList.remove("hidden");
+    if (requestHostingBtn) requestHostingBtn.addEventListener("click", () => openEditDrawer("hosting"));
+
+    // =====================================================================
+    // REQUEST-EDIT DRAWER + MESSAGES (client → admin)
+    //
+    // Clients never edit their real account/business/project data directly.
+    // "Request Edit" opens a right-side drawer that inserts an `edit_requests`
+    // row (RLS lets a client insert only a PENDING request for themselves). The
+    // admin reviews it; the client sees the outcome — plus any direct admin
+    // messages — in the Messages tab. All values are escaped before injection.
+    // =====================================================================
+    const ceEsc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    const SECTION_LABELS = { account: "Account Info", business: "Business Info", project: "Project Info", hosting: "Hosting Request" };
+    const EDIT_FIELD_LABELS = {
+      full_name: "Name", email: "Email", cell_phone: "Phone number",
+      business_name: "Business name", business_description: "Business description",
+      products_services: "Products / Services", website_goals: "Website goals",
+      visitor_actions: "Visitor actions", websites_liked: "Websites liked",
+      color_preferences: "Color preferences", design_notes: "Design notes", additional_info: "Additional info",
+    };
+    // Which structured fields each section offers. Values map to project_inquiries
+    // columns (account email is read from auth). "hosting" is message-only.
+    const EDIT_SECTIONS = {
+      account: { title: "Account info", fields: [
+        { key: "full_name" },
+        { key: "email", type: "email", note: "Email changes are reviewed manually and may require verifying your new address." },
+        { key: "cell_phone" },
+      ] },
+      business: { title: "Business info", fields: [
+        { key: "business_name" },
+        { key: "business_description", type: "textarea" },
+        { key: "products_services", type: "textarea" },
+        { key: "website_goals", type: "textarea" },
+        { key: "visitor_actions", type: "textarea" },
+        { key: "color_preferences" },
+        { key: "design_notes", type: "textarea" },
+        { key: "additional_info", type: "textarea" },
+      ] },
+      project: { title: "Project details", fields: [
+        { key: "business_description", type: "textarea" },
+        { key: "website_goals", type: "textarea" },
+        { key: "visitor_actions", type: "textarea" },
+        { key: "design_notes", type: "textarea" },
+        { key: "additional_info", type: "textarea" },
+      ] },
+      hosting: { title: "Request hosting", messageOnly: true,
+        intro: "Tell us what you’d like us to host and any details — pages, features, timeline. We’ll review your request and follow up in your Messages tab.",
+        placeholder: "What would you like hosted? Any details or questions?" },
+    };
+
+    let ceState = {};
+
+    // Current value shown for a field (arrays joined; account email from auth).
+    function editCurrentValue(section, key) {
+      const inq = currentInquiry || {};
+      if (section === "account" && key === "email") return (currentUser && currentUser.email) || inq.email || "";
+      const v = inq[key];
+      if (Array.isArray(v)) return v.filter(Boolean).join(", ");
+      return v == null ? "" : String(v);
+    }
+
+    function buildEditBody(section, cfg) {
+      if (cfg.messageOnly) {
+        return '<p class="cdrawer-intro">' + ceEsc(cfg.intro) + "</p>" +
+          '<label class="dmod-lbl" for="ce-message">Your request</label>' +
+          '<textarea class="dmod-input" id="ce-message" placeholder="' + ceEsc(cfg.placeholder || "") + '"></textarea>';
+      }
+      let h = '<p class="cdrawer-intro">Submitting sends a request to our team — nothing changes until it’s approved. You’ll see the outcome in your <b>Messages</b> tab.</p>';
+      h += '<div class="cdrawer-cur"><h4>Your current information</h4>';
+      cfg.fields.forEach((f) => {
+        const cur = editCurrentValue(section, f.key);
+        h += '<div class="cc-row"><b>' + ceEsc(EDIT_FIELD_LABELS[f.key] || f.key) + ":</b> " + ceEsc(cur || "—") + "</div>";
       });
+      h += "</div>";
+      cfg.fields.forEach((f) => {
+        const cur = editCurrentValue(section, f.key);
+        const label = EDIT_FIELD_LABELS[f.key] || f.key;
+        h += '<label class="dmod-lbl" for="ce-f-' + f.key + '">' + ceEsc(label) + "</label>";
+        if (f.type === "textarea") h += '<textarea class="dmod-input" id="ce-f-' + f.key + '">' + ceEsc(cur) + "</textarea>";
+        else h += '<input class="dmod-input" id="ce-f-' + f.key + '" type="' + (f.type || "text") + '" value="' + ceEsc(cur) + '" />';
+        if (f.note) h += '<p class="cdrawer-fnote">' + ceEsc(f.note) + "</p>";
+      });
+      h += '<label class="dmod-lbl" for="ce-message">Anything else? (optional)</label>' +
+        '<textarea class="dmod-input" id="ce-message" placeholder="Describe what you’d like changed or add any details."></textarea>';
+      return h;
+    }
+
+    function showCeMsg(msg, isErr) {
+      const m = $("ceMsg");
+      m.textContent = msg || "";
+      m.className = "cdrawer-msg" + (msg ? " show " + (isErr ? "err" : "ok") : "");
+    }
+
+    function openEditDrawer(section) {
+      const cfg = EDIT_SECTIONS[section];
+      if (!cfg) return;
+      ceState = { section: section };
+      $("ceTitle").textContent = cfg.title;
+      $("ceEyebrow").textContent = cfg.messageOnly ? "New request" : "Request changes";
+      $("ceBody").innerHTML = buildEditBody(section, cfg);
+      showCeMsg("", false);
+      const submit = $("ceSubmit");
+      submit.classList.remove("hidden"); submit.disabled = false; submit.textContent = "Submit Request";
+      $("ceCancel").textContent = "Cancel";
+      $("ceOv").classList.add("show"); $("ceOv").setAttribute("aria-hidden", "false");
+      $("ceDrawer").classList.add("show"); $("ceDrawer").setAttribute("aria-hidden", "false");
+    }
+    function closeEditDrawer() {
+      $("ceOv").classList.remove("show"); $("ceOv").setAttribute("aria-hidden", "true");
+      $("ceDrawer").classList.remove("show"); $("ceDrawer").setAttribute("aria-hidden", "true");
+    }
+
+    async function submitEditRequest() {
+      const submit = $("ceSubmit");
+      if (submit.disabled) return;
+      const section = ceState.section;
+      const cfg = EDIT_SECTIONS[section];
+      if (!cfg) return;
+      const msgEl = $("ce-message");
+      const message = (msgEl ? msgEl.value : "").trim();
+
+      let requested = null, current = null, changed = false;
+      if (!cfg.messageOnly) {
+        requested = {}; current = {};
+        cfg.fields.forEach((f) => {
+          const el = $("ce-f-" + f.key);
+          if (!el) return;
+          const cur = editCurrentValue(section, f.key);
+          const val = el.value.trim();
+          current[f.key] = cur;
+          if (val !== String(cur).trim()) { requested[f.key] = val; changed = true; }
+        });
+      }
+
+      if (cfg.messageOnly && !message) { showCeMsg("Please describe your request.", true); return; }
+      if (!cfg.messageOnly && !changed && !message) { showCeMsg("Change a field, or add a note describing what you’d like changed.", true); return; }
+      if (!currentUser) { showCeMsg("Your session expired. Please refresh and sign in again.", true); return; }
+
+      submit.disabled = true; submit.textContent = "Submitting…"; showCeMsg("", false);
+      try {
+        const { error } = await db.from("edit_requests").insert({
+          user_id: currentUser.id,
+          section: section,
+          current_data: cfg.messageOnly ? null : current,
+          requested_data: cfg.messageOnly ? null : requested,
+          request_message: message || null,
+          status: "pending",
+        });
+        if (error) throw error;
+        $("ceBody").innerHTML = '<div class="cdrawer-success"><div class="cs-ico">✓</div>' +
+          "<h4>Request submitted</h4><p>Thanks — our team will review your request and respond in your <b>Messages</b> tab.</p></div>";
+        submit.classList.add("hidden");
+        $("ceCancel").textContent = "Done";
+        showCeMsg("", false);
+      } catch (e) {
+        submit.disabled = false; submit.textContent = "Submit Request";
+        showCeMsg(e.message || "We couldn’t submit your request right now. Please try again.", true);
+      }
+    }
+
+    document.querySelectorAll("[data-edit-section]").forEach((b) =>
+      b.addEventListener("click", () => openEditDrawer(b.dataset.editSection)));
+    $("ceClose").addEventListener("click", closeEditDrawer);
+    $("ceCancel").addEventListener("click", closeEditDrawer);
+    $("ceOv").addEventListener("click", closeEditDrawer);
+    $("ceSubmit").addEventListener("click", submitEditRequest);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("ceDrawer").classList.contains("show")) closeEditDrawer(); });
+
+    // ---- Messages tab ---------------------------------------------------
+    function setMsgBadge(n) {
+      const b = $("msg-badge");
+      if (!b) return;
+      if (n > 0) { b.textContent = n > 99 ? "99+" : n; b.classList.remove("hidden"); }
+      else b.classList.add("hidden");
+    }
+    async function loadMsgBadge() {
+      if (!currentUser) return;
+      try {
+        const { count } = await db.from("user_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", currentUser.id).eq("is_read", false);
+        setMsgBadge(count || 0);
+      } catch (e) { /* non-critical */ }
+    }
+
+    function statusLabel(s) { return { pending: "Pending", approved: "Approved", denied: "Denied" }[s] || "Pending"; }
+
+    function requestSummaryHtml(r) {
+      const rd = r.requested_data && typeof r.requested_data === "object" ? r.requested_data : null;
+      if (rd && Object.keys(rd).length) {
+        return Object.keys(rd).map((k) =>
+          "<b>" + ceEsc(EDIT_FIELD_LABELS[k] || k) + ":</b> " + ceEsc(String(rd[k]))).join("<br>");
+      }
+      if (r.request_message) return ceEsc(r.request_message);
+      return "—";
+    }
+
+    function renderMsgItem(item) {
+      if (item.kind === "request") {
+        const r = item.data;
+        const submitted = fmtDate(r.created_at);
+        const updated = r.updated_at && r.updated_at !== r.created_at ? fmtDate(r.updated_at) : null;
+        let h = '<div class="msg-card"><div class="msg-top"><span class="msg-kind">Edit request</span>' +
+          '<span class="msg-pill p-' + ceEsc(r.status || "pending") + '">' + ceEsc(statusLabel(r.status)) + "</span>" +
+          '<span class="msg-date">' + ceEsc(submitted || "") + "</span></div>";
+        h += '<div class="msg-title">' + ceEsc(SECTION_LABELS[r.section] || r.section) + "</div>";
+        h += '<div class="msg-body">' + requestSummaryHtml(r) + "</div>";
+        if (r.request_message && r.requested_data && Object.keys(r.requested_data || {}).length)
+          h += '<div class="msg-sub"><b>Your note:</b> ' + ceEsc(r.request_message) + "</div>";
+        if (r.admin_comment)
+          h += '<div class="msg-comment"><span class="mc-label">Reply from WebSharke</span>' + ceEsc(r.admin_comment) + "</div>";
+        if (updated) h += '<div class="msg-sub">Updated ' + ceEsc(updated) + "</div>";
+        return h + "</div>";
+      }
+      const m = item.data;
+      let h = '<div class="msg-card' + (m.is_read ? "" : " unread") + '"><div class="msg-top"><span class="msg-kind">Message from WebSharke</span>' +
+        '<span class="msg-date">' + ceEsc(fmtDate(m.created_at) || "") + "</span></div>";
+      if (m.title) h += '<div class="msg-title">' + ceEsc(m.title) + "</div>";
+      h += '<div class="msg-body">' + ceEsc(m.body) + "</div>";
+      return h + "</div>";
+    }
+
+    async function loadMessages() {
+      if (!currentUser) return;
+      const listEl = $("msg-list"), loadEl = $("msg-loading"), emptyEl = $("msg-empty"), errEl = $("msg-error");
+      errEl.classList.add("hidden"); emptyEl.classList.add("hidden");
+      listEl.innerHTML = ""; loadEl.classList.remove("hidden");
+      try {
+        const [reqRes, msgRes] = await Promise.all([
+          db.from("edit_requests").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false }),
+          db.from("user_messages").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false }),
+        ]);
+        if (reqRes.error) throw reqRes.error;
+        if (msgRes.error) throw msgRes.error;
+        const items = (reqRes.data || []).map((r) => ({ kind: "request", when: r.updated_at || r.created_at, data: r }))
+          .concat((msgRes.data || []).map((m) => ({ kind: "message", when: m.created_at, data: m })))
+          .sort((a, b) => String(b.when || "").localeCompare(String(a.when || "")));
+        loadEl.classList.add("hidden");
+        if (!items.length) { emptyEl.classList.remove("hidden"); return; }
+        listEl.innerHTML = items.map(renderMsgItem).join("");
+
+        // Mark unread admin messages as read (RLS allows updating only is_read).
+        // Only clear the badge when the write actually succeeds — supabase-js
+        // resolves with { error } on failure rather than throwing, so a failed
+        // update must not leave the badge showing 0 while rows stay unread.
+        const unread = (msgRes.data || []).filter((m) => !m.is_read).map((m) => m.id);
+        if (unread.length) {
+          try {
+            const { error: readErr } = await db.from("user_messages").update({ is_read: true }).in("id", unread);
+            if (!readErr) setMsgBadge(0);
+          } catch (e) { /* non-fatal — badge self-heals on next load */ }
+        }
+      } catch (e) {
+        loadEl.classList.add("hidden");
+        errEl.classList.remove("hidden");
+      }
     }
 
     // ---- Subscriptions tab: open the Stripe Customer Portal ----------------
@@ -1571,6 +1942,10 @@
       inquiry = inquiry || {};
       sub = sub || {};
       const meta = user.user_metadata || {};
+
+      // Capture for the request-edit drawer + Messages tab.
+      currentUser = user;
+      currentInquiry = inquiry;
 
       // 1) Account ------------------------------------------------------
       resetEmail = user.email || null;
@@ -2208,6 +2583,8 @@
       renderClientPayBanner(sub);
       // Invoices load independently (own states) and never block the dashboard.
       loadClientInvoices(user);
+      // Unread-message badge (non-blocking; Messages tab loads its own content).
+      loadMsgBadge();
     })();
 
     // ---- Client-facing payment-status banner ----------------------------
@@ -2402,6 +2779,26 @@
       }
     }
 
+    // ---- Edit-request helpers (Requests view + review drawer) ----------
+    const EDIT_SECTION_LABEL = { account: "Account Info", business: "Business Info", project: "Project Info", hosting: "Hosting" };
+    const EDIT_FIELD_LABEL = {
+      full_name: "Name", email: "Email", cell_phone: "Phone number",
+      business_name: "Business name", business_description: "Business description",
+      products_services: "Products / Services", website_goals: "Website goals",
+      visitor_actions: "Visitor actions", websites_liked: "Websites liked",
+      color_preferences: "Color preferences", design_notes: "Design notes", additional_info: "Additional info",
+    };
+    // Fields an approved request may auto-apply to project_inquiries (mirror of
+    // the server's EDIT_APPLY_SAFE_FIELDS — email/domain/status are never applied).
+    const EDIT_APPLY_SAFE = ["full_name", "cell_phone", "business_name", "business_address", "business_description", "products_services", "website_goals", "visitor_actions", "websites_liked", "color_preferences", "design_notes", "additional_info"];
+    function editRequestSummary(r) {
+      const rd = r.requested_data && typeof r.requested_data === "object" ? r.requested_data : null;
+      if (rd && Object.keys(rd).length) {
+        return Object.keys(rd).map((k) => (EDIT_FIELD_LABEL[k] || k) + ": " + String(rd[k])).join(" · ");
+      }
+      return r.request_message || "—";
+    }
+
     const VIEWS = {
       users: {
         action: "list_users", title: "Users", subtitle: "Every client record from project_inquiries",
@@ -2587,7 +2984,7 @@
         noScroll: true,
       },
       requests: {
-        action: "list_requests", title: "Requests", subtitle: "Client requests — domain changes & more",
+        action: "list_requests", title: "Domain Requests", subtitle: "Client domain-change requests",
         searchPlaceholder: "Search client, email, domain…",
         rowClick: (r) => r.user_id ? openUserDrawer(r.user_id) : null,
         filters: [
@@ -2605,6 +3002,26 @@
           { key: "status", label: "Status", render: (r) => requestStatusSelect(r) },
         ],
         emptyTitle: "No requests yet", emptyMsg: "Domain changes and other client requests will show up here.",
+      },
+      editrequests: {
+        action: "list_edit_requests", title: "Requests", subtitle: "Client edit requests — account, business, project & hosting",
+        searchPlaceholder: "Search client, email, message…",
+        rowClick: (r) => openEditRequestDrawer(r),
+        filters: [
+          { key: "status", label: "Status", options: [["pending", "Pending"], ["approved", "Approved"], ["denied", "Denied"]] },
+          { key: "section", label: "Section", options: [["account", "Account Info"], ["business", "Business Info"], ["project", "Project Info"], ["hosting", "Hosting"]] },
+          { key: "from", label: "From", type: "date" },
+          { key: "to", label: "To", type: "date" },
+        ],
+        columns: [
+          { key: "created_at", label: "When", sortable: true, render: (r) => fmtDate(r.created_at) },
+          { key: "client_name", label: "Client", render: (r) => esc(r.client_name || r.client_email || "—") },
+          { key: "section", label: "Section", render: (r) => esc(EDIT_SECTION_LABEL[r.section] || pretty(r.section)) },
+          { key: "summary", label: "Requested change", render: (r) => '<span class="adm-trunc">' + esc(editRequestSummary(r)) + "</span>" },
+          { key: "status", label: "Status", render: (r) => badge(r.status) },
+          { key: "_actions", label: "", render: () => '<button class="adm-mini" data-act="review">Review</button>' },
+        ],
+        emptyTitle: "No requests yet", emptyMsg: "Client edit requests will show up here.",
       },
       activity: {
         action: "list_activity", title: "Activity Log", subtitle: "Audit trail of admin actions",
@@ -2816,6 +3233,7 @@
 
     // ---- Row action buttons --------------------------------------------
     async function handleRowAction(viewId, act, r) {
+      if (act === "review") { openEditRequestDrawer(r); return; }
       if (act === "edit" || act === "view") {
         if (viewId === "websites") openWebsiteDrawer(r);
         else openUserDrawer(r.user_id, r.id);
@@ -2858,6 +3276,7 @@
       if (VIEWS[id]) loadView(id, true);
       loadAlertBadge();
       loadRequestBadge();
+      loadEditReqBadge();
     }
 
     // =====================================================================
@@ -3059,6 +3478,18 @@
           : '<p style="color:var(--adm-muted);font-size:.84rem;margin-top:.7rem">This client has no linked login account yet, so a password can’t be set.</p>') +
         "</div>";
 
+      // ── Messages (send a direct message + history) ───────────────────
+      h += '<div class="adm-section"><h4>Messages</h4>';
+      if (inq.user_id) {
+        h += '<div id="dk-msg-history" style="margin-bottom:.85rem"><p style="color:var(--adm-muted);font-size:.84rem">Loading messages…</p></div>' +
+          '<div class="adm-fld"><label>Title (optional)</label><input id="dk-msg-title" maxlength="120" placeholder="e.g. About your request" /></div>' +
+          '<div class="adm-fld"><label>Message</label><textarea id="dk-msg-body" placeholder="Write a message to this client…"></textarea></div>' +
+          '<div class="adm-actions-row"><button class="adm-btn primary" data-act="send-message">Send message</button></div>';
+      } else {
+        h += '<p style="color:var(--adm-muted);font-size:.84rem">This client has no linked login account yet, so they can’t receive messages.</p>';
+      }
+      h += "</div>";
+
       // ── Recent Activity Timeline ─────────────────────────────────────
       h += '<div class="adm-section"><h4>Recent Activity</h4>';
       if (data.activity && data.activity.length) {
@@ -3154,9 +3585,22 @@
             toast("Password updated", "This client’s password has been changed.");
             return;
           }
+          if (k === "send-message") {
+            const body = (aq("dk-msg-body").value || "").trim();
+            const title = (aq("dk-msg-title").value || "").trim();
+            if (!body) { toast("Empty message", "Write a message before sending.", true); return; }
+            await adminApi("send_user_message", { user_id: inq.user_id, title: title || null, body: body });
+            aq("dk-msg-body").value = ""; aq("dk-msg-title").value = "";
+            toast("Message sent", "The client will see it in their Messages tab.");
+            loadDrawerMessages(inq.user_id);
+            return;
+          }
           if (k === "delete") { await doDelete(inq); closeDrawer(); return; }
         } catch (e) { toast("Action failed", e.message, true); }
       }));
+
+      // Load the message history for this client (if they have an account).
+      if (inq.user_id) loadDrawerMessages(inq.user_id);
     }
 
     async function saveUserDrawer(data) {
@@ -3175,6 +3619,104 @@
         openUserDrawer(inq.user_id, inq.id);
         refreshCurrent();
       } catch (e) { toast("Couldn’t save changes", e.message, true); }
+    }
+
+    // ---- Edit-request review drawer ------------------------------------
+    // Opens a client edit request in the shared right drawer: shows the
+    // requested changes (current → requested), the client's message, and an
+    // Approve / Deny + comment control. Approving can optionally apply the SAFE
+    // fields to the client's record (server enforces the safe-field whitelist).
+    function openEditRequestDrawer(r) {
+      openDrawer();
+      aq("admDrawerTitle").innerHTML = esc(EDIT_SECTION_LABEL[r.section] || pretty(r.section)) +
+        " request<small>" + esc(r.client_name || r.client_email || "") + "</small>";
+      const rd = r.requested_data && typeof r.requested_data === "object" ? r.requested_data : {};
+      const cd = r.current_data && typeof r.current_data === "object" ? r.current_data : {};
+      const keys = Object.keys(rd);
+
+      let h = '<div class="adm-section"><h4>Request</h4>';
+      h += '<div class="adm-kv"><span class="k">Client</span><span class="v">' + esc(r.client_name || "—") + (r.client_email ? " · " + esc(r.client_email) : "") + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Section</span><span class="v">' + esc(EDIT_SECTION_LABEL[r.section] || pretty(r.section)) + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Status</span><span class="v">' + badge(r.status) + "</span></div>";
+      h += '<div class="adm-kv"><span class="k">Submitted</span><span class="v">' + fmtDateTime(r.created_at) + "</span></div>";
+      if (r.reviewed_at) h += '<div class="adm-kv"><span class="k">Reviewed</span><span class="v">' + fmtDateTime(r.reviewed_at) + "</span></div>";
+      h += "</div>";
+
+      h += '<div class="adm-section"><h4>Requested changes</h4>';
+      if (keys.length) {
+        keys.forEach((k) => {
+          const from = (cd[k] != null && String(cd[k]).trim() !== "") ? '<span style="opacity:.55">' + esc(String(cd[k])) + "</span> → " : "";
+          h += '<div class="adm-kv"><span class="k">' + esc(EDIT_FIELD_LABEL[k] || k) + '</span><span class="v">' + from + "<b>" + esc(String(rd[k])) + "</b></span></div>";
+        });
+      } else {
+        h += '<p style="color:var(--adm-muted);font-size:.84rem">No structured field changes — see the message below.</p>';
+      }
+      h += "</div>";
+
+      if (r.request_message) {
+        h += '<div class="adm-section"><h4>Client message</h4><p style="font-size:.9rem;line-height:1.55;white-space:pre-wrap">' + esc(r.request_message) + "</p></div>";
+      }
+
+      const applyable = keys.filter((k) => EDIT_APPLY_SAFE.includes(k));
+      h += '<div class="adm-section"><h4>Review</h4>';
+      h += '<div class="adm-fld"><label>Comment to client (optional)</label><textarea id="er-comment" placeholder="Explain your decision — the client sees this in their Messages tab.">' + esc(r.admin_comment || "") + "</textarea></div>";
+      if (applyable.length) {
+        h += '<label style="display:flex;gap:.5rem;align-items:flex-start;font-size:.85rem;color:var(--adm-text);cursor:pointer;margin-top:.3rem">' +
+          '<input type="checkbox" id="er-apply" checked style="margin-top:.2rem" /> <span>Apply the requested changes to the client’s record (' + applyable.map((k) => esc(EDIT_FIELD_LABEL[k] || k)).join(", ") + ")</span></label>";
+      } else if (keys.length) {
+        h += '<p style="color:var(--adm-muted);font-size:.82rem;margin-top:.3rem">These fields aren’t auto-applied — update them in the client’s profile if you approve.</p>';
+      }
+      h += "</div>";
+
+      aq("admDrawerBody").innerHTML = h;
+
+      const foot = aq("admDrawerFoot");
+      foot.style.display = "flex";
+      foot.innerHTML = '<button class="adm-btn primary" id="er-approve" style="flex:1">Approve</button>' +
+        '<button class="adm-btn danger" id="er-deny" style="flex:1">Deny</button>' +
+        '<button class="adm-btn" id="er-close">Close</button>';
+      aq("er-close").onclick = closeDrawer;
+      aq("er-approve").onclick = () => reviewEditReq(r, "approved");
+      aq("er-deny").onclick = () => reviewEditReq(r, "denied");
+    }
+
+    async function reviewEditReq(r, decision) {
+      const commentEl = aq("er-comment");
+      const applyEl = aq("er-apply");
+      const comment = commentEl ? commentEl.value.trim() : "";
+      const apply = decision === "approved" && applyEl ? applyEl.checked : false;
+      const verb = decision === "approved" ? "Approve" : "Deny";
+      const ok = await confirmAction(verb + " request",
+        decision === "approved"
+          ? "Approve this request" + (apply ? " and apply the requested changes to the client’s record" : "") + "?"
+          : "Deny this request?",
+        verb);
+      if (!ok) return;
+      try {
+        const res = await adminApi("review_edit_request", { id: r.id, decision: decision, admin_comment: comment || null, apply: apply });
+        toast(decision === "approved" ? "Request approved" : "Request denied",
+          (res && res.applied && res.applied.length) ? "Applied: " + res.applied.join(", ") : "");
+        closeDrawer();
+        refreshCurrent();
+        loadEditReqBadge();
+      } catch (e) { toast("Couldn’t update request", e.message, true); }
+    }
+
+    // Load the message history the admin has sent to a client (user drawer).
+    async function loadDrawerMessages(userId) {
+      const el = aq("dk-msg-history");
+      if (!el) return;
+      try {
+        const data = await adminApi("list_user_messages", { user_id: userId });
+        const rows = data.rows || [];
+        if (!rows.length) { el.innerHTML = '<p style="color:var(--adm-muted);font-size:.84rem">No messages sent yet.</p>'; return; }
+        el.innerHTML = '<div style="display:flex;flex-direction:column;gap:.5rem;max-height:220px;overflow-y:auto">' +
+          rows.map((m) =>
+            '<div style="border:1px solid var(--adm-bd-2);border-radius:9px;padding:.5rem .65rem;background:var(--adm-panel)">' +
+            '<div style="font-size:.72rem;color:var(--adm-muted);margin-bottom:.2rem">' + fmtDateTime(m.created_at) + (m.is_read ? " · Read" : " · Unread") + "</div>" +
+            (m.title ? '<div style="font-weight:700;font-size:.82rem;margin-bottom:.15rem">' + esc(m.title) + "</div>" : "") +
+            '<div style="font-size:.84rem;line-height:1.45;white-space:pre-wrap">' + esc(m.body) + "</div></div>").join("") + "</div>";
+      } catch (e) { el.innerHTML = '<p style="color:#b3322a;font-size:.84rem">Couldn’t load messages: ' + esc(e.message) + "</p>"; }
     }
 
     // ---- Website drawer (create / edit) --------------------------------
@@ -3790,6 +4332,16 @@
       } catch (e) { /* non-critical */ }
     }
 
+    // ---- Edit-requests badge (count of pending edit requests) -----------
+    async function loadEditReqBadge() {
+      try {
+        const data = await adminApi("list_edit_requests", { filters: { status: "pending" } });
+        const n = (data.rows || []).length;
+        const b = aq("admEditReqBadge");
+        if (n > 0) { b.textContent = n; b.style.display = ""; } else b.style.display = "none";
+      } catch (e) { /* non-critical */ }
+    }
+
     // =====================================================================
     // SETTINGS — "Disable Everything" platform kill switch.
     // Flips a single reversible Supabase flag (platform_settings.disabled)
@@ -3933,6 +4485,7 @@
       loadOverview();
       loadAlertBadge();
       loadRequestBadge();
+      loadEditReqBadge();
     };
   })();
   </script>

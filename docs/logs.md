@@ -5343,3 +5343,69 @@ Requests with a working status dropdown + pending badge.
 - **(low)** The popup's `close()` cleared the password only on the success path; on Cancel/X/Escape/backdrop
   the plaintext lingered in the `#domReqPass` input. **Fixed:** `close()` now clears `passEl.value`.
 - Re-verified: `node --check api/admin.js` + both inline `dashboard.html` scripts compile.
+
+---
+
+## 2026-06-30 — Worker (Opus) — Request-based editing + Messages (edit_requests / user_messages)
+
+**Why:** Owner wants clients to REQUEST changes (not directly edit) to their Account / Business / Project
+info, plus a Messages tab; admins review requests (approve/deny/comment) and send direct messages. Also:
+the "Request Hosting" button must actually file a request.
+
+**New tables — `db/edit-requests-schema.sql` (run by hand in the Supabase SQL editor):**
+- `edit_requests` (id, user_id→auth.users, section in account/business/project/**hosting**, current_data
+  jsonb, requested_data jsonb, request_message, status pending/approved/denied, admin_comment, reviewed_by,
+  reviewed_at, created_at, updated_at). RLS: a client may INSERT only a **pending** request for themselves
+  (WITH CHECK forces status='pending' + null review fields), SELECT own; **no** client update/delete; admin
+  (is_admin) everything.
+- `user_messages` (id, user_id, sent_by, title, body, message_type admin_message/request_update,
+  related_request_id, is_read, created_at). RLS: client SELECT own + UPDATE own; admin all; **no client
+  INSERT** (so a client can't forge an admin message). Column lock: `revoke update … ; grant update
+  (is_read) to authenticated` so a client can only flip the read flag, never rewrite a body.
+
+**Admin API — `api/admin.js`:** new actions `list_edit_requests`, `review_edit_request`
+(approve/deny + comment + optional **safe-field** apply — `EDIT_APPLY_SAFE_FIELDS`, which EXCLUDES email/
+domain/status; applies to the client's most-recent project_inquiries row), `send_user_message`,
+`list_user_messages`. All behind the existing admin-email gate; every write audited.
+
+**Client dashboard (`dashboard.html`):**
+- "Request Edit" buttons on Account / Business / Project; "Request Hosting" now opens the same drawer in a
+  message-only "hosting" mode. A right-side **request drawer** (`#ceDrawer`) shows current info + structured
+  prefilled fields + a message box, and inserts an `edit_requests` row **via the RLS-guarded `db` client**
+  (never touches real data). Loading / success / error states; all values escaped (`ceEsc`).
+- New **Messages** tab: fetches the client's own `edit_requests` + `user_messages`, renders request cards
+  (section, Pending/Approved/Denied pill, requested-change summary, admin reply, submitted/updated dates)
+  and admin-message cards; empty state "You don't have any messages yet."; unread admin messages are marked
+  read on open; an unread-count badge shows on the nav item.
+
+**Admin dashboard (`dashboard.html`):**
+- Existing domain-change tab **relabeled "Domain Requests"** (unchanged otherwise). New **"Requests"** view
+  (`data-view="editrequests"`) lists edit requests (When · Client · Section · Requested change · Status);
+  row → a **review drawer** in the shared `admDrawer` with current→requested diffs, the client's message, an
+  Approve/Deny + comment control, and an "apply safe fields" checkbox. Pending-count nav badge.
+- The user drawer gained a **Messages** section: message history + a compose box (`send_user_message`).
+
+**Untouched:** payments/checkout, Stripe webhook, hosting/subscription billing, invoice payment, auth flow,
+and the existing domain-change request feature all unchanged.
+
+**Verified:** `node --check api/admin.js` passes; both inline `dashboard.html` scripts compile (vm.Script);
+all new identifiers cross-checked. No commit (none requested).
+
+### Required before it works
+Run **`db/edit-requests-schema.sql`** in the Supabase SQL editor. No new env vars.
+
+### Suggested next task
+Live-verify the full loop (client submits a request → admin approves with comment + apply → client sees the
+approved status, comment, and updated data in Messages), plus admin Send Message → client Messages.
+
+**Adversarial review (4-dimension workflow, 10 agents) + fixes — no security/RLS holes found; 6 low/medium
+correctness+UX findings, all fixed:**
+- **(medium)** `applyEditRequest` skipped empty-string values, so approving a request that intentionally
+  CLEARS a field silently didn't clear it. Fixed: a present key (incl. "") is now an intentional change.
+- **(low)** The domain-requests view still rendered an h1 "Requests", colliding with the new edit-requests
+  "Requests" header. Fixed: `VIEWS.requests` title → "Domain Requests".
+- **(low)** The Messages "When" column was `sortable` but `listEditRequests` ignored sortBy. Fixed: it now
+  honours the created_at sort direction.
+- **(low)** `loadMessages` zeroed the unread badge even if the mark-read UPDATE returned an error (supabase-js
+  resolves `{error}` rather than throwing). Fixed: the badge clears only on a successful write.
+- Re-verified: `node --check api/admin.js` + both inline `dashboard.html` scripts compile.

@@ -126,6 +126,8 @@ module.exports = async (req, res) => {
       case "list_domains":      return res.status(200).json(await listDomains(supa, p));
       case "list_alerts":       return res.status(200).json(await listAlerts(supa, p));
       case "list_requests":     return res.status(200).json(await listRequests(supa, p));
+      case "list_edit_requests":return res.status(200).json(await listEditRequests(supa, p));
+      case "list_user_messages":return res.status(200).json(await listUserMessages(supa, p));
       case "list_activity":     return res.status(200).json(await listActivity(supa, p));
       case "search":            return res.status(200).json(await globalSearch(supa, p));
       case "get_user":          return res.status(200).json(await getUser(supa, p));
@@ -145,6 +147,8 @@ module.exports = async (req, res) => {
       case "assign_domain":     return res.status(200).json(await assignDomain(supa, caller, p));
 
       case "set_request_status":return res.status(200).json(await setRequestStatus(supa, caller, p));
+      case "review_edit_request":return res.status(200).json(await reviewEditRequest(supa, caller, p));
+      case "send_user_message": return res.status(200).json(await sendUserMessage(supa, caller, p));
 
       case "set_payment_status":return res.status(200).json(await setPaymentStatus(supa, caller, p));
       case "update_plan":       return res.status(200).json(await updatePlan(supa, caller, p));
@@ -719,6 +723,68 @@ async function listRequests(supa, p) {
   return { rows, hasMore: (data || []).length === (Number(p.limit) || 50) };
 }
 
+// Edit requests (the dashboard "Requests" view). Clients ask the admin to change
+// their account / business / project info, or to set up hosting. Enriches each
+// row with the client's live identity and returns the full set (low volume,
+// like the alerts/domains lists) so the generic table renders one clean list.
+async function listEditRequests(supa, p) {
+  const f = p.filters || {};
+  let q = supa.from("edit_requests").select("*");
+  if (f.status) q = q.eq("status", f.status);
+  if (f.section) q = q.eq("section", f.section);
+  if (f.from) q = q.gte("created_at", f.from);
+  if (f.to) q = q.lte("created_at", f.to + "T23:59:59.999Z");
+  // The only sortable column in this view is created_at ("When"); honour its
+  // direction, else default to newest-first.
+  const sortCol = p.sortBy === "created_at" ? "created_at" : "created_at";
+  q = q.order(sortCol, { ascending: (p.sortDir || "desc") !== "desc" });
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+
+  let rows = data || [];
+  const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+  let inqMap = {};
+  if (ids.length) {
+    const { data: inq } = await supa
+      .from("project_inquiries")
+      .select("user_id, full_name, business_name, email")
+      .in("user_id", ids);
+    inqMap = indexBy(inq, "user_id");
+  }
+  rows = rows.map((r) => {
+    const u = inqMap[r.user_id] || {};
+    return {
+      ...r,
+      client_name: u.full_name || u.business_name || "—",
+      client_email: u.email || "—",
+      business_name: u.business_name || "—",
+    };
+  });
+
+  if (p.search) {
+    const s = p.search.toLowerCase();
+    rows = rows.filter((r) =>
+      [r.client_name, r.client_email, r.business_name, r.request_message, r.admin_comment, r.section]
+        .some((v) => v && String(v).toLowerCase().includes(s)));
+  }
+  return { rows, hasMore: false };
+}
+
+// All messages the admin has sent to one client (newest first) — used by the
+// admin user drawer's Messages thread. Read-only.
+async function listUserMessages(supa, p) {
+  const userId = typeof p.user_id === "string" ? p.user_id.trim() : "";
+  if (!userId) return { rows: [] };
+  const { data, error } = await supa
+    .from("user_messages")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+  return { rows: data || [] };
+}
+
 async function listActivity(supa, p) {
   const f = p.filters || {};
   let q = supa.from("admin_activity_log").select("*");
@@ -950,6 +1016,109 @@ async function setRequestStatus(supa, caller, p) {
       changed_field: "admin_notes", old_value: before.admin_notes || "", new_value: updates.admin_notes || "",
     });
   }
+  return { row: data };
+}
+
+// SAFE project_inquiries columns an approved edit request may write. Deliberately
+// EXCLUDES email (auth-sensitive — never auto-changed here), domain (its own flow),
+// and status/terms_agreed (admin-only meta). Everything else is plain profile text.
+const EDIT_APPLY_SAFE_FIELDS = [
+  "full_name", "cell_phone", "business_name", "business_address",
+  "business_description", "products_services", "website_goals", "visitor_actions",
+  "websites_liked", "color_preferences", "design_notes", "additional_info",
+];
+
+// Apply an APPROVED edit request's requested_data to the client's most-recent
+// project_inquiries row — SAFE fields only. Returns the list of fields written.
+async function applyEditRequest(supa, req) {
+  const requested = req && req.requested_data && typeof req.requested_data === "object" ? req.requested_data : {};
+  const updates = {};
+  for (const k of EDIT_APPLY_SAFE_FIELDS) {
+    // A present key is an intentional change — including an empty string, which
+    // clears the field. (Only skip keys the client didn't send.)
+    if (Object.prototype.hasOwnProperty.call(requested, k) && requested[k] !== undefined) {
+      updates[k] = requested[k] == null ? "" : requested[k];
+    }
+  }
+  if (!Object.keys(updates).length) return [];
+
+  const { data: rows } = await supa
+    .from("project_inquiries")
+    .select("id")
+    .eq("user_id", req.user_id)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const inqId = rows && rows[0] && rows[0].id;
+  if (!inqId) return []; // no linked inquiry row to write to
+
+  const { error } = await supa.from("project_inquiries").update(updates).eq("id", inqId);
+  if (error) throw new Error("Couldn’t apply the changes: " + error.message);
+  return Object.keys(updates);
+}
+
+// Approve or deny a client's edit request, save the admin comment, and — only
+// when approving with apply=true — write the SAFE requested fields to the
+// client's record. Every change is audited. The client sees the status + comment
+// in their Messages tab (which reads edit_requests directly).
+async function reviewEditRequest(supa, caller, p) {
+  const id = p.id;
+  const decision = p.decision;
+  if (!id) throw new Error("A request id is required.");
+  if (decision !== "approved" && decision !== "denied") throw new Error("Decision must be approved or denied.");
+  const comment = (p.admin_comment != null && String(p.admin_comment).trim() !== "") ? String(p.admin_comment) : null;
+  const apply = decision === "approved" && !!p.apply;
+
+  const { data: before } = await supa.from("edit_requests").select("*").eq("id", id).maybeSingle();
+  if (!before) throw new Error("Request not found.");
+
+  // Apply first, so a failed apply doesn't leave a mismatched "approved" status.
+  let applied = [];
+  if (apply) applied = await applyEditRequest(supa, before);
+
+  const { data, error } = await supa.from("edit_requests").update({
+    status: decision,
+    admin_comment: comment,
+    reviewed_by: caller.id || null,
+    reviewed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq("id", id).select().maybeSingle();
+  if (error) throw new Error(error.message);
+
+  await logActivity(supa, {
+    admin_email: caller.email,
+    action: decision === "approved" ? "edit_request_approved" : "edit_request_denied",
+    entity_type: "edit_request", entity_id: String(id), affected_user_id: before.user_id,
+    changed_field: "status", old_value: before.status || "pending",
+    new_value: decision + (applied.length ? " (applied: " + applied.join(", ") + ")" : ""),
+  });
+  return { row: data, applied };
+}
+
+// Send a direct message from the admin to a client (shown in the client's
+// Messages tab). Admin-only (this whole file is behind the admin-email gate).
+async function sendUserMessage(supa, caller, p) {
+  const userId = typeof p.user_id === "string" ? p.user_id.trim() : "";
+  const body = typeof p.body === "string" ? p.body.trim() : "";
+  const title = (p.title != null && String(p.title).trim() !== "") ? String(p.title).trim() : null;
+  if (!userId) throw new Error("A recipient is required.");
+  if (!body) throw new Error("Message body is required.");
+  if (body.length > 5000) throw new Error("Message is too long (max 5000 characters).");
+
+  const { data, error } = await supa.from("user_messages").insert({
+    user_id: userId,
+    sent_by: "admin",
+    title,
+    body,
+    message_type: "admin_message",
+    related_request_id: p.related_request_id || null,
+  }).select().maybeSingle();
+  if (error) throw new Error(error.message);
+
+  await logActivity(supa, {
+    admin_email: caller.email, action: "user_message_sent", entity_type: "message",
+    entity_id: data ? String(data.id) : null, affected_user_id: userId,
+    changed_field: null, old_value: null, new_value: title || body.slice(0, 60),
+  });
   return { row: data };
 }
 
