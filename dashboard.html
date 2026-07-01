@@ -834,7 +834,6 @@
         <p class="field"><span class="f-label">Email:</span> <span class="f-value" id="acc-email">…</span></p>
         <p class="field">
           <span class="f-label">Password:</span> <span class="f-value">Hidden for security</span>
-          <a class="f-link" id="verify-session" role="button" tabindex="0">Verify session</a>
           <a class="f-link" id="reset-pw" role="button" tabindex="0">Reset Password</a>
           <span class="f-sub hidden" id="pw-verify-status"></span>
         </p>
@@ -1337,23 +1336,6 @@
         "ws_session=; path=/; SameSite=Lax; Secure; max-age=0";
       window.location.replace("/login");
     });
-
-    // ---- Verify session (re-validates the Supabase session with the server;
-    //      never fetches, stores, or reveals the real password) -------------
-    $("verify-session").addEventListener("click", () => doVerifySession());
-    $("verify-session").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doVerifySession(); } });
-    async function doVerifySession() {
-      const statusEl = $("pw-verify-status");
-      try {
-        // getUser() validates the current session/JWT against Supabase.
-        const { data, error } = await db.auth.getUser();
-        if (error || !data || !data.user) throw new Error("session");
-        statusEl.textContent = "Email verified this session. You can reset your password securely.";
-      } catch (_) {
-        statusEl.textContent = "Could not verify your session. Please sign in again.";
-      }
-      statusEl.classList.remove("hidden");
-    }
 
     // ---- Reset password (real Supabase auth, never reveals a password) --
     $("reset-pw").addEventListener("click", () => doReset());
