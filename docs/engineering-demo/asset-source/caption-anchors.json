@@ -1,0 +1,32 @@
+{
+  "version": "v1",
+  "generated": "2026-07-02, from the stand-in scene capture pass (see docs/engineering-demo/review-report.md and the build report); regenerate when the production laptop.v1.glb replaces the stand-in",
+  "stills": [
+    { "still": "r1", "anchors": [
+      { "caption": "Lid", "x": 86.9, "y": 17.5 }
+    ]},
+    { "still": "r2", "anchors": [
+      { "caption": "Cooling fan", "x": 52.4, "y": 23.1 },
+      { "caption": "Heat pipes", "x": 70.3, "y": 37.3 },
+      { "caption": "Storage (SSD)", "x": 56.9, "y": 34.1 },
+      { "caption": "Memory (RAM)", "x": 77.0, "y": 52.2 },
+      { "caption": "Support boards", "x": 40.7, "y": 32.7 }
+    ]},
+    { "still": "r3", "anchors": [
+      { "caption": "Mainboard", "x": 82.9, "y": 50.7 },
+      { "caption": "Chassis", "x": 42.5, "y": 50.4 },
+      { "caption": "Battery", "x": 78.3, "y": 68.7 }
+    ]},
+    { "still": "r4", "anchors": [
+      { "caption": "Lid", "x": 74.2, "y": 8.8 },
+      { "caption": "Cooling fan", "x": 37.2, "y": 30.1 },
+      { "caption": "Heat pipes", "x": 56.3, "y": 33.2 },
+      { "caption": "Storage (SSD)", "x": 43.1, "y": 33.0 },
+      { "caption": "Memory (RAM)", "x": 64.9, "y": 37.1 },
+      { "caption": "Support boards", "x": 26.8, "y": 33.7 },
+      { "caption": "Mainboard", "x": 70.2, "y": 64.2 },
+      { "caption": "Chassis", "x": 30.7, "y": 80.6 },
+      { "caption": "Battery", "x": 65.9, "y": 97.9 }
+    ]}
+  ]
+}

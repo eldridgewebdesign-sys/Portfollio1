@@ -6,6 +6,117 @@
 
 ---
 
+## 2026-07-02 14:20 - Developer (Implementation) - engineering-demo-build-1
+
+Action:
+Finished
+
+Task:
+Build the `/engineering` cinematic laptop-teardown demo from
+`docs/engineering-demo/05-master-specification.md` (T-09; owner-directed start — the owner's build
+instruction supplies the D-017 go-ahead, adopting the recorded closing line and page title).
+
+Files claimed:
+
+- engineering/** (new directory — page, css, js, vendor, assets)
+- vercel.json (one headers entry, required by 05 §2.4)
+- docs/engineering-demo/asset-source/caption-anchors.json (capture sidecar per 05 §3.4)
+
+Files changed:
+
+- engineering/index.html — gate script, import map, critical CSS, semantic story document (05 §8.2/§8.3/§10.3)
+- engineering/css/engineering.css — static article + 3d overlay styles, chips, ending (05 §4)
+- engineering/js/{main,loader,scene,camera-rig,timeline,quality,fallback,debug,model}.js — full runtime (05 §6–§12)
+- engineering/vendor/{three-r180,gsap-3.13.0,decoders-r180}/** + vendor/README.md (SHA-256 manifest; pins three r180 / gsap 3.13.0)
+- engineering/assets/fallback/teardown-r{0..4}_{1280,2560}.v1.webp — 10 stills captured from the live scene
+- vercel.json — immutable cache headers for /engineering/(vendor|assets)
+- docs/engineering-demo/asset-source/caption-anchors.json — measured caption anchors
+- docs/logs.md (this entry)
+
+Summary:
+Complete build of `/engineering` on the master spec: mode gate, loader, Three.js scene (renderer,
+lights, ground rig per D-012), camera rig with the six poses, the full B0–B8 master timeline with
+the exact copy deck and label system, progress smoother (τ=70 ms + snap-on-drain), quality tiers +
+governor, static/no-JS/reduced-motion article, mid-session fallback conversion, context-loss
+recovery. The production GLB/KTX2/HDR assets do not exist yet, so the page runs on the sanctioned
+stand-in (02 §14): a procedural model in js/model.js carrying the byte-exact 05 §5.2 node names,
+§5.3 dimensions, and §5.5 materials, with RoomEnvironment as IBL; loader.js has the full
+byte-weighted production path behind an ASSETS_READY flag. Deviations (all documented in code and
+the build report): root-absolute paths (cleanUrls serves /engineering without a trailing slash, so
+relative subresource paths resolve at the site root — 05 §2.1's movability claim does not survive
+its own routing); GSAP injected by main.js in 3d mode only (05 §8.2 vs §12 P1 conflict resolved in
+§12's favor); a lid second-rise 0.50W→1.08W at 0.283–0.343 (at +0.50W the lid occludes B4/B5's
+subjects from P3 — ray-checked; needs a superseding decisions.md entry); stills are WebP-only
+(canvas AVIF encode unavailable) and rendered from the stand-in — re-capture when the real model
+lands.
+
+Testing:
+Headless Chrome (puppeteer-core + SwiftShader): 3d init clean (zero console errors/warnings, zero
+off-origin requests, zero assets/fallback fetches in 3d mode — QA-1); scroll pass at 10 addresses
+with screenshots; forward/reverse determinism at p=0.46 pixel-identical (QA-7); skip link lands at
+p=1.000 with CTA focusable (QA-11 partial); no-JS renders the full article with all five stills;
+reduced-motion → static with zero animation/3D bytes (QA-8); WebGL2-blocked → static, no error UI
+(QA-10); mobile 390×844 → comp-mobile + 1700vh track, no overflow, no errors; file:// shows the
+guard (QA-14); homepage regression OK. node --check passes on all nine modules. Not run (needs
+real hardware/devices): QA-2..QA-6, QA-12 (context-loss), QA-13 (screen readers), QA-16 timing
+audit on real GPU.
+
+Risks / Notes:
+Manager: T-09 → [REVIEW]. The lid second-rise and the GSAP load-order change need superseding
+decisions.md entries; the stand-in model and WebP-only stills are placeholders pending the
+04-asset-pipeline round (flip loader.js ASSETS_READY when laptop.v1.glb + textures + HDR land,
+then re-capture stills and regenerate caption-anchors.json). Sizes: our JS 56.3 KB (≤60 KB cap),
+stills set 294 KB (≤1.6 MB), 3d wire today ≈0.97 MB (≤8.5 MB). Vendored addons exceed 05 §11.1's
+180 KB line (real r180 GLTFLoader alone is 112 KB) but the loader graph is dormant until
+ASSETS_READY — noted in vendor/README.md.
+
+## 2026-07-02 - Reviewer - engineering-demo-round-6-full-review
+
+Action:
+Reviewed
+
+Task:
+Owner-directed full-project review of the `/engineering` demo blueprint — all hub documents, all
+four specialist documents at current revisions, and `05-master-specification.md` — judged at the
+Site-of-the-Day bar (category scores, AI-slop sweep, technical risks, missing opportunities,
+contradiction hunt, awards verdict).
+
+Files claimed:
+
+- docs/engineering-demo/review-report.md (Reviewer-owned)
+
+Files changed:
+
+- docs/engineering-demo/review-report.md (Round 6 appended; Rounds 1–5 preserved untouched)
+- docs/logs.md (this entry)
+
+Summary:
+Verdict: **APPROVED WITH CHANGES** — overall 8.3/10. The blueprint's arithmetic and interfaces
+survived independent re-derivation (arrival trigonometry, reading floors, word budgets, payload
+sums all verified). Also reviewed the previously unreviewed post-approval addenda (02 rev 6
+§13–§15/QA-18-19; 03 rev 6 §5.5/§6.4) — both Approved, conditional on a 05 fold-in. Gating
+findings before T-09 may start: (1) 05 is stale vs the addenda and README/taskboard overstate the
+review state; (2) the 10 parked 05 audit defects (incl. the verified corrupted §2.3 sentence and
+unenforced CTA clickability) must be fixed in-document, not "in the first implementation pass";
+(3) no social-share metadata (og:image etc.) exists anywhere — a distribution hole for a page
+whose success criteria depend on link-sharing; (4) four live contradictions with ruled survivors
+(battery caption 01 vs 05 §14.3(m); alt-text vs captions; ending enter-ramps vs the 0.015
+grammar; breakpoint statements). Non-gating: naive-user pacing test for the H4 trough, Playfair
+11.5px legibility on 1×-DPR panels, tier-C visual acceptance, measurement/hover/deep-link/
+predecessor decisions to be made on the record. D-017 owner sign-off remains the standing blocker.
+
+Testing:
+Documentation review only — no code exists, nothing runnable. All numeric claims spot-checked by
+hand; greps run for social metadata, bead-blasted ruling, battery captions, and the corrupted
+sentence (all confirmed as reported).
+
+Risks / Notes:
+The Manager should: sync README/taskboard to the true review state, drive the four documentation
+fixes and the 05 re-synthesis (hours of work), and obtain the D-017 sign-off. The Reviewer does
+not edit the board; T-06/T-08/T-09 status updates are the Manager's per the role rules.
+
+---
+
 ## 2026-07-01 - Engineering Demo Project Manager - engineering-demo-blueprint
 
 Action:

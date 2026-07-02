@@ -1714,3 +1714,415 @@ reasons. Next, per D-008: the 05-master-specification synthesis and its complete
 audit before any code — carrying forward the two optional notes above and the one open item,
 D-017's owner sign-off on the closing line and the page title. Nothing else stands between this
 documentation set and implementation.
+
+---
+
+## Round 6 — Full-project review (2026-07-02)
+
+- **Scope:** the whole project, reviewed as a first-time reader would meet it — every hub document
+  (README, project-vision, references, decisions, taskboard), all four specialist documents at
+  their current revisions (01 rev 5, 02 rev 6, 03 rev 6, 04 rev 4.1), and
+  `05-master-specification.md`. This round is not a re-litigation of rounds 1–5; it judges the
+  finished blueprint the way an Awwwards juror, a senior UX designer, a creative director, a
+  frontend architect, and a first-time client would judge the page it describes. It also covers
+  the two post-approval addenda that no prior round has seen: **02 revision 6** (§13 memory
+  management, §14 build order, §15 change absorption, QA-18/19) and **03 revision 6** (§5.5 optics
+  nulls, §6.4 lighting constancy) — both self-flagged as awaiting review.
+- **Method:** every arithmetic claim spot-checked (word counts, reading floors, anchor formula,
+  budget sums, tableau geometry — all verified correct; details under Strengths), every
+  cross-document interface checked against its D-entry, and the master specification checked as
+  the sole build source it claims to be.
+
+### Category scores
+
+| Category | Score | One-line verdict |
+|---|---|---|
+| Vision | **10** | Every element traces to one sentence; genuinely rare coherence |
+| Originality | **7** | The execution is distinctive; the format is a known genre |
+| Technical ambition | **8** | Discipline over novelty — impressive to engineers, not frontier tech |
+| User experience | **8** | Exemplary on paper; one real pacing risk mid-page |
+| Animation | **9** | Every motion audited and justified; one unrecorded grammar exception |
+| Camera | **9** | Five moves, each earning its place; the height vocabulary is excellent |
+| Lighting | **8** | Single-source discipline is right; total constancy is a monotony bet |
+| Typography | **7** | Coherent system; a real legibility risk at the small sizes |
+| Asset quality | **8** | The spec is superb; execution capability is the unpriced risk |
+| Storytelling | **9** | A real arc, not a sequence — the copy is the story |
+
+**Category commentary (what the numbers mean):**
+
+**Vision — 10.** The project's strongest asset. "Complexity, handled" is dramatized, not claimed;
+the §9 story-sentence test is applied to every element and the closed inventory (01 §7.1) makes it
+enforceable. No document contradicts the vision anywhere. This is what total commitment looks like.
+
+**Originality — 7, and it must be said plainly.** A scroll-scrubbed product teardown is a known
+genre: Apple built it with image sequences, and exploded-view product pages are an established
+award-site format. A juror who has seen fifty scroll-driven product pages will not be surprised by
+the *format*. What is original: the machine takes itself apart with no hands and no technician; the
+warm domestic room instead of the product void; the copy voice ("The chassis stays, and asks for no
+credit"); the page's one sentence about itself read over a frame that proves it. The
+differentiation is real but it lives entirely in execution quality and tone — if the built assets
+land at 90% of the spec, the page reads as a competent Apple homage, and originality collapses to a
+5. The concept gives no cover; the craft must all arrive.
+
+**Technical ambition — 8.** Deterministic scrub with published lag math, render-on-demand with a
+zero-idle guarantee, no build step, no CDN, a designed static branch — experienced developers will
+respect this, and the view-source story (an import map, eight small modules, data tables) is
+genuinely good. But nothing here will make a developer ask "how is that possible?" — it is
+excellence within known technique, not new technique. That is a deliberate, defensible choice
+(references §5 fences out award-bait complexity); it just caps this score.
+
+**User experience — 8.** The load experience, the no-hijack rule, the reversibility contract, and
+the fallback matrix are as good as this genre gets on paper. The deduction is the mid-page pacing
+risk (see Weaknesses 1) and the back-navigation rewind (Minor 4), both fixable or testable.
+
+**Animation — 9.** The arrival-anchor formula (`a + 0.47 × (b − a)`, derived from the LIFT bezier,
+verified correct), the reading-floor math (re-run against final word counts: all six cards pass),
+the one-mover rule with one sanctioned exception, the ban list — this is the most rigorous motion
+spec this reviewer has seen at documentation stage. The deduction: the ending's own enter-ramps
+break the 0.015 grammar without a recorded exception (Critical 2, item d).
+
+**Camera — 9.** Distances derived, not eyeballed (P0's trigonometry re-verified: extent 1.197W at
++24°, d ≈ 4.15W → 38.2%); elevation as the expressive axis; the never-cross-the-line rule; the
+purpose audit killing a sixth move. Would every planned move improve the experience? Yes — each
+changes what the next beat's motion *means*, which is the correct test. No unnecessary movement
+survives in the current storyboard.
+
+**Lighting — 8.** One window, warm fill, physical clamps, the shadow stack as depth narration —
+correct and disciplined. The risk is stated as a bet, so score it as one: 03 §6.4 bans every
+lighting change across ~10,800 px of scroll, §5.5 bans depth of field, and the room never varies.
+All visual variety must come from camera height and part positions. If the built materials are
+excellent, constancy reads as confidence; if they are merely good, the frame goes monotonous around
+B5 and nothing in the design can rescue it. The bet is coherent with the vision — but it is a bet,
+and the documents nowhere acknowledge that a competent-but-not-excellent render makes it a losing one.
+
+**Typography — 7.** The two-font discipline is right for a page of this site, and the caps-planning
+(sentence-case markup, ≤ 6-word Distillery lines, glyph-coverage gate) is professional. Two real
+concerns. First: **Playfair Display at 0.72rem (~11.5 px) for labels, microtext, and captions.**
+Playfair is a display face — high stroke contrast, delicate hairlines — and at 11.5 px on a 1×-DPR
+screen (exactly the tier-C 1366×768 office laptops the primary audience owns) the hairlines will
+shimmer or drop. 01 §4.3's reasoning ("Playfair 600 caps stays crisp") is asserted, never tested;
+no QA row covers microtext legibility on low-DPI hardware. Second: memorability — the typography is
+deliberately the site's system, which means the page's type will be *correct* rather than
+*remembered*; the identity load rests on the scene, which is consistent with the vision but caps
+this score. (Fix for the first concern is cheap: an M1-stage render test on a 1×-DPR screen, with
+the pre-priced fallback of a size/weight step for chip text.)
+
+**Asset quality — 8.** The pipeline spec is the best document of its kind in this project's stack:
+per-part AO isolation, ETC1S-authored silkscreen with a legibility tripwire, provenance manifest,
+true-separation QA, the populated-vs-bare resolution. The two unpriced risks: (1) execution — the
+spec demands a photoreal hero ultrabook, a believable authored HDRI, and film-grade grading, and no
+document asks whether the project has the 3D artist those demands assume; QA gates catch failure
+but cannot produce success. (2) The whole page rests on one GLB and one HDR — there is no
+"assets landed at 80%" contingency anywhere, and the vision's own standard ("photographed, not
+rendered") is the hardest bar in the project. Missing assets: none within the page's own scope —
+but see Missing opportunities for the social-share image, which is a real absent asset.
+
+**Storytelling — 9.** It is a story, not a sequence: setup (a sealed thing), lessons (each layer
+names itself), midpoint payoff (the parts you've heard of), quiet turn (the parts nobody thanks),
+climax (the spread), resolution (the diagram, the echo of the homepage promise). The battery ruling
+(D-015) shows the narrative judgment working: naming the part that never moves *because* it never
+moves. Deduction: B5 is the weakest beat — its honesty-of-the-unglamorous point is real but it
+lands directly after the page's longest silence, which is a structural low-energy trough (see
+Weaknesses 1).
+
+### AI slop detection
+
+**On the designed page: effectively clean — the strictest sweep this reviewer can run finds no
+occurrence of the listed patterns.** No gradients without physical cause (census: three, each with
+a stated source), no particles, no glassmorphism, no numbered eyebrows, no fake statistics, no
+invented testimonials, no hype adjectives (banned-word grep across all page copy: zero hits), no
+template hero/cards/CTA shape (the §9 rule-14 test holds — the copy is unusable without the
+machine), no stock interactions, no scroll-jacking, no filler whitespace (every hold has a stated
+reading or breathing purpose with a width). Two borderline calls, judged honestly: (1)
+`copy.B4`'s "everything it's thinking about" and `copy.B6`'s "asks for no credit" flirt with
+preciousness — two poeticisms in 63 card words is inside taste, but a third would tip it; any
+future copy edit should spend no more. (2) The closing line's echo of the homepage headline is
+either the page's best line or a self-quote, and the project has correctly made that the owner's
+call (D-017).
+
+**On the documentation: the process shows its tooling, and rule 7 of the README is being violated
+by the documents themselves.** The specialist docs' revision headers are 30–70-line thickets of
+self-citation and changelog defense; every load-bearing number lives in three to five places; the
+prose leans on the same reflexes throughout (em-dash chains, "stated so nobody...", "— the X owner's
+number made literal"). The board itself records that a revision agent died mid-edit. None of this
+ships to a visitor, and rounds 1–5 treated the paper trail as evidence of handcraft — but a future
+human maintainer meets ~6,000 lines where perhaps 2,500 carry information, and the mirror-swap saga
+is the recorded proof of what that redundancy costs. This is a maintenance liability, not a page
+defect; the recommendation section addresses it.
+
+### Technical risks
+
+1. **Asset execution risk (highest).** Everything above 60 fps arguments assumes the model, maps,
+   and HDRI arrive at spec quality. There is no contingency for "competent but not photoreal."
+2. **iOS Safari long-document behavior.** A 1700vh container with a fixed full-viewport stage is
+   exactly the territory of iOS toolbar-resize repaints and rubber-band edge cases. The 120 px
+   resize rule and `ignoreMobileResize` are the right mitigations, but this must be tested on real
+   hardware early (QA-4 exists; schedule it at M5, not M8 — a failure here restructures §6.3).
+3. **Tier-A false positives.** Detection (fine pointer + screen ≥ 900 + WebGL2) sends a 2018
+   integrated-GPU desktop to tier A: DPR 2.0 and a 2048 shadow map. The governor only steps *down*
+   after violations the visitor already felt. Risk is bounded (one object, ≤ 60 draw calls) but
+   the first 2 s on weak tier-A hardware is the exposure; QA-3's trace should be run once on a
+   low-end tier-A machine, not only the reference hardware.
+4. **Tier-C is the primary audience's hardware.** min(screen) ≥ 900 makes every 1366×768 laptop —
+   the most common small-business machine — tier C: `antialias: false`, DPR 1.5. Functionally
+   correct; visually unverified. A visual-acceptance pass on a real 1366×768 panel belongs in QA,
+   or the page's most important viewers see its worst rendition.
+5. **Transitive-import completeness.** 05 §2.3's vendoring gate (KTX2Loader's `libs/` imports) is
+   correctly identified as a total-failure mode and correctly gated. Named here because it is the
+   single most likely "worked locally, dead on deploy" candidate.
+6. **Browser floor.** Import maps + WebGL2 as one cliff is sound; Safari 16.4+ leaves a small but
+   real 2026 tail of older iPads/Macs in static mode — acceptable and designed, but the owner
+   should know some visitors will only ever see the article.
+7. **No production measurement (see Missing opportunities 3):** several success criteria are
+   unmeasurable after launch as specified.
+
+### Missing opportunities
+
+1. **A social-share image — this one is a hole, not an enhancement.** The page's success criteria
+   are built on sharing ("given the link", "show it to a prospective client from their phone"), and
+   `05` specifies `<title>` and a meta description but **no `og:image`, no `og:title`/`og:description`,
+   no Twitter card** (§3.3 and §8.2 are silent; grep confirms). A shared `/engineering` link in
+   iMessage, Slack, or LinkedIn unfurls with no image — for this page, that is a distribution
+   failure. Needs a decision entry: og/social tags in §3.3's table, plus one dedicated share image
+   (a 1200×630 crop of the `R0` arrival or `R4` tableau, captured by the same §9.2 harness). Note
+   the D-014b interaction: "exactly five stills" is a fallback-branch count; the share image is a
+   sixth capture with a different job and should be recorded as outside D-014b, not smuggled in.
+2. **A reward for the curious (hover as the one free channel).** Hover/focus is already
+   clock-exempt. A settled label chip could reveal one extra dry fact on hover ("39 blades" ·
+   "Li-ion — 54 Wh" — strings that already exist on the textures) at zero motion cost and zero
+   words against the budget (hover-revealed text is arguably outside the rendered-page count, but
+   record the ruling either way). It rewards exactly the visitor the page wants most — the one who
+   stops and looks closer. Costs one 01 §7.5 paragraph and one D-entry; declining it on restraint
+   grounds is also legitimate, but it should be declined on the record rather than unconsidered.
+3. **Knowing whether anyone finishes.** Zero third-party requests is right, but as specified the
+   owner will never learn completion rate, drop-off point, or CTA click-through — the exact
+   numbers that tell WebSharke whether its flagship works. Options: accept unmeasurability on the
+   record (a legitimate privacy stance), or a same-origin beacon (e.g., Vercel's own analytics
+   endpoint or a one-line `/api` counter at three thresholds: reached B4, reached 1.0, clicked
+   CTA). Either way it deserves a decision entry; right now it is simply unaddressed.
+4. **Deep links into the timeline.** Scene state is a pure function of `p` — the architecture gets
+   `#tableau`-style anchors almost for free (the skip link already proves the jump mechanism). The
+   owner being able to send a client straight to the finished diagram is worth the ~zero cost.
+   Declinable on one-story-one-entrance grounds, but again: decide it, don't miss it.
+5. **The predecessor's fate (D-002) has no deadline.** Once `/engineering` ships, the homepage
+   links to both the new page and the 2.5D study it obsoletes. Fine for launch week; unresolved, it
+   eventually reads as two versions of the same idea. The owner decision is already flagged — it
+   should acquire a "by implementation ship" due date.
+
+### Contradictions
+
+Found by fresh cross-reading of all current texts (the five-round seam history is settled and not
+re-counted here):
+
+1. **01 §7.8/§8.3 vs 05 §14.3(m)/§3.6 — the battery caption.** 01 as published gives `R3` captions
+   MAINBOARD, CHASSIS (2 words; static total 141); 03 §11 and D-015's "joins the fallback-still
+   captions" put BATTERY in `R3`; 05 ruled BATTERY captions `R3` (static total **142**). The ruling
+   is right (the still shows the chassis interior; the part is named policy-wide) — but 01, an
+   Approved document, now contradicts the build source and its own word budget. **Survivor: 05
+   §14.3(m).** 01 needs a one-line supersession note (its §7.8 caption list, §8.3 table, and §9
+   rule 5's 145-cap arithmetic all cite 141).
+2. **05 §3.4 alt text vs its own caption ruling and 04 §9.5.** The `R3`/`R4` captions name BATTERY;
+   the `R3`/`R4` alt strings (adopted from 01 §8.4) never do — while 04 §9.5's required-content
+   rule ("which canon parts are visible") and its drafts name the battery in both. A screen-reader
+   visitor gets less part inventory than a sighted one on the same still. **Survivor: 04's
+   required-content rule** — add the battery to `R3`/`R4` alt text in 05 §3.4 (alt is uncounted, so
+   budgets are untouched), or record why alt deliberately omits it.
+3. **03 §7.3's 0.015 enter-ramp grammar vs 03 §3/§9.2's ending windows.** `copy.close` enters over
+   0.013, `copy.cta` over 0.010, `copy.signoff` over 0.008 — three violations of the document's own
+   grammar, no recorded exception (05's audit noted it and deferred). This is precisely the class
+   of silent exception that caused rounds 1–3. **Survivor: the ending timing as designed** (the
+   compressed ramps are defensible approaching `p = 1.0`) — but record it as a sanctioned exception
+   in 03 §7.3/05 §7.5, or a future edit will "fix" the ending against the grammar.
+4. **Breakpoint sets across 01/02/03.** 01 composes at <768/≥1024 (768–1023 undefined), 03's mobile
+   rules apply at ≤680, 02 §9.4 names "the site uses 900/680". 05 §9.1 resolved this by synthesis
+   ruling and is the survivor — but the three specialist documents still disagree with each other
+   on the record, and none carries a pointer to the ruling. One header line each.
+5. **README/taskboard status vs the documents' own flags.** README: "Phase 3 — Review (5 rounds;
+   all four documents Approved)"; T-06 "Completed". But 02 rev 6 and 03 rev 6 both state they are
+   awaiting review (02: "additive completeness pass (post-approval; awaiting its own review
+   round)"; 03: "re-opens the document for a same-rigor verification pass and is flagged for the
+   Reviewer"). The hub claimed a review state the documents themselves denied. **Survivor: the
+   documents.** This round clears the flags (below); the PM should sync README/T-06 wording to
+   "5 rounds + round-6 addenda review."
+6. **02 §13–§15 and 03 §5.5/§6.4 vs 05's completeness claim.** 05 §0 positions itself as the sole
+   build source, and 02 §14 explicitly says "the build source is 05-master-specification.md, per
+   D-008" — yet the memory-management policy, the build order, and the optics/lighting nulls exist
+   only in 02/03. A builder obeying D-008 literally ("from the master specification alone") never
+   sees them. **Survivor: both, after a fold-in** — 05 must be re-synthesized to absorb the
+   addenda (or explicitly delegate those sections by reference).
+7. *(Micro, for the record)* 03 §6.2 states group members "share the same window length"; B7's
+   three plane windows are 0.045/0.044/0.043 (§3/§4-B7). The 0.007-stagger exception is recorded;
+   the unequal-window consequence is not. One parenthetical in §6.2 closes it.
+
+**Verified non-contradictions worth recording** (checked because they looked wrong): the
+62vw/38%/4.15W arrival is now genuinely identical in 01/03/02/D-010; the D-009 copy table is
+cell-identical in 01 §8.2, 03 §7.1, and 05 §3.1; all word counts and both budget totals re-add
+correctly (including 05's corrected 142); the anchor formula reproduces every stated in-point;
+02 §8.1's caps sum to 8.43 ≤ 8.5; 04 §5.3's atlas caps sum to 02's texture line exactly; the
+tableau projection math (0.36W ranks at 26° elevation) is correct; brushed-vs-bead-blasted is
+settled by 05 §14.3(b) with sound reasoning.
+
+### The round-6 addenda, reviewed (02 rev 6, 03 rev 6)
+
+**02 §13 (memory), §14 (build order), §15 (change absorption), QA-18/19 — verified sound.** §13's
+three teardown rows are individually correct: disposing the PMREM generator and HDR GPU texture
+while retaining the CPU-side reference is exactly what §11.2's context-loss rebuild needs;
+disposing the Draco/KTX2 loaders terminates workers without touching parsed geometry/texture data
+(whose CPU-side retention is what makes context-restore re-upload work — QA-18 tests the pairing,
+which is the right test); dropping the glTF wrapper reference is correct and commonly missed. §13.5
+(no unload handlers, bfcache preserved) is correct and well-reasoned. §14's milestone order is
+sound — static document first makes D-007 an ordering fact; instrumentation before scene is right;
+the M3 stand-in rule with QA-17 as the swap-catcher closes its own loophole. §15 invents nothing.
+**Verdict on the addenda: Approved, required changes: none** — with the standing condition that
+they are not real until 05 carries them (Critical 1).
+
+**03 §5.5, §6.4 — verified sound.** Both state nulls the design already implied; both correctly
+name the two runtime mechanisms (governor, HDR fallback) that bound the constancy claims, so the
+claims are true as written. §5.5's hero-frames inventory (stills map to P0/P1/P3/P4/P5; P2
+deliberately still-less) matches 04 §9.1 exactly. No number changed; spot-checked against revision
+5's body — byte-consistent where sampled. **Verdict: Approved, required changes: none**, same
+fold-in condition.
+
+---
+
+### Strengths
+
+1. **One vision, actually enforced.** The story-sentence test is applied to every element, the
+   inventory is closed, and five rounds of review rejected everything that failed it. The result
+   reads designed, not assembled.
+2. **The numbers are real.** This reviewer re-derived the arrival trigonometry, the reading floors,
+   the arrival-anchor formula, both word budgets, the payload sums, and the tableau projection —
+   every one checks out. A blueprint whose arithmetic survives independent re-derivation is rare.
+3. **The interfaces are governed.** Every cross-document number now has one owner, one entry of
+   record, and a supersession mechanism. The decision log (D-001–D-017) is the project's real
+   innovation — the mirror-swap failure was diagnosed to root cause and fixed structurally.
+4. **Failure is designed, not patched.** The static article, the stall-forward rule, the context-loss
+   path, the `file://` guard, the no-error-state loader: every branch a visitor can land in was
+   designed on purpose. D-007 is honored in full.
+5. **The restraint is checkable.** Banned-word greps, gradient census, clock audit, closed
+   inventory, word caps — the anti-slop rules are tests, not vibes. This is the strongest
+   anti-generic defense this reviewer has seen documented.
+6. **The copy.** 106 steady words across 10,800 px, and at least four of them will be remembered
+   ("That was you." / "asks for no credit"). The voice survives contact with a technical subject.
+
+### Weaknesses
+
+1. **The mid-page energy trough is unpriced.** From `copy.B4`'s clear (0.506) to B5's first board
+   (0.569) is ~680 px of nothing moving, followed by the least dramatic beat, followed by another
+   hold. The docs call H4 "designed mid-story silence"; a naive visitor at ordinary flick speed may
+   call it "the page ended." Every pacing number was verified *internally consistent* — none has
+   met a human. No QA row tests pacing with naive users.
+2. **Total visual constancy is a bet the docs don't hedge.** No lighting change, no focus change,
+   one room, one object, for 60–90 seconds. Excellence carries it; competence doesn't. There is no
+   recorded fallback if integration review finds the middle third monotonous.
+3. **Typography carries a low-DPI risk at exactly the audience's hardware** (Playfair at 11.5 px
+   on 1×-DPR tier-C laptops — untested, no QA row).
+4. **The documentation set has outgrown its readers.** The blueprint is excellent; the path to it
+   (~6,000 lines, headers that are changelog fortresses, every number in 3–5 places) violates the
+   project's own write-plainly rule and is the proven breeding ground of the seam class that
+   consumed rounds 1–3. 05 fixed this once; 02/03's post-approval addenda show drift resuming
+   within a day.
+5. **Distribution is designed for a page nobody can preview-share** (no social metadata — the one
+   genuine hole in an otherwise complete spec).
+
+### Critical problems
+
+1. **The gate is stale: 05 is no longer the union of the approved documents.** 02 §13–§15 and
+   03 §5.5/§6.4 exist only outside the build source, while D-008 and 02 §14 both direct the builder
+   to 05 alone. Until 05 is re-synthesized (or delegates by explicit reference), the project's own
+   process forbids building the memory policy and build order it now depends on. The README/taskboard
+   meanwhile assert a review state ("all Approved", T-06 Completed) that two documents' own headers
+   denied until this round.
+2. **Known defects are being shipped into implementation by choice.** T-08 parks "10 low-severity
+   audit notes" for "the first implementation pass" — but they are *document* defects, and D-008's
+   entire argument is that blueprint defects are cheap now and expensive later. Verified samples:
+   (a) 05 §2.3 contains the corrupted sentence — "**`DistilleryDisplay` addons** are from the same
+   r180 tag" — a font name spliced into a Three.js sentence, in the build source, in a section a
+   cold-start implementer must obey; (b) missing head-boilerplate enumeration (which is also where
+   Critical 3 lives); (c) CTA "clickable ≥ 0.992" is stated but unenforced — `autoAlpha` makes it
+   clickable from 0.988+ε; the spec needs the `pointer-events` rule that makes the number true;
+   (d) the ending enter-ramp exception (Contradiction 3). Deferring these into code review
+   re-creates the exact failure mode this project spent five rounds engineering away.
+3. **No social-share metadata exists anywhere in the project** (Missing opportunity 1 — elevated
+   to critical because the success criteria depend on link-sharing and the fix requires an asset
+   decision, not just tags).
+
+### Minor problems
+
+1. 01 §7.8/§8.3/§9-rule-5 carry the superseded 141-word static budget and the 2-word `R3` caption
+   (Contradiction 1) — one supersession note fixes all three.
+2. `R3`/`R4` alt text omits the battery its captions name (Contradiction 2).
+3. 03 §6.2's same-window-length rule vs B7's 0.045/0.044/0.043 (Contradiction 7).
+4. §11.4 forces every back-navigation and bfcache restore to `p = 0`. The stated reason ("scene
+   state can never disagree with a restored scroll position it hasn't seen") is weaker than the
+   architecture: scene state is a pure function of `p`, and the warm-up-frame sync already handles
+   arbitrary landing offsets. A mid-story visitor who clicks the logo and comes back loses their
+   place for no structural reason. Defensible as the site's existing pattern; worth one deliberate
+   look before it ships as-is.
+5. The specialist docs' breakpoint statements lack pointers to 05 §9.1's ruling (Contradiction 4).
+6. The standing round-4/5 optional notes (the "pairing" terminology asymmetry; the D-017 floor
+   re-run) remain open and correctly parked.
+
+### Recommendations
+
+1. **Re-synthesize 05 now** (fold in 02 §13–15, 03 §5.5/§6.4, and every fix below), re-run the
+   completeness/consistency audit on the delta, and have the PM sync README + taskboard to the
+   true state. This is a half-day of documentation against a build measured in weeks.
+2. **Fix all ten parked audit notes in the documents** — starting with the corrupted §2.3 sentence,
+   the CTA `pointer-events` enforcement, and the head-boilerplate enumeration. Zero should survive
+   into M0.
+3. **Add the social-metadata decision entry**: og/twitter tags in 05 §3.3, one 1200×630 share
+   image captured by the §9.2 harness, recorded as outside D-014b's five-still count.
+4. **Close the four live contradictions** with one-line supersession notes in 01 and 03 and the
+   two alt-text words in 05 §3.4 (survivors as ruled above).
+5. **Add three cheap QA rows before ship**: microtext legibility on a real 1×-DPR panel (M1); a
+   naive-user pacing pass at M5 (five people, no instructions, watch where they stall or bail —
+   H4's width is data-adjustable by one number if it reads as dead); tier-C visual acceptance on a
+   1366×768 machine (M3).
+6. **Decide the undecided on the record**: measurement (accept none, or same-origin beacon), hover
+   facts on labels (adopt or decline), deep links (adopt or decline), predecessor retirement date.
+   Each is one D-entry; all four are currently unconsidered rather than declined.
+7. **Freeze 01–04 as historical record after the fixes above** and route all future change through
+   `decisions.md` + 05 only. The parallel-document era produced the seams; the project has already
+   proven the single-source model works. (02 §15 half-states this; make it a PM rule.)
+8. **Get the D-017 sign-off** — still the one true implementation blocker, unchanged.
+
+### Overall score
+
+**8.3 / 10** at documentation stage. Scored against "would this compete for Site of the Day," not
+"is this fine." The vision, motion system, and governance are 9–10; originality of format,
+typography risk, and the unhedged execution bet hold it under 9. The ceiling of the built page is
+higher than this number — and its floor is lower, because the entire margin lives in asset
+execution that no document can guarantee.
+
+### Final verdict — awards reality check
+
+- **Awwwards SOTD: a credible contender, conditionally.** Concept coherence, craft depth,
+  accessibility, and performance discipline are all above the current SOTD bar. The condition is
+  absolute: the model, materials, and HDRI must land at the spec's "photographed, not rendered"
+  standard. At 100% asset execution this competes seriously; at 90% it is an honorable mention.
+  Jury math: design 8–9, usability 9, creativity 7–8, content 9.
+- **FWA: unlikely, by design.** FWA rewards frontier spectacle; this page's identity is restraint
+  within known technique. Submitting is free, but the project should not measure itself here.
+- **CSS Design Awards: strong contender** — craft-forward judging suits this page's profile
+  (WOTD plausible; category scores on UI/UX should run high).
+
+### Approval status
+
+**APPROVED WITH CHANGES.**
+
+The blueprint is sound, verified, and buildable; nothing here re-opens the design. Implementation
+(T-09) may begin when — and only when — the following are done, in order:
+
+1. The ten parked 05 audit defects fixed in-document (Critical 2), including the corrupted §2.3
+   sentence, CTA clickability enforcement, and head boilerplate.
+2. The social-metadata entry recorded and specified (Critical 3).
+3. The four live contradictions closed with their ruled survivors (Contradictions 1–4).
+4. 05 re-synthesized to absorb 02 §13–§15, 03 §5.5/§6.4, and items 1–3; the delta re-audited;
+   README/taskboard synced (Critical 1).
+5. The owner's D-017 sign-off (standing blocker, unchanged).
+
+Items 1–4 are documentation work measured in hours. The Reviewer's recommended QA additions
+(Recommendation 5) and the four on-the-record decisions (Recommendation 6) are strongly advised
+but not gating. Re-review of the round-6 changes can be targeted (the delta only), per the round-5
+precedent.
