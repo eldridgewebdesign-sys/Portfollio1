@@ -17,7 +17,10 @@ const POSE_DATA = {
   P2: { az: 38, el: 9,  d: 2.95, ty: 0.10, shift: 0.12 },
   P3: { az: 30, el: 48, d: 2.95, ty: 0.14, shift: 0.12 },
   P4: { az: 24, el: 24, d: 2.90, ty: 0.11, shift: 0.12 },
-  P5: { az: 24, el: 26, d: 3.00, ty: 0.55, shift: 0 },
+  // P5 pulled back for the five-rank tableau (lower shell 0 → logic +0.34W →
+  // thermal/ports +0.68W → top case +1.02W → display +1.36W): at 3.65W the
+  // 1.38W stack top clears the frame with ≈12% vertical margin.
+  P5: { az: 24, el: 26, d: 3.65, ty: 0.70, shift: 0 },
 };
 
 export function createRig(camera) {

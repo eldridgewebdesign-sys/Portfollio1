@@ -71,15 +71,18 @@ async function init() {
   const { root, env } = await load({ renderer, scene, onProgress });
   scene.add(root);
 
-  // 5. Bind by name, byte-for-byte; capture rest positions for the eleven
-  // animatable parts. A missing name throws → static (05 §8.10 step 5).
-  const TOP = ['lid', 'cooling_fan', 'heat_pipes', 'storage_ssd', 'memory_ram',
-    'support_boards', 'mainboard', 'chassis'];
-  const SUB = ['support_board_io', 'support_board_wireless', 'support_board_aux'];
+  // 5. Bind by name, byte-for-byte; capture rest positions for every node the
+  // timeline or the label system touches (movers, micro-separation children,
+  // and static anchors). A missing name throws → static (05 §8.10 step 5).
+  const MOVERS = ['display_assembly', 'top_case', 'shield_plate', 'graphite_sheet',
+    'port_board_usbc', 'port_board_charge', 'port_board_audio', 'logic_board'];
+  const MICRO = ['display_glass', 'display_panel'];
+  const ANCHORS = ['battery_cells', 'speaker_l', 'speaker_r', 'lower_case',
+    'hinge_barrel_l', 'trackpad_glass', 'soc_package', 'memory_packages', 'storage_packages'];
   const laptopRoot = root.name === 'laptop_root' ? root : root.getObjectByName('laptop_root');
   if (!laptopRoot) throw new Error('node bind failed: laptop_root missing');
   const parts = {};
-  for (const n of TOP.concat(SUB)) {
+  for (const n of MOVERS.concat(MICRO, ANCHORS)) {
     const node = laptopRoot.getObjectByName(n);
     if (!node) throw new Error('node bind failed: ' + n + ' missing');
     node.userData.rest = node.position.clone();

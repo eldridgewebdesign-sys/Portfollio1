@@ -1,47 +1,55 @@
-// model.js — the development stand-in laptop (02 §14's sanctioned scaffolding).
+// model.js — the development stand-in laptop: a thin FANLESS ultrabook.
 //
-// The production asset is engineering/assets/laptop.v1.glb (Draco + KTX2, built
-// per 04/05 §5). That asset does not exist yet, so this module builds a
-// procedural stand-in that carries:
-//   - the BYTE-EXACT node hierarchy and names of 05 §5.2 (bind + QA-17 pass),
-//   - the real-world dimensions of 05 §5.3 (1 unit = 1 m),
-//   - the PBR material values of 05 §5.5 (colors, metalness, roughness),
-//   - the pivot rule (every top-level part's origin = its bbox center;
-//     rotor pivot on the spindle axis).
-// When the real GLB lands, flip ASSETS_READY in loader.js and delete this file;
-// nothing in the timeline, camera, or label systems changes.
+// Architecture reference: the internal logic of a modern thin fanless
+// ultrabook — large flat battery cells, one dense logic board with the
+// processor/memory/storage soldered on, a passive thermal stack (shield
+// plate + graphite sheet, no fan anywhere), slim speaker chambers, port
+// boards at the edges, an engineered display assembly and top case.
+// No brand marks, no logos, no fake specs.
+//
+// The node names below are the bind contract shared with component-data.js,
+// timeline.js, and main.js; a future production GLB must carry them
+// byte-exactly. Every top-level part's pivot is recentered to its own bbox
+// center; the world envelope (304 × 212 × 15.6 mm) matches the camera math.
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const MM = 0.001;
 
-// PBR material table (05 §5.5) — solid-color stand-ins for the four atlases.
+// Material table — physical, muted, one light source explains everything.
 function makeMaterials() {
   const m = (color, metalness, roughness) =>
     new THREE.MeshStandardMaterial({ color, metalness, roughness });
   return {
-    alu:       m(0xc8cbce, 1.0, 0.46),
-    keycap:    m(0x303336, 0.0, 0.60),
-    pcb:       m(0x0d1412, 0.0, 0.60),
-    solder:    m(0xb9bec2, 1.0, 0.35),
-    copper:    m(0xc87d52, 1.0, 0.32),
-    silicon:   m(0x3a3f46, 0.0, 0.15),
-    substrate: m(0x123018, 0.0, 0.50),
-    epoxy:     m(0x16181a, 0.0, 0.75),
-    gold:      m(0xd4af6a, 1.0, 0.25),
-    label:     m(0xded9cf, 0.0, 0.85),
-    fanHouse:  m(0x1b1d1f, 0.0, 0.60),
-    fanRotor:  m(0x1b1d1f, 0.0, 0.45),
-    steel:     m(0x9ea3a6, 1.0, 0.35),
-    rubber:    m(0x2a2c2d, 0.0, 0.90),
-    glass:     m(0x3f4548, 0.0, 0.20),
-    pouch:     m(0x33363a, 0.0, 0.65),
-    paste:     m(0xb9bdc0, 0.0, 0.35),
+    alu:        m(0xc8cbce, 1.0, 0.46),  // machined shell aluminum
+    aluDark:    m(0x9fa2a6, 1.0, 0.40),  // hinge barrels, brackets
+    glassBlack: m(0x16181a, 0.0, 0.06),  // display glass — sharp subtle reflection
+    panelDark:  m(0x101214, 0.0, 0.40),  // display panel layer
+    wellDark:   m(0x1f2124, 0.0, 0.65),  // keyboard well inset
+    keycap:     m(0x2b2d30, 0.0, 0.60),  // shallow keycaps
+    button:     m(0x3a3d42, 0.0, 0.45),  // fingerprint power button
+    backlight:  m(0x8b857a, 0.0, 0.80),  // unlit light-guide layer, warm gray
+    membrane:   m(0x232527, 0.0, 0.70),  // keyboard membrane film
+    glassPad:   m(0x3f4548, 0.0, 0.15),  // trackpad glass
+    pcb:        m(0x14171a, 0.0, 0.55),  // logic board — matte near-black
+    trace:      m(0x1e232a, 0.0, 0.55),  // etched trace hint, barely lighter
+    substrate:  m(0x16181a, 0.0, 0.50),  // processor substrate
+    silicon:    m(0x3a3f46, 0.0, 0.15),  // exposed die
+    chip:       m(0x1b1d20, 0.0, 0.72),  // memory/storage/controller packages
+    steel:      m(0x9ea3a6, 1.0, 0.35),  // brackets, screws
+    shieldTop:  m(0xb9bdc0, 1.0, 0.30),  // heat/shield plate — clearly metal beside the dark graphite
+    graphite:   m(0x232323, 0.0, 0.50),  // graphite heat sheet — dark satin
+    pouch:      m(0x2e3033, 0.0, 0.60),  // battery cells — satin dark polymer
+    adhesive:   m(0xb9b2a4, 0.0, 0.85),  // muted adhesive/pull-tab strips
+    molded:     m(0x1b1d1f, 0.0, 0.75),  // speaker chambers — molded matte
+    flexFilm:   m(0x26221f, 0.0, 0.50),  // ribbon cables — dark flexible film
+    contact:    m(0xc3a36f, 1.0, 0.38),  // muted gold contacts
+    plastic:    m(0x4a4642, 0.0, 0.70),  // antenna windows
+    rubber:     m(0x2a2c2d, 0.0, 0.90),  // foot inserts
   };
 }
 
-// A box authored in world millimetres (center + size), returned in metres.
 function box(w, h, d, cx, cy, cz, ry) {
   const g = new THREE.BoxGeometry(w * MM, h * MM, d * MM);
   if (ry) g.rotateY(ry);
@@ -55,9 +63,6 @@ function cyl(r, h, cx, cy, cz, seg, axisX) {
   return g;
 }
 
-// Merge per-material geometry lists into ONE mesh (one group per material —
-// draw calls stay at one per material, not one per box). The mesh's pivot is
-// recentered to its own bbox center (the 05 §5.2 pivot rule).
 function buildMesh(name, parts, recenter = true) {
   const perMat = [];
   const mats = [];
@@ -83,8 +88,6 @@ function buildMesh(name, parts, recenter = true) {
   return mesh;
 }
 
-// After composing a group's children (authored in world coords), move the
-// group's origin to the group bbox center, keeping world positions intact.
 function recenterGroup(g) {
   const bb = new THREE.Box3().setFromObject(g);
   const c = new THREE.Vector3();
@@ -99,193 +102,290 @@ export function buildStandIn() {
   const root = new THREE.Group();
   root.name = 'laptop_root';
 
-  /* ---------------- lid — the sealed upper clamshell half ---------------- */
-  const lid = new THREE.Group();
-  lid.name = 'lid';
+  /* ================= display_assembly =================
+     Not one slab: shell + glass + panel + camera + flex + hinges + antennas.
+     Closed: y 10.6–15.6 (glass faces down toward the deck). */
+  const display = new THREE.Group();
+  display.name = 'display_assembly';
 
-  lid.add(buildMesh('lid_shell', [{ mat: M.alu, geoms: [
-    box(304, 1.8, 212, 0, 14.7, 0),                    // display back (top plate)
-    box(1.8, 4.8, 212, -151.1, 11.4, 0),               // perimeter skirt
-    box(1.8, 4.8, 212, 151.1, 11.4, 0),
-    box(300.4, 4.8, 1.8, 0, 11.4, -105.1),
-    box(300.4, 4.8, 1.8, 0, 11.4, 105.1),
+  display.add(buildMesh('display_shell', [{ mat: M.alu, geoms: [
+    box(304, 1.4, 212, 0, 14.9, 0),                    // outer shell plate
+    box(1.6, 3.4, 212, -151.2, 12.5, 0),               // perimeter skirt
+    box(1.6, 3.4, 212, 151.2, 12.5, 0),
+    box(300.8, 3.4, 1.6, 0, 12.5, -105.2),
+    box(300.8, 3.4, 1.6, 0, 12.5, 105.2),
   ]}]));
 
-  lid.add(buildMesh('lid_deck', [{ mat: M.alu, geoms: [
-    box(300, 1.2, 208, 0, 9.7, 0),
+  display.add(buildMesh('display_antenna', [{ mat: M.plastic, geoms: [
+    box(40, 2.8, 4, -120, 12.2, -100),                 // antenna windows, hinge-side corners
+    box(40, 2.8, 4, 120, 12.2, -100),
   ]}]));
 
-  // 78-key field (6 rows × 13 columns), one merged mesh, on the deck underside.
+  display.add(buildMesh('display_panel', [{ mat: M.panelDark, geoms: [
+    box(288, 0.6, 192, 0, 12.0, 2),
+  ]}]));
+
+  display.add(buildMesh('display_glass', [{ mat: M.glassBlack, geoms: [
+    box(296, 0.4, 200, 0, 11.4, 2),
+  ]}]));
+
+  display.add(buildMesh('display_camera', [
+    { mat: M.chip, geoms: [box(9, 0.7, 6, 0, 12.1, -92)] },
+    { mat: M.glassBlack, geoms: [cyl(1.2, 0.3, 0, 11.55, -92, 12)] },
+  ]));
+
+  // Two flex ribbons dipping through the hinge line into the body.
+  display.add(buildMesh('display_flex', [{ mat: M.flexFilm, geoms: [
+    box(26, 0.25, 16, -60, 10.4, -101),
+    box(26, 0.25, 16, 60, 10.4, -101),
+  ]}, { mat: M.contact, geoms: [
+    box(26, 0.1, 1.6, -60, 10.42, -94.5),              // faint contact edges
+    box(26, 0.1, 1.6, 60, 10.42, -94.5),
+  ]}]));
+
+  display.add(buildMesh('hinge_barrel_l', [
+    { mat: M.aluDark, geoms: [cyl(2.8, 36, -92, 10.2, -102, 20, true)] },
+    { mat: M.steel, geoms: [box(12, 1.0, 8, -92, 10.2, -96)] },
+  ]));
+  display.add(buildMesh('hinge_barrel_r', [
+    { mat: M.aluDark, geoms: [cyl(2.8, 36, 92, 10.2, -102, 20, true)] },
+    { mat: M.steel, geoms: [box(12, 1.0, 8, 92, 10.2, -96)] },
+  ]));
+
+  recenterGroup(display);
+  root.add(display);
+
+  /* ================= top_case (keyboard deck) =================
+     A thin engineered platform: deck, membrane, backlight, keys, fingerprint
+     button, trackpad glass + force assembly + flex. y 9.0–10.4 (+ keys). */
+  const topCase = new THREE.Group();
+  topCase.name = 'top_case';
+
+  topCase.add(buildMesh('top_shell', [
+    { mat: M.alu, geoms: [box(304, 1.4, 212, 0, 9.7, 0)] },
+    { mat: M.wellDark, geoms: [box(240, 0.15, 110, 0, 10.42, -32)] }, // keyboard well
+  ]));
+
+  topCase.add(buildMesh('keyboard_membrane', [{ mat: M.membrane, geoms: [
+    box(236, 0.1, 106, 0, 10.51, -32),
+  ]}]));
+
+  topCase.add(buildMesh('key_backlight', [{ mat: M.backlight, geoms: [
+    box(234, 0.08, 104, 0, 10.58, -32),
+  ]}]));
+
+  // 77 shallow keys + 1 distinct fingerprint power button (6 rows × 13 cols).
   const keyGeoms = [];
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 13; c++) {
-      keyGeoms.push(box(16, 0.8, 16, -114 + c * 19, 8.7, -86 + r * 19));
+      if (r === 0 && c === 12) continue; // power button slot
+      keyGeoms.push(box(15.6, 0.5, 15.6, -106.8 + c * 17.8, 10.9, -76.5 + r * 17.8));
     }
   }
-  lid.add(buildMesh('lid_deck_keys', [{ mat: M.keycap, geoms: keyGeoms }]));
+  topCase.add(buildMesh('keycap_field', [{ mat: M.keycap, geoms: keyGeoms }]));
+  topCase.add(buildMesh('power_button', [
+    { mat: M.button, geoms: [box(15.6, 0.5, 15.6, -106.8 + 12 * 17.8, 10.9, -76.5)] },
+    { mat: M.steel, geoms: [box(11, 0.1, 11, -106.8 + 12 * 17.8, 11.2, -76.5)] }, // sensor ring hint
+  ]));
 
-  lid.add(buildMesh('lid_deck_trackpad', [{ mat: M.glass, geoms: [
-    box(120, 0.8, 70, 0, 8.85, 62),
+  topCase.add(buildMesh('trackpad_glass', [{ mat: M.glassPad, geoms: [
+    box(130, 0.5, 82, 0, 10.6, 62),
+  ]}]));
+  topCase.add(buildMesh('trackpad_assembly', [
+    { mat: M.steel, geoms: [box(118, 0.5, 72, 0, 8.75, 62)] },
+    { mat: M.chip, geoms: [box(24, 0.4, 8, 0, 8.45, 40)] },   // force-sensing module
+  ]));
+  topCase.add(buildMesh('trackpad_flex', [{ mat: M.flexFilm, geoms: [
+    box(10, 0.15, 26, 0, 8.75, 14),
   ]}]));
 
-  recenterGroup(lid);
-  root.add(lid);
+  recenterGroup(topCase);
+  root.add(topCase);
 
-  /* ---------------- cooling_fan ---------------- */
-  const fan = new THREE.Group();
-  fan.name = 'cooling_fan';
-
-  fan.add(buildMesh('cooling_fan_housing', [{ mat: M.fanHouse, geoms: [
-    box(64, 1.0, 58, -92, 5.7, -58),                   // base plate
-    box(3, 5.2, 58, -122.5, 8.8, -58),                 // side walls (open top)
-    box(3, 5.2, 58, -61.5, 8.8, -58),
-    box(58, 5.2, 3, -92, 8.8, -85.5),
-    box(58, 5.2, 3, -92, 8.8, -30.5),
-  ]}]));
-
-  // 39-blade rotor; pivot stays on the spindle axis at blade mid-height.
-  const bladeGeoms = [cyl(7, 4.6, -92, 8.6, -58, 32)];
-  for (let i = 0; i < 39; i++) {
-    const a = (i / 39) * Math.PI * 2;
-    const bx = -92 + Math.cos(a) * 14.5;
-    const bz = -58 - Math.sin(a) * 14.5;
-    bladeGeoms.push(box(15, 4.0, 1.4, bx, 8.6, bz, a));
-  }
-  fan.add(buildMesh('cooling_fan_rotor', [{ mat: M.fanRotor, geoms: bladeGeoms }]));
-
-  recenterGroup(fan);
-  root.add(fan);
-
-  /* ---------------- heat_pipes (one assembly, raw copper — D-016) ---------------- */
-  const pipes = new THREE.Group();
-  pipes.name = 'heat_pipes';
-
-  pipes.add(buildMesh('heat_pipes_pipe', [{ mat: M.copper, geoms: [
-    box(50, 3, 8, -15, 10.0, -30),                     // run west from the coldplate
-    box(62, 3, 8, -54, 10.0, -60, 2.116),              // angled run to the fin stack
-    // mirrored thermal-paste imprint on the coldplate underside (05 §5.5 #12)
-  ]}, { mat: M.paste, geoms: [
-    box(16, 0.1, 14, 2, 9.47, -30),
-  ]}]));
-
-  pipes.add(buildMesh('heat_pipes_coldplate', [{ mat: M.copper, geoms: [
-    box(38, 2, 32, 2, 10.5, -30),
-  ]}]));
-
-  const finGeoms = [];
-  for (let i = 0; i < 45; i++) {
-    finGeoms.push(box(0.5, 6.5, 11.5, -97 + i * 1.22, 8.4, -92));
-  }
-  pipes.add(buildMesh('heat_pipes_finstack', [{ mat: M.copper, geoms: finGeoms }]));
-
-  recenterGroup(pipes);
-  root.add(pipes);
-
-  /* ---------------- storage_ssd — M.2 2280, one mesh ---------------- */
-  root.add(buildMesh('storage_ssd', [
-    { mat: M.pcb, geoms: [box(80, 1.2, 22, -18, 9.4, -18)] },
-    { mat: M.epoxy, geoms: [
-      box(14, 1.2, 16, -34, 10.0, -18),
-      box(14, 1.2, 16, -16, 10.0, -18),
-      box(10, 1.2, 12, 0, 10.0, -18),
+  /* ================= passive thermal stack (no fan) =================
+     Shield/heat plate with a processor contact pad, then the graphite sheet.
+     Both rest over the processor region of the logic board. */
+  root.add(buildMesh('shield_plate', [
+    { mat: M.shieldTop, geoms: [
+      box(120, 0.5, 80, 8, 8.95, -52),
+      box(26, 0.3, 18, 8, 8.60, -52),                  // processor contact plate
     ]},
-    { mat: M.label, geoms: [box(56, 0.2, 18, -22, 10.75, -18)] },  // honest unbranded label
-    { mat: M.gold, geoms: [box(6, 1.3, 18, 19, 9.4, -18)] },
-  ]));
-
-  /* ---------------- memory_ram — SO-DIMM, one mesh ---------------- */
-  const dramGeoms = [];
-  for (let i = 0; i < 4; i++) {
-    dramGeoms.push(box(12, 1.0, 11, 62 - 21 + i * 14, 10.15, -13));
-    dramGeoms.push(box(12, 1.0, 11, 62 - 21 + i * 14, 10.15, -1));
-  }
-  root.add(buildMesh('memory_ram', [
-    { mat: M.pcb, geoms: [box(69.6, 1.2, 30, 62, 9.5, -8)] },
-    { mat: M.epoxy, geoms: dramGeoms },
-    { mat: M.gold, geoms: [box(64, 0.6, 3, 62, 9.5, -21.5)] },
-  ]));
-
-  /* ---------------- support_boards (group of 3; B5 drives them individually) ---------------- */
-  const boards = new THREE.Group();
-  boards.name = 'support_boards';
-
-  boards.add(buildMesh('support_board_io', [
-    { mat: M.pcb, geoms: [box(64, 1.2, 28, -116, 8.9, 18)] },
-    { mat: M.steel, geoms: [box(30, 2.5, 20, -124, 10.7, 18)] },
-  ]));
-  boards.add(buildMesh('support_board_wireless', [
-    { mat: M.pcb, geoms: [box(30, 1.2, 26, -104, 8.9, 44)] },
-    { mat: M.steel, geoms: [box(20, 2.0, 18, -104, 10.5, 44)] },
-  ]));
-  boards.add(buildMesh('support_board_aux', [
-    { mat: M.pcb, geoms: [box(46, 1.2, 20, -84, 8.9, 64)] },
-    { mat: M.epoxy, geoms: [box(6, 2, 4, -94, 10.5, 64), box(6, 2, 4, -76, 10.5, 64)] },
-  ]));
-
-  recenterGroup(boards);
-  root.add(boards);
-
-  /* ---------------- mainboard — one mesh incl. permanently-soldered parts ---------------- */
-  const chokeGeoms = [];
-  for (let i = 0; i < 6; i++) chokeGeoms.push(box(8, 3, 8, -60 + i * 14, 9.2, -60));
-  const capGeoms = [];
-  for (let i = 0; i < 8; i++) capGeoms.push(box(3.4, 1.6, 2, -58 + i * 9, 8.5, -48));
-  root.add(buildMesh('mainboard', [
-    { mat: M.pcb, geoms: [box(262, 1.2, 158, 0, 7.1, -22)] },
-    { mat: M.substrate, geoms: [box(40, 0.8, 34, 2, 8.1, -30)] },
-    { mat: M.silicon, geoms: [box(18, 1.0, 16, 2, 9.0, -30)] },
-    { mat: M.paste, geoms: [box(16, 0.1, 14, 2, 9.42, -30)] },   // paste imprint on the die
-    { mat: M.epoxy, geoms: [
-      ...chokeGeoms, ...capGeoms,
-      box(8, 2, 22, 24, 8.7, -18),                     // M.2 socket
-      box(74, 1.5, 3, 62, 8.45, -25),                  // SO-DIMM socket, latches open
-      box(74, 1.5, 3, 62, 8.45, 9),
-      box(3, 1.5, 31, 26.5, 8.45, -8),
-      box(3, 1.5, 31, 97.5, 8.45, -8),
-      box(6, 2, 3, -70, 8.7, -40),                     // empty fan header
-      box(6, 2, 3, 30, 8.7, 30),                       // empty battery header
+    { mat: M.aluDark, geoms: [
+      cyl(1.2, 0.4, -46, 9.3, -86, 10), cyl(1.2, 0.4, 62, 9.3, -18, 10), // shield screws
     ]},
-    { mat: M.solder, geoms: [
-      box(9, 3.5, 7.5, -127, 9.0, 10),                 // two USB-C shells, left wall
-      box(9, 3.5, 7.5, -127, 9.0, 24),
-      cyl(2, 2, -56, 8.7, -18, 12),                    // M.2 standoff
-    ]},
-    { mat: M.epoxy, geoms: [cyl(3, 12, -127, 9.0, 40, 12, true)] }, // audio jack
   ]));
 
-  /* ---------------- chassis ---------------- */
-  const chassis = new THREE.Group();
-  chassis.name = 'chassis';
-
-  chassis.add(buildMesh('chassis_tub', [{ mat: M.alu, geoms: [
-    box(304, 1.6, 212, 0, 2.0, 0),                     // floor
-    box(1.6, 6.2, 212, -151.2, 5.9, 0),                // walls (port cutouts implied)
-    box(1.6, 6.2, 212, 151.2, 5.9, 0),
-    box(300.8, 6.2, 1.6, 0, 5.9, -105.2),
-    box(300.8, 6.2, 1.6, 0, 5.9, 105.2),
+  root.add(buildMesh('graphite_sheet', [{ mat: M.graphite, geoms: [
+    box(150, 0.15, 95, 0, 9.35, -52),
   ]}]));
 
-  chassis.add(buildMesh('chassis_battery', [{ mat: M.pouch, geoms: [
-    box(190, 5.4, 92, 35, 5.5, 52),                    // non-separating (D-015); labeled, never moves
+  /* ================= logic_board =================
+     One dense compact board at the rear: processor package with on-substrate
+     unified memory, soldered storage, PMICs, VRM field, wireless, timing
+     crystal, board-to-board connectors, ribbon sockets, grounding pads,
+     screw posts, and subtle etched traces. */
+  const board = new THREE.Group();
+  board.name = 'logic_board';
+
+  // Named anchor meshes first (tight label boxes).
+  board.add(buildMesh('soc_package', [
+    { mat: M.substrate, geoms: [box(56, 0.8, 34, 8, 8.1, -52)] },
+    { mat: M.silicon, geoms: [box(20, 0.4, 15, 0, 8.7, -52)] },        // exposed die
+  ]));
+  board.add(buildMesh('memory_packages', [{ mat: M.chip, geoms: [
+    box(13, 0.4, 11, 26, 8.7, -58),                    // unified memory on the substrate
+    box(13, 0.4, 11, 26, 8.7, -46),
+  ]}]));
+  board.add(buildMesh('storage_packages', [{ mat: M.chip, geoms: [
+    box(14, 0.6, 12, -70, 8.0, -42),                   // soldered NAND
+    box(14, 0.6, 12, -70, 8.0, -64),
   ]}]));
 
-  chassis.add(buildMesh('chassis_speaker_l', [{ mat: M.epoxy, geoms: [box(58, 5, 18, -120, 5.4, 88)] }]));
-  chassis.add(buildMesh('chassis_speaker_r', [{ mat: M.epoxy, geoms: [box(58, 5, 18, 120, 5.4, 88)] }]));
+  // The board itself with its regions.
+  const vrmInd = [];
+  for (let i = 0; i < 8; i++) vrmInd.push(box(3.2, 1.0, 3.2, -30 + (i % 4) * 5.2, 8.2, -72 + Math.floor(i / 4) * 5.2));
+  const vrmCaps = [];
+  for (let i = 0; i < 12; i++) vrmCaps.push(box(1.8, 0.6, 1.1, -32 + i * 3.1, 8.0, -61));
+  const traces = [];
+  for (let i = 0; i < 8; i++) traces.push(box(20 + (i % 3) * 8, 0.06, 0.7, -40 + i * 16, 7.74, -30 - (i % 4) * 12));
+  board.add(buildMesh('logic_board_body', [
+    { mat: M.pcb, geoms: [box(235, 1.2, 90, -2.5, 7.1, -55)] },
+    { mat: M.chip, geoms: [
+      box(9, 0.5, 9, -48, 7.95, -53),                  // storage controller
+      box(7, 0.6, 7, 58, 8.0, -74), box(7, 0.6, 7, 68, 8.0, -74), box(7, 0.6, 7, 78, 8.0, -74), // PMICs
+      box(16, 0.7, 14, 90, 8.05, -44),                 // wireless module
+      box(3, 0.5, 1.6, 44, 7.95, -70),                 // timing crystal
+      box(8, 0.5, 8, 96, 7.95, -70),                   // USB-C controller
+      box(7, 0.5, 7, -96, 7.95, -30),                  // audio controller
+      ...vrmInd, ...vrmCaps,
+    ]},
+    { mat: M.steel, geoms: [
+      box(18, 0.3, 16, 90, 8.55, -44),                 // wireless shield can
+      cyl(1.2, 0.4, -112, 7.9, -92, 10), cyl(1.2, 0.4, 108, 7.9, -92, 10), // board screws
+      cyl(1.2, 0.4, -112, 7.9, -18, 10), cyl(1.2, 0.4, 108, 7.9, -18, 10),
+    ]},
+    { mat: M.contact, geoms: [
+      box(4, 0.1, 4, -110, 7.72, -88), box(4, 0.1, 4, 106, 7.72, -88),   // grounding pads
+      box(4, 0.1, 4, -110, 7.72, -22), box(4, 0.1, 4, 106, 7.72, -22),
+    ]},
+    { mat: M.aluDark, geoms: [
+      box(9, 0.8, 3, -80, 8.1, -16), box(9, 0.8, 3, -30, 8.1, -14),      // board-to-board connectors
+      box(9, 0.8, 3, 30, 8.1, -14), box(9, 0.8, 3, 80, 8.1, -16),
+    ]},
+    { mat: M.membrane, geoms: [
+      box(7, 0.7, 2.4, -55, 8.05, -14), box(7, 0.7, 2.4, 5, 8.05, -14), box(7, 0.7, 2.4, 55, 8.05, -14), // ribbon sockets
+      box(1.2, 0.4, 1.2, -60, 7.9, -84), box(1.2, 0.4, 1.2, -20, 7.9, -88), // microphone ports
+    ]},
+    { mat: M.trace, geoms: traces },
+  ]));
 
-  chassis.add(buildMesh('chassis_feet', [{ mat: M.rubber, geoms: [
+  recenterGroup(board);
+  root.add(board);
+
+  /* ================= port and I/O boards (left wall) ================= */
+  root.add(buildMesh('port_board_usbc', [
+    { mat: M.pcb, geoms: [box(46, 1.2, 22, -136, 7.4, -66)] },
+    { mat: M.steel, geoms: [
+      box(9, 3.4, 7.6, -146, 7.4, -73),                // two USB-C shells
+      box(9, 3.4, 7.6, -146, 7.4, -59),
+      box(2.5, 5, 24, -149, 7.4, -66),                 // reinforcement bracket
+    ]},
+    { mat: M.flexFilm, geoms: [box(14, 0.2, 8, -110, 7.9, -66)] },
+  ]));
+  root.add(buildMesh('port_board_charge', [
+    { mat: M.pcb, geoms: [box(36, 1.2, 14, -136, 7.4, -20)] },
+    { mat: M.contact, geoms: [box(3, 1.0, 22, -148, 7.6, -20)] },        // magnetic contact strip
+    { mat: M.flexFilm, geoms: [box(14, 0.2, 7, -112, 7.9, -20)] },
+  ]));
+  root.add(buildMesh('port_board_audio', [
+    { mat: M.pcb, geoms: [box(24, 1.2, 12, -136, 7.4, 42)] },
+    { mat: M.chip, geoms: [cyl(2.6, 10, -143, 7.4, 42, 12, true)] },     // jack barrel
+    { mat: M.flexFilm, geoms: [box(12, 0.2, 7, -118, 7.9, 42)] },
+  ]));
+
+  /* ================= battery_system (stays seated; the volume king) ================= */
+  const battery = new THREE.Group();
+  battery.name = 'battery_system';
+
+  battery.add(buildMesh('battery_cells', [
+    { mat: M.pouch, geoms: [
+      box(80, 5.2, 82, -42, 5.4, 55),                  // center cell pair
+      box(80, 5.2, 82, 42, 5.4, 55),
+      box(40, 5.2, 72, -106, 5.4, 55),                 // side cells
+      box(40, 5.2, 72, 106, 5.4, 55),
+    ]},
+    { mat: M.adhesive, geoms: [
+      box(6, 0.25, 70, -84, 2.95, 55),                 // adhesive zones in the cell gaps
+      box(6, 0.25, 70, 0, 2.95, 55),
+      box(6, 0.25, 70, 84, 2.95, 55),
+      box(10, 0.1, 26, -60, 8.05, 88),                 // pull tabs on the front cells
+      box(10, 0.1, 26, 60, 8.05, 88),
+    ]},
+  ]));
+
+  battery.add(buildMesh('battery_bms', [
+    { mat: M.pcb, geoms: [box(130, 1.4, 10, 0, 8.5, 12)] },              // management board
+    { mat: M.flexFilm, geoms: [box(24, 0.5, 12, 0, 8.5, -2)] },          // battery cable to the board
+    { mat: M.contact, geoms: [box(10, 0.3, 3, 0, 9.0, 8)] },
+  ]));
+
+  recenterGroup(battery);
+  root.add(battery);
+
+  /* ================= audio: slim speaker chambers beside the battery ================= */
+  root.add(buildMesh('speaker_l', [
+    { mat: M.molded, geoms: [box(38, 5.6, 92, -128, 5.8, 40)] },
+    { mat: M.chip, geoms: [cyl(6, 0.8, -128, 8.8, 18, 20)] },            // driver
+    { mat: M.flexFilm, geoms: [box(10, 0.2, 18, -128, 8.7, -6)] },       // audio flex
+  ]));
+  root.add(buildMesh('speaker_r', [
+    { mat: M.molded, geoms: [box(38, 5.6, 92, 128, 5.8, 40)] },
+    { mat: M.chip, geoms: [cyl(6, 0.8, 128, 8.8, 18, 20)] },
+    { mat: M.flexFilm, geoms: [box(10, 0.2, 18, 128, 8.7, -6)] },
+  ]));
+
+  /* ================= lower_case ================= */
+  const lower = new THREE.Group();
+  lower.name = 'lower_case';
+
+  lower.add(buildMesh('lower_shell', [
+    { mat: M.alu, geoms: [
+      box(304, 1.6, 212, 0, 2.0, 0),                   // floor — ventless edges all round
+      box(1.6, 6.2, 212, -151.2, 5.9, 0),
+      box(1.6, 6.2, 212, 151.2, 5.9, 0),
+      box(300.8, 6.2, 1.6, 0, 5.9, -105.2),
+      box(300.8, 6.2, 1.6, 0, 5.9, 105.2),
+      box(180, 0.8, 2.5, 10, 3.2, 5),                  // internal ribs
+      box(120, 0.8, 2.5, 0, 3.2, -98),
+    ]},
+    { mat: M.aluDark, geoms: [
+      cyl(2, 2.5, -140, 4.0, -95, 10), cyl(2, 2.5, 140, 4.0, -95, 10),   // screw bosses
+      cyl(2, 2.5, -140, 4.0, 95, 10), cyl(2, 2.5, 140, 4.0, 95, 10),
+      cyl(2, 2.5, -140, 4.0, 0, 10), cyl(2, 2.5, 140, 4.0, 0, 10),
+    ]},
+    { mat: M.steel, geoms: [
+      cyl(1.1, 0.35, -140, 2.95, -95, 10), cyl(1.1, 0.35, 140, 2.95, -95, 10), // visible screws
+      cyl(1.1, 0.35, -140, 2.95, 95, 10), cyl(1.1, 0.35, 140, 2.95, 95, 10),
+    ]},
+    { mat: M.contact, geoms: [
+      box(5, 0.15, 5, -60, 2.9, -12), box(5, 0.15, 5, 60, 2.9, -12),     // grounding contacts
+    ]},
+  ]));
+
+  lower.add(buildMesh('foot_inserts', [{ mat: M.rubber, geoms: [
     cyl(6, 1.2, -132, 0.6, -92), cyl(6, 1.2, 132, 0.6, -92),
     cyl(6, 1.2, -132, 0.6, 92), cyl(6, 1.2, 132, 0.6, 92),
   ]}]));
 
-  recenterGroup(chassis);
-  root.add(chassis);
+  recenterGroup(lower);
+  root.add(lower);
 
-  /* ---------------- locators ---------------- */
+  /* ================= locators ================= */
   const locators = new THREE.Group();
   locators.name = 'locators';
   const hinge = new THREE.Object3D();
   hinge.name = 'loc_lid_hinge';
-  hinge.position.set(0, 9.0 * MM, -106.0 * MM);
+  hinge.position.set(0, 10.2 * MM, -102.0 * MM);
   const groundCenter = new THREE.Object3D();
   groundCenter.name = 'loc_ground_center';
   locators.add(hinge, groundCenter);

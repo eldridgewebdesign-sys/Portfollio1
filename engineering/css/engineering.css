@@ -69,7 +69,7 @@ main h2{
   font-size:.72rem;font-weight:600;line-height:1.2;letter-spacing:.14em;
   text-transform:uppercase;color:var(--ink);
   background:rgba(242,232,218,.92);border:1px solid rgba(43,35,32,.30);
-  border-radius:3px;padding:.34rem .6rem;max-width:12ch;
+  border-radius:3px;padding:.34rem .6rem;max-width:14ch;
 }
 
 #ending{padding-bottom:6rem}
@@ -80,7 +80,7 @@ main h2{
 /* The scrim: a soft ellipse, never a rectangle — its one scheduled use backs
    the closing block at the tableau (05 §4.5). Inert in the static article. */
 .scrim{
-  position:absolute;left:-15%;top:-15%;width:130%;height:130%;z-index:-1;
+  position:absolute;left:-35%;top:-25%;width:170%;height:150%;z-index:-1;
   background:radial-gradient(ellipse at center,var(--scrim) 0%,rgba(242,232,218,0) 70%);
   display:none;
 }
@@ -159,7 +159,7 @@ html.comp-mobile[data-mode="3d"] .closing span{white-space:normal}
   text-transform:uppercase;color:var(--ink);
   background:rgba(242,232,218,calc(.92 - .37 * var(--sett,0)));
   border:1px solid rgba(43,35,32,calc(.30 - .12 * var(--sett,0)));
-  border-radius:3px;padding:.34rem .6rem;max-width:12ch;width:max-content;
+  border-radius:3px;padding:.34rem .6rem;max-width:14ch;width:max-content;
 }
 #labels .leader{
   position:absolute;height:1px;transform-origin:left center;

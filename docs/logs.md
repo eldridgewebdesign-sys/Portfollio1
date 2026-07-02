@@ -6,6 +6,67 @@
 
 ---
 
+## 2026-07-02 15:40 - Developer (Implementation) - engineering-demo-realism-pass-1
+
+Action:
+Finished
+
+Task:
+Owner-directed realism pass on `/engineering`: rebuild the stand-in machine as a thin fanless
+ultrabook (modern thin-laptop internal logic as engineering reference — no brand marks, no
+trademarks) and rewire the component system, labels, and copy to match. The page style, route,
+timeline grammar, and cinematic system stay as built.
+
+Files claimed:
+
+- engineering/** (page, css, js, fallback stills)
+- docs/engineering-demo/asset-source/caption-anchors.json
+
+Files changed:
+
+- engineering/js/component-data.js (new) — structured component system: 8 groups, ~50 components
+  with one-sentence descriptions, visual priority, focus ranges; the 14-chip label set
+- engineering/js/model.js — full rebuild: display assembly (shell/glass/panel/camera/flex/hinges/
+  antennas), top case (deck/membrane/backlight/78 keys/fingerprint power button/force trackpad),
+  battery cell array (4 cells, BMS, cable, pull tabs, adhesive), dense logic board (SoC package
+  with on-substrate unified memory, soldered storage, PMICs, VRM field, wireless, timing crystal,
+  board-to-board connectors, ribbon sockets, grounding pads, screws, subtle traces), passive
+  thermal stack (shield plate + contact plate, graphite sheet — the fan and heat pipes are gone),
+  three port boards (USB-C + bracket, magnetic-style charge, headphone jack), slim speaker
+  chambers, engineered lower shell (ribs, bosses, screws, grounding, ventless edges)
+- engineering/js/timeline.js — new part-move tables (display → top case → thermal peel → port
+  boards → logic board), two-slab clearing rises, glass/panel micro-separations, per-label focus
+  windows (max 3 concurrent), 14-slot tableau re-entry
+- engineering/js/main.js — new bind contract (8 movers + 2 micro children + 9 anchors)
+- engineering/js/camera-rig.js — P5 pulled back to 3.65W / target 0.70W for the five-rank tableau
+- engineering/index.html — new cards/h2s/sr-story/captions/alt text (cards ≤ 14 words, floors
+  re-checked; static total at the 145 cap)
+- engineering/css/engineering.css — chip width 14ch, wider scrim ellipse
+- engineering/assets/fallback/*.webp — all 10 stills re-captured from the new scene
+- docs/engineering-demo/asset-source/caption-anchors.json — regenerated (v2)
+- docs/logs.md (this entry)
+
+Summary:
+The internals no longer read as a generic fan-cooled repair diagram: no fan, no heat pipes, no
+removable RAM/M.2 sticks. The teardown now tells the fanless story (B4 card: "A shield and a
+graphite sheet carry heat away. No fan.") over a believable dense board, big flat battery, and
+edge-mounted port boards; the final exploded view is a five-rank museum stack (lower shell 0 →
+logic board +0.34W → thermal/ports +0.68W → top case +1.02W → display +1.36W).
+
+Testing:
+Headless Chrome: zero console errors, zero off-origin requests, QA-1 clean; forward/reverse
+pixel-identical at p=0.46; skip link lands p=1.000 with CTA focusable; no-JS article with all five
+stills; reduced-motion → static with zero animation/3D bytes; WebGL2-blocked → static; mobile
+390×844 comp+track classes, no overflow, no errors; file:// guard; homepage regression OK;
+node --check on all ten modules; banned-word grep clean on shipped copy.
+
+Risks / Notes:
+Manager: needs decisions.md entries — this pass supersedes 05 §5.2's node names/copy deck wording
+(owner-directed). 3d word total is now ≈126 (> the 115 cap; labels grew from 9 to 14 — suggest
+recording a raised cap). Our JS is now ~80 KB (> the 60 KB line; component-data.js and the bigger
+stand-in model account for it — both shrink when the real GLB replaces model.js). Stills remain
+WebP-only, captured from the stand-in; re-capture with the production asset round.
+
 ## 2026-07-02 14:20 - Developer (Implementation) - engineering-demo-build-1
 
 Action:

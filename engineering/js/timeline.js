@@ -6,6 +6,10 @@
 
 import * as THREE from 'three';
 import { W } from './camera-rig.js';
+import { LABELS } from './component-data.js';
+
+// Re-exported under the old name for the debug/capture harness.
+export const LABEL_DEFS = LABELS;
 
 const g = () => window.gsap;
 
@@ -23,39 +27,48 @@ const CAMERA_MOVES = [
 ];
 
 // Teardown part travel: node · Δ (in W) · window. Pure +Y from captured rest.
-// DEVIATION from 05 §7.3, documented in the build report: the lid takes a
-// second rise (+0.50W → +1.08W, its final tableau rank) during late B3 while
-// the camera holds at P2 — at +0.50W it sits square in P3's +48° sightline
-// and occludes the storage/memory/support-board beats it is not part of
-// (verified by ray check and screenshot; hiding the discussed component is
-// banned by the vision). Single-mover rule holds: nothing else moves in that
-// window. The lid's B7 glide is dropped — it is already at rank.
+// Fanless-ultrabook architecture (owner-directed realism pass): display
+// assembly → top case → thermal peel (shield, then graphite) → port boards
+// (staggered, rear→front) → logic board. Battery, speakers, and the lower
+// shell never move — the volume story stays honest.
 const PART_MOVES = [
-  ['lid', 0.50, 0.105, 0.145],
-  ['cooling_fan', 0.28, 0.205, 0.275],
-  ['heat_pipes', 0.28, 0.205, 0.275],
-  ['storage_ssd', 0.28, 0.388, 0.433],
-  ['memory_ram', 0.28, 0.400, 0.445],
-  ['support_board_io', 0.28, 0.569, 0.609],
-  ['support_board_wireless', 0.28, 0.581, 0.621],
-  ['support_board_aux', 0.28, 0.593, 0.633],
-  ['mainboard', 0.14, 0.693, 0.743],
+  ['display_assembly', 0.50, 0.105, 0.145],
+  ['top_case', 0.28, 0.205, 0.275],
+  ['shield_plate', 0.28, 0.388, 0.433],
+  ['graphite_sheet', 0.28, 0.400, 0.445],
+  ['port_board_usbc', 0.28, 0.569, 0.609],
+  ['port_board_charge', 0.28, 0.581, 0.621],
+  ['port_board_audio', 0.28, 0.593, 0.633],
+  ['logic_board', 0.14, 0.693, 0.743],
 ];
 
-// The lid's second rise (see the deviation note above): from +0.50W to +1.08W.
-const LID_CLEAR = [0.50, 1.08, 0.283, 0.343];
+// Clearing rises while the camera holds at P2 (0.283–0.343): the full-footprint
+// slabs continue to their final tableau ranks so they never occlude P3's
+// high-angle beats (ray-checked — hiding the discussed component is banned).
+const CLEAR_MOVES = [
+  ['display_assembly', 0.50, 1.36, 0.283, 0.343],
+  ['top_case', 0.28, 1.02, 0.283, 0.343],
+];
 
-// B7 glide to final ranks (from teardown height → final rank, staggered 0.007).
-// The lid is absent: it reached +1.08W during LID_CLEAR (deviation note above).
+// Micro-separations: tiny relative offsets that make an assembly read as
+// engineered, not monolithic. The glass and panel drop slightly away from the
+// shell as the display lifts (negative = down, seen from the underside), so
+// the assembly reads as layered: shell, panel, glass. −2.5 mm and −1.2 mm.
+const MICRO_MOVES = [
+  ['display_glass', -2.5 / 304, 0.105, 0.145],
+  ['display_panel', -1.2 / 304, 0.105, 0.145],
+];
+
+// B7 glide to final ranks. Display and top case are already parked (CLEAR_MOVES).
+// Ranks: lower shell 0 · logic board +0.34W · thermal + ports +0.68W ·
+// top case +1.02W · display +1.36W — five even ranks, museum-aligned.
 const TABLEAU_MOVES = [
-  ['mainboard', 0.14, 0.36, 0.865, 0.910],
-  ['cooling_fan', 0.28, 0.72, 0.872, 0.916],
-  ['heat_pipes', 0.28, 0.72, 0.872, 0.916],
-  ['storage_ssd', 0.28, 0.72, 0.872, 0.916],
-  ['memory_ram', 0.28, 0.72, 0.872, 0.916],
-  ['support_board_io', 0.28, 0.72, 0.872, 0.916],
-  ['support_board_wireless', 0.28, 0.72, 0.872, 0.916],
-  ['support_board_aux', 0.28, 0.72, 0.872, 0.916],
+  ['logic_board', 0.14, 0.34, 0.865, 0.910],
+  ['shield_plate', 0.28, 0.68, 0.872, 0.916],
+  ['graphite_sheet', 0.28, 0.68, 0.872, 0.916],
+  ['port_board_usbc', 0.28, 0.68, 0.872, 0.916],
+  ['port_board_charge', 0.28, 0.68, 0.872, 0.916],
+  ['port_board_audio', 0.28, 0.68, 0.872, 0.916],
 ];
 
 // Copy cards: in-ramp start / out-ramp start (ramps are 0.015 wide).
@@ -70,20 +83,9 @@ const COPY = [
 // Windows during which any copy card is at opacity > 0 (for the quiet zone).
 const CARD_WINDOWS = COPY.map(c => [c[1], c[2] + 0.015]);
 
-// Component labels (05 §7.5): side is the fixed ±X assignment; next = the next
-// label's in-point (drives the active→settled demotion); re = B8 stagger slot.
-export const LABEL_DEFS = [
-  { key: 'lid', text: 'Lid', anchor: 'lid', move: 'lid', side: 1, inAt: 0.124, next: 0.238, re: 0 },
-  { key: 'fan', text: 'Cooling fan', anchor: 'cooling_fan', move: 'cooling_fan', side: -1, inAt: 0.238, next: 0.250, re: 1 },
-  { key: 'pipes', text: 'Heat pipes', anchor: 'heat_pipes', move: 'heat_pipes', side: 1, inAt: 0.250, next: 0.409, re: 2 },
-  { key: 'storage', text: 'Storage (SSD)', anchor: 'storage_ssd', move: 'storage_ssd', side: -1, inAt: 0.409, next: 0.421, re: 3 },
-  { key: 'memory', text: 'Memory (RAM)', anchor: 'memory_ram', move: 'memory_ram', side: 1, inAt: 0.421, next: 0.612, re: 4 },
-  { key: 'support', text: 'Support boards', anchor: 'support_boards', move: 'support_board_io', side: -1, inAt: 0.612, next: 0.717, re: 5 },
-  { key: 'mainboard', text: 'Mainboard', anchor: 'mainboard', move: 'mainboard', side: 1, inAt: 0.717, next: 0.797, re: 6 },
-  { key: 'chassis', text: 'Chassis', anchor: 'chassis', move: 'chassis', side: -1, inAt: 0.797, next: null, re: 7 },
-  { key: 'battery', text: 'Battery', anchor: 'chassis_battery', move: 'chassis', side: 1, inAt: 0.797, next: null, re: 7.5 },
-];
-const LABELS_OUT = 0.862; // group exit 0.862–0.877
+// Component labels come from component-data.js (LABELS): each carries its own
+// focus window (inAt/out) so no more than three chips share the screen during
+// the teardown; the full set re-enters at B8 as the finished diagram.
 
 /* ---------------- Eases (05 §7.2, registered once) ---------------- */
 
@@ -124,13 +126,12 @@ function buildMaster({ rig, parts, els, labelProxies }) {
     const rest = node.userData.rest.y;
     m.fromTo(node.position, { y: rest }, { y: rest + dW * W, duration: b - a, ease: E.LIFT, ...ir }, a);
   }
-  {
-    const [fromW, toW, a, b] = LID_CLEAR;
-    const lid = parts.lid;
-    const rest = lid.userData.rest.y;
-    m.fromTo(lid.position, { y: rest + fromW * W }, { y: rest + toW * W, duration: b - a, ease: E.LIFT, ...ir }, a);
+  for (const [name, dW, a, b] of MICRO_MOVES) {
+    const node = parts[name];
+    const rest = node.userData.rest.y;
+    m.fromTo(node.position, { y: rest }, { y: rest + dW * W, duration: b - a, ease: E.LIFT, ...ir }, a);
   }
-  for (const [name, fromW, toW, a, b] of TABLEAU_MOVES) {
+  for (const [name, fromW, toW, a, b] of CLEAR_MOVES.concat(TABLEAU_MOVES)) {
     const node = parts[name];
     const rest = node.userData.rest.y;
     m.fromTo(node.position, { y: rest + fromW * W }, { y: rest + toW * W, duration: b - a, ease: E.LIFT, ...ir }, a);
@@ -154,13 +155,13 @@ function buildMaster({ rig, parts, els, labelProxies }) {
   m.fromTo(els.cta, { opacity: 0 }, { opacity: 1, duration: 0.010, ease: E.TXT_IN, ...ir }, 0.988);
   m.fromTo(els.signoff, { opacity: 0 }, { opacity: 1, duration: 0.008, ease: E.TXT_IN, ...ir }, 0.992);
 
-  // Labels: named on arrival; group exit 0.862–0.877; B8 re-entry staggered.
+  // Labels: named on arrival, out at the end of their focus window (1–3 on
+  // screen at once), full staggered re-entry at the B8 tableau.
   for (const def of LABEL_DEFS) {
     const pr = labelProxies[def.key];
     m.fromTo(pr, { a: 0 }, { a: 1, duration: 0.015, ease: E.TXT_IN, ...ir }, def.inAt);
-    m.fromTo(pr, { a: 1 }, { a: 0, duration: 0.015, ease: 'none', ...ir }, LABELS_OUT);
-    const slot = Math.floor(def.re);
-    const reStart = 0.930 + 0.003 * slot;
+    m.fromTo(pr, { a: 1 }, { a: 0, duration: 0.015, ease: 'none', ...ir }, def.out);
+    const reStart = 0.928 + 0.0018 * def.re;
     m.fromTo(pr, { a: 0 }, { a: 1, duration: 0.006, ease: E.TXT_IN, ...ir }, reStart);
   }
 
@@ -257,7 +258,7 @@ function createLabels({ container, camera, scene, parts, compMobileRef }) {
 
       // Active → settled demotion: a pure function of p (05 §7.6).
       let sett = 0;
-      if (!tableau && it.def.next !== null && p < LABELS_OUT) {
+      if (!tableau && it.def.next !== null && p < it.def.out) {
         sett = Math.min(1, Math.max(0, (p - it.def.next) / 0.015));
       }
       if (sett !== it.lastSett) {
@@ -271,7 +272,7 @@ function createLabels({ container, camera, scene, parts, compMobileRef }) {
       const sy = (-tmp.y * 0.5 + 0.5) * vh - (1 - a) * 6; // 6px entry rise
 
       let side = it.def.side;
-      if (mobileTableau) side = (Math.floor(it.def.re * 2) % 2 === 0) ? -1 : 1;
+      if (mobileTableau) side = (it.def.re % 2 === 0) ? -1 : 1;
 
       // The deterministic slot ladder: horizontal 36→64, 45° up, 45° down.
       const lens = [36, 50, 64];
