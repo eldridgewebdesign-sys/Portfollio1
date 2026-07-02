@@ -6,6 +6,423 @@
 
 ---
 
+## 2026-07-01 - Engineering Demo Project Manager - engineering-demo-blueprint
+
+Action:
+Finished (documentation round; no production code written)
+
+Task:
+Owner-directed round: run the `/engineering` demo project (cinematic scroll-driven laptop
+teardown, Three.js + GSAP) as a managed documentation effort — vision, specialist team, review
+gate, master specification. Everything lives in **`docs/engineering-demo/`** (deploy-excluded).
+
+Result:
+- Hub docs: `README` (rules/build order), `project-vision` (binding; narrative spine = the
+  homepage promise "Websites are complicated — good thing we're not" dramatized as a teardown),
+  `taskboard`, `references` (Bruno Simon / Apple / Framework / iFixit / Awwwards, each with
+  learn-vs-don't-copy), `decisions` D-001–D-017.
+- Four specialist docs written in parallel (creative direction · technical architecture ·
+  animation storyboard · asset pipeline), then **5 adversarial review rounds** in
+  `review-report.md`. Rounds 1–3 rejected everything; root cause of persistent rejections was
+  cross-document seams mirror-swapping between parallel revisions, fixed by recording PM referee
+  rulings (D-009 copy deck · D-010 62vw arrival · D-011 flat `.vN` asset tree · D-012 shadow rig ·
+  D-013 no poster · D-014 converged rulings · D-015 battery seated+named · D-016 copper heat
+  pipes · D-017 closing line pending owner sign-off) and sequencing round 4 (entries → citation
+  passes → re-review). Final verdicts: **all four Approved**.
+- **`05-master-specification.md`** (1,913 lines) — the single build-from-this-alone blueprint:
+  file tree/routing, full copy deck, design tokens with WCAG ratios, asset manifest + node
+  hierarchy + PBR table, scene/lighting/camera spec, the merged B0–B8 master timeline, runtime
+  architecture, responsive + fallback matrices, numeric budgets with verification procedures,
+  loading sequence, acceptance criteria, reconciliations appendix. Passed two independent audits;
+  all 14 high/medium findings fixed (10 low-severity polish notes recorded on taskboard T-08).
+
+Blocked on owner (before implementation):
+1. **D-017 sign-off** — closing line "Websites are complicated. / You've seen how we treat
+   complicated." + page title "Engineering" echo the homepage headline; owner must approve or
+   rewrite (a rewrite re-runs the storyboard's reading-floor math).
+2. Meta description sign-off (the one synthesis-authored string, spec §3.3).
+3. Eventual fate of `Animations/laptop-teardown` (kept live and untouched per D-002).
+
+Files changed: `docs/engineering-demo/**` (11 files, all new) and this log entry. Nothing outside
+`docs/` touched; no live page edited.
+
+## 2026-06-30 - Developer / Implementation - onboarding-feature-extensions-redesign
+
+Action:
+Finished
+
+Task:
+Per user request: redo the onboarding flow into a clean, feature-driven client intake form that asks
+different questions depending on which "extensions" the client wants. Kept the existing account-creation
+(Supabase Auth signUp) + submit/redirect behavior intact.
+
+Flow now: **(1) Account Information** (email, password, confirm — unchanged, still creates the login).
+**(2) Website Features** — a checkbox group "What extensions do you want on your site?"
+(Authentication · Administrator Dashboard · Spreadsheets · Payment Integration). **(3) About You & Your
+Site** (always shown): Name, Business Name (optional), Cell Phone (optional), "What do you do?", "What is
+everything I should know?" (helper "What points do you want to get across with the site?"), "How should the
+style look?" (larger textarea, ranked-list helper). **(4) Feature Details** — conditional cards that
+reveal/hide immediately as extensions are checked/unchecked (values kept in the DOM so re-checking restores
+them; unchecked answers are never saved). Authentication → sign-in method / account creation / user
+capabilities. Administrator Dashboard → what the admin can do. Spreadsheets → what data to connect + a
+"How spreadsheets work →" link to the new **how-to-sheets.html** (opens in a new tab). Payment Integration →
+Yes/No embedded-payment choice + a repeatable **Add product** block (name / price USD / description).
+
+Validation: Name, What do you do, key points, style are required; conditional fields required only when
+their extension is selected (payment requires the Yes/No choice + at least one named product). Business
+name / phone are optional. Selected extensions saved as a `text[]`; products saved as `jsonb`.
+
+Files changed:
+
+- **onboarding.html** — full rewrite of the form + JS (same visual system: ocean waves, glass card,
+  Distillery Display + Playfair Display, `.fi`/`.check`/`.btn`). New CSS for `.cond`/`.cond-card`
+  conditional blocks, `.yesno` pills, `.product-block`/`.btn-add` repeatable products, `.help-link`.
+  New JS: `syncConditionals()` (checkbox→section reveal), repeatable product add/remove + `gatherProducts()`,
+  rewritten `validate()` (base + conditional required), and a rebuilt `inquiry` insert object saving the new
+  columns (conditional answers only saved for selected extensions; `client_name` mirrored into `full_name`
+  so the admin's name column/search keep working).
+- **how-to-sheets.html** (NEW) — client-friendly, non-technical explainer of spreadsheet integrations
+  (heading, short explanation, 6 example tiles, 4 "how it comes together" steps, "← Back to your project
+  form" button → onboarding.html). Matches the WebSharke ocean/glass style.
+- **supabase-project-inquiries.sql** — added (idempotent `add column if not exists`) the new columns:
+  `selected_extensions text[]`, `client_name`, `key_points`, `style_preferences`, `auth_sign_in_method`,
+  `auth_account_creation`, `auth_user_capabilities`, `admin_dashboard_needs`, `spreadsheet_needs`,
+  `payment_embedded`, `payment_products jsonb`. `business_description` reused for "What do you do?". No RLS
+  changes (existing insert/select/update policies are column-agnostic).
+- **dashboard.html** — surfaced the new fields for the admin and client:
+  - Admin drawer (`renderUserDrawer`): new read-only **"Website Build Requirements"** section (extensions +
+    each conditional answer, only rows with content; products formatted as readable lines). No change to the
+    editable-field save path.
+  - Admin **Onboarding** CSV export: added Extensions / key points / style / auth·admin·spreadsheet·payment
+    / products columns; hardened `csvCell()` to JSON-stringify object array items (payment_products).
+  - Client **Project details** tab (`renderProject` + markup): added the new fields and a hide-empty helper
+    so answered questions show and removed/legacy questions collapse. **Business info** tab (`renderBusiness`)
+    also collapses empty rows.
+
+DB migration required: **yes** — run the new `add column if not exists` block in
+`supabase-project-inquiries.sql` (Supabase SQL editor) before the redesigned form goes live.
+
+Testing:
+Local static-server + Chrome. Verified all 7 scenarios (no extensions; each extension individually;
+multiple at once; uncheck) drive the correct show/hide and produce the correct saved payload via stubbed
+signUp/insert (no real accounts created). Verified validation blocks: empty base fields, conditional-required
+when an extension is selected, payment Yes/No + product-name, email format, password length + mismatch.
+Confirmed how-to-sheets.html renders + back link, and dashboard.html parses/executes cleanly.
+
+---
+
+## 2026-06-30 - Developer / Implementation - separate-invoices-from-subscriptions
+
+Action:
+Finished
+
+Task:
+Per user request: cleanly separate one-time invoices from recurring subscriptions on the client dashboard.
+(1) The **Invoices tab shows one-time invoices only** — all subscription/recurring wording, interval
+display (`/month` `/year`), pending-subscription cards, and subscription action buttons were removed from
+it. (2) The **Hosting tab was renamed "Subscriptions"** and is now the single home for every recurring
+subscription (active / past_due / canceled / pending), each rendered as its own card with plan name, price
++ interval, status badge, next-payment date (when live), and its own actions. (3) **Users can cancel their
+own subscription** via a new secure server route. (4) **Users can change payment info** via the existing
+Stripe Customer Portal.
+
+Files changed:
+
+- **dashboard.html**
+  - **Invoices tab (`#tab-billing`):** removed the `#bill-active` subscription block (payment method /
+    hosting status / current plan / next payment / "Manage My Subscription" / "Cancel Hosting Services")
+    and the `#csub-block` pending-subscriptions list. The tab now contains only the current one-time
+    invoice card + "View Previous Payments", with a one-line "One-time payments only" note. Deleted
+    `renderBilling()` and its `#bill-load-error`/`#bill-error` lines + the `#manage-sub` CSS.
+  - **Subscriptions tab (`#tab-hosting`, nav label + title now "Subscriptions"):** replaced the fixed
+    none/pending/active divs with a list container `#sub-list`. New `renderSubscriptions(rows, billingError)`
+    filters the user's subscription rows (`isSubscriptionRow`), sorts live→pending→canceled, and renders one
+    `buildSubscriptionCard()` per row (reusing the shared `cinv-*` card styling). Cards show: plan name +
+    short id, status badge (added `.cinv-badge.active/.trialing` green + `.past_due/.unpaid` red CSS),
+    recurring price ("Recurring payment", `$25/month` etc.), next-payment date (active/past_due), and
+    actions: **Change Payment Info** → `openBillingPortal()` (Stripe Customer Portal), **Cancel
+    Subscription** → `cancelSubscription()` (new route), or **Activate Subscription** (pending) →
+    `/payment?subscription_id=…`. Canceled rows show a "Canceled on …" line and no actions.
+  - Replaced the old `#bill-active` "Cancel Hosting"/"Manage My Subscription" handlers and the
+    `#manage-hosting` handler with a single reusable `openBillingPortal(btn)` + `showHostError()`; removed
+    `renderHosting()`, `renderClientPendingSubs()`, `buildPendingSubCard()`, the `stripeCustomerId` global,
+    and the now-unused `hasService`/`activeHostingSub`/`pendingHostingSub` page-load computations. Pay-banner
+    wording updated ("Change Payment Info under Subscriptions").
+  - `cancelSubscription()` POSTs only the row id + session token; on a confirmed 200 it flips the card's
+    badge to "Canceled" and removes its actions in place (never deletes the card, never fakes the status —
+    the row is really canceled server-side).
+
+- **api/subscriptions/cancel.js** (NEW) — a client cancels their OWN subscription. Verifies the Supabase
+  bearer token, loads the row with the service-role key, and **rejects it (403) unless `row.user_id ===
+  caller.id`** — the browser never sends (and the server never trusts) a Stripe customer/subscription id.
+  If the row has a live Stripe subscription it calls `stripe.subscriptions.cancel()` first (tolerating
+  `resource_missing`), then marks the row `canceled` + `canceled_at`. Mirrors the security pattern of
+  `api/subscriptions/activate.js`. Already-canceled → 409. The webhook's `customer.subscription.deleted`
+  case also sets `canceled` (idempotent), so no webhook change was needed.
+
+- **payment.html** — corrected a stale comment that said the invoice deep-link "also drives monthly/annual
+  invoices" (invoices are one-time PaymentIntents only; recurring is the separate subscription_id flow).
+
+Backend/security:
+- No Stripe secret key or Supabase service-role key is ever in the browser. Cancellation and portal sessions
+  are created server-side; both verify the authenticated user owns the resource. No raw card details are
+  stored (Stripe Customer Portal handles card updates). Change Payment Info **reuses the existing
+  `api/customer-portal.js`** rather than duplicating portal logic.
+- Webhook (`api/webhook.js`) already handles `customer.subscription.updated/deleted` and
+  `invoice.paid/payment_failed` → Supabase status (`active`/`past_due`/`canceled`); left unchanged.
+
+Verified:
+- `node --check api/subscriptions/cancel.js` passes; both inline `dashboard.html` scripts compile
+  (`new Function`); `payment.html` script compiles. Grep confirms no dangling references to removed ids/
+  functions (`bill-active`, `manage-sub`, `renderBilling`, `renderHosting`, `renderClientPendingSubs`,
+  `stripeCustomerId`, etc.). Not live-tested in a browser and no commit (none requested).
+
+### Suggested next task
+Live-verify each state as a client: (no invoice/no sub → both tabs show empty/"not hosting"), (unpaid
+one-time invoice → Pay Invoice on Invoices only), (paid invoice), (active subscription → Subscriptions tab
+shows price/interval/next-payment + Change Payment Info + Cancel), (cancel → card flips to "Canceled"),
+(both an invoice and a subscription → each appears only in its own tab). Confirm the Stripe Customer Portal
+opens for Change Payment Info and that cancellation reflects `canceled` after the webhook fires.
+
+## 2026-06-30 - Developer / Implementation - invoice-status-workflow-recent-payments
+
+Action:
+Finished
+
+Task:
+Per user request (two messages): (1) the admin can EDIT an invoice's status to issued / paid / in_progress /
+finished / live; the client dashboard shows that status; it's editable + searchable + status-filterable in
+the admin **Recent Payments** tab. (2) "remove what I said earlier" — the Invoices & Subscriptions tabs must
+NOT list all payments; **all payments (every invoice + every subscription) are shown only in Recent
+Payments.** This REVERSES the previous "all-time lists in the Invoices/Subscriptions tabs" change.
+
+Files changed:
+
+- **api/admin.js**
+  - `listPayments` rebuilt: now returns **ALL invoices (every status)** + **ALL subscriptions (every
+    status)** — no paid-only filter. Each row carries `date` (invoice paid_at→created_at; subscription
+    last_payment_date→activated_at→created_at), amount, type, and status. Filters: `kind`
+    (invoice|subscription), `status` (invoice workflow status), date range; free-text search; newest first.
+  - NEW `set_invoice_status` action + `setInvoiceStatus()` — validates the id + status against
+    `INVOICE_STATUSES` (draft/issued/paid/overdue/void/canceled/in_progress/finished/live), updates
+    `invoices.status`, logs `invoice_status_changed`. Surfaces a clear message if the DB CHECK constraint
+    hasn't been widened yet. Does NOT touch paid_at / Stripe (webhook stays the payment-state authority).
+  - Removed the `list_invoices` action + `listInvoices()` (revert of the prior change).
+- **api/admin/invoices.js** — `ALLOWED_STATUS` extended with in_progress/finished/live (single source of
+  truth; creation still only uses draft/issued).
+- **api/admin/subscriptions.js** — `list` action reverted to category='hosting' (it's now unused; all
+  subscriptions are viewed via listPayments).
+- **db/invoices-schema.sql** — inline status CHECK widened to include in_progress/finished/live.
+- **db/invoices-status-workflow.sql** (NEW) — idempotent migration to drop+re-add the
+  `invoices_status_check` constraint with the new values. **⚠ Must be run by hand in the Supabase SQL
+  editor** (no DB access from this environment) before the three new statuses can be saved; issued/paid work
+  immediately.
+- **dashboard.html (admin)**
+  - Recent Payments view: title kept; subtitle/empty updated ("No payments found."). Columns Date · Name ·
+    Client · Type · Amount · **Status** · (actions). Invoice Status = an inline editable `<select>`
+    (`invoiceStatusSelect` → delegated `change` → `setInvoiceStatusUI` → set_invoice_status); subscription
+    Status = read-only badge + a **Cancel** action. Filters: Type, **Status** (STATUS_OPT_INV), date.
+  - Added `STATUS_OPT_INV` / `INV_STATUS_LABEL`, `invoiceStatusSelect`, `setInvoiceStatusUI`, a delegated
+    change listener, a `cancel-sub` case in `handleRowAction`, and a `buildRow` guard so clicking the status
+    select doesn't open the drawer. `cancelSub` now refreshes via `refreshCurrent()`.
+  - **Removed the "All invoices" list from the Invoices tab** (+ `loadInvoiceList`) and the **"All
+    subscriptions" list from the Subscriptions tab** (+ `loadSubsList`, `subRowPriceLabel`); both tabs are
+    create-only again. Subscription cancel now lives in Recent Payments.
+  - CSS: badge `b-issued`/`b-finished`/`b-overdue`/`b-void`/`b-draft`; styled `.adm-pay-status` dropdown.
+- **dashboard.html (client)** — `loadClientInvoices` shows the most recent CLIENT_VISIBLE invoice (now
+  includes in_progress/finished/live) with its status badge; the **Pay Invoice button shows only when the
+  invoice is payable** (issued/overdue). `CLIENT_STATUS_LABEL` + `.cinv-badge` CSS extended for the new
+  statuses. (Merged with an external edit that had added `CLIENT_VISIBLE_STATUSES` + a `SHOW_DRAFTS_TO_CLIENTS`
+  toggle — kept that structure, added the workflow statuses, removed a duplicate.)
+
+### Date field used for sorting (Recent Payments)
+- Invoices: `paid_at` if paid, else `created_at`. Subscriptions: `last_payment_date` → `activated_at` →
+  `current_period_start` → `created_at`. Whole feed sorted by that, newest first.
+
+### Scope / safety
+- Display/query + one status-update endpoint; no invoice/subscription rows deleted, no Stripe object touched.
+  `api/webhook.js`, `payment.html`, Stripe checkout/webhook, Supabase auth/RLS, the client dashboard's other
+  tabs, and the other admin sections (Users / Onboarding / Overview / Websites / Domains / Alerts / Activity /
+  Settings) are untouched. `node --check` passes on all three API files; both inline dashboard scripts parse
+  clean.
+
+### Notes
+- The new statuses need **db/invoices-status-workflow.sql** applied in Supabase; until then setting
+  in_progress/finished/live returns a clear toast and reverts the dropdown.
+- No commit made (none requested).
+
+---
+
+## 2026-06-30 - Developer / Implementation - admin-invoices-subscriptions-all-time
+
+Action:
+Finished
+
+Task:
+Per user request: make the admin **Invoices** and **Subscriptions** sections show the COMPLETE historical
+record — every status, all time, newest first — instead of an aggressively filtered subset. (Separate from
+the "Recent Payments" tab, which is intentionally paid-only.)
+
+Files changed:
+
+- **api/admin/subscriptions.js** — the `list` action no longer filters. Removed `.eq("category","hosting")`
+  so EVERY subscription returns: active / trialing / past_due / unpaid / incomplete / pending_activation /
+  canceled, and both admin 'hosting' rows AND legacy plan rows (category NULL). Still `order(created_at,
+  desc)` (newest first) and still no status filter. Added `amount, plan_interval` to the select so legacy
+  plan rows (dollar `amount` + 'month'/'year') render their price too.
+- **api/admin.js** — added a new `list_invoices` action + `listInvoices()`. It returns ALL invoices,
+  UNFILTERED (draft / issued / paid / overdue / void / canceled — one-time + any legacy subscription
+  invoices), `order(created_at, desc)`, joined to client name/business/email by `client_user_id`, with
+  `amount` = total_amount_cents/100. (The admin Invoices tab previously had NO list at all — only a create
+  form — and `api/admin/invoices.js` is create-only, so the list query had to live in the main admin route.)
+- **dashboard.html**:
+  1. Invoices tab: added an "**All invoices**" panel (`#inv-list`) below the create form + `loadInvoiceList()`
+     (calls `adminApi("list_invoices")`). Columns: Name · Client · Title · Amount · Status (badge) · Created.
+     Loads on tab open (`initInvoices`) and refreshes after a successful create. Empty state → "**No invoices
+     found.**" Display-only (no per-invoice buttons; there is no invoice drawer).
+  2. Subscriptions tab: added `subRowPriceLabel(r)` so the "All subscriptions" list renders BOTH hosting
+     rows (amount_cents/interval_months) and legacy rows (amount/plan_interval); swapped it in for the old
+     hosting-only `subRecurringLabel(...)` call. Empty state "No subscriptions yet." → "**No subscriptions
+     found.**" Status badge + Created date already shown; inline Cancel kept (existing pattern, no sub drawer).
+
+### Date fields used for sorting
+- **Invoices** → `created_at` (invoice creation date), descending. (No `invoice_date`/`updated_at` column
+  exists; `created_at` is the canonical creation timestamp.)
+- **Subscriptions** → `created_at` (subscription creation date), descending — unchanged.
+
+### Filters removed
+- Subscriptions: the `category = 'hosting'` restriction (the only filter — there was no status filter).
+- Invoices: there was no prior list to filter; the new query is intentionally unfiltered (no status / date /
+  recency conditions).
+
+### Scope / safety
+- Display + query change only — no invoice/subscription rows created, deleted, or mutated. Create/cancel
+  flows, `api/webhook.js`, `payment.html`, Stripe checkout/webhook, Supabase auth/RLS, the client dashboard,
+  the Recent Payments tab, and every other admin section (Users / Onboarding / Overview / Websites / Domains
+  / Alerts / Activity / Settings) are untouched. `list_invoices` runs through the existing admin-gated
+  `/api/admin` route (service role). `node --check` passes on all three JS files; both inline dashboard
+  scripts parse clean.
+
+### Notes / assumptions
+- Invoices are one-time only in current code, so "subscription invoices" in the invoices table would only be
+  legacy rows; the unfiltered list surfaces them if any exist.
+- The Subscriptions "Client" column resolves names from the already-loaded user map (legacy users still load
+  via `list_users`), falling back to a short user_id when a name isn't available — pre-existing behavior.
+- No commit made (none requested).
+
+---
+
+## 2026-06-30 - Developer / Implementation - admin-recent-payments-paid-only
+
+Action:
+Finished
+
+Task:
+Per user request: make the admin dashboard "Payments" tab a clean, read-only **Recent Payments** feed that
+shows ONLY payments that actually went through — never unpaid / pending / open / draft / failed / canceled-
+without-payment / incomplete records. It must surface both paid one-time invoices and paid subscription
+payments, newest first. (Full invoice/subscription management stays on the separate Invoices and
+Subscriptions tabs — untouched.)
+
+Files changed:
+
+- **api/admin.js** — rewrote `listPayments()`. It no longer dumps every `subscriptions` row. It now unions
+  the only two places a successful payment is recorded and returns the newest first:
+  - `invoices` filtered server-side to `status = 'paid'` (one-time invoice payments; `paid_at` is the paid
+    timestamp).
+  - `subscriptions` filtered to states that imply a real charge: `active` / `past_due` / `unpaid` always
+    (their first invoice was paid), plus `canceled` / `trialing` ONLY when `last_payment_date` is set.
+    `pending_activation` / `incomplete` (and anything else not paid) are excluded. `last_payment_date` is the
+    payment proof — NOT `activated_at`, which the webhook also stamps at trial/active START.
+  - Sort: newest first by the most accurate paid timestamp (`paid_at` for invoices; `last_payment_date` →
+    `activated_at` → `current_period_start` → `created_at` for subscriptions). Joins client name/email/site
+    by `user_id` (invoices key on `client_user_id`). Date `from`/`to` filter now applies to the paid date.
+    Returns `hasMore:false` (full paid set, like the other aggregated admin views).
+- **dashboard.html** — Payments view config + chrome:
+  1. Nav label "Payments" → "**Recent Payments**"; view `title` → "Recent Payments", subtitle "Payments that
+     have actually been paid — newest first".
+  2. Columns now paid-appropriate: Paid (date) · Name · Client · Type (One-time invoice / Subscription · …) ·
+     Amount · Status (uniform green **Paid** badge). Dropped the old Status filter (everything is paid);
+     filters are now Type (invoice/subscription) + From/To date. Empty state → "**No recent paid payments
+     yet**".
+  3. CSV export columns updated to the paid-payment shape (Paid, Name, Client, Email, Type, Plan, Amount,
+     Currency, Domain).
+  4. Added `b-paid` to the green badge CSS rule.
+
+### Scope / safety
+- Display + query change only. No DB rows deleted or mutated. `api/webhook.js`, `payment.html`, the Stripe
+  flow, Supabase auth/RLS, and every other admin tab (Users / Onboarding / Invoices / Subscriptions /
+  Websites / Domains / Alerts / Activity / Settings) and the client dashboard are untouched. `list_payments`
+  has no other consumer (the global search uses the separate `search` action). `node --check api/admin.js`
+  passes.
+
+### Notes / assumptions
+- Invoices are one-time only in current code (`api/invoices/pay.js` creates a single PaymentIntent; the
+  recurring branch was removed earlier), so a paid invoice never also appears as a subscription → no double-
+  counting. The `monthly`/`annual` label branches in `listPayments` are defensive only, to render any legacy
+  recurring invoice rows still in the live DB gracefully.
+- No commit made (none requested).
+
+---
+
+## 2026-06-28 - Developer / Implementation - why-section-frosted-glass
+
+Action:
+Finished
+
+Task:
+Per user request: redesign the "Why WebSharke" section cards (Simplicity / Integration / Honest) from the
+old weathered-wood/plank treatment to frosted underwater glass panels — semi-transparent dark teal,
+`backdrop-filter` blur (ocean shows faintly through), a 1px cyan/teal gradient border brighter at the top,
+a soft teal outer glow, a small thin-line underwater icon above each header, glowing (bioluminescent)
+headers with calm non-glowing body text, and a gentle hover float. Reduced-motion respected.
+
+Files claimed / changed:
+
+- index.html — scoped entirely to the `#why` section (CSS + that section's markup). No other section,
+  and no JS / payment / auth / Supabase / Stripe code touched.
+  1. CSS comment header (line 124) retitled "WHY WEBSHARKE — frosted underwater glass panels".
+  2. Removed ALL wood styling for this section: the `#why .sec-title::before` `long-plank.png` sign and
+     the `.simplicity-card` / `.integration-card` / `.honest-card` rules + their `taller-plank(2).png`
+     `::before` frames (and their responsive overrides). Confirmed via grep: zero `*-card` / `*-plank`
+     references remain in index.html.
+  3. `#why .sec-title` now sits clean in the water with a faint teal bioluminescent halo (no wood) — kept
+     the title coherent with the new glass cards (the title is not technically a "card", flagged to user).
+  4. New `.why-col` = frosted glass card: `linear-gradient(rgba(14,49,62,.46)→rgba(6,27,37,.34))` +
+     `backdrop-filter:blur(15px) saturate(135%)` (+ `-webkit-` prefix), inset top highlight, soft teal
+     outer glow box-shadow. `.why-col::before` draws the 1px top-bright→bottom-soft cyan gradient frame
+     via the mask-composite border trick.
+  5. `.why-ic` (44px, `--aqua`, drop-shadow glow) holds an inline thin-line SVG per card: stacked waves
+     (Simplicity), connected nodes (Integration), shield+check (Honest). Headers glow via text-shadow;
+     body `<p>` stays calm/readable with only a faint legibility shadow (no glow).
+  6. Hover: `translateY(-8px)` + intensified glow (float-in-water feel). `@media(prefers-reduced-motion)`
+     disables the card transition + hover transform.
+  7. Layout: `.why-cols` tightened from the old edge-to-edge `max-width:1500px` / `gap:7rem` spread to a
+     clean even row (`max-width:1100px`, `gap:clamp(1.5rem,2.6vw,2.4rem)`, `align-items:stretch` for equal
+     heights). Body copy unchanged (kept owner's original wording/typos). Mobile (≤900px) → single column,
+     `max-width:440px`; the old `width:150%` plank overflow risk is gone.
+
+Summary:
+The section now reads as three glass panels sitting *in* the water rather than wood signs pasted on top.
+The existing background image, marine snow (`#snow`) and fish (`#fish`, both behind the z:1 section) show
+faintly through the blur. Only the headers + icons glow; body text is deliberately calm so the effect
+isn't ruined. Palette stays inside the existing ocean tokens (`--aqua #62b6c6` etc.) — no purple/blue tech
+gradients, no new dependencies, no extra fish/sharks.
+
+Testing:
+Static review only (no GUI session available to me). Verified: grep shows no leftover wood class/image
+refs; `.rv`/`.d1`–`.d3` reveal classes preserved on the cards (scroll-reveal observer still targets them);
+no JS references the removed classes; SVG paths well-formed; mask-composite border has a graceful
+fallback. Live in-browser eyeball (desktop hover, mobile stack/no-overflow, backdrop-filter on Safari)
+still advised per the usual non-GUI caveat.
+
+Risks / Notes:
+One scope judgment flagged to the user: the section *title*'s wood plank was also removed (replaced with a
+teal halo) so it wouldn't clash with the glass cards — slightly beyond the literal "cards" wording but in
+line with "clean up old wood styling in this section." Easy to revert if the wood title was wanted. Header
+text kept as existing "Honest" (user's list said "HONESTY" but body/header copy was left unchanged). Not
+on the board — owner-direct change.
+
 ## 2026-06-27 16:05 - Developer / Implementation - why-section-text-color
 
 Action:
@@ -4823,3 +5240,212 @@ disk; I verified + ratified + recorded it.
 **Suggested next task:** **Task E** — vendor Google Fonts on those 6 remaining pages (same pattern as
 Task C, reuses `/fonts`; needs a per-page weight audit, since some pages may use faces not yet in `/fonts`,
 e.g. Mulish-700 / CG-italic). Task A (GUI live-verify) is the other open item but needs a browser session.
+
+---
+
+## 2026-06-30 — Worker (Opus) — Separate Invoices (one-time) from Subscriptions (recurring)
+
+**Why:** Invoices and the Subscriptions tab overlapped — an invoice with `billing_type` monthly/annual
+started a Stripe subscription, so "invoices" could secretly be recurring. Owner wants a hard split:
+**Invoices = one-time fees only**, **Subscriptions = recurring only** (which already say `$/month`,
+`$/year`, or `every N months` via `recurringLabel`/`subRecurringLabel`), and the redundant invoice
+billing data removed from Supabase.
+
+### Files changed (production code)
+- **dashboard.html** — removed the "Billing type" select from the admin invoice form; dropped
+  `billing_type` from `collectInvoice`/`resetInvoiceForm`; deleted the client-side recurring-invoice
+  display helpers (`invoiceBillingType`/`isRecurringInvoice`/`billingIntervalSuffix`/`invoicePriceLabel`/
+  `invoicePayLabel`) + the orphaned `BILLING_LABEL`; invoice totals now render a plain `cinvMoney(...)` and
+  the action is always "Pay Invoice". Subscription labels untouched.
+- **api/admin/invoices.js** — removed `ALLOWED_BILLING_TYPES`, the `billing_type` validation/field, and the
+  `p_billing_type` RPC arg.
+- **api/invoices/pay.js** — deleted the entire monthly/annual subscription branch + `BILLING_INTERVAL`/
+  `REUSABLE_SUB`; invoices are paid by a single PaymentIntent only.
+- **api/webhook.js** — removed all recurring-invoice handling (the `metadata.invoice_id` subscription
+  branches, `invoice_payments` writes, `next_payment_at`/`stripe_invoice_id`-on-invoices reconciliation,
+  and the now-unused helpers `subscriptionNextChargeUnix`/`invoicePaymentIntentId`/`recordInvoicePayment`).
+  Kept the hosting-subscription sync and the one-time `payment_intent.succeeded` invoice path.
+- **payment.html** + **prev-inv.html** — same client-side simplification (plain one-time totals + "Pay
+  invoice"); dropped `billing_type` from their `invoices` selects. Subscription activation flow untouched.
+
+### Supabase (schema)
+- **db/invoices-schema.sql** — updated to the one-time target: dropped `billing_type` + recurring `stripe_*`
+  / `next_payment_at` columns, removed the `invoice_payments` table + its RLS, and rebuilt
+  `create_invoice_with_items()` without `p_billing_type`.
+- **db/invoices-one-time-cleanup.sql** (NEW) — standalone, idempotent teardown to run in the Supabase SQL
+  editor: drops the redundant invoice columns, drops `invoice_payments`, and replaces the RPC.
+
+**⚠ Not yet applied to the live DB.** This environment has **no Supabase CLI, no psql, no `.env.local`, no
+DB credentials**, so I could not push the schema change from the terminal (every schema change in this repo
+is run by hand in the Supabase SQL editor). The owner must paste `db/invoices-one-time-cleanup.sql` into the
+SQL editor and run it. Until then the dropped columns simply sit unused — the app code no longer reads or
+writes them, so nothing breaks in the interim.
+
+### Notes
+- No commit made (none requested). The recurring-display logic for **subscriptions** was intentionally left
+  exactly as-is — that's where `/month` `/year` lives, and it already keys off `interval_months`.
+
+### Suggested next task
+Run `db/invoices-one-time-cleanup.sql` in Supabase, then live-verify in a browser: create a one-time invoice
+(no billing selector), pay it, and confirm the Subscriptions tab still shows recurring prices correctly.
+
+---
+
+## 2026-06-30 — Worker (Opus) — Admin: set a client's login password
+
+**Why:** Owner wants to edit user passwords from the admin panel (admin-only).
+
+**How:** Added a server action `set_user_password` to **api/admin.js** behind the existing admin-email gate.
+It validates the target has a linked auth account, enforces 6–72 chars, blocks the admin from changing
+their OWN password (self-lockout guard), then calls `supa.auth.admin.updateUserById(userId,{password})`
+(service role — the only way to set another user's password without their current one). The plaintext is
+sent straight to GoTrue and **never stored, logged, or returned** — the audit-log entry records
+`new_value:"(updated)"` only.
+
+**UI (dashboard.html):** in the user drawer's *Admin Actions* section, added "Set new password" + "Confirm
+new password" inputs and a "Set password" button (only rendered when the client has `inq.user_id`; otherwise
+a muted "no linked login account" note). The `[data-act="set-password"]` handler validates ≥6 + match,
+shows a `confirmAction` warning, POSTs to `set_user_password`, then clears the fields. No other user actions
+touched.
+
+**Also (carry-over cleanup from the one-time-invoice change):** simplified `invPaymentLabel()` in api/admin.js
+to always return "One-time invoice" — it was still reading the now-dropped `invoices.billing_type` column.
+
+**Verified:** `node --check api/admin.js` passes. No commit (none requested).
+
+### Suggested next task
+Live-verify: open a client in the admin drawer, set a new password, and confirm that client can sign in with
+it (and that the field is hidden for inquiries with no linked account).
+
+---
+
+## 2026-06-30 — Worker (Opus) — Client → Admin "Requests" (domain-change flow)
+
+**Why:** Owner wants a client→admin request channel. First use case: a client asks to change their
+domain. The Domain tab's old "Change Domain" button just opened a mailto; now it's a real in-app
+request that the admin manages from a new **Requests** section.
+
+**New DB table — `db/client-requests-schema.sql` (must be run by hand in the Supabase SQL editor):**
+`client_requests` (id, user_id→auth.users, `type` default `domain_change`, `status`
+pending|approved|rejected|completed, denormalised `client_name`/`client_email`, `current_domain`,
+`requested_domain`, `availability`, `admin_notes`, created_at/updated_at). Indexes on user_id/status/
+created_at. RLS: owner may INSERT their own (`auth.uid()=user_id`), owner may SELECT their own, admin
+(`public.is_admin()`) may do everything. (Re-declares `is_admin()` so the file runs stand-alone.)
+
+**New client route — `api/requests/create.js` (`POST /api/requests/create`):** a signed-in client files
+a request. In order it (1) verifies the Supabase bearer token, (2) **re-verifies the current password**
+via a throwaway anon client `signInWithPassword({email,password})` — password is read over HTTPS, used
+only to re-auth, **never stored/logged**, (3) normalises + validates the new domain (extension/TLD
+required), (4) checks the domain isn't already registered via **RDAP (rdap.org)** — 200=taken→**no
+request filed**, returns `{ok:false,available:false}`; 404=available; anything else=unknown→allowed,
+(5) inserts the `client_requests` row (service role) with the client's identity + current domain.
+Env: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (optional `SUPABASE_ANON_KEY`, falls back to the
+known public anon key for the password check). No new Stripe/secret env needed.
+
+**Admin API — `api/admin.js`:** added actions `list_requests` (select `client_requests`, re-joins live
+`project_inquiries` names, filters status/type/date + search) and `set_request_status` (update status
+and/or `admin_notes`, audited to `admin_activity_log`; changing status never auto-applies the domain —
+the admin still assigns it through the existing Domains/drawer flow).
+
+**Dashboard (admin) — `dashboard.html`:** new **Requests** sidebar item (inbox icon) with a pending-count
+badge (`admRequestBadge`, refreshed at init/after edits like the Alerts badge), a `view-requests` section,
+a `VIEWS.requests` config (When · Client · Type · Current · Requested · inline editable Status select),
+`requestStatusSelect`/`setRequestStatusUI` (mirrors the invoice status select; the global change listener
+now routes `data-reqid` selects to requests), and badge colors for pending/approved/rejected/completed.
+
+**Dashboard (client) — `dashboard.html`:** the Domain tab's "Change Domain" button now opens a 3-step
+popup (`#domReqOv`): **(1) warning** — "Domain change prices may vary depending on the domain. Make sure
+you include the domain extension (.com, .net, etc.)"; **(2) form** — Current password + New domain;
+**(3) sent** confirmation. Submit POSTs to `/api/requests/create`; a **taken** domain is shown inline
+("already taken") and **no request is sent**; wrong password / invalid domain are shown inline too. The
+old mailto handler is gone; the Terms-of-service button still uses mailto.
+
+**Verified:** `node --check` passes on `api/requests/create.js` and `api/admin.js`; both inline
+`dashboard.html` scripts compile (vm.Script). No commit (none requested).
+
+### Required before it works
+Run **`db/client-requests-schema.sql`** in the Supabase SQL editor (the `client_requests` table doesn't
+exist yet). No new env vars are required.
+
+### Suggested next task
+Live-verify: as a client, open Domain → Change Domain → enter a known-registered domain (e.g. google.com)
+and confirm "already taken" + no row; then an available domain and confirm it appears under admin →
+Requests with a working status dropdown + pending badge.
+
+**Adversarial review (4-dimension workflow) + fixes applied:**
+- **(medium, found by 3 dimensions independently)** The `creq_owner_insert` RLS policy only checked
+  `auth.uid()=user_id`, so a signed-in client could use the public anon client to insert a
+  `client_requests` row directly with `status:'approved'` + spoofed identity + a taken domain — bypassing
+  the route's password re-check / RDAP / forced `pending`. **Fixed:** the insert `WITH CHECK` now also
+  requires `status='pending' AND type='domain_change' AND admin_notes IS NULL` (the service-role route still
+  inserts freely, RLS bypassed), and `listRequests` now prefers the **live** `project_inquiries` identity
+  over the client-settable denormalised `client_name`/`client_email` so a spoofed name/email never displays.
+- **(low)** The popup's `close()` cleared the password only on the success path; on Cancel/X/Escape/backdrop
+  the plaintext lingered in the `#domReqPass` input. **Fixed:** `close()` now clears `passEl.value`.
+- Re-verified: `node --check api/admin.js` + both inline `dashboard.html` scripts compile.
+
+---
+
+## 2026-06-30 — Worker (Opus) — Request-based editing + Messages (edit_requests / user_messages)
+
+**Why:** Owner wants clients to REQUEST changes (not directly edit) to their Account / Business / Project
+info, plus a Messages tab; admins review requests (approve/deny/comment) and send direct messages. Also:
+the "Request Hosting" button must actually file a request.
+
+**New tables — `db/edit-requests-schema.sql` (run by hand in the Supabase SQL editor):**
+- `edit_requests` (id, user_id→auth.users, section in account/business/project/**hosting**, current_data
+  jsonb, requested_data jsonb, request_message, status pending/approved/denied, admin_comment, reviewed_by,
+  reviewed_at, created_at, updated_at). RLS: a client may INSERT only a **pending** request for themselves
+  (WITH CHECK forces status='pending' + null review fields), SELECT own; **no** client update/delete; admin
+  (is_admin) everything.
+- `user_messages` (id, user_id, sent_by, title, body, message_type admin_message/request_update,
+  related_request_id, is_read, created_at). RLS: client SELECT own + UPDATE own; admin all; **no client
+  INSERT** (so a client can't forge an admin message). Column lock: `revoke update … ; grant update
+  (is_read) to authenticated` so a client can only flip the read flag, never rewrite a body.
+
+**Admin API — `api/admin.js`:** new actions `list_edit_requests`, `review_edit_request`
+(approve/deny + comment + optional **safe-field** apply — `EDIT_APPLY_SAFE_FIELDS`, which EXCLUDES email/
+domain/status; applies to the client's most-recent project_inquiries row), `send_user_message`,
+`list_user_messages`. All behind the existing admin-email gate; every write audited.
+
+**Client dashboard (`dashboard.html`):**
+- "Request Edit" buttons on Account / Business / Project; "Request Hosting" now opens the same drawer in a
+  message-only "hosting" mode. A right-side **request drawer** (`#ceDrawer`) shows current info + structured
+  prefilled fields + a message box, and inserts an `edit_requests` row **via the RLS-guarded `db` client**
+  (never touches real data). Loading / success / error states; all values escaped (`ceEsc`).
+- New **Messages** tab: fetches the client's own `edit_requests` + `user_messages`, renders request cards
+  (section, Pending/Approved/Denied pill, requested-change summary, admin reply, submitted/updated dates)
+  and admin-message cards; empty state "You don't have any messages yet."; unread admin messages are marked
+  read on open; an unread-count badge shows on the nav item.
+
+**Admin dashboard (`dashboard.html`):**
+- Existing domain-change tab **relabeled "Domain Requests"** (unchanged otherwise). New **"Requests"** view
+  (`data-view="editrequests"`) lists edit requests (When · Client · Section · Requested change · Status);
+  row → a **review drawer** in the shared `admDrawer` with current→requested diffs, the client's message, an
+  Approve/Deny + comment control, and an "apply safe fields" checkbox. Pending-count nav badge.
+- The user drawer gained a **Messages** section: message history + a compose box (`send_user_message`).
+
+**Untouched:** payments/checkout, Stripe webhook, hosting/subscription billing, invoice payment, auth flow,
+and the existing domain-change request feature all unchanged.
+
+**Verified:** `node --check api/admin.js` passes; both inline `dashboard.html` scripts compile (vm.Script);
+all new identifiers cross-checked. No commit (none requested).
+
+### Required before it works
+Run **`db/edit-requests-schema.sql`** in the Supabase SQL editor. No new env vars.
+
+### Suggested next task
+Live-verify the full loop (client submits a request → admin approves with comment + apply → client sees the
+approved status, comment, and updated data in Messages), plus admin Send Message → client Messages.
+
+**Adversarial review (4-dimension workflow, 10 agents) + fixes — no security/RLS holes found; 6 low/medium
+correctness+UX findings, all fixed:**
+- **(medium)** `applyEditRequest` skipped empty-string values, so approving a request that intentionally
+  CLEARS a field silently didn't clear it. Fixed: a present key (incl. "") is now an intentional change.
+- **(low)** The domain-requests view still rendered an h1 "Requests", colliding with the new edit-requests
+  "Requests" header. Fixed: `VIEWS.requests` title → "Domain Requests".
+- **(low)** The Messages "When" column was `sortable` but `listEditRequests` ignored sortBy. Fixed: it now
+  honours the created_at sort direction.
+- **(low)** `loadMessages` zeroed the unread badge even if the mark-read UPDATE returned an error (supabase-js
+  resolves `{error}` rather than throwing). Fixed: the badge clears only on a successful write.
+- Re-verified: `node --check api/admin.js` + both inline `dashboard.html` scripts compile.

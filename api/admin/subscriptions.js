@@ -247,6 +247,10 @@ module.exports = async (req, res) => {
     }
 
     // ================= LIST =================
+    // Returns the category='hosting' rows. (All payments — invoices AND
+    // subscriptions, every status — are now viewed in the admin Recent Payments
+    // tab, which queries them directly via api/admin.js → listPayments. This
+    // action remains for completeness / future use.)
     if (action === "list") {
       const { data: rows, error: listErr } = await supa
         .from("subscriptions")
