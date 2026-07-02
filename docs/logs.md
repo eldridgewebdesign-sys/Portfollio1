@@ -6,6 +6,46 @@
 
 ---
 
+## 2026-07-01 - Engineering Demo Project Manager - engineering-demo-blueprint
+
+Action:
+Finished (documentation round; no production code written)
+
+Task:
+Owner-directed round: run the `/engineering` demo project (cinematic scroll-driven laptop
+teardown, Three.js + GSAP) as a managed documentation effort — vision, specialist team, review
+gate, master specification. Everything lives in **`docs/engineering-demo/`** (deploy-excluded).
+
+Result:
+- Hub docs: `README` (rules/build order), `project-vision` (binding; narrative spine = the
+  homepage promise "Websites are complicated — good thing we're not" dramatized as a teardown),
+  `taskboard`, `references` (Bruno Simon / Apple / Framework / iFixit / Awwwards, each with
+  learn-vs-don't-copy), `decisions` D-001–D-017.
+- Four specialist docs written in parallel (creative direction · technical architecture ·
+  animation storyboard · asset pipeline), then **5 adversarial review rounds** in
+  `review-report.md`. Rounds 1–3 rejected everything; root cause of persistent rejections was
+  cross-document seams mirror-swapping between parallel revisions, fixed by recording PM referee
+  rulings (D-009 copy deck · D-010 62vw arrival · D-011 flat `.vN` asset tree · D-012 shadow rig ·
+  D-013 no poster · D-014 converged rulings · D-015 battery seated+named · D-016 copper heat
+  pipes · D-017 closing line pending owner sign-off) and sequencing round 4 (entries → citation
+  passes → re-review). Final verdicts: **all four Approved**.
+- **`05-master-specification.md`** (1,913 lines) — the single build-from-this-alone blueprint:
+  file tree/routing, full copy deck, design tokens with WCAG ratios, asset manifest + node
+  hierarchy + PBR table, scene/lighting/camera spec, the merged B0–B8 master timeline, runtime
+  architecture, responsive + fallback matrices, numeric budgets with verification procedures,
+  loading sequence, acceptance criteria, reconciliations appendix. Passed two independent audits;
+  all 14 high/medium findings fixed (10 low-severity polish notes recorded on taskboard T-08).
+
+Blocked on owner (before implementation):
+1. **D-017 sign-off** — closing line "Websites are complicated. / You've seen how we treat
+   complicated." + page title "Engineering" echo the homepage headline; owner must approve or
+   rewrite (a rewrite re-runs the storyboard's reading-floor math).
+2. Meta description sign-off (the one synthesis-authored string, spec §3.3).
+3. Eventual fate of `Animations/laptop-teardown` (kept live and untouched per D-002).
+
+Files changed: `docs/engineering-demo/**` (11 files, all new) and this log entry. Nothing outside
+`docs/` touched; no live page edited.
+
 ## 2026-06-30 - Developer / Implementation - onboarding-feature-extensions-redesign
 
 Action:
