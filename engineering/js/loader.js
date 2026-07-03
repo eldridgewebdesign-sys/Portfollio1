@@ -42,6 +42,9 @@ export async function load({ renderer, scene, onProgress }) {
     const root = buildStandIn();
     onProgress(0.55);
     const env = await sceneMod.applyRoomEnvironment(renderer, scene);
+    // Graded up from 05 §6.4's 0.5 for the procedural warm room: metals live
+    // on the environment, and the sides read as machined metal at 0.65.
+    scene.environmentIntensity = 0.65;
     onProgress(0.9);
     return { root, env };
   }

@@ -6,6 +6,72 @@
 
 ---
 
+## 2026-07-02 16:50 - Developer (Implementation) - engineering-demo-material-pass-1
+
+Action:
+Finished
+
+Task:
+Owner-directed material-realism pass on `/engineering`: make the existing objects look physical
+and machined — PBR materials, procedural textures, bevels, environment reflections, baked-in
+occlusion — without adding components, labels, or camera moves. No redesign.
+
+Files claimed:
+
+- engineering/js/** (textures, materials, model, scene, timeline, loader)
+- engineering/assets/fallback/*.webp (re-capture)
+- engineering/index.html (four caption-anchor values only)
+- docs/engineering-demo/asset-source/caption-anchors.json
+
+Files changed:
+
+- engineering/js/textures.js (new) — procedural canvas textures, generated once, deterministic
+  seed: brushed aluminum (color/roughness/bump), deck map with trackpad-recess occlusion ring,
+  lower-shell interior vignette, logic-board map (etched traces, vias, pad fields, seated-package
+  occlusion), battery pouch map (edge puff shading, abstract micro-markings, seams), graphite
+  flake, shield handling marks, glass smudge roughness, speaker ribbing bump
+- engineering/js/materials.js (new) — named PBR recipes (aluminumMaterial, glassMaterial,
+  pcbMaterial, batteryMaterial, graphiteMaterial, shieldPlateMaterial, copperContactMaterial,
+  blackPlasticMaterial, ribbonCableMaterial, rubberFootMaterial…); MeshPhysicalMaterial only for
+  aluminum (anisotropy 0.35) and glass (clearcoat); per-material envMapIntensity so materials
+  answer the same light differently
+- engineering/js/model.js — consumes materials.js; small-radius bevels via the vendored
+  RoundedBoxGeometry on shells, plates, board, packages, keys, trackpad, battery cells (soft
+  pouch puff), speaker chambers; display flex ribbons now segmented arcs; port cutout cavities on
+  the lower-shell wall exterior aligned with the port boards; de-index normalization for merges
+- engineering/js/scene.js — procedural warm-room environment for PMREM (beige walls, pale floor,
+  bright ceiling, one warm window softbox at the key light's bearing, wood-slat strip camera-left)
+  replacing the neutral RoomEnvironment on the stand-in path
+- engineering/js/loader.js — environmentIntensity graded 0.5 → 0.65 (metals live on the
+  environment; documented deviation from 05 §6.4's number)
+- engineering/js/timeline.js — shield/graphite teardown and tableau heights staggered
+  (0.22W/0.34W → ranks 0.62W/0.74W): equal heights stacked the sheets and hid the stamped metal
+- engineering/assets/fallback/*.webp — all 10 stills re-captured with the new materials
+- engineering/index.html + caption-anchors.json — four shield/graphite anchors re-measured
+
+Summary:
+Realism now comes from materials, not part count: brushed grain and machining variation on the
+aluminum, clearcoat glass with its own sharper reflection, satin pouch cells with seams and
+abstract print, a near-black board whose traces/pads/occlusion are painted into its texture,
+graphite that reads as a heat sheet beside clearly-metal shielding, ports cut into the chassis
+wall. Reflections come from a warm room whose window agrees with the key light, so every material
+answers one light source. Zero new components, zero new labels, zero new camera moves.
+
+Testing:
+Headless Chrome: zero console errors, zero off-origin requests, QA-1 clean; forward/reverse
+pixel-identical at p=0.46; full matrix re-run (no-JS with all stills, reduced-motion → static
+with zero animation bytes, WebGL2-blocked → static, mobile 390×844 no overflow, file:// guard,
+skip link lands p=1.000, homepage untouched); node --check on all twelve modules; banned-word
+grep clean. Caught and fixed during the pass: RoundedBoxGeometry is non-indexed and broke
+mergeGeometries (de-index normalization), and the first warm-room grade was too dim for metals.
+
+Risks / Notes:
+Our JS is now ≈97 KB (textures + materials modules; the 05 §11.1 60 KB line is a stand-in-era
+casualty — most of model.js/textures.js retires when the production GLB with real texture maps
+lands). Stills set 440 KB (caps hold). Real-GPU frame timing (QA-3/QA-4) still needs hardware —
+SwiftShader numbers are not representative. Textures are deterministic (seeded PRNG), generated
+once at load, ~10 small canvases.
+
 ## 2026-07-02 15:40 - Developer (Implementation) - engineering-demo-realism-pass-1
 
 Action:

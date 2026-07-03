@@ -14,45 +14,23 @@
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { createMaterials } from './materials.js';
 
 const MM = 0.001;
-
-// Material table — physical, muted, one light source explains everything.
-function makeMaterials() {
-  const m = (color, metalness, roughness) =>
-    new THREE.MeshStandardMaterial({ color, metalness, roughness });
-  return {
-    alu:        m(0xc8cbce, 1.0, 0.46),  // machined shell aluminum
-    aluDark:    m(0x9fa2a6, 1.0, 0.40),  // hinge barrels, brackets
-    glassBlack: m(0x16181a, 0.0, 0.06),  // display glass — sharp subtle reflection
-    panelDark:  m(0x101214, 0.0, 0.40),  // display panel layer
-    wellDark:   m(0x1f2124, 0.0, 0.65),  // keyboard well inset
-    keycap:     m(0x2b2d30, 0.0, 0.60),  // shallow keycaps
-    button:     m(0x3a3d42, 0.0, 0.45),  // fingerprint power button
-    backlight:  m(0x8b857a, 0.0, 0.80),  // unlit light-guide layer, warm gray
-    membrane:   m(0x232527, 0.0, 0.70),  // keyboard membrane film
-    glassPad:   m(0x3f4548, 0.0, 0.15),  // trackpad glass
-    pcb:        m(0x14171a, 0.0, 0.55),  // logic board — matte near-black
-    trace:      m(0x1e232a, 0.0, 0.55),  // etched trace hint, barely lighter
-    substrate:  m(0x16181a, 0.0, 0.50),  // processor substrate
-    silicon:    m(0x3a3f46, 0.0, 0.15),  // exposed die
-    chip:       m(0x1b1d20, 0.0, 0.72),  // memory/storage/controller packages
-    steel:      m(0x9ea3a6, 1.0, 0.35),  // brackets, screws
-    shieldTop:  m(0xb9bdc0, 1.0, 0.30),  // heat/shield plate — clearly metal beside the dark graphite
-    graphite:   m(0x232323, 0.0, 0.50),  // graphite heat sheet — dark satin
-    pouch:      m(0x2e3033, 0.0, 0.60),  // battery cells — satin dark polymer
-    adhesive:   m(0xb9b2a4, 0.0, 0.85),  // muted adhesive/pull-tab strips
-    molded:     m(0x1b1d1f, 0.0, 0.75),  // speaker chambers — molded matte
-    flexFilm:   m(0x26221f, 0.0, 0.50),  // ribbon cables — dark flexible film
-    contact:    m(0xc3a36f, 1.0, 0.38),  // muted gold contacts
-    plastic:    m(0x4a4642, 0.0, 0.70),  // antenna windows
-    rubber:     m(0x2a2c2d, 0.0, 0.90),  // foot inserts
-  };
-}
 
 function box(w, h, d, cx, cy, cz, ry) {
   const g = new THREE.BoxGeometry(w * MM, h * MM, d * MM);
   if (ry) g.rotateY(ry);
+  g.translate(cx * MM, cy * MM, cz * MM);
+  return g;
+}
+
+// Beveled box: precise small-radius edges so plates and packages catch light.
+// Radius clamps to the thinnest half-dimension; segments stay low (cheap).
+function rbox(w, h, d, cx, cy, cz, r, seg) {
+  const radius = Math.min(r, w / 2, h / 2, d / 2) * MM;
+  const g = new RoundedBoxGeometry(w * MM, h * MM, d * MM, seg || 2, radius);
   g.translate(cx * MM, cy * MM, cz * MM);
   return g;
 }
@@ -68,7 +46,10 @@ function buildMesh(name, parts, recenter = true) {
   const mats = [];
   for (const p of parts) {
     if (!p.geoms.length) continue;
-    const merged = p.geoms.length === 1 ? p.geoms[0] : mergeGeometries(p.geoms, false);
+    // RoundedBoxGeometry is non-indexed while Box/Cylinder are indexed;
+    // mergeGeometries requires one convention, so de-index uniformly.
+    const geoms = p.geoms.map(g => (g.index ? g.toNonIndexed() : g));
+    const merged = geoms.length === 1 ? geoms[0] : mergeGeometries(geoms, false);
     perMat.push(merged);
     mats.push(p.mat);
   }
@@ -98,7 +79,7 @@ function recenterGroup(g) {
 }
 
 export function buildStandIn() {
-  const M = makeMaterials();
+  const M = createMaterials();
   const root = new THREE.Group();
   root.name = 'laptop_root';
 
@@ -109,7 +90,7 @@ export function buildStandIn() {
   display.name = 'display_assembly';
 
   display.add(buildMesh('display_shell', [{ mat: M.alu, geoms: [
-    box(304, 1.4, 212, 0, 14.9, 0),                    // outer shell plate
+    rbox(304, 1.4, 212, 0, 14.9, 0, 0.6),              // outer shell plate, beveled edge
     box(1.6, 3.4, 212, -151.2, 12.5, 0),               // perimeter skirt
     box(1.6, 3.4, 212, 151.2, 12.5, 0),
     box(300.8, 3.4, 1.6, 0, 12.5, -105.2),
@@ -126,7 +107,7 @@ export function buildStandIn() {
   ]}]));
 
   display.add(buildMesh('display_glass', [{ mat: M.glassBlack, geoms: [
-    box(296, 0.4, 200, 0, 11.4, 2),
+    rbox(296, 0.4, 200, 0, 11.4, 2, 0.18, 1),          // thin glass, tiny edge bevel
   ]}]));
 
   display.add(buildMesh('display_camera', [
@@ -134,13 +115,24 @@ export function buildStandIn() {
     { mat: M.glassBlack, geoms: [cyl(1.2, 0.3, 0, 11.55, -92, 12)] },
   ]));
 
-  // Two flex ribbons dipping through the hinge line into the body.
+  // Two flex ribbons arcing through the hinge line — segmented so the film
+  // reads as a bent cable, not a flat sticker.
+  const flexArc = (x) => {
+    const segs = [];
+    const g1 = new THREE.BoxGeometry(26 * MM, 0.25 * MM, 9 * MM);
+    g1.rotateX(0.5);
+    g1.translate(x * MM, 10.9 * MM, -97 * MM);
+    const g2 = new THREE.BoxGeometry(26 * MM, 0.25 * MM, 9 * MM);
+    g2.rotateX(-0.35);
+    g2.translate(x * MM, 10.55 * MM, -104.5 * MM);
+    segs.push(g1, g2);
+    return segs;
+  };
   display.add(buildMesh('display_flex', [{ mat: M.flexFilm, geoms: [
-    box(26, 0.25, 16, -60, 10.4, -101),
-    box(26, 0.25, 16, 60, 10.4, -101),
+    ...flexArc(-60), ...flexArc(60),
   ]}, { mat: M.contact, geoms: [
-    box(26, 0.1, 1.6, -60, 10.42, -94.5),              // faint contact edges
-    box(26, 0.1, 1.6, 60, 10.42, -94.5),
+    box(26, 0.12, 1.4, -60, 11.05, -93.5),             // faint contact edges at the anchored ends
+    box(26, 0.12, 1.4, 60, 11.05, -93.5),
   ]}]));
 
   display.add(buildMesh('hinge_barrel_l', [
@@ -162,7 +154,7 @@ export function buildStandIn() {
   topCase.name = 'top_case';
 
   topCase.add(buildMesh('top_shell', [
-    { mat: M.alu, geoms: [box(304, 1.4, 212, 0, 9.7, 0)] },
+    { mat: M.aluDeck, geoms: [rbox(304, 1.4, 212, 0, 9.7, 0, 0.6)] },
     { mat: M.wellDark, geoms: [box(240, 0.15, 110, 0, 10.42, -32)] }, // keyboard well
   ]));
 
@@ -179,20 +171,20 @@ export function buildStandIn() {
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 13; c++) {
       if (r === 0 && c === 12) continue; // power button slot
-      keyGeoms.push(box(15.6, 0.5, 15.6, -106.8 + c * 17.8, 10.9, -76.5 + r * 17.8));
+      keyGeoms.push(rbox(15.6, 0.5, 15.6, -106.8 + c * 17.8, 10.9, -76.5 + r * 17.8, 0.2, 1));
     }
   }
   topCase.add(buildMesh('keycap_field', [{ mat: M.keycap, geoms: keyGeoms }]));
   topCase.add(buildMesh('power_button', [
-    { mat: M.button, geoms: [box(15.6, 0.5, 15.6, -106.8 + 12 * 17.8, 10.9, -76.5)] },
+    { mat: M.button, geoms: [rbox(15.6, 0.5, 15.6, -106.8 + 12 * 17.8, 10.9, -76.5, 0.2, 1)] },
     { mat: M.steel, geoms: [box(11, 0.1, 11, -106.8 + 12 * 17.8, 11.2, -76.5)] }, // sensor ring hint
   ]));
 
   topCase.add(buildMesh('trackpad_glass', [{ mat: M.glassPad, geoms: [
-    box(130, 0.5, 82, 0, 10.6, 62),
+    rbox(130, 0.5, 82, 0, 10.6, 62, 0.22, 1),
   ]}]));
   topCase.add(buildMesh('trackpad_assembly', [
-    { mat: M.steel, geoms: [box(118, 0.5, 72, 0, 8.75, 62)] },
+    { mat: M.steel, geoms: [rbox(118, 0.5, 72, 0, 8.75, 62, 0.2, 1)] },
     { mat: M.chip, geoms: [box(24, 0.4, 8, 0, 8.45, 40)] },   // force-sensing module
   ]));
   topCase.add(buildMesh('trackpad_flex', [{ mat: M.flexFilm, geoms: [
@@ -207,7 +199,7 @@ export function buildStandIn() {
      Both rest over the processor region of the logic board. */
   root.add(buildMesh('shield_plate', [
     { mat: M.shieldTop, geoms: [
-      box(120, 0.5, 80, 8, 8.95, -52),
+      rbox(120, 0.5, 80, 8, 8.95, -52, 0.22, 1),       // thin stamped sheet, beveled
       box(26, 0.3, 18, 8, 8.60, -52),                  // processor contact plate
     ]},
     { mat: M.aluDark, geoms: [
@@ -227,18 +219,19 @@ export function buildStandIn() {
   const board = new THREE.Group();
   board.name = 'logic_board';
 
-  // Named anchor meshes first (tight label boxes).
+  // Named anchor meshes first (tight label boxes). Packages get tiny bevels
+  // so they read as molded parts seated on the board, not painted rectangles.
   board.add(buildMesh('soc_package', [
-    { mat: M.substrate, geoms: [box(56, 0.8, 34, 8, 8.1, -52)] },
-    { mat: M.silicon, geoms: [box(20, 0.4, 15, 0, 8.7, -52)] },        // exposed die
+    { mat: M.substrate, geoms: [rbox(56, 0.8, 34, 8, 8.1, -52, 0.25, 1)] },
+    { mat: M.silicon, geoms: [rbox(20, 0.4, 15, 0, 8.7, -52, 0.15, 1)] }, // exposed die
   ]));
   board.add(buildMesh('memory_packages', [{ mat: M.chip, geoms: [
-    box(13, 0.4, 11, 26, 8.7, -58),                    // unified memory on the substrate
-    box(13, 0.4, 11, 26, 8.7, -46),
+    rbox(13, 0.4, 11, 26, 8.7, -58, 0.15, 1),          // unified memory on the substrate
+    rbox(13, 0.4, 11, 26, 8.7, -46, 0.15, 1),
   ]}]));
   board.add(buildMesh('storage_packages', [{ mat: M.chip, geoms: [
-    box(14, 0.6, 12, -70, 8.0, -42),                   // soldered NAND
-    box(14, 0.6, 12, -70, 8.0, -64),
+    rbox(14, 0.6, 12, -70, 8.0, -42, 0.18, 1),         // soldered NAND
+    rbox(14, 0.6, 12, -70, 8.0, -64, 0.18, 1),
   ]}]));
 
   // The board itself with its regions.
@@ -249,7 +242,7 @@ export function buildStandIn() {
   const traces = [];
   for (let i = 0; i < 8; i++) traces.push(box(20 + (i % 3) * 8, 0.06, 0.7, -40 + i * 16, 7.74, -30 - (i % 4) * 12));
   board.add(buildMesh('logic_board_body', [
-    { mat: M.pcb, geoms: [box(235, 1.2, 90, -2.5, 7.1, -55)] },
+    { mat: M.pcb, geoms: [rbox(235, 1.2, 90, -2.5, 7.1, -55, 0.4, 1)] },
     { mat: M.chip, geoms: [
       box(9, 0.5, 9, -48, 7.95, -53),                  // storage controller
       box(7, 0.6, 7, 58, 8.0, -74), box(7, 0.6, 7, 68, 8.0, -74), box(7, 0.6, 7, 78, 8.0, -74), // PMICs
@@ -284,7 +277,7 @@ export function buildStandIn() {
 
   /* ================= port and I/O boards (left wall) ================= */
   root.add(buildMesh('port_board_usbc', [
-    { mat: M.pcb, geoms: [box(46, 1.2, 22, -136, 7.4, -66)] },
+    { mat: M.pcb, geoms: [rbox(46, 1.2, 22, -136, 7.4, -66, 0.35, 1)] },
     { mat: M.steel, geoms: [
       box(9, 3.4, 7.6, -146, 7.4, -73),                // two USB-C shells
       box(9, 3.4, 7.6, -146, 7.4, -59),
@@ -293,12 +286,12 @@ export function buildStandIn() {
     { mat: M.flexFilm, geoms: [box(14, 0.2, 8, -110, 7.9, -66)] },
   ]));
   root.add(buildMesh('port_board_charge', [
-    { mat: M.pcb, geoms: [box(36, 1.2, 14, -136, 7.4, -20)] },
+    { mat: M.pcb, geoms: [rbox(36, 1.2, 14, -136, 7.4, -20, 0.35, 1)] },
     { mat: M.contact, geoms: [box(3, 1.0, 22, -148, 7.6, -20)] },        // magnetic contact strip
     { mat: M.flexFilm, geoms: [box(14, 0.2, 7, -112, 7.9, -20)] },
   ]));
   root.add(buildMesh('port_board_audio', [
-    { mat: M.pcb, geoms: [box(24, 1.2, 12, -136, 7.4, 42)] },
+    { mat: M.pcb, geoms: [rbox(24, 1.2, 12, -136, 7.4, 42, 0.35, 1)] },
     { mat: M.chip, geoms: [cyl(2.6, 10, -143, 7.4, 42, 12, true)] },     // jack barrel
     { mat: M.flexFilm, geoms: [box(12, 0.2, 7, -118, 7.9, 42)] },
   ]));
@@ -309,10 +302,10 @@ export function buildStandIn() {
 
   battery.add(buildMesh('battery_cells', [
     { mat: M.pouch, geoms: [
-      box(80, 5.2, 82, -42, 5.4, 55),                  // center cell pair
-      box(80, 5.2, 82, 42, 5.4, 55),
-      box(40, 5.2, 72, -106, 5.4, 55),                 // side cells
-      box(40, 5.2, 72, 106, 5.4, 55),
+      rbox(80, 5.2, 82, -42, 5.4, 55, 1.4),            // pouch cells — soft edge puff
+      rbox(80, 5.2, 82, 42, 5.4, 55, 1.4),
+      rbox(40, 5.2, 72, -106, 5.4, 55, 1.4),
+      rbox(40, 5.2, 72, 106, 5.4, 55, 1.4),
     ]},
     { mat: M.adhesive, geoms: [
       box(6, 0.25, 70, -84, 2.95, 55),                 // adhesive zones in the cell gaps
@@ -334,12 +327,12 @@ export function buildStandIn() {
 
   /* ================= audio: slim speaker chambers beside the battery ================= */
   root.add(buildMesh('speaker_l', [
-    { mat: M.molded, geoms: [box(38, 5.6, 92, -128, 5.8, 40)] },
+    { mat: M.molded, geoms: [rbox(38, 5.6, 92, -128, 5.8, 40, 0.9)] },
     { mat: M.chip, geoms: [cyl(6, 0.8, -128, 8.8, 18, 20)] },            // driver
     { mat: M.flexFilm, geoms: [box(10, 0.2, 18, -128, 8.7, -6)] },       // audio flex
   ]));
   root.add(buildMesh('speaker_r', [
-    { mat: M.molded, geoms: [box(38, 5.6, 92, 128, 5.8, 40)] },
+    { mat: M.molded, geoms: [rbox(38, 5.6, 92, 128, 5.8, 40, 0.9)] },
     { mat: M.chip, geoms: [cyl(6, 0.8, 128, 8.8, 18, 20)] },
     { mat: M.flexFilm, geoms: [box(10, 0.2, 18, 128, 8.7, -6)] },
   ]));
@@ -349,14 +342,22 @@ export function buildStandIn() {
   lower.name = 'lower_case';
 
   lower.add(buildMesh('lower_shell', [
-    { mat: M.alu, geoms: [
-      box(304, 1.6, 212, 0, 2.0, 0),                   // floor — ventless edges all round
+    { mat: M.aluShell, geoms: [
+      rbox(304, 1.6, 212, 0, 2.0, 0, 0.7),             // floor — beveled, ventless edges all round
       box(1.6, 6.2, 212, -151.2, 5.9, 0),
       box(1.6, 6.2, 212, 151.2, 5.9, 0),
       box(300.8, 6.2, 1.6, 0, 5.9, -105.2),
       box(300.8, 6.2, 1.6, 0, 5.9, 105.2),
       box(180, 0.8, 2.5, 10, 3.2, 5),                  // internal ribs
       box(120, 0.8, 2.5, 0, 3.2, -98),
+    ]},
+    { mat: M.cavity, geoms: [
+      // Port cutouts on the left wall exterior — dark cavities aligned with
+      // the port boards inside, so the ports read as cut into the chassis.
+      rbox(0.5, 4.2, 10, -152.3, 7.4, -73, 0.2, 1),    // USB-C pair
+      rbox(0.5, 4.2, 10, -152.3, 7.4, -59, 0.2, 1),
+      rbox(0.5, 3.4, 24, -152.3, 7.4, -20, 0.2, 1),    // magnetic charge slot
+      cyl(2.4, 0.5, -152.3, 7.4, 42, 14, true),        // headphone jack cavity
     ]},
     { mat: M.aluDark, geoms: [
       cyl(2, 2.5, -140, 4.0, -95, 10), cyl(2, 2.5, 140, 4.0, -95, 10),   // screw bosses

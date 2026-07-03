@@ -60,14 +60,53 @@ export function createScene(q) {
 }
 
 // Environment / IBL (05 §6.4). The production path loads studio-warm.v1.hdr;
-// until that asset exists (see loader.js ASSETS_READY) the sanctioned fallback —
-// the vendored RoomEnvironment through PMREM at the same intensity — is used.
-// Returns a rebuild() hook for WebGL context restoration.
+// until that asset exists (see loader.js ASSETS_READY) a procedural warm room
+// stands in: beige plaster walls, a pale floor, one bright warm window softbox
+// at the key light's own bearing (azimuth +55°, elevation ≈40° — so every
+// reflection and the runtime shadow tell one light direction), and a wood-slat
+// strip camera-left for vertical warm streaks in the aluminum. Metals reflect
+// this room, not a neutral void.
+function buildWarmRoom() {
+  const room = new THREE.Scene();
+  const lit = (hex, k) => new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(k) });
+
+  const shell = new THREE.Mesh(
+    new THREE.BoxGeometry(7, 4.5, 7),
+    lit(0xc9b8a6, 1.0)
+  );
+  shell.material.side = THREE.BackSide;
+  shell.position.y = 1.6;
+  room.add(shell);
+
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), lit(0xa59586, 0.55));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -0.6;
+  room.add(floor);
+
+  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), lit(0xe9ddd1, 1.15));
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.y = 3.6;
+  room.add(ceiling);
+
+  // Window softbox — right-rear-high, matching the key light's direction.
+  const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.7), lit(0xfff3dd, 6.5));
+  win.position.set(1.95, 2.0, -1.4);
+  win.lookAt(0, 0.2, 0);
+  room.add(win);
+
+  // Wood-slat feature strip camera-left: vertical warm streaks in reflections.
+  for (let i = 0; i < 5; i++) {
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.02, 2.6, 0.14), lit(0x8d7254, 0.55));
+    slat.position.set(-3.2, 1.2, -1.1 + i * 0.55);
+    room.add(slat);
+  }
+  return room;
+}
+
 export async function applyRoomEnvironment(renderer, scene) {
-  const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
   function build() {
     const pmrem = new THREE.PMREMGenerator(renderer);
-    const room = new RoomEnvironment();
+    const room = buildWarmRoom();
     const envRT = pmrem.fromScene(room, 0.04);
     scene.environment = envRT.texture;
     scene.environmentIntensity = 0.5;

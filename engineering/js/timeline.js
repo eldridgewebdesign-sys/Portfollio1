@@ -34,8 +34,10 @@ const CAMERA_MOVES = [
 const PART_MOVES = [
   ['display_assembly', 0.50, 0.105, 0.145],
   ['top_case', 0.28, 0.205, 0.275],
-  ['shield_plate', 0.28, 0.388, 0.433],
-  ['graphite_sheet', 0.28, 0.400, 0.445],
+  // The graphite rides above the shield with real daylight between them —
+  // equal heights would stack the sheets and hide the stamped metal.
+  ['shield_plate', 0.22, 0.388, 0.433],
+  ['graphite_sheet', 0.34, 0.400, 0.445],
   ['port_board_usbc', 0.28, 0.569, 0.609],
   ['port_board_charge', 0.28, 0.581, 0.621],
   ['port_board_audio', 0.28, 0.593, 0.633],
@@ -64,8 +66,8 @@ const MICRO_MOVES = [
 // top case +1.02W · display +1.36W — five even ranks, museum-aligned.
 const TABLEAU_MOVES = [
   ['logic_board', 0.14, 0.34, 0.865, 0.910],
-  ['shield_plate', 0.28, 0.68, 0.872, 0.916],
-  ['graphite_sheet', 0.28, 0.68, 0.872, 0.916],
+  ['shield_plate', 0.22, 0.62, 0.872, 0.916],
+  ['graphite_sheet', 0.34, 0.74, 0.872, 0.916],
   ['port_board_usbc', 0.28, 0.68, 0.872, 0.916],
   ['port_board_charge', 0.28, 0.68, 0.872, 0.916],
   ['port_board_audio', 0.28, 0.68, 0.872, 0.916],
