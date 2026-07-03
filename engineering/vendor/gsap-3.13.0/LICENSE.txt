@@ -1,0 +1,19 @@
+GSAP 3.13.0 — GSAP Standard License
+
+The files in this directory (gsap.min.js, CustomEase.min.js, ScrollTrigger.min.js)
+are unmodified builds from the official gsap@3.13.0 npm package.
+
+License declared by the package (package.json "license" field, verbatim):
+
+    Standard 'no charge' license: https://gsap.com/standard-license.
+
+Summary of the license as it applies to this project (see the URL above for the
+full, authoritative text): since GSAP 3.13 (April 30, 2025) the GSAP Standard
+License is free for all use, including commercial use, and expressly permits
+self-hosting. Formerly-Club plugins (including CustomEase) are included. GSAP is
+source-available, not open source: the files are vendored as-is and must never
+be modified or republished as a competing library. The license's one restriction
+(building tools that compete with Webflow's site builders) does not apply to
+this project.
+
+Vendored: 2026-07-02, from the npm registry (gsap@3.13.0).

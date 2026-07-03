@@ -1,0 +1,194 @@
+/* ==========================================================================
+   /engineering — non-critical styles.
+   Static mode is the default document (no-JS, reduced-motion, no-WebGL2).
+   3d-mode overlay styling is scoped under [data-mode="3d"].
+   Color law (05 §4.1): every literal here is a token or an rgba() of one.
+   Gradient census (05 §4.5): the shipped CSS holds exactly three gradient
+   definitions — --wall-grad (critical :root), the scrim ellipse below, and
+   the verbatim .btn-sand block below.
+   ========================================================================== */
+
+body{background:var(--wall-grad);background-attachment:fixed}
+
+/* ---------- Type scale (05 §4.3) ---------- */
+#title{
+  font-family:'Distillery Display','Playfair Display',serif;font-weight:600;
+  font-size:clamp(2.4rem,4.8vw,4.4rem);line-height:1;letter-spacing:.015em;
+  text-transform:uppercase;color:var(--ink);
+}
+#subline{
+  font-size:clamp(1rem,1.5vw,1.2rem);line-height:1.7;letter-spacing:.01em;
+  color:var(--ink-soft);max-width:44ch;margin-top:1.1rem;
+}
+.card{
+  font-size:clamp(1.15rem,1.9vw,1.5rem);line-height:1.55;letter-spacing:.005em;
+  color:var(--ink);max-width:34ch;
+}
+main h2{
+  font-family:'Distillery Display','Playfair Display',serif;font-weight:600;
+  font-size:clamp(1.4rem,2.6vw,2rem);line-height:1.15;letter-spacing:.02em;
+  text-transform:uppercase;color:var(--ink);
+}
+.closing{
+  font-family:'Distillery Display','Playfair Display',serif;font-weight:600;
+  font-size:clamp(1.7rem,3.2vw,2.6rem);line-height:1.25;letter-spacing:.01em;
+  text-transform:uppercase;color:var(--ink);
+}
+.closing span{display:block}
+.signoff{
+  font-size:.72rem;font-weight:500;line-height:1.4;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-soft);
+}
+
+/* ---------- The CTA — .btn/.btn-sand verbatim from index.html (byte-identical). ---------- */
+.btn{font-family:'Playfair Display',sans-serif;font-weight:500;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;border-radius:100px;cursor:pointer;border:none;transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s,background .4s}
+.btn-sand{padding:1.05rem 2.9rem;color:var(--ink);background:linear-gradient(135deg,#f8ecd3,#e4cfa6);box-shadow:0 1px 0 rgba(255,255,255,.65) inset,0 12px 32px rgba(16,37,54,.2),0 2px 6px rgba(16,37,54,.12)}
+.btn-sand:hover{transform:translateY(-3px);box-shadow:0 1px 0 rgba(255,255,255,.75) inset,0 20px 46px rgba(16,37,54,.28)}
+/* On this page --ink is the machine ink; the CTA label keeps the homepage ink (05 §4.3). */
+#ending .btn-sand{color:var(--cta-ink)}
+
+/* ==========================================================================
+   STATIC MODE — the designed longform article (05 §10.2/§10.3).
+   This is also the no-JS default: everything below applies unless 3d
+   overlay rules override it.
+   ========================================================================== */
+#opening{
+  max-width:min(72ch,92vw);margin:0 auto;
+  padding:calc(24px + 84px + 5rem) 24px 3rem;
+}
+#scroll-track section{
+  max-width:min(72ch,92vw);margin:0 auto;padding:4.5rem 24px 1.5rem;
+}
+#scroll-track section h2{margin-bottom:1.4rem}
+#scroll-track .card{margin-bottom:1rem}
+
+.still{position:relative;margin:2.6rem 0 0}
+.still img{width:100%;height:auto;display:block}
+.still-caption{
+  position:absolute;left:var(--ax);top:var(--ay);transform:translate(10px,-50%);
+  font-size:.72rem;font-weight:600;line-height:1.2;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink);
+  background:rgba(242,232,218,.92);border:1px solid rgba(43,35,32,.30);
+  border-radius:3px;padding:.34rem .6rem;max-width:14ch;
+}
+
+#ending{padding-bottom:6rem}
+#ending .closing-block{margin-top:3rem;text-align:center;position:relative}
+#ending .closing{margin-bottom:2.2rem}
+#ending .btn-sand{margin-bottom:2.6rem}
+
+/* The scrim: a soft ellipse, never a rectangle — its one scheduled use backs
+   the closing block at the tableau (05 §4.5). Inert in the static article. */
+.scrim{
+  position:absolute;left:-35%;top:-25%;width:170%;height:150%;z-index:-1;
+  background:radial-gradient(ellipse at center,var(--scrim) 0%,rgba(242,232,218,0) 70%);
+  display:none;
+}
+
+/* Scroll cue — exists only in 3d mode (05 §3.3). */
+#cue{display:none}
+
+/* ==========================================================================
+   3D MODE — sections become timeline-driven overlays (05 §10.3).
+   ========================================================================== */
+[data-mode="3d"] body{background-attachment:scroll}
+[data-mode="3d"] #scroll-track{position:relative;height:1300vh}
+[data-mode="3d"].track-mobile #scroll-track{height:1700vh}
+
+[data-mode="3d"] #scroll-track section{max-width:none;margin:0;padding:0;position:static}
+[data-mode="3d"] #scroll-track section h2{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+[data-mode="3d"] .still{display:none}
+
+/* The word column (desktop): title block and cards live at the left edge.
+   Centering translations are applied by GSAP (xPercent/yPercent) so its y
+   tweens compose cleanly — no transform here. */
+[data-mode="3d"] #opening{
+  position:fixed;z-index:2;left:7vw;top:50%;
+  max-width:33vw;margin:0;padding:0;
+}
+[data-mode="3d"] .card{
+  position:fixed;z-index:2;left:7vw;top:50%;
+  width:min(34ch,26vw);max-width:none;margin:0;
+  opacity:0;visibility:hidden;
+}
+
+/* The ending: an in-flow 100vh anchor at the bottom of the track (so the
+   skip link's native jump lands at p = 1), with a fixed closing block.
+   (#scroll-track is repeated for specificity over the section reset above.) */
+[data-mode="3d"] #scroll-track #ending{
+  position:absolute;left:0;right:0;bottom:0;height:100vh;
+  margin:0;padding:0;max-width:none;pointer-events:none;
+}
+/* Block starts at 74vh (05 §4.4); the min() guard keeps the sign-off on
+   screen on short viewports. */
+[data-mode="3d"] #ending .closing-block{
+  position:fixed;z-index:2;left:50%;top:min(74vh,calc(100vh - 16.5rem));transform:translateX(-50%);
+  width:max-content;max-width:92vw;margin:0;text-align:center;
+}
+/* Each closing line is ≤ 6 words by rule — one rendered line per sentence. */
+[data-mode="3d"] .closing span{white-space:nowrap}
+html.comp-mobile[data-mode="3d"] .closing span{white-space:normal}
+[data-mode="3d"] #ending .closing,
+[data-mode="3d"] #ending .btn-sand,
+[data-mode="3d"] #ending .signoff{opacity:0}
+[data-mode="3d"] #ending .closing{margin-bottom:2.2rem}
+[data-mode="3d"] #ending .btn-sand{margin-bottom:2.6rem;pointer-events:none}
+[data-mode="3d"] .scrim{display:block;opacity:0}
+
+/* Scroll cue: microtext above a 1×34px hairline, bottom-center (05 §4.5). */
+[data-mode="3d"] #cue{
+  display:flex;flex-direction:column;align-items:center;gap:.6rem;
+  position:fixed;z-index:2;left:50%;bottom:5vh;transform:translateX(-50%);
+  opacity:0;pointer-events:none;
+}
+#cue .cue-word{
+  font-size:.72rem;font-weight:500;line-height:1.4;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-soft);
+}
+#cue .cue-line{width:1px;height:34px;background:rgba(70,60,51,.55)}
+
+/* ---------- Component labels: chips + leaders + dots (05 §4.5, D-014a). ----------
+   --sett interpolates active (0) → settled (1); text never fades, paper does. */
+#labels .label{position:absolute;left:0;top:0;opacity:0;will-change:transform}
+#labels .chip{
+  position:absolute;transform:translate(0,-50%);
+  font-size:.72rem;font-weight:600;line-height:1.2;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink);
+  background:rgba(242,232,218,calc(.92 - .37 * var(--sett,0)));
+  border:1px solid rgba(43,35,32,calc(.30 - .12 * var(--sett,0)));
+  border-radius:3px;padding:.34rem .6rem;max-width:14ch;width:max-content;
+}
+#labels .leader{
+  position:absolute;height:1px;transform-origin:left center;
+  background:rgba(43,35,32,calc(.55 - .27 * var(--sett,0)));
+}
+#labels .dot{
+  position:absolute;border-radius:50%;transform:translate(-50%,-50%);
+  width:calc(3px - var(--sett,0) * 1px);height:calc(3px - var(--sett,0) * 1px);
+  background:rgba(43,35,32,calc(1 - .5 * var(--sett,0)));
+}
+#labels.tableau .dot{background:var(--oak)}
+
+/* ==========================================================================
+   Mobile composition (05 §9.2) — applied by JS as html.comp-mobile in 3d
+   mode ((coarse pointer AND portrait) at any width, or width < 768px).
+   ========================================================================== */
+html.comp-mobile[data-mode="3d"] #opening{
+  left:50%;top:auto;bottom:max(5.4rem,env(safe-area-inset-bottom) + 4.4rem);
+  max-width:92vw;width:92vw;text-align:center;
+}
+html.comp-mobile[data-mode="3d"] #opening #subline{max-width:92vw;margin-left:auto;margin-right:auto}
+html.comp-mobile[data-mode="3d"] .card{
+  left:50%;top:auto;bottom:max(2.2rem,env(safe-area-inset-bottom) + 1.2rem);
+  width:min(92vw,34ch);text-align:center;
+}
+html.comp-mobile[data-mode="3d"] #cue{bottom:max(2.2rem,env(safe-area-inset-bottom) + 1.2rem)}
+html.comp-mobile[data-mode="3d"] #ending .btn-sand{width:100%;max-width:320px}
+
+/* Safe-area padding for the fixed nav on notched devices. */
+@supports (padding: max(0px)){
+  #site-nav{top:max(24px,env(safe-area-inset-top));left:max(24px,env(safe-area-inset-left))}
+}

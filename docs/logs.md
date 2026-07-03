@@ -6,6 +6,353 @@
 
 ---
 
+## 2026-07-02 18:20 - Developer (Implementation) - homepage-featured-engineering
+
+Action:
+Finished
+
+Task:
+Owner-directed: add a "Featured" section at the bottom of the homepage (before the footer) with a
+single large clickable preview card that links to /engineering. Header "Featured", subheader
+"the best from websharke". No extra copy, no button. Lightweight static preview (no iframe), using
+the engineering page's own opening-frame assets read-only. /engineering itself NOT modified.
+
+Files claimed:
+
+- index.html (new Featured section markup + its CSS only)
+- read-only: engineering/index.html, engineering/css/engineering.css,
+  engineering/assets/fallback/teardown-r0_*.webp (referenced, not modified)
+
+Files changed:
+
+- index.html — added a `#featured` section (class `sx`) between `#why` and `#site-footer`, plus its
+  scoped CSS block just above the `#site-footer` rule. The card is one `<a href="/engineering">`
+  (whole box clickable, aria-label "Open WebSharke Engineering demo", no button/copy). It recreates
+  the demo's opening frame: the wall-gradient tokens (#e9ddd1→#c9b8a6→#bba58d), a masked WebSharke
+  wordmark top-left, an uppercase "Engineering" title, over the demo's own r0 fallback still
+  (teardown-r0_1280/2560.v1.webp, object-fit:cover). Hover = 8px lift + brighter 1px frame + deeper
+  shadow + cursor:pointer; reveals via the existing `.rv` observer; reduced-motion disables the
+  card motion; mobile switches to a 4/3 card with the title bottom-centered and the still nudged to
+  keep the laptop framed.
+
+Summary:
+Section renders below "Why WebSharke". Near-zero added weight (one lazy, below-the-fold webp already
+shipped by the demo; no new CSS files, JS, CDNs, or deps). Header/subheader text exact per spec;
+only in-card text is the demo's own wordmark + "Engineering". Not in hero, not in nav, no homepage
+redesign. After a 3-lens adversarial self-review (spec / code / a11y-perf), applied three small
+fixes: (1) added `opacity` to the card's transition so it fades in with the title/subheader instead
+of popping (the `.rv`+own-transition interaction was clobbering the fade) and dropped the now-inert
+`d2` stagger class; (2) removed a redundant `#featured .wrap{max-width:1100px}` (restated the
+`.wrap` default); (3) corrected the `sizes` attribute (was `110vw`, which pushed DPR-3 phones to the
+19 KB still) so phones now fetch the 6.4 KB 1280px file. No confirmed defects remained.
+
+Testing:
+Headless Chrome (puppeteer-core + SwiftShader, cleanUrls static server). Desktop 1440 + mobile 390:
+section present, header "Featured", subheader "the best from websharke", card is an `<a>` to
+/engineering with the aria-label, cursor:pointer, image loads, section sits before the footer, bg
+still clips to content. Zero console errors, zero pageerrors, zero failed requests at every width.
+Reveal verified: card starts opacity 0 → animates to 1 (transition-property now opacity, transform,
+box-shadow). Title/laptop clearance 104–141px across 700/820/980/1440/1920 — no overlap. No
+horizontal overflow at 390. Reduced-motion: card transition:none confirmed. Phone DPR-3 now selects
+teardown-r0_1280 (6.4 KB), desktop DPR-1 also 1280 — correct. `/engineering` re-loaded independently
+in 3d mode (title, loader handoff) — still works, untouched. Screenshots eyeballed desktop + mobile
++ tablet + hover.
+
+Risks / Notes:
+- References /engineering/assets/fallback/teardown-r0_*.v1.webp read-only — if the engineering demo
+  re-captures stills under new filenames, the homepage card image must be updated to match.
+- `engineering/index.html` shows as modified in the working tree (title/copy tweaks, e.g. "The whole
+  machine"→"The whole thing"). This was NOT made by this session — I did not edit /engineering. Left
+  as-is for the Manager/owning session to resolve; not part of this change.
+- Manager to record board status for this Developer task (Developer does not edit the board).
+
+## 2026-07-02 17:35 - Developer (Implementation) - engineering-demo-slim-pass-1
+
+Action:
+Finished
+
+Task:
+Owner-directed surgical tweak: make only the starting closed-laptop state read slimmer, closer to
+a thin fanless ultrabook profile. No changes to the animation sequence, labels, copy, internal
+detail, or later camera choreography.
+
+Files claimed:
+
+- engineering/js/model.js (display assembly + top case vertical numbers only)
+- engineering/js/camera-rig.js (P0/P1 elevation only)
+- engineering/js/scene.js (ground-shadow opacity only)
+- engineering/assets/fallback/*.webp (re-capture)
+- engineering/index.html + docs/engineering-demo/asset-source/caption-anchors.json (one anchor)
+
+Files changed:
+
+- engineering/js/model.js — display assembly slimmed 4.8 → 3.3 mm (shell plate 1.2, shorter
+  skirt, glass/panel/camera/antenna/flex/hinges lowered accordingly); top case plate 1.4 → 1.2 mm
+  with shallower keys (0.5 → 0.4, lower profile) and flush trackpad glass; closed height
+  15.6 → 14.0 mm. Interior geometry below the y = 9.0 seam untouched — B4–B6 identical
+- engineering/js/camera-rig.js — P0/P1 elevation 22° → 16° (both together, so B1 stays a pure
+  dolly; the lower product angle compresses the projected footprint ≈ 23%). P2–P5 untouched
+- engineering/js/scene.js — ground shadow opacity 0.35 → 0.30 (lighter, lower-sitting read;
+  D-012 geometry unchanged)
+- engineering/assets/fallback/*.webp — stills re-captured (R2–R4 anchors identical to before,
+  confirming later beats unchanged; only R1's display anchor moved)
+- engineering/index.html + caption-anchors.json — the one moved anchor transcribed
+
+Summary:
+Combined effect ≈ 25–30% visual thickness reduction at the hero state: real −1.6 mm off the
+closed stack plus the lower product angle. The closed machine now reads as a thin machined slab
+with a bright bevel line at its base, sitting low on a soft shadow. First separation (B2) is
+pop-free by construction — the slimmed slabs are the same objects that tear down.
+
+Testing:
+Headless Chrome: zero console errors, QA-1 clean, zero off-origin requests; forward/reverse
+pixel-identical; full matrix (no-JS + stills, reduced-motion static with zero animation bytes,
+WebGL2-blocked static, mobile 390×844 no overflow, file:// guard, skip link p=1.000, homepage
+untouched); screenshots verified at p=0, 0.13 (first separation), 0.46 and 1.0 (unchanged beats);
+node --check on all modules.
+
+Risks / Notes:
+The shadow-opacity grade (0.35 → 0.30) and P0/P1 elevation are deviations from 05 §6.5/§6.7
+numbers — decisions.md entries recommended alongside the earlier passes' entries.
+
+## 2026-07-02 16:50 - Developer (Implementation) - engineering-demo-material-pass-1
+
+Action:
+Finished
+
+Task:
+Owner-directed material-realism pass on `/engineering`: make the existing objects look physical
+and machined — PBR materials, procedural textures, bevels, environment reflections, baked-in
+occlusion — without adding components, labels, or camera moves. No redesign.
+
+Files claimed:
+
+- engineering/js/** (textures, materials, model, scene, timeline, loader)
+- engineering/assets/fallback/*.webp (re-capture)
+- engineering/index.html (four caption-anchor values only)
+- docs/engineering-demo/asset-source/caption-anchors.json
+
+Files changed:
+
+- engineering/js/textures.js (new) — procedural canvas textures, generated once, deterministic
+  seed: brushed aluminum (color/roughness/bump), deck map with trackpad-recess occlusion ring,
+  lower-shell interior vignette, logic-board map (etched traces, vias, pad fields, seated-package
+  occlusion), battery pouch map (edge puff shading, abstract micro-markings, seams), graphite
+  flake, shield handling marks, glass smudge roughness, speaker ribbing bump
+- engineering/js/materials.js (new) — named PBR recipes (aluminumMaterial, glassMaterial,
+  pcbMaterial, batteryMaterial, graphiteMaterial, shieldPlateMaterial, copperContactMaterial,
+  blackPlasticMaterial, ribbonCableMaterial, rubberFootMaterial…); MeshPhysicalMaterial only for
+  aluminum (anisotropy 0.35) and glass (clearcoat); per-material envMapIntensity so materials
+  answer the same light differently
+- engineering/js/model.js — consumes materials.js; small-radius bevels via the vendored
+  RoundedBoxGeometry on shells, plates, board, packages, keys, trackpad, battery cells (soft
+  pouch puff), speaker chambers; display flex ribbons now segmented arcs; port cutout cavities on
+  the lower-shell wall exterior aligned with the port boards; de-index normalization for merges
+- engineering/js/scene.js — procedural warm-room environment for PMREM (beige walls, pale floor,
+  bright ceiling, one warm window softbox at the key light's bearing, wood-slat strip camera-left)
+  replacing the neutral RoomEnvironment on the stand-in path
+- engineering/js/loader.js — environmentIntensity graded 0.5 → 0.65 (metals live on the
+  environment; documented deviation from 05 §6.4's number)
+- engineering/js/timeline.js — shield/graphite teardown and tableau heights staggered
+  (0.22W/0.34W → ranks 0.62W/0.74W): equal heights stacked the sheets and hid the stamped metal
+- engineering/assets/fallback/*.webp — all 10 stills re-captured with the new materials
+- engineering/index.html + caption-anchors.json — four shield/graphite anchors re-measured
+
+Summary:
+Realism now comes from materials, not part count: brushed grain and machining variation on the
+aluminum, clearcoat glass with its own sharper reflection, satin pouch cells with seams and
+abstract print, a near-black board whose traces/pads/occlusion are painted into its texture,
+graphite that reads as a heat sheet beside clearly-metal shielding, ports cut into the chassis
+wall. Reflections come from a warm room whose window agrees with the key light, so every material
+answers one light source. Zero new components, zero new labels, zero new camera moves.
+
+Testing:
+Headless Chrome: zero console errors, zero off-origin requests, QA-1 clean; forward/reverse
+pixel-identical at p=0.46; full matrix re-run (no-JS with all stills, reduced-motion → static
+with zero animation bytes, WebGL2-blocked → static, mobile 390×844 no overflow, file:// guard,
+skip link lands p=1.000, homepage untouched); node --check on all twelve modules; banned-word
+grep clean. Caught and fixed during the pass: RoundedBoxGeometry is non-indexed and broke
+mergeGeometries (de-index normalization), and the first warm-room grade was too dim for metals.
+
+Risks / Notes:
+Our JS is now ≈97 KB (textures + materials modules; the 05 §11.1 60 KB line is a stand-in-era
+casualty — most of model.js/textures.js retires when the production GLB with real texture maps
+lands). Stills set 440 KB (caps hold). Real-GPU frame timing (QA-3/QA-4) still needs hardware —
+SwiftShader numbers are not representative. Textures are deterministic (seeded PRNG), generated
+once at load, ~10 small canvases.
+
+## 2026-07-02 15:40 - Developer (Implementation) - engineering-demo-realism-pass-1
+
+Action:
+Finished
+
+Task:
+Owner-directed realism pass on `/engineering`: rebuild the stand-in machine as a thin fanless
+ultrabook (modern thin-laptop internal logic as engineering reference — no brand marks, no
+trademarks) and rewire the component system, labels, and copy to match. The page style, route,
+timeline grammar, and cinematic system stay as built.
+
+Files claimed:
+
+- engineering/** (page, css, js, fallback stills)
+- docs/engineering-demo/asset-source/caption-anchors.json
+
+Files changed:
+
+- engineering/js/component-data.js (new) — structured component system: 8 groups, ~50 components
+  with one-sentence descriptions, visual priority, focus ranges; the 14-chip label set
+- engineering/js/model.js — full rebuild: display assembly (shell/glass/panel/camera/flex/hinges/
+  antennas), top case (deck/membrane/backlight/78 keys/fingerprint power button/force trackpad),
+  battery cell array (4 cells, BMS, cable, pull tabs, adhesive), dense logic board (SoC package
+  with on-substrate unified memory, soldered storage, PMICs, VRM field, wireless, timing crystal,
+  board-to-board connectors, ribbon sockets, grounding pads, screws, subtle traces), passive
+  thermal stack (shield plate + contact plate, graphite sheet — the fan and heat pipes are gone),
+  three port boards (USB-C + bracket, magnetic-style charge, headphone jack), slim speaker
+  chambers, engineered lower shell (ribs, bosses, screws, grounding, ventless edges)
+- engineering/js/timeline.js — new part-move tables (display → top case → thermal peel → port
+  boards → logic board), two-slab clearing rises, glass/panel micro-separations, per-label focus
+  windows (max 3 concurrent), 14-slot tableau re-entry
+- engineering/js/main.js — new bind contract (8 movers + 2 micro children + 9 anchors)
+- engineering/js/camera-rig.js — P5 pulled back to 3.65W / target 0.70W for the five-rank tableau
+- engineering/index.html — new cards/h2s/sr-story/captions/alt text (cards ≤ 14 words, floors
+  re-checked; static total at the 145 cap)
+- engineering/css/engineering.css — chip width 14ch, wider scrim ellipse
+- engineering/assets/fallback/*.webp — all 10 stills re-captured from the new scene
+- docs/engineering-demo/asset-source/caption-anchors.json — regenerated (v2)
+- docs/logs.md (this entry)
+
+Summary:
+The internals no longer read as a generic fan-cooled repair diagram: no fan, no heat pipes, no
+removable RAM/M.2 sticks. The teardown now tells the fanless story (B4 card: "A shield and a
+graphite sheet carry heat away. No fan.") over a believable dense board, big flat battery, and
+edge-mounted port boards; the final exploded view is a five-rank museum stack (lower shell 0 →
+logic board +0.34W → thermal/ports +0.68W → top case +1.02W → display +1.36W).
+
+Testing:
+Headless Chrome: zero console errors, zero off-origin requests, QA-1 clean; forward/reverse
+pixel-identical at p=0.46; skip link lands p=1.000 with CTA focusable; no-JS article with all five
+stills; reduced-motion → static with zero animation/3D bytes; WebGL2-blocked → static; mobile
+390×844 comp+track classes, no overflow, no errors; file:// guard; homepage regression OK;
+node --check on all ten modules; banned-word grep clean on shipped copy.
+
+Risks / Notes:
+Manager: needs decisions.md entries — this pass supersedes 05 §5.2's node names/copy deck wording
+(owner-directed). 3d word total is now ≈126 (> the 115 cap; labels grew from 9 to 14 — suggest
+recording a raised cap). Our JS is now ~80 KB (> the 60 KB line; component-data.js and the bigger
+stand-in model account for it — both shrink when the real GLB replaces model.js). Stills remain
+WebP-only, captured from the stand-in; re-capture with the production asset round.
+
+## 2026-07-02 14:20 - Developer (Implementation) - engineering-demo-build-1
+
+Action:
+Finished
+
+Task:
+Build the `/engineering` cinematic laptop-teardown demo from
+`docs/engineering-demo/05-master-specification.md` (T-09; owner-directed start — the owner's build
+instruction supplies the D-017 go-ahead, adopting the recorded closing line and page title).
+
+Files claimed:
+
+- engineering/** (new directory — page, css, js, vendor, assets)
+- vercel.json (one headers entry, required by 05 §2.4)
+- docs/engineering-demo/asset-source/caption-anchors.json (capture sidecar per 05 §3.4)
+
+Files changed:
+
+- engineering/index.html — gate script, import map, critical CSS, semantic story document (05 §8.2/§8.3/§10.3)
+- engineering/css/engineering.css — static article + 3d overlay styles, chips, ending (05 §4)
+- engineering/js/{main,loader,scene,camera-rig,timeline,quality,fallback,debug,model}.js — full runtime (05 §6–§12)
+- engineering/vendor/{three-r180,gsap-3.13.0,decoders-r180}/** + vendor/README.md (SHA-256 manifest; pins three r180 / gsap 3.13.0)
+- engineering/assets/fallback/teardown-r{0..4}_{1280,2560}.v1.webp — 10 stills captured from the live scene
+- vercel.json — immutable cache headers for /engineering/(vendor|assets)
+- docs/engineering-demo/asset-source/caption-anchors.json — measured caption anchors
+- docs/logs.md (this entry)
+
+Summary:
+Complete build of `/engineering` on the master spec: mode gate, loader, Three.js scene (renderer,
+lights, ground rig per D-012), camera rig with the six poses, the full B0–B8 master timeline with
+the exact copy deck and label system, progress smoother (τ=70 ms + snap-on-drain), quality tiers +
+governor, static/no-JS/reduced-motion article, mid-session fallback conversion, context-loss
+recovery. The production GLB/KTX2/HDR assets do not exist yet, so the page runs on the sanctioned
+stand-in (02 §14): a procedural model in js/model.js carrying the byte-exact 05 §5.2 node names,
+§5.3 dimensions, and §5.5 materials, with RoomEnvironment as IBL; loader.js has the full
+byte-weighted production path behind an ASSETS_READY flag. Deviations (all documented in code and
+the build report): root-absolute paths (cleanUrls serves /engineering without a trailing slash, so
+relative subresource paths resolve at the site root — 05 §2.1's movability claim does not survive
+its own routing); GSAP injected by main.js in 3d mode only (05 §8.2 vs §12 P1 conflict resolved in
+§12's favor); a lid second-rise 0.50W→1.08W at 0.283–0.343 (at +0.50W the lid occludes B4/B5's
+subjects from P3 — ray-checked; needs a superseding decisions.md entry); stills are WebP-only
+(canvas AVIF encode unavailable) and rendered from the stand-in — re-capture when the real model
+lands.
+
+Testing:
+Headless Chrome (puppeteer-core + SwiftShader): 3d init clean (zero console errors/warnings, zero
+off-origin requests, zero assets/fallback fetches in 3d mode — QA-1); scroll pass at 10 addresses
+with screenshots; forward/reverse determinism at p=0.46 pixel-identical (QA-7); skip link lands at
+p=1.000 with CTA focusable (QA-11 partial); no-JS renders the full article with all five stills;
+reduced-motion → static with zero animation/3D bytes (QA-8); WebGL2-blocked → static, no error UI
+(QA-10); mobile 390×844 → comp-mobile + 1700vh track, no overflow, no errors; file:// shows the
+guard (QA-14); homepage regression OK. node --check passes on all nine modules. Not run (needs
+real hardware/devices): QA-2..QA-6, QA-12 (context-loss), QA-13 (screen readers), QA-16 timing
+audit on real GPU.
+
+Risks / Notes:
+Manager: T-09 → [REVIEW]. The lid second-rise and the GSAP load-order change need superseding
+decisions.md entries; the stand-in model and WebP-only stills are placeholders pending the
+04-asset-pipeline round (flip loader.js ASSETS_READY when laptop.v1.glb + textures + HDR land,
+then re-capture stills and regenerate caption-anchors.json). Sizes: our JS 56.3 KB (≤60 KB cap),
+stills set 294 KB (≤1.6 MB), 3d wire today ≈0.97 MB (≤8.5 MB). Vendored addons exceed 05 §11.1's
+180 KB line (real r180 GLTFLoader alone is 112 KB) but the loader graph is dormant until
+ASSETS_READY — noted in vendor/README.md.
+
+## 2026-07-02 - Reviewer - engineering-demo-round-6-full-review
+
+Action:
+Reviewed
+
+Task:
+Owner-directed full-project review of the `/engineering` demo blueprint — all hub documents, all
+four specialist documents at current revisions, and `05-master-specification.md` — judged at the
+Site-of-the-Day bar (category scores, AI-slop sweep, technical risks, missing opportunities,
+contradiction hunt, awards verdict).
+
+Files claimed:
+
+- docs/engineering-demo/review-report.md (Reviewer-owned)
+
+Files changed:
+
+- docs/engineering-demo/review-report.md (Round 6 appended; Rounds 1–5 preserved untouched)
+- docs/logs.md (this entry)
+
+Summary:
+Verdict: **APPROVED WITH CHANGES** — overall 8.3/10. The blueprint's arithmetic and interfaces
+survived independent re-derivation (arrival trigonometry, reading floors, word budgets, payload
+sums all verified). Also reviewed the previously unreviewed post-approval addenda (02 rev 6
+§13–§15/QA-18-19; 03 rev 6 §5.5/§6.4) — both Approved, conditional on a 05 fold-in. Gating
+findings before T-09 may start: (1) 05 is stale vs the addenda and README/taskboard overstate the
+review state; (2) the 10 parked 05 audit defects (incl. the verified corrupted §2.3 sentence and
+unenforced CTA clickability) must be fixed in-document, not "in the first implementation pass";
+(3) no social-share metadata (og:image etc.) exists anywhere — a distribution hole for a page
+whose success criteria depend on link-sharing; (4) four live contradictions with ruled survivors
+(battery caption 01 vs 05 §14.3(m); alt-text vs captions; ending enter-ramps vs the 0.015
+grammar; breakpoint statements). Non-gating: naive-user pacing test for the H4 trough, Playfair
+11.5px legibility on 1×-DPR panels, tier-C visual acceptance, measurement/hover/deep-link/
+predecessor decisions to be made on the record. D-017 owner sign-off remains the standing blocker.
+
+Testing:
+Documentation review only — no code exists, nothing runnable. All numeric claims spot-checked by
+hand; greps run for social metadata, bead-blasted ruling, battery captions, and the corrupted
+sentence (all confirmed as reported).
+
+Risks / Notes:
+The Manager should: sync README/taskboard to the true review state, drive the four documentation
+fixes and the 05 re-synthesis (hours of work), and obtain the D-017 sign-off. The Reviewer does
+not edit the board; T-06/T-08/T-09 status updates are the Manager's per the role rules.
+
+---
+
 ## 2026-07-01 - Engineering Demo Project Manager - engineering-demo-blueprint
 
 Action:

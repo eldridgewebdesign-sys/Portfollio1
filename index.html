@@ -140,6 +140,32 @@ body.ready #hero .anim{opacity:1;transform:none}
 .why-col:hover{transform:translateY(-8px);box-shadow:inset 0 1px 0 rgba(173,224,233,.3),0 30px 62px rgba(2,12,20,.5)}
 .why-col:hover::before{background:linear-gradient(180deg,rgba(170,236,247,.78),rgba(98,182,198,.26) 42%,rgba(98,182,198,.09))}
 
+/* ── FEATURED — a window into /engineering ──────────────────────────────────
+   The card recreates the engineering demo's opening frame exactly: its wall
+   tokens, its wordmark + title placement, and the page's own r0 fallback
+   still (webp with alpha, so it composites on the gradient like the real
+   page). The whole card is one link to /engineering — no button, no copy. */
+.feat-sub{font-family:'Playfair Display',sans-serif;font-style:italic;font-weight:400;color:var(--mist);font-size:clamp(.95rem,1.3vw,1.08rem);letter-spacing:.05em;margin-top:.9rem}
+.feat-card{--eng-ink:#2b2320;position:relative;display:block;width:min(980px,100%);margin:clamp(2.6rem,5vw,4rem) auto 0;aspect-ratio:16/10;border-radius:20px;overflow:hidden;text-decoration:none;background:linear-gradient(180deg,#e9ddd1 0%,#c9b8a6 62%,#bba58d 100%);box-shadow:0 24px 60px rgba(2,12,20,.5),0 4px 14px rgba(2,12,20,.3);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .55s cubic-bezier(.16,1,.3,1),box-shadow .55s cubic-bezier(.16,1,.3,1);cursor:pointer}
+/* 1px gradient frame — same technique as the why-cards, in the demo's warm light */
+.feat-card::after{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(180deg,rgba(255,250,240,.55),rgba(228,207,166,.18) 46%,rgba(228,207,166,.06));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;pointer-events:none;transition:background .55s}
+.feat-card:hover{transform:translateY(-8px);box-shadow:0 34px 80px rgba(2,12,20,.58),0 6px 18px rgba(2,12,20,.34)}
+.feat-card:hover::after{background:linear-gradient(180deg,rgba(255,252,244,.75),rgba(228,207,166,.26) 46%,rgba(228,207,166,.1))}
+.feat-card:focus-visible{outline:2px solid var(--aqua);outline-offset:4px}
+.feat-still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.feat-logo{position:absolute;top:5.2%;left:4.6%;width:clamp(84px,11%,112px);aspect-ratio:150/84;background:var(--eng-ink);-webkit-mask:url(images/Main-Logo.png) center/contain no-repeat;mask:url(images/Main-Logo.png) center/contain no-repeat}
+.feat-title{position:absolute;left:7%;top:50%;transform:translateY(-50%);font-family:'Distillery Display','Playfair Display',serif;font-weight:600;font-size:clamp(1.4rem,2.6vw,2.6rem);line-height:1;letter-spacing:.015em;text-transform:uppercase;color:var(--eng-ink)}
+@media(max-width:680px){
+  .feat-card{aspect-ratio:4/3}
+  .feat-still{object-position:62% 50%}
+  .feat-logo{width:88px;left:6%;top:5.5%}
+  .feat-title{left:50%;top:auto;bottom:8.5%;transform:translateX(-50%);font-size:clamp(1.3rem,6vw,1.7rem);white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){
+  .feat-card,.feat-card::after{transition:none}
+  .feat-card:hover{transform:none}
+}
+
 #site-footer{position:relative;z-index:1;text-align:center;padding:1.6rem 1.5rem 2.2rem;font-family:'Playfair Display',sans-serif;font-weight:400;font-size:.76rem;letter-spacing:.08em;color:rgba(236,244,243,.68)}
 
 /* ── PRELOADER ───────────────────────────────────────────────────────────── */
@@ -222,7 +248,7 @@ body.lock{overflow:hidden;height:100vh}
       <div class="why-col rv d1">
         <span class="why-ic" aria-hidden="true"><img src="images/Simplicity-WW.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
         <h3>Simplicity</h3>
-        <p>Wheather your a software developer or still own a phone, everything is designed to be as simple and as intuitive as possible</p>
+        <p>Whether your a software developer or still own a phone, everything is designed to be as simple and as intuitive as possible</p>
       </div>
       <div class="why-col rv d2">
         <span class="why-ic" aria-hidden="true"><img src="images/Intigration-WW.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
@@ -232,9 +258,25 @@ body.lock{overflow:hidden;height:100vh}
       <div class="why-col rv d3">
         <span class="why-ic" aria-hidden="true"><img src="images/Honesty-WW.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
         <h3>Honest</h3>
-        <p>Not going to tell you things that don't apply to your business. We tell you what everything does and how you can apply it, the rest is up to you.</p>
+        <p>Not going to tell you to buy things that don't apply to your business. We tell you what everything does, the rest is up to you.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ── FEATURED — window into the engineering demo ────────────────────────── -->
+<section id="featured" class="sx">
+  <div class="wrap">
+    <h2 class="sec-title rv">Featured</h2>
+    <p class="feat-sub rv d1">the best from websharke</p>
+    <a class="feat-card rv" href="/engineering" aria-label="Open WebSharke Engineering demo">
+      <img class="feat-still" src="/engineering/assets/fallback/teardown-r0_1280.v1.webp"
+           srcset="/engineering/assets/fallback/teardown-r0_1280.v1.webp 1280w, /engineering/assets/fallback/teardown-r0_2560.v1.webp 2560w"
+           sizes="(max-width:680px) 90vw, (max-width:1024px) calc(100vw - 6rem), 980px"
+           alt="" loading="lazy" decoding="async">
+      <span class="feat-logo" aria-hidden="true"></span>
+      <span class="feat-title">Engineering</span>
+    </a>
   </div>
 </section>
 

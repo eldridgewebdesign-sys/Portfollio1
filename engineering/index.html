@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSharke Engineering</title>
+  <meta name="description" content="A laptop comes apart layer by layer as you scroll. Every part named in plain English. This is how we treat complicated things.">
+  <link rel="icon" type="image/png" href="/images/Tab-Logo.png">
+
+  <!-- 1. Mode gate — sets data-mode BEFORE first paint (05 §8.3, transcribed exactly). -->
+  <script>
+    (function () {
+      var mode = 'static';
+      try {
+        var im  = 'supports' in HTMLScriptElement && HTMLScriptElement.supports('importmap');
+        var rm  = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var gl2 = !!document.createElement('canvas').getContext('webgl2');
+        if (location.protocol === 'file:') mode = 'file';
+        else if (!rm && im && gl2)         mode = '3d';
+      } catch (e) { /* any throw ⇒ static */ }
+      document.documentElement.dataset.mode = mode;
+    })();
+  </script>
+
+  <!-- 2. Critical CSS: tokens, fonts, base, the complete loader, nav, stage, mode switches. -->
+  <style>
+    /* ---- Design tokens (05 §4.1) — every color literal on the page lives here. ---- */
+    :root{
+      --linen:#f2e8da;
+      --wall-lit:#e9ddd1;
+      --wall:#c9b8a6;
+      --wall-shade:#bba58d;
+      --floor:#a59586;
+      --oak:#8d7254;
+      --alu:#acacae;
+      --alu-lit:#d6d6d8;
+      --pcb:#232a26;
+      --solder:#9a9da2;
+      --copper:#b06c3d;
+      --copper-ink:#8a4b26;
+      --gold:#c3a36f;
+      --ink:#2b2320;
+      --ink-soft:#463c33;
+      --cta-ink:#102536;
+      --scrim:rgba(242,232,218,.72);
+      --wall-grad:linear-gradient(180deg, var(--wall-lit) 0%, var(--wall) 62%, var(--wall-shade) 100%);
+    }
+    /* ---- Fonts (D-004: the site's two families, self-hosted — no third family). ---- */
+    @font-face{font-family:'Distillery Display';src:url('/fonts/distillery-display/DistilleryDisplay-Regular.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/playfair-display/latin-400-normal.woff2') format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/playfair-display/latin-500-normal.woff2') format('woff2')}
+    @font-face{font-family:'Playfair Display';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/playfair-display/latin-600-normal.woff2') format('woff2')}
+
+    *{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:auto}
+    body{
+      background:var(--wall);
+      color:var(--ink);
+      font-family:'Playfair Display',serif;
+      font-weight:500;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      overflow-x:hidden;
+    }
+    a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+    /* ---- Stage: fixed backdrop + canvas. The wall is CSS, never geometry (05 §6.2). ---- */
+    #stage{position:fixed;inset:0;z-index:0;background:var(--wall-grad);display:none}
+    #stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+    #labels{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+    [data-mode="3d"] #stage{display:block}
+
+    /* ---- Nav: logo only, top-left, never hides (05 §4.5). ---- */
+    #site-nav{position:fixed;top:24px;left:24px;z-index:1000}
+    #site-nav .logo{
+      display:block;width:150px;height:84px;background-color:var(--ink);
+      -webkit-mask-image:url('/images/Main-Logo.png');mask-image:url('/images/Main-Logo.png');
+      -webkit-mask-size:contain;mask-size:contain;
+      -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+      -webkit-mask-position:center;mask-position:center;
+      transition:transform 350ms;
+    }
+    #site-nav .logo:hover{transform:translateY(-1px)}
+    @media (max-width:767px){#site-nav .logo{width:120px;height:67px}}
+
+    /* ---- Loader (05 §12 P0): wall, masked wordmark, 140×2 hairline, microtext. ----
+         Lives above the story overlays and below the nav so nothing leaks through it. */
+    #loader{position:fixed;inset:0;z-index:900;background:var(--wall-grad);display:none;
+      flex-direction:column;align-items:center;justify-content:center}
+    [data-mode="3d"] #loader{display:flex}
+    #loader .wordmark{width:min(340px,56vw);aspect-ratio:340/190;background-color:var(--ink);
+      -webkit-mask-image:url('/images/Main-Logo.png');mask-image:url('/images/Main-Logo.png');
+      -webkit-mask-size:contain;mask-size:contain;
+      -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+      -webkit-mask-position:center;mask-position:center}
+    #loader .hairline{width:140px;height:2px;margin-top:2rem;background:rgba(43,35,32,.14);position:relative;overflow:hidden}
+    #loader .hairline .fill{position:absolute;inset:0;background:var(--copper-ink);transform:scaleX(0);transform-origin:left center}
+    #loader .microtext{margin-top:1rem;font-size:.72rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+
+    /* ---- file:// developer guard (05 §3.3) — unreachable in production. ---- */
+    #guard{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:var(--wall-grad)}
+    [data-mode="file"] #guard{display:flex}
+    [data-mode="file"] main,[data-mode="file"] #site-nav{display:none}
+    #guard p{max-width:44ch;font-size:1.05rem;line-height:1.7;color:var(--ink)}
+
+    /* ---- Skip link: hidden until focused; renders as an active-treatment chip (05 §4.5). ---- */
+    .skip-link{position:fixed;top:120px;left:24px;z-index:1001;
+      font-size:.72rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;
+      color:var(--ink);background:rgba(242,232,218,.92);border:1px solid rgba(43,35,32,.30);border-radius:3px;
+      padding:.34rem .6rem;
+      clip-path:inset(50%);clip:rect(0 0 0 0);width:1px;height:1px;overflow:hidden;white-space:nowrap}
+    .skip-link:focus{clip-path:none;clip:auto;width:auto;height:auto;overflow:visible}
+
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  </style>
+
+  <!-- 3. Import map — must precede any module script (05 §8.3).
+       Paths are root-absolute (/engineering/…): with cleanUrls this document is
+       served at /engineering (no trailing slash), so relative URLs would
+       resolve against the site root. -->
+  <script type="importmap">
+  { "imports": {
+      "three": "/engineering/vendor/three-r180/three.module.min.js",
+      "three/addons/": "/engineering/vendor/three-r180/addons/" } }
+  </script>
+
+  <!-- 4. Preloads: the wordmark + the 2 font files (05 §8.2). -->
+  <link rel="preload" href="/images/Main-Logo.png" as="image" crossorigin>
+  <link rel="preload" href="/fonts/distillery-display/DistilleryDisplay-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/playfair-display/latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+
+  <!-- 5. Non-critical styles. -->
+  <link rel="stylesheet" href="/engineering/css/engineering.css">
+</head>
+<body>
+  <a class="skip-link" href="#ending">Skip to the end</a>
+
+  <nav id="site-nav">
+    <a class="logo" href="/" aria-label="WebSharke — home"></a>
+  </nav>
+
+  <!-- The fixed 3D stage: CSS wall + transparent canvas + screen-space label layer. -->
+  <div id="stage" aria-hidden="true">
+    <canvas id="gl"></canvas>
+    <div id="labels"></div>
+  </div>
+
+  <!-- Loader overlay (3d mode only): same wall gradient, so the handoff is pixel-continuous. -->
+  <div id="loader" aria-hidden="true">
+    <div class="wordmark"></div>
+    <div class="hairline"><div class="fill"></div></div>
+    <div class="microtext">Preparing the machine</div>
+  </div>
+
+  <!-- file:// developer guard. -->
+  <div id="guard">
+    <p>This page runs from a web server, not from a file. From the project root, start any
+    static server (for example, vercel dev), then open /engineering.</p>
+  </div>
+
+  <main>
+    <!-- Visible title block (copy.B0). In 3d mode the init sets aria-hidden here and the
+         canonical #sr-story narrative below carries the one h1 in the accessibility tree;
+         in static mode #sr-story stays hidden and this header IS the article's head. -->
+    <header id="opening">
+      <h1 id="title">Engineering</h1>
+      <p id="subline">A laptop is a complicated thing. It comes apart layer by layer.</p>
+    </header>
+
+    <!-- Canonical screen-reader narrative (05 §10.1). hidden is the shipped default;
+         the 3d init removes it. Contains no focusable elements. -->
+    <div id="sr-story" class="sr-only" hidden>
+      <h1>Engineering</h1>
+      <p>A laptop is a complicated thing. It comes apart layer by layer.</p>
+      <p>That was you. This page only moves when you do.</p>
+      <p>The display comes off first. It always does.</p>
+      <p>The keyboard and trackpad lift away as one thin, machined deck.</p>
+      <p>A shield and a graphite sheet carry heat away. No fan.</p>
+      <p>Port boards. Charging, data, and audio, handled at the edges.</p>
+      <p>The logic board lifts away. Processor, memory, and storage share one dense slab.</p>
+    </div>
+
+    <div id="scroll-track">
+      <section data-beat="B0">
+        <h2>The machine</h2>
+        <p class="card" data-copy="B1">That was you. This page only moves when you do.</p>
+        <figure class="still" data-still="r0">
+          <picture>
+            <source type="image/webp" srcset="/engineering/assets/fallback/teardown-r0_1280.v1.webp 1280w, /engineering/assets/fallback/teardown-r0_2560.v1.webp 2560w" sizes="(max-width: 767px) 92vw, 72vw">
+            <img src="/engineering/assets/fallback/teardown-r0_1280.v1.webp" alt="A thin silver laptop, closed, in a warm beige studio." loading="lazy" decoding="async">
+          </picture>
+        </figure>
+      </section>
+
+      <section data-beat="B2">
+        <h2>Display</h2>
+        <p class="card" data-copy="B2">The display comes off first. It always does.</p>
+        <figure class="still" data-still="r1">
+          <picture>
+            <source type="image/webp" srcset="/engineering/assets/fallback/teardown-r1_1280.v1.webp 1280w, /engineering/assets/fallback/teardown-r1_2560.v1.webp 2560w" sizes="(max-width: 767px) 92vw, 72vw">
+            <img src="/engineering/assets/fallback/teardown-r1_1280.v1.webp" alt="The laptop&rsquo;s display lifted straight up off the body, hanging above it." loading="lazy" decoding="async">
+          </picture>
+          <span class="still-caption" style="--ax:86.4%;--ay:14.6%">Display</span>
+        </figure>
+      </section>
+
+      <section data-beat="B3">
+        <h2>Keyboard deck</h2>
+        <p class="card" data-copy="B3">The keyboard and trackpad lift away as one thin, machined deck.</p>
+      </section>
+
+      <section data-beat="B4">
+        <h2>Cooling without a fan</h2>
+        <p class="card" data-copy="B4">A shield and a graphite sheet carry heat away. No fan.</p>
+      </section>
+
+      <section data-beat="B5">
+        <h2>Port boards</h2>
+        <p class="card" data-copy="B5">Port boards. Charging, data, and audio, handled at the edges.</p>
+        <figure class="still" data-still="r2">
+          <picture>
+            <source type="image/webp" srcset="/engineering/assets/fallback/teardown-r2_1280.v1.webp 1280w, /engineering/assets/fallback/teardown-r2_2560.v1.webp 2560w" sizes="(max-width: 767px) 92vw, 72vw">
+            <img src="/engineering/assets/fallback/teardown-r2_1280.v1.webp" alt="Seen from above, the shield plate, graphite sheet, and port boards raised off the logic board, the keyboard deck and display hanging higher still." loading="lazy" decoding="async">
+          </picture>
+          <span class="still-caption" style="--ax:60.5%;--ay:33.7%">Shield plate</span>
+          <span class="still-caption" style="--ax:77.8%;--ay:39.9%">Graphite sheet</span>
+          <span class="still-caption" style="--ax:49%;--ay:19.3%">Port boards</span>
+          <span class="still-caption" style="--ax:70.7%;--ay:60%">Processor</span>
+          <span class="still-caption" style="--ax:68.6%;--ay:47%">Memory</span>
+          <span class="still-caption" style="--ax:57.2%;--ay:42.6%">Storage</span>
+        </figure>
+      </section>
+
+      <section data-beat="B6">
+        <h2>Logic board</h2>
+        <p class="card" data-copy="B6">The logic board lifts away. Processor, memory, and storage share one dense slab.</p>
+        <figure class="still" data-still="r3">
+          <picture>
+            <source type="image/webp" srcset="/engineering/assets/fallback/teardown-r3_1280.v1.webp 1280w, /engineering/assets/fallback/teardown-r3_2560.v1.webp 2560w" sizes="(max-width: 767px) 92vw, 72vw">
+            <img src="/engineering/assets/fallback/teardown-r3_1280.v1.webp" alt="The logic board lifted a short way off the lower case, a clean gap between them." loading="lazy" decoding="async">
+          </picture>
+          <span class="still-caption" style="--ax:82%;--ay:47.5%">Logic board</span>
+          <span class="still-caption" style="--ax:77.3%;--ay:69.1%">Battery</span>
+          <span class="still-caption" style="--ax:40.4%;--ay:57%">Speakers</span>
+          <span class="still-caption" style="--ax:42.5%;--ay:46%">Lower shell</span>
+        </figure>
+      </section>
+
+      <section id="ending">
+        <h2>The whole thing</h2>
+        <figure class="still" data-still="r4">
+          <picture>
+            <source type="image/webp" srcset="/engineering/assets/fallback/teardown-r4_1280.v1.webp 1280w, /engineering/assets/fallback/teardown-r4_2560.v1.webp 2560w" sizes="(max-width: 767px) 92vw, 72vw">
+            <img src="/engineering/assets/fallback/teardown-r4_1280.v1.webp" alt="The whole laptop taken apart in mid-air: display, keyboard deck, thermal layers, port boards, logic board, battery, speakers, and lower shell, each above its place." loading="lazy" decoding="async">
+          </picture>
+          <span class="still-caption" style="--ax:69.8%;--ay:7.8%">Display</span>
+          <span class="still-caption" style="--ax:69.2%;--ay:31.2%">Keyboard deck</span>
+          <span class="still-caption" style="--ax:46.8%;--ay:49.1%">Shield plate</span>
+          <span class="still-caption" style="--ax:61.3%;--ay:44.9%">Graphite sheet</span>
+          <span class="still-caption" style="--ax:56.5%;--ay:73%">Processor</span>
+          <span class="still-caption" style="--ax:54.7%;--ay:60%">Memory</span>
+          <span class="still-caption" style="--ax:44.3%;--ay:63.9%">Storage</span>
+          <span class="still-caption" style="--ax:36.3%;--ay:43.2%">Port boards</span>
+          <span class="still-caption" style="--ax:65.8%;--ay:69.1%">Logic board</span>
+          <span class="still-caption" style="--ax:62.1%;--ay:95%">Battery</span>
+          <span class="still-caption" style="--ax:32.4%;--ay:90%">Speakers</span>
+          <span class="still-caption" style="--ax:34%;--ay:80%">Lower shell</span>
+        </figure>
+        <div class="closing-block">
+          <div class="scrim" aria-hidden="true"></div>
+          <p class="closing"><span>laptops are complicated.</span> <span>You&rsquo;ve seen how we treat complicated.</span></p>
+          <a class="btn btn-sand" href="/onboarding">Start a Project</a>
+          <p class="signoff">&copy; 2026 WebSharke</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Scroll cue (3d mode only; clock-based idle trigger per 05 §7.7). -->
+  <div id="cue" aria-hidden="true"><span class="cue-word">Scroll</span><span class="cue-line"></span></div>
+
+  <!-- 6–8. The entry module. GSAP (classic UMD scripts, core before plugins)
+       is injected by main.js only in 3d mode, so a static-mode visitor never
+       downloads the animation stack (05 §12 P1). -->
+  <script type="module" src="/engineering/js/main.js"></script>
+</body>
+</html>
