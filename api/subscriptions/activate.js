@@ -49,6 +49,53 @@ const REUSABLE_SUB = ["incomplete"];
 // interval:'month' with interval_count 1..12 (12 = yearly).
 const MAX_INTERVAL_MONTHS = 12;
 
+// Build a secret-free diagnostic from any thrown error so the REAL cause is
+// visible without leaking anything sensitive. Stripe errors carry
+// type/code/statusCode/requestId + a customer-safe message (Stripe redacts keys
+// in its own messages); Supabase/Postgres errors carry a code + message. None of
+// these contain the secret key. We log the full object server-side (incl. the
+// message) and return only this trimmed version to the browser — surfacing the
+// message to the browser ONLY for Stripe errors (whose messages Stripe
+// guarantees are safe), keeping raw DB/internal messages server-side.
+function errorInfo(err) {
+  const isStripe = !!(err && (err.raw || (typeof err.type === "string" && err.type.indexOf("Stripe") === 0)));
+  return {
+    type: (err && (err.type || err.name)) || "Error",
+    code: (err && err.code) || undefined,
+    statusCode: (err && err.statusCode) || undefined,
+    requestId: (err && err.requestId) || undefined,
+    message: isStripe ? (err && err.message) : undefined,
+  };
+}
+
+// Resolve the first-payment client secret from a freshly-created subscription.
+// The canonical Basil/Dahlia path is latest_invoice.confirmation_secret (which
+// this route expands on create). If that is somehow absent on the create
+// response, re-fetch the invoice asking only for confirmation_secret (a valid
+// expand on current API versions). We deliberately do NOT expand
+// latest_invoice.payment_intent — Basil removed that field, so the expand 400s.
+// Returns the client secret string, or null when there is truly nothing to
+// confirm (the caller decides what that means).
+async function resolveSubClientSecret(subscription) {
+  const latest = subscription.latest_invoice;
+  if (latest && typeof latest === "object" && latest.confirmation_secret && latest.confirmation_secret.client_secret) {
+    return latest.confirmation_secret.client_secret;
+  }
+  const invoiceId =
+    latest && typeof latest === "object" ? latest.id : typeof latest === "string" ? latest : null;
+  if (invoiceId) {
+    try {
+      const inv = await stripe.invoices.retrieve(invoiceId, { expand: ["confirmation_secret"] });
+      if (inv && inv.confirmation_secret && inv.confirmation_secret.client_secret) {
+        return inv.confirmation_secret.client_secret;
+      }
+    } catch (e) {
+      console.error("Invoice confirmation_secret re-fetch failed:", e && e.message);
+    }
+  }
+  return null;
+}
+
 module.exports = async (req, res) => {
   // ---- CORS: same-origin site only; the verified token below is the real control. ----
   res.setHeader("Access-Control-Allow-Origin", "https://websharke.com");
@@ -110,7 +157,7 @@ module.exports = async (req, res) => {
       .select("id, user_id, status, plan_name, amount_cents, interval_months, currency, category, stripe_customer_id, stripe_subscription_id")
       .eq("id", subId)
       .maybeSingle();
-    if (subErr) throw new Error(subErr.message);
+    if (subErr) throw Object.assign(new Error(subErr.message), { code: subErr.code });
     if (!sub) return res.status(404).json({ error: "Subscription not found." });
 
     // Ownership: a client may activate ONLY their own subscription.
@@ -211,8 +258,11 @@ module.exports = async (req, res) => {
           expand: ["latest_invoice.confirmation_secret"],
         });
       } catch (e) {
-        console.error("Subscription create failed for row", sub.id, e && e.message);
-        return res.status(500).json({ error: "Could not start the subscription. Please try again." });
+        // Full detail (incl. message) to server logs; secret-free diagnostic to
+        // the browser. A wrong-mode/deleted STRIPE_SUBSCRIPTION_PRODUCT_ID shows
+        // here as code:"resource_missing"; a bad key as StripeAuthenticationError.
+        console.error("Subscription create failed for row", sub.id, JSON.stringify({ ...errorInfo(e), message: e && e.message }));
+        return res.status(500).json({ error: "Could not start the subscription. Please try again.", debug: errorInfo(e) });
       }
     }
 
@@ -229,14 +279,22 @@ module.exports = async (req, res) => {
       .eq("id", sub.id);
     if (updErr) console.error("Could not save Stripe ids for subscription", sub.id, updErr.message);
 
-    const latest = subscription.latest_invoice;
-    const clientSecret =
-      latest && typeof latest === "object" && latest.confirmation_secret
-        ? latest.confirmation_secret.client_secret
-        : null;
+    const clientSecret = await resolveSubClientSecret(subscription);
     if (!clientSecret) {
-      console.error("Subscription confirmation secret missing for row", sub.id, "sub", subscription.id);
-      return res.status(500).json({ error: "Could not start payment. Please try again." });
+      console.error(
+        "Subscription confirmation secret missing for row", sub.id, "sub", subscription.id,
+        JSON.stringify({
+          subStatus: subscription.status,
+          latestType: typeof subscription.latest_invoice,
+          hasConfirmationSecret: !!(subscription.latest_invoice &&
+            typeof subscription.latest_invoice === "object" &&
+            subscription.latest_invoice.confirmation_secret),
+        })
+      );
+      return res.status(500).json({
+        error: "Could not start payment. Please try again.",
+        debug: { reason: "no_confirmation_secret", subStatus: subscription.status },
+      });
     }
 
     // ---- 6. Return only the client secret + safe, display-only info. ----
@@ -252,7 +310,9 @@ module.exports = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Subscription activate error:", err && err.message);
-    return res.status(500).json({ error: "Could not start the subscription. Please try again." });
+    // Full detail (incl. the raw message) to the server logs only; the browser
+    // gets a secret-free diagnostic so the real cause is debuggable.
+    console.error("Subscription activate error:", JSON.stringify({ ...errorInfo(err), message: err && err.message }));
+    return res.status(500).json({ error: "Could not start the subscription. Please try again.", debug: errorInfo(err) });
   }
 };
