@@ -6,6 +6,66 @@
 
 ---
 
+## 2026-07-02 18:20 - Developer (Implementation) - homepage-featured-engineering
+
+Action:
+Finished
+
+Task:
+Owner-directed: add a "Featured" section at the bottom of the homepage (before the footer) with a
+single large clickable preview card that links to /engineering. Header "Featured", subheader
+"the best from websharke". No extra copy, no button. Lightweight static preview (no iframe), using
+the engineering page's own opening-frame assets read-only. /engineering itself NOT modified.
+
+Files claimed:
+
+- index.html (new Featured section markup + its CSS only)
+- read-only: engineering/index.html, engineering/css/engineering.css,
+  engineering/assets/fallback/teardown-r0_*.webp (referenced, not modified)
+
+Files changed:
+
+- index.html — added a `#featured` section (class `sx`) between `#why` and `#site-footer`, plus its
+  scoped CSS block just above the `#site-footer` rule. The card is one `<a href="/engineering">`
+  (whole box clickable, aria-label "Open WebSharke Engineering demo", no button/copy). It recreates
+  the demo's opening frame: the wall-gradient tokens (#e9ddd1→#c9b8a6→#bba58d), a masked WebSharke
+  wordmark top-left, an uppercase "Engineering" title, over the demo's own r0 fallback still
+  (teardown-r0_1280/2560.v1.webp, object-fit:cover). Hover = 8px lift + brighter 1px frame + deeper
+  shadow + cursor:pointer; reveals via the existing `.rv` observer; reduced-motion disables the
+  card motion; mobile switches to a 4/3 card with the title bottom-centered and the still nudged to
+  keep the laptop framed.
+
+Summary:
+Section renders below "Why WebSharke". Near-zero added weight (one lazy, below-the-fold webp already
+shipped by the demo; no new CSS files, JS, CDNs, or deps). Header/subheader text exact per spec;
+only in-card text is the demo's own wordmark + "Engineering". Not in hero, not in nav, no homepage
+redesign. After a 3-lens adversarial self-review (spec / code / a11y-perf), applied three small
+fixes: (1) added `opacity` to the card's transition so it fades in with the title/subheader instead
+of popping (the `.rv`+own-transition interaction was clobbering the fade) and dropped the now-inert
+`d2` stagger class; (2) removed a redundant `#featured .wrap{max-width:1100px}` (restated the
+`.wrap` default); (3) corrected the `sizes` attribute (was `110vw`, which pushed DPR-3 phones to the
+19 KB still) so phones now fetch the 6.4 KB 1280px file. No confirmed defects remained.
+
+Testing:
+Headless Chrome (puppeteer-core + SwiftShader, cleanUrls static server). Desktop 1440 + mobile 390:
+section present, header "Featured", subheader "the best from websharke", card is an `<a>` to
+/engineering with the aria-label, cursor:pointer, image loads, section sits before the footer, bg
+still clips to content. Zero console errors, zero pageerrors, zero failed requests at every width.
+Reveal verified: card starts opacity 0 → animates to 1 (transition-property now opacity, transform,
+box-shadow). Title/laptop clearance 104–141px across 700/820/980/1440/1920 — no overlap. No
+horizontal overflow at 390. Reduced-motion: card transition:none confirmed. Phone DPR-3 now selects
+teardown-r0_1280 (6.4 KB), desktop DPR-1 also 1280 — correct. `/engineering` re-loaded independently
+in 3d mode (title, loader handoff) — still works, untouched. Screenshots eyeballed desktop + mobile
++ tablet + hover.
+
+Risks / Notes:
+- References /engineering/assets/fallback/teardown-r0_*.v1.webp read-only — if the engineering demo
+  re-captures stills under new filenames, the homepage card image must be updated to match.
+- `engineering/index.html` shows as modified in the working tree (title/copy tweaks, e.g. "The whole
+  machine"→"The whole thing"). This was NOT made by this session — I did not edit /engineering. Left
+  as-is for the Manager/owning session to resolve; not part of this change.
+- Manager to record board status for this Developer task (Developer does not edit the board).
+
 ## 2026-07-02 17:35 - Developer (Implementation) - engineering-demo-slim-pass-1
 
 Action:
