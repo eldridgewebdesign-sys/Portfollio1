@@ -12,8 +12,12 @@ const DEG = Math.PI / 180;
 // the laptop's front edge (+Z); positive swings toward +X (screen-right side).
 // ty = target height in W; shift = subject-center offset (0.12 → 62vw, 0 → 50vw).
 const POSE_DATA = {
-  P0: { az: 24, el: 22, d: 4.15, ty: 0.02, shift: 0.12 },
-  P1: { az: 24, el: 22, d: 2.90, ty: 0.02, shift: 0.12 },
+  // P0/P1 elevation lowered 22° → 16° (closed-laptop slimming pass): the
+  // lower product angle compresses the projected footprint and reads the
+  // closed machine as a thin machined slab. Both poses move together so B1
+  // stays a pure dolly; P2–P5 are untouched.
+  P0: { az: 24, el: 16, d: 4.15, ty: 0.02, shift: 0.12 },
+  P1: { az: 24, el: 16, d: 2.90, ty: 0.02, shift: 0.12 },
   P2: { az: 38, el: 9,  d: 2.95, ty: 0.10, shift: 0.12 },
   P3: { az: 30, el: 48, d: 2.95, ty: 0.14, shift: 0.12 },
   P4: { az: 24, el: 24, d: 2.90, ty: 0.11, shift: 0.12 },

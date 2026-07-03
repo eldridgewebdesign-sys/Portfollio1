@@ -45,10 +45,12 @@ export function createScene(q) {
   bounceFill.position.set(-1.6, 0.9, 1.2);
   scene.add(bounceFill);
 
-  // Ground rig (D-012): 1.2 × 1.2 m ShadowMaterial plane, opacity 0.35, receive-only.
+  // Ground rig (D-012 geometry; opacity graded 0.35 → 0.30 in the slimming
+  // pass — a lighter contact shadow reads the closed machine as sitting low
+  // and light on the surface).
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(1.2, 1.2),
-    new THREE.ShadowMaterial({ opacity: 0.35 })
+    new THREE.ShadowMaterial({ opacity: 0.30 })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = 0;

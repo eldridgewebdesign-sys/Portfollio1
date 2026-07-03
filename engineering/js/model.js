@@ -89,30 +89,32 @@ export function buildStandIn() {
   const display = new THREE.Group();
   display.name = 'display_assembly';
 
+  // Slimmed closed profile: the display assembly is a 3.3 mm stack
+  // (glass 10.9 → shell top 13.95) instead of the earlier 4.8 mm brick.
   display.add(buildMesh('display_shell', [{ mat: M.alu, geoms: [
-    rbox(304, 1.4, 212, 0, 14.9, 0, 0.6),              // outer shell plate, beveled edge
-    box(1.6, 3.4, 212, -151.2, 12.5, 0),               // perimeter skirt
-    box(1.6, 3.4, 212, 151.2, 12.5, 0),
-    box(300.8, 3.4, 1.6, 0, 12.5, -105.2),
-    box(300.8, 3.4, 1.6, 0, 12.5, 105.2),
+    rbox(304, 1.2, 212, 0, 13.35, 0, 0.55),            // outer shell plate, beveled edge
+    box(1.6, 2.05, 212, -151.2, 11.72, 0),             // perimeter skirt
+    box(1.6, 2.05, 212, 151.2, 11.72, 0),
+    box(300.8, 2.05, 1.6, 0, 11.72, -105.2),
+    box(300.8, 2.05, 1.6, 0, 11.72, 105.2),
   ]}]));
 
   display.add(buildMesh('display_antenna', [{ mat: M.plastic, geoms: [
-    box(40, 2.8, 4, -120, 12.2, -100),                 // antenna windows, hinge-side corners
-    box(40, 2.8, 4, 120, 12.2, -100),
+    box(40, 1.9, 4, -120, 11.85, -100),                // antenna windows, hinge-side corners
+    box(40, 1.9, 4, 120, 11.85, -100),
   ]}]));
 
   display.add(buildMesh('display_panel', [{ mat: M.panelDark, geoms: [
-    box(288, 0.6, 192, 0, 12.0, 2),
+    box(288, 0.6, 192, 0, 11.65, 2),
   ]}]));
 
   display.add(buildMesh('display_glass', [{ mat: M.glassBlack, geoms: [
-    rbox(296, 0.4, 200, 0, 11.4, 2, 0.18, 1),          // thin glass, tiny edge bevel
+    rbox(296, 0.4, 200, 0, 11.12, 2, 0.18, 1),         // thin glass, tiny edge bevel
   ]}]));
 
   display.add(buildMesh('display_camera', [
-    { mat: M.chip, geoms: [box(9, 0.7, 6, 0, 12.1, -92)] },
-    { mat: M.glassBlack, geoms: [cyl(1.2, 0.3, 0, 11.55, -92, 12)] },
+    { mat: M.chip, geoms: [box(9, 0.7, 6, 0, 11.75, -92)] },
+    { mat: M.glassBlack, geoms: [cyl(1.2, 0.3, 0, 11.35, -92, 12)] },
   ]));
 
   // Two flex ribbons arcing through the hinge line — segmented so the film
@@ -121,27 +123,27 @@ export function buildStandIn() {
     const segs = [];
     const g1 = new THREE.BoxGeometry(26 * MM, 0.25 * MM, 9 * MM);
     g1.rotateX(0.5);
-    g1.translate(x * MM, 10.9 * MM, -97 * MM);
+    g1.translate(x * MM, 10.75 * MM, -97 * MM);
     const g2 = new THREE.BoxGeometry(26 * MM, 0.25 * MM, 9 * MM);
     g2.rotateX(-0.35);
-    g2.translate(x * MM, 10.55 * MM, -104.5 * MM);
+    g2.translate(x * MM, 10.45 * MM, -104.5 * MM);
     segs.push(g1, g2);
     return segs;
   };
   display.add(buildMesh('display_flex', [{ mat: M.flexFilm, geoms: [
     ...flexArc(-60), ...flexArc(60),
   ]}, { mat: M.contact, geoms: [
-    box(26, 0.12, 1.4, -60, 11.05, -93.5),             // faint contact edges at the anchored ends
-    box(26, 0.12, 1.4, 60, 11.05, -93.5),
+    box(26, 0.12, 1.4, -60, 10.9, -93.5),              // faint contact edges at the anchored ends
+    box(26, 0.12, 1.4, 60, 10.9, -93.5),
   ]}]));
 
   display.add(buildMesh('hinge_barrel_l', [
-    { mat: M.aluDark, geoms: [cyl(2.8, 36, -92, 10.2, -102, 20, true)] },
-    { mat: M.steel, geoms: [box(12, 1.0, 8, -92, 10.2, -96)] },
+    { mat: M.aluDark, geoms: [cyl(2.5, 36, -92, 10.25, -102, 20, true)] },
+    { mat: M.steel, geoms: [box(12, 1.0, 8, -92, 10.25, -96)] },
   ]));
   display.add(buildMesh('hinge_barrel_r', [
-    { mat: M.aluDark, geoms: [cyl(2.8, 36, 92, 10.2, -102, 20, true)] },
-    { mat: M.steel, geoms: [box(12, 1.0, 8, 92, 10.2, -96)] },
+    { mat: M.aluDark, geoms: [cyl(2.5, 36, 92, 10.25, -102, 20, true)] },
+    { mat: M.steel, geoms: [box(12, 1.0, 8, 92, 10.25, -96)] },
   ]));
 
   recenterGroup(display);
@@ -154,16 +156,16 @@ export function buildStandIn() {
   topCase.name = 'top_case';
 
   topCase.add(buildMesh('top_shell', [
-    { mat: M.aluDeck, geoms: [rbox(304, 1.4, 212, 0, 9.7, 0, 0.6)] },
-    { mat: M.wellDark, geoms: [box(240, 0.15, 110, 0, 10.42, -32)] }, // keyboard well
+    { mat: M.aluDeck, geoms: [rbox(304, 1.2, 212, 0, 9.6, 0, 0.55)] },
+    { mat: M.wellDark, geoms: [box(240, 0.15, 110, 0, 10.27, -32)] }, // keyboard well
   ]));
 
   topCase.add(buildMesh('keyboard_membrane', [{ mat: M.membrane, geoms: [
-    box(236, 0.1, 106, 0, 10.51, -32),
+    box(236, 0.1, 106, 0, 10.38, -32),
   ]}]));
 
   topCase.add(buildMesh('key_backlight', [{ mat: M.backlight, geoms: [
-    box(234, 0.08, 104, 0, 10.58, -32),
+    box(234, 0.08, 104, 0, 10.46, -32),
   ]}]));
 
   // 77 shallow keys + 1 distinct fingerprint power button (6 rows × 13 cols).
@@ -171,17 +173,17 @@ export function buildStandIn() {
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 13; c++) {
       if (r === 0 && c === 12) continue; // power button slot
-      keyGeoms.push(rbox(15.6, 0.5, 15.6, -106.8 + c * 17.8, 10.9, -76.5 + r * 17.8, 0.2, 1));
+      keyGeoms.push(rbox(15.6, 0.4, 15.6, -106.8 + c * 17.8, 10.7, -76.5 + r * 17.8, 0.18, 1));
     }
   }
   topCase.add(buildMesh('keycap_field', [{ mat: M.keycap, geoms: keyGeoms }]));
   topCase.add(buildMesh('power_button', [
-    { mat: M.button, geoms: [rbox(15.6, 0.5, 15.6, -106.8 + 12 * 17.8, 10.9, -76.5, 0.2, 1)] },
-    { mat: M.steel, geoms: [box(11, 0.1, 11, -106.8 + 12 * 17.8, 11.2, -76.5)] }, // sensor ring hint
+    { mat: M.button, geoms: [rbox(15.6, 0.4, 15.6, -106.8 + 12 * 17.8, 10.7, -76.5, 0.18, 1)] },
+    { mat: M.steel, geoms: [box(11, 0.08, 11, -106.8 + 12 * 17.8, 10.94, -76.5)] }, // sensor ring hint
   ]));
 
   topCase.add(buildMesh('trackpad_glass', [{ mat: M.glassPad, geoms: [
-    rbox(130, 0.5, 82, 0, 10.6, 62, 0.22, 1),
+    rbox(130, 0.45, 82, 0, 10.42, 62, 0.2, 1),
   ]}]));
   topCase.add(buildMesh('trackpad_assembly', [
     { mat: M.steel, geoms: [rbox(118, 0.5, 72, 0, 8.75, 62, 0.2, 1)] },

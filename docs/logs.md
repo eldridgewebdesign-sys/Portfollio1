@@ -6,6 +6,55 @@
 
 ---
 
+## 2026-07-02 17:35 - Developer (Implementation) - engineering-demo-slim-pass-1
+
+Action:
+Finished
+
+Task:
+Owner-directed surgical tweak: make only the starting closed-laptop state read slimmer, closer to
+a thin fanless ultrabook profile. No changes to the animation sequence, labels, copy, internal
+detail, or later camera choreography.
+
+Files claimed:
+
+- engineering/js/model.js (display assembly + top case vertical numbers only)
+- engineering/js/camera-rig.js (P0/P1 elevation only)
+- engineering/js/scene.js (ground-shadow opacity only)
+- engineering/assets/fallback/*.webp (re-capture)
+- engineering/index.html + docs/engineering-demo/asset-source/caption-anchors.json (one anchor)
+
+Files changed:
+
+- engineering/js/model.js — display assembly slimmed 4.8 → 3.3 mm (shell plate 1.2, shorter
+  skirt, glass/panel/camera/antenna/flex/hinges lowered accordingly); top case plate 1.4 → 1.2 mm
+  with shallower keys (0.5 → 0.4, lower profile) and flush trackpad glass; closed height
+  15.6 → 14.0 mm. Interior geometry below the y = 9.0 seam untouched — B4–B6 identical
+- engineering/js/camera-rig.js — P0/P1 elevation 22° → 16° (both together, so B1 stays a pure
+  dolly; the lower product angle compresses the projected footprint ≈ 23%). P2–P5 untouched
+- engineering/js/scene.js — ground shadow opacity 0.35 → 0.30 (lighter, lower-sitting read;
+  D-012 geometry unchanged)
+- engineering/assets/fallback/*.webp — stills re-captured (R2–R4 anchors identical to before,
+  confirming later beats unchanged; only R1's display anchor moved)
+- engineering/index.html + caption-anchors.json — the one moved anchor transcribed
+
+Summary:
+Combined effect ≈ 25–30% visual thickness reduction at the hero state: real −1.6 mm off the
+closed stack plus the lower product angle. The closed machine now reads as a thin machined slab
+with a bright bevel line at its base, sitting low on a soft shadow. First separation (B2) is
+pop-free by construction — the slimmed slabs are the same objects that tear down.
+
+Testing:
+Headless Chrome: zero console errors, QA-1 clean, zero off-origin requests; forward/reverse
+pixel-identical; full matrix (no-JS + stills, reduced-motion static with zero animation bytes,
+WebGL2-blocked static, mobile 390×844 no overflow, file:// guard, skip link p=1.000, homepage
+untouched); screenshots verified at p=0, 0.13 (first separation), 0.46 and 1.0 (unchanged beats);
+node --check on all modules.
+
+Risks / Notes:
+The shadow-opacity grade (0.35 → 0.30) and P0/P1 elevation are deviations from 05 §6.5/§6.7
+numbers — decisions.md entries recommended alongside the earlier passes' entries.
+
 ## 2026-07-02 16:50 - Developer (Implementation) - engineering-demo-material-pass-1
 
 Action:
