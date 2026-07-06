@@ -7,10 +7,6 @@
   <title>Finishing up — WebSharke</title>
   <meta name="robots" content="noindex" />
 
-  <!-- Auto-redirect fallback if JavaScript is disabled. The dashboard is the real
-       source of truth for billing status, so landing there is always correct. -->
-  <meta http-equiv="refresh" content="6;url=/dashboard" />
-
   <style>
     /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
     @font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
@@ -83,17 +79,113 @@
 </head>
 <body>
   <main class="card">
-    <div class="icon" aria-hidden="true">&#10003;</div>
-    <h1>Payment successful!</h1>
-    <p>Your plan is now active. You&rsquo;ll be redirected to your dashboard in a few seconds.</p>
-    <div class="dots">Redirecting&hellip; or <a href="dashboard.html">go now</a>.</div>
+    <div class="icon" id="s-icon" aria-hidden="true">&hellip;</div>
+    <h1 id="s-title">Finishing up&hellip;</h1>
+    <p id="s-status" role="status" aria-live="polite">Confirming your payment&hellip;</p>
+
+    <!-- Shown ONLY once the payment is confirmed in the database. -->
+    <div id="s-next" hidden>
+      <p>Thank you for your payment. Your plan is now active.</p>
+      <p>What's next?</p>
+      <p id="msg-invoice" hidden>We get started on sites as soon as possible. Make sure to check your email and dashboard for updates and clarifying questions.</p>
+      <p id="msg-subscription" hidden>Your website should be live within a few days. if you have any questions, feel free to contact our support team.</p>
+    </div>
+
+    <div class="dots" id="s-dots">Checking your payment&hellip;</div>
   </main>
 
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
   <script>
-    // Auto-redirect to the dashboard after 3 seconds.
-    setTimeout(function () {
-      window.location.href = "dashboard.html";
-    }, 3000);
+    "use strict";
+    // Accurate confirmation. The user arrives here after Stripe confirms the charge,
+    // but the DATABASE is the source of truth: api/webhook.js marks the invoice paid /
+    // subscription active. So we VERIFY the real status in Supabase before showing
+    // success — never a fake "successful" just because they reached this URL. While
+    // the webhook is still catching up we show a neutral "processing" state. We never
+    // write status from the browser.
+    (function () {
+      var q = new URLSearchParams(window.location.search);
+      var type = (q.get("type") || "").toLowerCase();
+      var invoiceId = (q.get("invoice_id") || "").trim();
+      var subId = (q.get("subscription_id") || "").trim();
+      // Which flow: an explicit ?type= wins, else infer from whichever id is present.
+      var isSubscription = type === "subscription" || (type !== "invoice" && subId && !invoiceId);
+      var id = isSubscription ? subId : invoiceId;
+
+      var iconEl = document.getElementById("s-icon");
+      var titleEl = document.getElementById("s-title");
+      var statusEl = document.getElementById("s-status");
+      var nextEl = document.getElementById("s-next");
+      var dotsEl = document.getElementById("s-dots");
+      var redirectTimer = null;
+
+      // CONFIRMED — the webhook has marked the invoice paid / subscription active.
+      function showConfirmed() {
+        iconEl.innerHTML = "&#10003;";
+        titleEl.textContent = "Payment successful!";
+        statusEl.hidden = true;
+        nextEl.hidden = false;
+        var m = document.getElementById(isSubscription ? "msg-subscription" : "msg-invoice");
+        if (m) m.hidden = false;
+        dotsEl.innerHTML = 'Redirecting to your dashboard&hellip; or <a href="/dashboard">go now</a>.';
+        if (!redirectTimer) redirectTimer = setTimeout(function () { window.location.assign("/dashboard"); }, 7000);
+      }
+
+      // PROCESSING — the charge is confirmed by Stripe but the database hasn't caught
+      // up yet (webhook lag), or we can't verify. Neutral — never a fake success.
+      function showProcessing() {
+        iconEl.innerHTML = "&hellip;";
+        titleEl.textContent = "Payment processing";
+        statusEl.hidden = false;
+        statusEl.textContent =
+          "Your payment is going through. This page updates on its own, and your dashboard will show the final status shortly — you can safely leave this page.";
+        nextEl.hidden = true;
+        dotsEl.innerHTML = '<a href="/dashboard">Go to your dashboard</a>';
+      }
+
+      function showVerifying() {
+        iconEl.innerHTML = "&hellip;";
+        titleEl.textContent = "Finishing up…";
+        statusEl.hidden = false;
+        statusEl.textContent = "Confirming your payment…";
+        nextEl.hidden = true;
+        dotsEl.textContent = "Checking your payment…";
+      }
+
+      // Nothing to verify against (reached directly), or Supabase unavailable: stay
+      // neutral rather than claim a success we haven't confirmed.
+      if (!id || typeof db === "undefined") { showProcessing(); return; }
+
+      showVerifying();
+      var table = isSubscription ? "subscriptions" : "invoices";
+      var doneStatuses = isSubscription ? ["active", "trialing"] : ["paid"];
+      var tries = 0;
+      var MAX = 30; // ~90s of 3s polls, then settle on the neutral processing state
+
+      function check() {
+        tries++;
+        db.from(table).select("status").eq("id", id).maybeSingle()
+          .then(function (res) {
+            var st = res && res.data && String(res.data.status).toLowerCase();
+            if (st && doneStatuses.indexOf(st) !== -1) { showConfirmed(); return; }
+            if (tries === 5) showProcessing();   // ~15s in: reassure while still checking
+            if (tries >= MAX) { showProcessing(); return; }
+            setTimeout(check, 3000);
+          })
+          .catch(function () {
+            if (tries >= MAX) { showProcessing(); return; }
+            setTimeout(check, 3000);
+          });
+      }
+
+      // Reading the row needs a signed-in session (RLS: a client reads only their own
+      // rows). If there's no session we can't verify — stay neutral.
+      db.auth.getUser().then(function (r) {
+        if (!r || !r.data || !r.data.user) { showProcessing(); return; }
+        check();
+      }).catch(function () { showProcessing(); });
+    })();
   </script>
 </body>
 </html>

@@ -196,6 +196,7 @@ module.exports = async (req, res) => {
         metadata: {
           invoice_id: invoice.id,
           supabase_user_id: caller.id,
+          type: "invoice",
         },
         receipt_email: caller.email || undefined,
         automatic_payment_methods: { enabled: true },
