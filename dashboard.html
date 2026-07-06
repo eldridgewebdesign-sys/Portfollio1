@@ -2887,7 +2887,7 @@
         emptyTitle: "No onboarding forms yet", emptyMsg: "New project intake submissions will show up here.",
       },
       payments: {
-        action: "list_payments", title: "Recent Payments", subtitle: "Every invoice & subscription — edit an invoice's status, newest first",
+        action: "list_payments", title: "Recent Payments", subtitle: "Every invoice & subscription — edit or delete any, newest first",
         searchPlaceholder: "Search client, email, plan, domain…",
         rowClick: (r) => r.user_id ? openUserDrawer(r.user_id) : null,
         // ALL invoices (every status) + ALL subscriptions show here. Filter by
@@ -2908,7 +2908,7 @@
           { key: "type_label", label: "Type", render: (r) => esc(r.type_label || "—") },
           { key: "amount", label: "Amount", render: (r) => money(r.amount) },
           { key: "status", label: "Status", render: (r) => r.kind === "invoice" ? invoiceStatusSelect(r) : badge(r.status) },
-          { key: "_actions", label: "", render: (r) => (r.kind === "subscription" && r.status !== "canceled") ? '<button class="adm-mini danger" data-act="cancel-sub">Cancel</button>' : "" },
+          { key: "_actions", label: "", render: (r) => paymentActionsHtml(r) },
         ],
         // CSV export keeps the full payment record.
         exportColumns: [
@@ -3233,6 +3233,11 @@
 
     // ---- Row action buttons --------------------------------------------
     async function handleRowAction(viewId, act, r) {
+      if (viewId === "payments") {
+        if (act === "edit-pay") return editPayment(r);
+        if (act === "delete-pay") return deletePayment(r);
+        if (act === "cancel-sub") return cancelSub(r.id);
+      }
       if (act === "review") { openEditRequestDrawer(r); return; }
       if (act === "edit" || act === "view") {
         if (viewId === "websites") openWebsiteDrawer(r);
@@ -3266,6 +3271,43 @@
         toast("User deleted");
         refreshCurrent();
       } catch (e) { toast("Couldn’t delete user", e.message, true); }
+    }
+
+    // ---- Recent Payments: edit / delete any invoice or subscription --------
+    // Every payment row gets Edit + Delete; active subscriptions also keep Cancel.
+    function paymentActionsHtml(r) {
+      let h = '<div class="adm-row-actions"><button class="adm-mini" data-act="edit-pay">Edit</button>';
+      if (r.kind === "subscription" && r.status !== "canceled")
+        h += '<button class="adm-mini" data-act="cancel-sub">Cancel</button>';
+      h += '<button class="adm-mini danger" data-act="delete-pay">Delete</button></div>';
+      return h;
+    }
+
+    // Edit opens the matching builder (invoices / subscriptions) in edit mode.
+    function editPayment(r) {
+      if (r.kind === "invoice") return openInvoiceEditor(r);
+      return openSubEditor(r);
+    }
+
+    // Delete an invoice or subscription (confirmed). Subscriptions cancel their
+    // live Stripe subscription first (handled server-side).
+    async function deletePayment(r) {
+      const isInv = r.kind === "invoice";
+      const what = isInv ? "invoice" : "subscription";
+      const name = r.plan_name ? "“" + r.plan_name + "”" : "#" + String(r.id).slice(0, 8);
+      const warn = isInv
+        ? "This permanently deletes invoice " + name + " and its line items. If it was paid, that payment record is removed too (the Stripe charge itself is not refunded). This cannot be undone."
+        : "This permanently deletes subscription " + name + ". If it has an active Stripe subscription, it is canceled first so the client stops being billed. This cannot be undone.";
+      const ok = await confirmAction("Delete " + what + "?", warn, "Delete");
+      if (!ok) return;
+      try {
+        if (isInv) await postInvoice({ op: "delete", invoice_id: r.id });
+        else await subsApi("delete", { subscription_id: r.id });
+        toast(isInv ? "Invoice deleted" : "Subscription deleted", "", false);
+        refreshCurrent();
+      } catch (e) {
+        toast("Couldn’t delete " + what, e.message, true);
+      }
     }
 
     function refreshCurrent() {
@@ -4076,16 +4118,107 @@
       }
     }
 
+    function buildInvoiceForm() {
+      if (INV.built) return;
+      addInvItem();
+      recomputeInvoice();
+      aq("inv-add").addEventListener("click", () => { addInvItem(); recomputeInvoice(); });
+      // In edit mode the two buttons become Cancel / Save changes (see enter/exit).
+      aq("inv-draft").addEventListener("click", () => INV.editingId ? exitInvoiceEditToPayments() : runInvoiceSubmit("draft"));
+      aq("inv-issue").addEventListener("click", () => INV.editingId ? runInvoiceUpdate() : runInvoiceSubmit("issued"));
+      INV.built = true;
+    }
     function initInvoices() {
-      if (!INV.built) {
-        addInvItem();
-        recomputeInvoice();
-        aq("inv-add").addEventListener("click", () => { addInvItem(); recomputeInvoice(); });
-        aq("inv-draft").addEventListener("click", () => runInvoiceSubmit("draft"));
-        aq("inv-issue").addEventListener("click", () => runInvoiceSubmit("issued"));
-        INV.built = true;
-      }
+      buildInvoiceForm();
       loadInvoiceClients(false);
+    }
+
+    // ---- Edit an existing invoice by reusing this builder in "edit mode" -----
+    // Opened from the Recent Payments "Edit" action. Prefills every field + line
+    // item from the DB, then Save changes PUTs the whole invoice (op:update).
+    async function openInvoiceEditor(r) {
+      activateViewShell("invoices");
+      buildInvoiceForm();
+      showInvMsg("ok", "Loading invoice…");
+      let data;
+      try {
+        await loadInvoiceClients(false);
+        data = await adminApi("get_invoice", { id: r.id });
+      } catch (e) {
+        toast("Couldn’t open invoice", e.message, true);
+        showInvMsg("err", "Couldn’t load this invoice: " + e.message);
+        return;
+      }
+      enterInvoiceEditMode(data.invoice || {}, data.items || []);
+    }
+
+    function enterInvoiceEditMode(invoice, items) {
+      INV.editingId = invoice.id || null;
+      INV.editingStatus = invoice.status || "issued";
+
+      const sel = aq("inv-client");
+      if (invoice.client_user_id && !Array.from(sel.options).some((o) => o.value === invoice.client_user_id)) {
+        sel.appendChild(new Option("Current client", invoice.client_user_id));
+      }
+      sel.value = invoice.client_user_id || "";
+      aq("inv-title").value = invoice.title || "";
+      aq("inv-notes").value = invoice.notes || "";
+      aq("inv-due").value = invoice.due_date || "";
+
+      const wrap = aq("inv-items");
+      wrap.innerHTML = "";
+      (items && items.length ? items : [null]).forEach((it) => {
+        const row = invItemRow();
+        wrap.appendChild(row);
+        if (it) {
+          row.querySelector(".inv-name").value = it.name || "";
+          row.querySelector(".inv-desc").value = it.description || "";
+          row.querySelector(".inv-qty").value = it.quantity != null ? it.quantity : 1;
+          row.querySelector(".inv-price").value = it.unit_amount_cents != null ? (Number(it.unit_amount_cents) / 100).toFixed(2) : "";
+        }
+      });
+      recomputeInvoice();
+
+      aq("inv-draft").textContent = "Cancel";
+      aq("inv-issue").textContent = "Save changes";
+      showInvMsg("ok", "Editing invoice #" + String(INV.editingId || "").slice(0, 8) + " (status: " + (INV_STATUS_LABEL[INV.editingStatus] || INV.editingStatus) + "). Change any field or line item, then Save changes. The status is set from the Recent Payments list.");
+    }
+
+    // Leave edit mode + restore the builder to its normal "create" state.
+    function exitInvoiceEdit() {
+      if (!INV.editingId) return;
+      INV.editingId = null;
+      INV.editingStatus = null;
+      aq("inv-draft").textContent = "Save as draft";
+      aq("inv-issue").textContent = "Issue invoice";
+      resetInvoiceForm();
+    }
+    function exitInvoiceEditToPayments() {
+      exitInvoiceEdit();
+      switchView("payments");
+    }
+
+    async function runInvoiceUpdate() {
+      if (INV.submitting || !INV.editingId) return;
+      const r = collectInvoice(INV.editingStatus || "issued");
+      if (!r.ok) return;
+      INV.submitting = true;
+      const issue = aq("inv-issue"), lbl = issue.textContent;
+      issue.disabled = true; issue.textContent = "Saving…";
+      aq("inv-add").disabled = true; aq("inv-draft").disabled = true;
+      try {
+        await postInvoice(Object.assign({}, r.body, { op: "update", invoice_id: INV.editingId }));
+        toast("Invoice updated", r.body.title || "", false);
+        exitInvoiceEdit();
+        switchView("payments");
+      } catch (e) {
+        showInvMsg("err", e.message || "Could not update the invoice.");
+        toast("Couldn’t update invoice", e.message, true);
+      } finally {
+        INV.submitting = false;
+        issue.disabled = false; aq("inv-add").disabled = false; aq("inv-draft").disabled = false;
+        if (INV.editingId) issue.textContent = lbl; // restore only if still editing (error path)
+      }
     }
 
     // =====================================================================
@@ -4236,14 +4369,83 @@
       }
     }
 
+    function buildSubForm() {
+      if (SUBS.built) return;
+      aq("sub-create").addEventListener("click", () => SUBS.editingId ? runSubUpdate() : runSubCreate());
+      aq("sub-amount").addEventListener("input", subPreview);
+      aq("sub-interval").addEventListener("input", subPreview);
+      SUBS.built = true;
+    }
     function initSubs() {
-      if (!SUBS.built) {
-        aq("sub-create").addEventListener("click", runSubCreate);
-        aq("sub-amount").addEventListener("input", subPreview);
-        aq("sub-interval").addEventListener("input", subPreview);
-        SUBS.built = true;
-      }
+      buildSubForm();
       loadSubClients(false);
+    }
+
+    // ---- Edit an existing subscription by reusing this builder in "edit mode" ----
+    async function openSubEditor(r) {
+      activateViewShell("subscriptions");
+      buildSubForm();
+      try { await loadSubClients(false); } catch (e) { /* client list best-effort */ }
+      enterSubEditMode(r);
+    }
+
+    function enterSubEditMode(r) {
+      SUBS.editingId = r.id;
+      const sel = aq("sub-client");
+      if (r.user_id && !Array.from(sel.options).some((o) => o.value === r.user_id)) {
+        sel.appendChild(new Option(r.user_name || r.client_name || "Current client", r.user_id));
+      }
+      sel.value = r.user_id || "";
+      aq("sub-name").value = r.plan_name || "";
+      const cents = r.amount_cents != null ? r.amount_cents : (r.amount != null ? Math.round(Number(r.amount) * 100) : null);
+      aq("sub-amount").value = cents != null ? (cents / 100).toFixed(2) : "";
+      aq("sub-interval").value = (r.interval_months != null && r.interval_months >= 1) ? r.interval_months : 1;
+      subPreview();
+      aq("sub-create").textContent = "Save changes";
+      const activeNote = (r.status === "active" || r.status === "trialing")
+        ? " Note: this updates the record only — a live Stripe subscription keeps billing its current amount until it's canceled and re-created."
+        : "";
+      showSubMsg("ok", "Editing subscription #" + String(r.id).slice(0, 8) + ". Update the details, then Save changes." + activeNote);
+    }
+
+    function exitSubEdit() {
+      if (!SUBS.editingId) return;
+      SUBS.editingId = null;
+      aq("sub-create").textContent = "Create subscription";
+      aq("sub-name").value = ""; aq("sub-amount").value = ""; aq("sub-interval").value = "1"; aq("sub-client").value = "";
+      subPreview();
+    }
+
+    async function runSubUpdate() {
+      if (SUBS.submitting || !SUBS.editingId) return;
+      const clientEl = aq("sub-client"), nameEl = aq("sub-name"), amountEl = aq("sub-amount"), intervalEl = aq("sub-interval");
+      aq("view-subscriptions").querySelectorAll(".flagged").forEach((e) => e.classList.remove("flagged"));
+      const flag = (el, msg) => { showSubMsg("err", msg); toast("Can’t save this subscription yet", msg, true); el.classList.add("flagged"); try { el.focus({ preventScroll: true }); } catch (e) {} };
+
+      const name = nameEl.value.trim();
+      if (!name) return flag(nameEl, "Enter a subscription name.");
+      const cents = dollarsToCents(amountEl.value);
+      if (cents == null || cents < 50) return flag(amountEl, "Enter an amount of at least $0.50.");
+      const months = Number(intervalEl.value);
+      if (!Number.isInteger(months) || months < 1 || months > 12) return flag(intervalEl, "Charge interval must be a whole number of months between 1 and 12.");
+
+      SUBS.submitting = true;
+      const btn = aq("sub-create"), lbl = btn.textContent;
+      btn.disabled = true; btn.textContent = "Saving…";
+      try {
+        const payload = { subscription_id: SUBS.editingId, name: name, amount_dollars: cents / 100, interval_months: months };
+        if (clientEl.value) payload.client_user_id = clientEl.value;
+        await subsApi("update", payload);
+        toast("Subscription updated", name + " · " + subRecurringLabel(cents, months), false);
+        exitSubEdit();
+        switchView("payments");
+      } catch (e) {
+        showSubMsg("err", e.message || "Could not update the subscription.");
+        toast("Couldn’t update subscription", e.message, true);
+      } finally {
+        SUBS.submitting = false; btn.disabled = false;
+        if (SUBS.editingId) btn.textContent = lbl;
+      }
     }
 
     // =====================================================================
@@ -4450,9 +4652,18 @@
     // =====================================================================
     // NAV / SHELL
     // =====================================================================
-    function switchView(viewId) {
+    // Toggle the nav + view panels to a view WITHOUT running its init/reset — used
+    // by the payment editors, which then switch a builder into edit mode.
+    function activateViewShell(viewId) {
       document.querySelectorAll(".adm-nav button").forEach((b) => b.classList.toggle("active", b.dataset.view === viewId));
       document.querySelectorAll(".adm-view").forEach((v) => v.classList.toggle("active", v.id === "view-" + viewId));
+    }
+
+    function switchView(viewId) {
+      // Any normal navigation leaves invoice/subscription edit mode (back to create).
+      if (INV.editingId) exitInvoiceEdit();
+      if (SUBS.editingId) exitSubEdit();
+      activateViewShell(viewId);
       if (viewId === "overview") { loadOverview(); return; }
       if (viewId === "invoices") { initInvoices(); return; }
       if (viewId === "subscriptions") { initSubs(); return; }

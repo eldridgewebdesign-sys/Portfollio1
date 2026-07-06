@@ -73,6 +73,11 @@ const ALLOWED_STATUS = ["draft", "issued", "paid", "overdue", "void", "canceled"
 const MAX_CENTS = 5_000_000_000;
 const MAX_QTY = 1_000_000;
 
+// Stripe's minimum card charge is $0.50 USD (50 cents). A nonzero invoice below
+// this can never be paid online (paymentIntents.create → amount_too_small), so we
+// reject it at creation. A $0 (no-charge) invoice is still allowed.
+const MIN_CHARGE_CENTS = 50;
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function adminClient() {
@@ -225,6 +230,10 @@ function parseInvoiceBody(body) {
     throw new HttpError(400, "Discount cannot exceed the subtotal plus tax (total would be negative).");
   }
   if (total > MAX_CENTS) throw new HttpError(400, "Invoice total exceeds the maximum allowed amount.");
+  // A nonzero total under Stripe's $0.50 minimum can never be paid by card.
+  if (total > 0 && total < MIN_CHARGE_CENTS) {
+    throw new HttpError(400, "Invoice total must be at least $0.50 to be paid by card (Stripe's minimum), or exactly $0 for a no-charge invoice.");
+  }
 
   return {
     invoice: {
@@ -282,39 +291,109 @@ module.exports = async (req, res) => {
     return res.status(403).json({ error: "Forbidden: admin access required." });
   }
 
-  // ---- 3. Parse + validate the request body. ----
-  let parsed;
+  // ---- 3. Parse the body + pick the operation (create | update | delete). ----
+  // The invoice builder sends no `op` (defaults to create). The Recent Payments
+  // editor sends op:"update" + invoice_id; delete sends op:"delete" + invoice_id.
+  let body;
   try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-    parsed = parseInvoiceBody(body);
-  } catch (err) {
-    if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
+    body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
+  } catch (e) {
     return res.status(400).json({ error: "Request body is not valid JSON." });
   }
+  const op = typeof body.op === "string" ? body.op.trim().toLowerCase() : "create";
 
   try {
-    // ---- 4. Make sure the client exists (auth.users is the source of truth). ----
-    // Only a genuinely-missing user is a 404. A transient lookup failure is a
-    // server error, so we let it fall through to the 500 handler below rather
-    // than misreport it as "client not found". (A thrown error from the call
-    // propagates to the outer catch == 500 for the same reason.)
-    const { data: userRes, error: userErr } = await supa.auth.admin.getUserById(parsed.invoice.client_user_id);
-    if (userErr) {
-      if (userErr.status === 404) {
-        return res.status(404).json({ error: "No client found for the supplied client_user_id." });
-      }
-      throw new Error(userErr.message || "Failed to verify the client.");
-    }
-    if (!userRes || !userRes.user) {
-      return res.status(404).json({ error: "No client found for the supplied client_user_id." });
+    // ================= DELETE =================
+    // Remove an invoice (its line items cascade via FK). Deleting a PAID invoice
+    // also removes that payment record — the Stripe charge itself is NOT refunded
+    // here; the dashboard confirms this before calling.
+    if (op === "delete") {
+      const invoiceId = typeof body.invoice_id === "string" ? body.invoice_id.trim() : "";
+      if (!invoiceId || !UUID_RE.test(invoiceId)) return res.status(400).json({ error: "A valid invoice_id is required." });
+
+      const { data: before, error: loadErr } = await supa.from("invoices").select("*").eq("id", invoiceId).maybeSingle();
+      if (loadErr) throw new Error(loadErr.message);
+      if (!before) return res.status(404).json({ error: "Invoice not found." });
+
+      const { error: delErr } = await supa.from("invoices").delete().eq("id", invoiceId);
+      if (delErr) throw new Error(delErr.message);
+
+      await logActivity(supa, {
+        admin_email: caller.email, action: "invoice_deleted", entity_type: "invoice",
+        entity_id: String(invoiceId), affected_user_id: before.client_user_id ? String(before.client_user_id) : null,
+        changed_field: null,
+        old_value: (before.title || "") + (before.total_amount_cents != null ? " — " + before.total_amount_cents + " cents" : "") + " (" + (before.status || "") + ")",
+        new_value: null,
+      });
+      return res.status(200).json({ deleted: true });
     }
 
-    // ---- 5. Create the invoice + its line items ATOMICALLY. ----
+    // ---- create + update both validate + recompute the full invoice body. ----
+    let parsed;
+    try {
+      parsed = parseInvoiceBody(body);
+    } catch (err) {
+      if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
+      return res.status(400).json({ error: "Invalid invoice data." });
+    }
+
+    // Make sure the client exists (auth.users is the source of truth). Only a
+    // genuinely-missing user is a 404; a transient lookup failure falls through
+    // to the 500 handler rather than misreporting "client not found".
+    const { data: userRes, error: userErr } = await supa.auth.admin.getUserById(parsed.invoice.client_user_id);
+    if (userErr) {
+      if (userErr.status === 404) return res.status(404).json({ error: "No client found for the supplied client_user_id." });
+      throw new Error(userErr.message || "Failed to verify the client.");
+    }
+    if (!userRes || !userRes.user) return res.status(404).json({ error: "No client found for the supplied client_user_id." });
+
+    // ================= UPDATE =================
+    // Replace the invoice header + all line items atomically (RPC). paid_at and
+    // the Stripe PaymentIntent id are preserved — editing an invoice's contents
+    // never rewrites its payment history.
+    if (op === "update") {
+      const invoiceId = typeof body.invoice_id === "string" ? body.invoice_id.trim() : "";
+      if (!invoiceId || !UUID_RE.test(invoiceId)) return res.status(400).json({ error: "A valid invoice_id is required." });
+
+      const { data: updated, error: rpcErr } = await supa.rpc("update_invoice_with_items", {
+        p_invoice_id: invoiceId,
+        p_client_user_id: parsed.invoice.client_user_id,
+        p_title: parsed.invoice.title,
+        p_notes: parsed.invoice.notes,
+        p_due_date: parsed.invoice.due_date,
+        p_status: parsed.invoice.status,
+        p_subtotal_amount_cents: parsed.invoice.subtotal_amount_cents,
+        p_discount_amount_cents: parsed.invoice.discount_amount_cents,
+        p_tax_amount_cents: parsed.invoice.tax_amount_cents,
+        p_total_amount_cents: parsed.invoice.total_amount_cents,
+        p_items: parsed.items,
+      });
+      if (rpcErr) {
+        if (rpcErr.code === "PGRST202" || /update_invoice_with_items/.test(rpcErr.message || "")) {
+          console.error("update-invoice RPC missing — apply db/invoices-update.sql:", rpcErr.message);
+          return res.status(503).json({ error: "Invoice editing isn't provisioned yet. Apply db/invoices-update.sql in Supabase, then try again." });
+        }
+        if (/invoice not found/i.test(rpcErr.message || "")) return res.status(404).json({ error: "Invoice not found." });
+        throw new Error(rpcErr.message);
+      }
+      const invoice = updated && updated.invoice;
+      const items = (updated && updated.items) || [];
+      if (!invoice) throw new Error("Invoice update returned no data.");
+
+      await logActivity(supa, {
+        admin_email: caller.email, action: "invoice_updated", entity_type: "invoice",
+        entity_id: String(invoiceId), affected_user_id: parsed.invoice.client_user_id,
+        changed_field: null, old_value: null,
+        new_value: parsed.invoice.title + " — " + parsed.invoice.total_amount_cents + " cents (" + items.length + " item(s))",
+      });
+      return res.status(200).json({ invoice, items });
+    }
+
+    // ================= CREATE (default) =================
     // A single Postgres RPC inserts the header and the line items inside ONE
-    // transaction, so they can never partially succeed: if the items fail, the
-    // invoice is rolled back too. No orphaned invoice with no line items, and no
-    // application-side compensating delete. (See public.create_invoice_with_items
-    // in db/invoices-schema.sql — the DB also generates each item's total.)
+    // transaction, so they can never partially succeed (see
+    // public.create_invoice_with_items in db/invoices-schema.sql — the DB also
+    // generates each item's total).
     const { data: created, error: rpcErr } = await supa.rpc("create_invoice_with_items", {
       p_client_user_id: parsed.invoice.client_user_id,
       p_title: parsed.invoice.title,
@@ -328,10 +407,6 @@ module.exports = async (req, res) => {
       p_items: parsed.items,
     });
     if (rpcErr) {
-      // The route calls create_invoice_with_items by name. If the latest
-      // db/invoices-schema.sql migration has not been applied, PostgREST can't
-      // resolve that signature (PGRST202) — surface a clear, actionable message
-      // instead of a generic 500 so the admin knows to run the migration.
       if (rpcErr.code === "PGRST202" || /create_invoice_with_items/.test(rpcErr.message || "")) {
         console.error("create-invoice RPC missing/mismatched — apply db/invoices-schema.sql:", rpcErr.message);
         return res.status(503).json({
@@ -344,7 +419,6 @@ module.exports = async (req, res) => {
     const items = (created && created.items) || [];
     if (!invoice) throw new Error("Invoice creation returned no data.");
 
-    // ---- 6. Audit trail (best-effort, mirrors the other admin writes). ----
     await logActivity(supa, {
       admin_email: caller.email,
       action: "invoice_created",
@@ -354,21 +428,14 @@ module.exports = async (req, res) => {
       changed_field: null,
       old_value: null,
       new_value:
-        parsed.invoice.title +
-        " — " +
-        parsed.invoice.total_amount_cents +
-        " cents (" +
-        items.length +
-        " item(s))",
+        parsed.invoice.title + " — " + parsed.invoice.total_amount_cents + " cents (" + items.length + " item(s))",
     });
 
-    // ---- 7. Return the created invoice and its items. ----
     return res.status(201).json({ invoice, items });
   } catch (err) {
-    // Mirror api/admin.js: log server-side and surface the (admin-only, safe)
-    // message so the dashboard toast can show a useful reason — e.g. a column
-    // mismatch — to the admin, who is the only caller that can reach here.
-    console.error("Admin create-invoice error:", err && err.message);
-    return res.status(500).json({ error: err && err.message ? err.message : "Could not create the invoice." });
+    // Log server-side and surface the (admin-only, safe) message so the dashboard
+    // toast can show a useful reason to the admin, the only caller that reaches here.
+    console.error("Admin invoice write error [" + op + "]:", err && err.message);
+    return res.status(500).json({ error: err && err.message ? err.message : "Could not save the invoice." });
   }
 };
