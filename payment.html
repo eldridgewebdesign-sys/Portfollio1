@@ -712,6 +712,9 @@
           body: JSON.stringify({ invoice_id: invoiceId }),
         });
         const data = await res.json().catch(() => ({}));
+        // Server returns a secret-free diagnostic on failure — log it so the real
+        // cause (bad key, missing column, etc.) is visible in the browser console.
+        if ((!res.ok || !data.clientSecret) && data && data.debug) console.error("Invoice pay API debug:", data.debug);
         if (!res.ok) throw new Error(data.error || "Could not start payment. Please try again.");
         if (!data.clientSecret) throw new Error("Could not start payment. Please try again.");
 
@@ -771,6 +774,9 @@
           body: JSON.stringify({ subscription_id: subscriptionId }),
         });
         const data = await res.json().catch(() => ({}));
+        // Server returns a secret-free diagnostic on failure — log it so the real
+        // cause (wrong-mode product id, bad key, etc.) is visible in the console.
+        if ((!res.ok || !data.clientSecret) && data && data.debug) console.error("Subscription activate API debug:", data.debug);
         if (!res.ok) throw new Error(data.error || "Could not start the subscription. Please try again.");
         if (!data.clientSecret) throw new Error("Could not start the subscription. Please try again.");
 

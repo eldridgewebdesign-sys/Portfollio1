@@ -44,6 +44,25 @@ const PAYABLE_STATUSES = ["issued", "overdue"];
 // second "Pay" click reuses the same intent instead of creating duplicates.
 const REUSABLE_PI = ["requires_payment_method", "requires_confirmation", "requires_action", "processing"];
 
+// Build a secret-free diagnostic from any thrown error so the REAL cause is
+// visible without leaking anything sensitive. Stripe errors carry
+// type/code/statusCode/requestId + a customer-safe message (Stripe redacts keys
+// in its own messages); Supabase/Postgres errors carry a code + message. None of
+// these contain the secret key. We log the full object server-side (incl. the
+// message) and return only this trimmed version to the browser — and we surface
+// the message to the browser ONLY for Stripe errors (whose messages Stripe
+// guarantees are safe to show), keeping raw DB/internal messages server-side.
+function errorInfo(err) {
+  const isStripe = !!(err && (err.raw || (typeof err.type === "string" && err.type.indexOf("Stripe") === 0)));
+  return {
+    type: (err && (err.type || err.name)) || "Error",
+    code: (err && err.code) || undefined,
+    statusCode: (err && err.statusCode) || undefined,
+    requestId: (err && err.requestId) || undefined,
+    message: isStripe ? (err && err.message) : undefined,
+  };
+}
+
 module.exports = async (req, res) => {
   // ---- CORS: same-origin site only; the verified token below is the real control. ----
   res.setHeader("Access-Control-Allow-Origin", "https://websharke.com");
@@ -105,7 +124,7 @@ module.exports = async (req, res) => {
       .select("id, client_user_id, title, status, currency, total_amount_cents, stripe_payment_intent_id")
       .eq("id", invoiceId)
       .maybeSingle();
-    if (invErr) throw new Error(invErr.message);
+    if (invErr) throw Object.assign(new Error(invErr.message), { code: invErr.code });
     if (!invoice) return res.status(404).json({ error: "Invoice not found." });
 
     // Ownership: a client may pay ONLY their own invoice.
@@ -192,7 +211,9 @@ module.exports = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Invoice pay error:", err && err.message);
-    return res.status(500).json({ error: "Could not start payment. Please try again." });
+    // Full detail (incl. the raw message) goes to the server logs only; the
+    // browser gets a secret-free diagnostic so the real cause is debuggable.
+    console.error("Invoice pay error:", JSON.stringify({ invoiceId, ...errorInfo(err), message: err && err.message }));
+    return res.status(500).json({ error: "Could not start payment. Please try again.", debug: errorInfo(err) });
   }
 };
