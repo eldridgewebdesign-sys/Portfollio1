@@ -56,6 +56,9 @@ const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com")
 
 // Money sanity cap (cents): same as the invoices route. $50,000,000.00.
 const MAX_CENTS = 5_000_000_000;
+// Stripe's minimum card charge is $0.50 USD (50 cents); a smaller recurring
+// amount can never take its first payment, so reject it at creation.
+const MIN_CHARGE_CENTS = 50;
 // Stripe caps a single recurring interval at one year, so "every N months" is
 // representable as interval:'month' with interval_count 1..12 (12 = yearly).
 const MAX_INTERVAL_MONTHS = 12;
@@ -112,6 +115,9 @@ function parseCreatePayload(payload) {
   const amountCents = Math.round(amountDollars * 100);
   if (!Number.isInteger(amountCents) || amountCents < 1 || amountCents > MAX_CENTS) {
     throw new HttpError(400, "Amount is out of the allowed range.");
+  }
+  if (amountCents < MIN_CHARGE_CENTS) {
+    throw new HttpError(400, "Amount must be at least $0.50 (Stripe's minimum charge).");
   }
 
   // ---- interval in months (required, whole number 1..12) ----
@@ -259,6 +265,118 @@ module.exports = async (req, res) => {
         .order("created_at", { ascending: false });
       if (listErr) throw new Error(listErr.message);
       return res.status(200).json({ subscriptions: rows || [] });
+    }
+
+    // ================= UPDATE =================
+    // Edit a subscription's name / amount / interval / status (and, if given, its
+    // client). Amount + interval come from the admin here and are re-validated.
+    // NOTE: for a subscription that is already ACTIVE in Stripe, this updates the
+    // local record only — Stripe keeps billing the original price until the sub is
+    // canceled and re-created. For a pending_activation row (not yet activated) the
+    // new values fully apply, since api/subscriptions/activate reads them at activation.
+    if (action === "update") {
+      const subId = typeof payload.subscription_id === "string" ? payload.subscription_id.trim() : "";
+      if (!subId || !UUID_RE.test(subId)) return res.status(400).json({ error: "A valid subscription_id is required." });
+
+      const { data: before, error: loadErr } = await supa
+        .from("subscriptions").select("*").eq("id", subId).maybeSingle();
+      if (loadErr) throw new Error(loadErr.message);
+      if (!before) return res.status(404).json({ error: "Subscription not found." });
+
+      const updates = {};
+      if (payload.name !== undefined) {
+        const name = typeof payload.name === "string" ? payload.name.trim() : "";
+        if (!name) return res.status(400).json({ error: "A subscription name is required." });
+        if (name.length > 200) return res.status(400).json({ error: "name is too long (max 200 characters)." });
+        updates.plan_name = name;
+      }
+      if (payload.amount_dollars !== undefined) {
+        const amt = typeof payload.amount_dollars === "number" ? payload.amount_dollars : Number(payload.amount_dollars);
+        if (!Number.isFinite(amt) || amt <= 0) return res.status(400).json({ error: "Amount must be a number greater than 0." });
+        const cents = Math.round(amt * 100);
+        if (!Number.isInteger(cents) || cents > MAX_CENTS) return res.status(400).json({ error: "Amount is out of the allowed range." });
+        if (cents < MIN_CHARGE_CENTS) return res.status(400).json({ error: "Amount must be at least $0.50 (Stripe's minimum charge)." });
+        updates.amount_cents = cents;
+      }
+      if (payload.interval_months !== undefined) {
+        const im = typeof payload.interval_months === "number" ? payload.interval_months : Number(payload.interval_months);
+        if (!Number.isInteger(im) || im < 1 || im > MAX_INTERVAL_MONTHS) {
+          return res.status(400).json({ error: "Charge interval must be a whole number of months between 1 and " + MAX_INTERVAL_MONTHS + "." });
+        }
+        updates.interval_months = im;
+      }
+      if (payload.status !== undefined) {
+        const ALLOWED_SUB_STATUS = ["pending_activation", "active", "past_due", "unpaid", "canceled", "inactive"];
+        const st = typeof payload.status === "string" ? payload.status.trim().toLowerCase() : "";
+        if (!ALLOWED_SUB_STATUS.includes(st)) return res.status(400).json({ error: "A valid subscription status is required." });
+        updates.status = st;
+      }
+      if (payload.client_user_id !== undefined) {
+        const cu = typeof payload.client_user_id === "string" ? payload.client_user_id.trim() : "";
+        if (!cu || !UUID_RE.test(cu)) return res.status(400).json({ error: "client_user_id must be a valid UUID." });
+        if (cu !== before.user_id) {
+          const { data: userRes, error: userErr } = await supa.auth.admin.getUserById(cu);
+          if (userErr && userErr.status === 404) return res.status(404).json({ error: "No client found for the supplied client_user_id." });
+          if (userErr) throw new Error(userErr.message || "Failed to verify the client.");
+          if (!userRes || !userRes.user) return res.status(404).json({ error: "No client found for the supplied client_user_id." });
+          updates.user_id = cu;
+        }
+      }
+      if (!Object.keys(updates).length) return res.status(400).json({ error: "No editable fields were provided." });
+      updates.updated_at = new Date().toISOString();
+
+      const { data: row, error: updErr } = await supa
+        .from("subscriptions").update(updates).eq("id", subId)
+        .select("id, user_id, plan_name, amount_cents, interval_months, currency, category, status, created_at").single();
+      if (updErr) throw new Error(updErr.message);
+
+      await logActivity(supa, {
+        admin_email: caller.email, action: "subscription_updated", entity_type: "subscription",
+        entity_id: String(subId), affected_user_id: (updates.user_id || before.user_id) ? String(updates.user_id || before.user_id) : null,
+        changed_field: Object.keys(updates).filter((k) => k !== "updated_at").join(","),
+        old_value: before.plan_name || "", new_value: JSON.stringify(updates),
+      });
+      return res.status(200).json({ subscription: row });
+    }
+
+    // ================= DELETE =================
+    // Permanently remove a subscription row. If it has a live Stripe subscription,
+    // cancel it in STRIPE first so the client stops being billed, then delete.
+    if (action === "delete") {
+      const subId = typeof payload.subscription_id === "string" ? payload.subscription_id.trim() : "";
+      if (!subId || !UUID_RE.test(subId)) return res.status(400).json({ error: "A valid subscription_id is required." });
+
+      const { data: row, error: loadErr } = await supa
+        .from("subscriptions").select("*").eq("id", subId).maybeSingle();
+      if (loadErr) throw new Error(loadErr.message);
+      if (!row) return res.status(404).json({ error: "Subscription not found." });
+
+      if (row.stripe_subscription_id) {
+        if (!process.env.STRIPE_SECRET_KEY) {
+          console.error("Admin delete subscription: STRIPE_SECRET_KEY is not set.");
+          return res.status(500).json({ error: "Server is not configured for payments." });
+        }
+        try {
+          await stripe.subscriptions.cancel(row.stripe_subscription_id);
+        } catch (e) {
+          // Already gone in Stripe → fine to proceed; any other error is fatal.
+          const code = e && e.code;
+          if (code !== "resource_missing") {
+            console.error("Stripe cancel (during delete) failed for subscription", row.id, e && e.message);
+            return res.status(500).json({ error: "Could not cancel the subscription in Stripe before deleting. Please try again." });
+          }
+        }
+      }
+
+      const { error: delErr } = await supa.from("subscriptions").delete().eq("id", subId);
+      if (delErr) throw new Error(delErr.message);
+
+      await logActivity(supa, {
+        admin_email: caller.email, action: "subscription_deleted", entity_type: "subscription",
+        entity_id: String(subId), affected_user_id: row.user_id ? String(row.user_id) : null,
+        changed_field: null, old_value: (row.plan_name || "") + " (" + (row.status || "") + ")", new_value: null,
+      });
+      return res.status(200).json({ deleted: true });
     }
 
     // ================= CANCEL =================

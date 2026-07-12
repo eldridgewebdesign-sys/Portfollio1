@@ -49,6 +49,11 @@ const REUSABLE_SUB = ["incomplete"];
 // interval:'month' with interval_count 1..12 (12 = yearly).
 const MAX_INTERVAL_MONTHS = 12;
 
+// Stripe's minimum card charge is $0.50 USD (50 cents). A smaller first-invoice
+// amount makes the subscription's initial payment fail; catch it early with a
+// clear message. (This route already enforces USD, so a flat 50 is correct.)
+const MIN_CHARGE_CENTS = 50;
+
 // Build a secret-free diagnostic from any thrown error so the REAL cause is
 // visible without leaking anything sensitive. Stripe errors carry
 // type/code/statusCode/requestId + a customer-safe message (Stripe redacts keys
@@ -186,6 +191,12 @@ module.exports = async (req, res) => {
     if (currency !== "usd") {
       console.error("Refusing to activate a non-USD subscription", sub.id, "currency:", currency);
       return res.status(400).json({ error: "This subscription can’t be activated online yet. Please contact support." });
+    }
+
+    // Stripe rejects a first charge below its minimum ($0.50 USD). Surface a
+    // clear message instead of a failed payment inside the Element.
+    if (amount < MIN_CHARGE_CENTS) {
+      return res.status(400).json({ error: "This subscription’s amount is below the $0.50 minimum required to pay by card." });
     }
 
     const productId = process.env.STRIPE_SUBSCRIPTION_PRODUCT_ID;

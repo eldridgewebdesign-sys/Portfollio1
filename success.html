@@ -7,10 +7,6 @@
   <title>Finishing up — WebSharke</title>
   <meta name="robots" content="noindex" />
 
-  <!-- Auto-redirect fallback if JavaScript is disabled. The dashboard is the real
-       source of truth for billing status, so landing there is always correct. -->
-  <meta http-equiv="refresh" content="6;url=/dashboard" />
-
   <style>
     /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
     @font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
@@ -56,24 +52,27 @@
 
     /* ── Translucent light-aqua result card (matches the login card) ────────── */
     .card{
-      max-width:440px;width:100%;text-align:center;
-      padding:clamp(2.2rem,5vw,3rem) clamp(1.6rem,4vw,2.4rem);
-      background:var(--card);border:1px solid var(--card-bd);border-radius:16px;
+      max-width:480px;width:100%;text-align:center;
+      padding:clamp(3rem,6vw,4rem) clamp(2.1rem,5vw,3.1rem);
+      background:var(--card);border:1px solid var(--card-bd);border-radius:20px;
       backdrop-filter:blur(11px) saturate(1.18);-webkit-backdrop-filter:blur(11px) saturate(1.18);
       box-shadow:0 20px 54px rgba(0,40,55,.22),inset 0 1px 0 rgba(255,255,255,.45);
     }
     .icon{
-      width:74px;height:74px;margin:0 auto 1.5rem;border-radius:50%;
+      width:82px;height:82px;margin:0 auto 2.1rem;border-radius:50%;
       display:flex;align-items:center;justify-content:center;
       background:rgba(16,182,204,.16);border:1px solid rgba(16,182,204,.5);
-      color:var(--turq-deep);font-size:2.3rem;line-height:1;
+      color:var(--turq-deep);font-size:2.4rem;line-height:1;
     }
     h1{
       font-family:'Distillery Display','Playfair Display',serif;font-weight:400;
-      font-size:clamp(1.7rem,4vw,2.1rem);margin-bottom:.7rem;color:#0e2f44;letter-spacing:.01em;
+      font-size:clamp(1.8rem,4vw,2.2rem);line-height:1.2;margin-bottom:1.15rem;color:#0e2f44;letter-spacing:.015em;
     }
-    p{color:var(--ink-soft);font-size:1.02rem;line-height:1.6;margin:0 auto;max-width:34ch}
-    .dots{margin-top:1.5rem;font-size:.9rem;color:var(--ink-soft);letter-spacing:.02em}
+    p{color:var(--ink-soft);font-size:1.05rem;line-height:1.75;margin:0 auto;max-width:36ch}
+    .card p + p{margin-top:1.1rem}
+    #s-status{margin-top:.3rem}
+    #s-next{margin-top:1.7rem}
+    .dots{margin-top:2.2rem;font-size:.92rem;line-height:1.6;color:var(--ink-soft);letter-spacing:.02em}
     .dots a{color:var(--turq-deep);text-decoration:none;font-weight:600;border-bottom:1px solid rgba(21,112,127,.5)}
     .dots a:hover{color:#0a566a;border-bottom-color:#0a566a}
     .dots a:focus-visible{outline:2px solid var(--turq);outline-offset:3px;border-radius:3px}
@@ -83,17 +82,135 @@
 </head>
 <body>
   <main class="card">
-    <div class="icon" aria-hidden="true">&#10003;</div>
-    <h1>Payment successful!</h1>
-    <p>Your plan is now active. You&rsquo;ll be redirected to your dashboard in a few seconds.</p>
-    <div class="dots">Redirecting&hellip; or <a href="dashboard.html">go now</a>.</div>
+    <div class="icon" id="s-icon" aria-hidden="true">&hellip;</div>
+    <h1 id="s-title">Finishing up&hellip;</h1>
+    <p id="s-status" role="status" aria-live="polite">Confirming your payment&hellip;</p>
+
+    <!-- Shown ONLY once the payment is confirmed in the database. -->
+    <div id="s-next" hidden>
+      <p>Thank you for your payment. Your plan is now active.</p>
+      <p>What's next?</p>
+      <p id="msg-invoice" hidden>We get started on sites as soon as possible. Make sure to check your email and dashboard for updates and clarifying questions.</p>
+      <p id="msg-subscription" hidden>Your website should be live within a few days. if you have any questions, feel free to contact our support team.</p>
+    </div>
+
+    <div class="dots" id="s-dots">Checking your payment&hellip;</div>
   </main>
 
+  <script src="js/vendor/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
   <script>
-    // Auto-redirect to the dashboard after 3 seconds.
-    setTimeout(function () {
-      window.location.href = "dashboard.html";
-    }, 3000);
+    "use strict";
+    // Accurate confirmation. The user arrives here after Stripe confirms the charge,
+    // but the DATABASE is the source of truth: api/webhook.js marks the invoice paid /
+    // subscription active. So we VERIFY the real status in Supabase before showing
+    // success — never a fake "successful" just because they reached this URL. While
+    // the webhook is still catching up we show a neutral "processing" state. We never
+    // write status from the browser.
+    (function () {
+      var q = new URLSearchParams(window.location.search);
+      var type = (q.get("type") || "").toLowerCase();
+      var invoiceId = (q.get("invoice_id") || "").trim();
+      var subId = (q.get("subscription_id") || "").trim();
+      // Which flow: an explicit ?type= wins, else infer from whichever id is present.
+      var isSubscription = type === "subscription" || (type !== "invoice" && subId && !invoiceId);
+      var id = isSubscription ? subId : invoiceId;
+
+      var iconEl = document.getElementById("s-icon");
+      var titleEl = document.getElementById("s-title");
+      var statusEl = document.getElementById("s-status");
+      var nextEl = document.getElementById("s-next");
+      var dotsEl = document.getElementById("s-dots");
+      var redirectTimer = null;
+
+      // CONFIRMED — the webhook has marked the invoice paid / subscription active.
+      function showConfirmed() {
+        iconEl.innerHTML = "&#10003;";
+        titleEl.textContent = "Payment successful!";
+        statusEl.hidden = true;
+        nextEl.hidden = false;
+        var m = document.getElementById(isSubscription ? "msg-subscription" : "msg-invoice");
+        if (m) m.hidden = false;
+        dotsEl.innerHTML = 'Redirecting to your dashboard&hellip; or <a href="/dashboard">go now</a>.';
+        if (!redirectTimer) redirectTimer = setTimeout(function () { window.location.assign("/dashboard"); }, 7000);
+      }
+
+      // PROCESSING — the charge is confirmed by Stripe but the database hasn't caught
+      // up yet (webhook lag), or we can't verify. Neutral — never a fake success.
+      function showProcessing() {
+        iconEl.innerHTML = "&hellip;";
+        titleEl.textContent = "Payment processing";
+        statusEl.hidden = false;
+        statusEl.textContent =
+          "Your payment is going through. This page updates on its own, and your dashboard will show the final status shortly — you can safely leave this page.";
+        nextEl.hidden = true;
+        dotsEl.innerHTML = '<a href="/dashboard">Go to your dashboard</a>';
+      }
+
+      function showVerifying() {
+        iconEl.innerHTML = "&hellip;";
+        titleEl.textContent = "Finishing up…";
+        statusEl.hidden = false;
+        statusEl.textContent = "Confirming your payment…";
+        nextEl.hidden = true;
+        dotsEl.textContent = "Checking your payment…";
+      }
+
+      // Nothing to verify against (reached directly), or Supabase unavailable: stay
+      // neutral rather than claim a success we haven't confirmed.
+      if (!id || typeof db === "undefined") { showProcessing(); return; }
+
+      showVerifying();
+      var table = isSubscription ? "subscriptions" : "invoices";
+      var doneStatuses = isSubscription ? ["active", "trialing"] : ["paid"];
+      var tries = 0;
+      var MAX = 30; // ~90s of 3s polls, then settle on the neutral processing state
+
+      // Poll the DB for the webhook-written status. Fallback for the invoice path and
+      // the primary check for subscriptions (whose activation is webhook-driven).
+      function poll() {
+        tries++;
+        db.from(table).select("status").eq("id", id).maybeSingle()
+          .then(function (res) {
+            var st = res && res.data && String(res.data.status).toLowerCase();
+            if (st && doneStatuses.indexOf(st) !== -1) { showConfirmed(); return; }
+            if (tries === 5) showProcessing();   // ~15s in: reassure while still checking
+            if (tries >= MAX) { showProcessing(); return; }
+            setTimeout(poll, 3000);
+          })
+          .catch(function () {
+            if (tries >= MAX) { showProcessing(); return; }
+            setTimeout(poll, 3000);
+          });
+      }
+
+      // For an invoice, first ask the server to reconcile with Stripe and flip
+      // issued -> paid immediately, without waiting on the async webhook. The SERVER
+      // (not the browser) checks the real PaymentIntent and writes the row; if it isn't
+      // succeeded yet (e.g. a processing async method) we fall back to polling the DB.
+      function confirmInvoiceThenPoll(token) {
+        fetch("/api/invoices/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ invoice_id: id }),
+        })
+          .then(function (r) { return r.json().catch(function () { return {}; }); })
+          .then(function (data) {
+            if (data && String(data.status).toLowerCase() === "paid") { showConfirmed(); return; }
+            poll();
+          })
+          .catch(function () { poll(); });
+      }
+
+      // Verifying needs a signed-in session (RLS on the read; the confirm route also
+      // requires the bearer token). No session → stay neutral.
+      db.auth.getSession().then(function (r) {
+        var token = r && r.data && r.data.session && r.data.session.access_token;
+        if (!token) { showProcessing(); return; }
+        if (isSubscription) { poll(); return; }
+        confirmInvoiceThenPoll(token);
+      }).catch(function () { showProcessing(); });
+    })();
   </script>
 </body>
 </html>

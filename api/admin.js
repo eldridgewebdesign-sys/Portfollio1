@@ -122,6 +122,7 @@ module.exports = async (req, res) => {
       case "list_onboarding":   return res.status(200).json(await listOnboarding(supa, p));
       case "list_payments":     return res.status(200).json(await listPayments(supa, p));
       case "set_invoice_status":return res.status(200).json(await setInvoiceStatus(supa, caller, p));
+      case "get_invoice":       return res.status(200).json(await getInvoice(supa, p));
       case "list_websites":     return res.status(200).json(await listWebsites(supa, p));
       case "list_domains":      return res.status(200).json(await listDomains(supa, p));
       case "list_alerts":       return res.status(200).json(await listAlerts(supa, p));
@@ -509,6 +510,9 @@ async function listPayments(supa, p) {
     domain: s.domain || null,
     status: String(s.status || "").toLowerCase(),
     stripe_subscription_id: s.stripe_subscription_id || null,
+    // Raw fields the Recent Payments editor prefills from (no extra round-trip).
+    interval_months: s.interval_months != null ? Number(s.interval_months) : null,
+    amount_cents: s.amount_cents != null ? Number(s.amount_cents) : null,
   }));
 
   let rows = invoiceRows.concat(subRows);
@@ -557,6 +561,22 @@ async function listPayments(supa, p) {
   // admin views — so the generic table renders one clean list.
   rows.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
   return { rows, hasMore: false };
+}
+
+// Full invoice + its line items (ordered), for the Recent Payments editor to
+// prefill. Read-only. Admin-gated like every action in this file.
+async function getInvoice(supa, p) {
+  const id = typeof p.id === "string" ? p.id.trim() : "";
+  if (!id) throw new Error("An invoice id is required.");
+  const { data: invoice, error } = await supa.from("invoices").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!invoice) throw new Error("Invoice not found.");
+  const { data: items, error: itErr } = await supa
+    .from("invoice_items").select("*").eq("invoice_id", id)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (itErr) throw new Error(itErr.message);
+  return { invoice, items: items || [] };
 }
 
 async function listWebsites(supa, p) {

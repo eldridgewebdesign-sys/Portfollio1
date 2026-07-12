@@ -40,6 +40,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // Only an invoice the admin has issued (or that has gone overdue) can be paid.
 const PAYABLE_STATUSES = ["issued", "overdue"];
 
+// Stripe's minimum card charge is $0.50 USD (50 cents). A smaller amount makes
+// paymentIntents.create throw `amount_too_small`; we catch it early with a clear
+// message. (This route already enforces USD, so a flat 50 is correct.)
+const MIN_CHARGE_CENTS = 50;
+
 // PaymentIntent statuses whose existing client secret can still be reused, so a
 // second "Pay" click reuses the same intent instead of creating duplicates.
 const REUSABLE_PI = ["requires_payment_method", "requires_confirmation", "requires_action", "processing"];
@@ -156,6 +161,12 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "This invoice can’t be paid online yet. Please contact support." });
     }
 
+    // Stripe rejects any charge below its minimum ($0.50 USD) with
+    // `amount_too_small`. Surface a clear message instead of the generic 500.
+    if (amount < MIN_CHARGE_CENTS) {
+      return res.status(400).json({ error: "This invoice’s total is below the $0.50 minimum required to pay by card." });
+    }
+
     // ---- 4. Reuse an open PaymentIntent if one already exists; else create one. ----
     let intent = null;
     if (invoice.stripe_payment_intent_id) {
@@ -185,6 +196,7 @@ module.exports = async (req, res) => {
         metadata: {
           invoice_id: invoice.id,
           supabase_user_id: caller.id,
+          type: "invoice",
         },
         receipt_email: caller.email || undefined,
         automatic_payment_methods: { enabled: true },
