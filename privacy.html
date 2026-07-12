@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="images/Tab-Logo.png" type="image/png">
+<title>Privacy Policy — WebSharke</title>
+<meta name="description" content="WebSharke Privacy Policy — what data WebSharke collects through websharke.com and the client dashboard, how it is used and shared, plus a reusable Privacy template for client websites.">
+<meta name="robots" content="index,follow">
+<style>
+/* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+@font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/playfair-display/latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/playfair-display/latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/playfair-display/latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:italic;font-weight:500;font-display:swap;src:url(fonts/playfair-display/latin-500-italic.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/mulish-700.woff2) format('woff2')}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sand:#f6e8ce; --foam:#ecf4f3; --mist:#aec3c9; --body:#dcebe9;
+  --deep:#030d16; --surf:#0a3d50; --aqua:#62b6c6; --aqua-d:#2c7e90; --warm:#e4cfa6;
+  --panel:rgba(9,26,36,.58); --panel-bd:rgba(126,178,190,.22); --line:rgba(126,178,190,.15);
+  --serif:'Playfair Display',Georgia,'Times New Roman',serif;
+  --sans:'Mulish',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --brand:'Distillery Display','Playfair Display',serif;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);color:var(--body);min-height:100vh;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  background:
+    radial-gradient(1100px 620px at 50% -8%,rgba(46,126,144,.30),transparent 62%),
+    linear-gradient(180deg,#06212d 0%,#04151f 42%,var(--deep) 100%);
+  background-attachment:fixed;line-height:1.6;
+}
+
+/* ── Top nav ─────────────────────────────────────────────────────────────── */
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:.65rem clamp(1rem,4vw,2.4rem);background:rgba(4,17,25,.72);border-bottom:1px solid var(--line);
+  backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2)}
+.brand{display:block;width:120px;height:40px;flex:0 0 auto;background:var(--foam);
+  -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;mask:url(images/Main-Logo.png) left center/contain no-repeat}
+.nav-links{display:flex;align-items:center;gap:.25rem;flex-wrap:wrap;justify-content:flex-end;font-size:.82rem}
+.nav-links a{color:var(--mist);text-decoration:none;padding:.4rem .75rem;border-radius:999px;letter-spacing:.02em;
+  transition:color .2s ease,background .2s ease;white-space:nowrap}
+.nav-links a:hover{color:var(--foam);background:rgba(98,182,198,.12)}
+.nav-links a[aria-current="page"]{color:#052029;background:var(--sand)}
+.nav-links a .arw{opacity:.7}
+
+/* ── Document head ───────────────────────────────────────────────────────── */
+.doc-head{max-width:820px;margin:0 auto;padding:clamp(2.4rem,6vw,4rem) clamp(1.15rem,4vw,2rem) .6rem}
+.kicker{font-family:var(--brand);font-size:.82rem;letter-spacing:.34em;text-transform:uppercase;color:var(--sand);margin-bottom:.9rem}
+.doc-title{font-family:var(--serif);font-weight:700;line-height:1.04;font-size:clamp(2.2rem,6.4vw,3.5rem);color:var(--foam);letter-spacing:-.01em}
+.doc-tagline{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--mist);font-size:clamp(1rem,2.5vw,1.2rem);margin-top:.7rem;max-width:44ch}
+.doc-meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.3rem}
+.doc-meta span{font-size:.74rem;letter-spacing:.05em;color:var(--mist);background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:999px;padding:.32rem .8rem}
+.doc-meta b{color:var(--foam);font-weight:700}
+
+/* ── Sheet (reading column) ──────────────────────────────────────────────── */
+.wrap{max-width:820px;margin:0 auto;padding:1rem clamp(1.15rem,4vw,2rem) 3.5rem}
+.sheet{background:var(--panel);border:1px solid var(--panel-bd);border-radius:18px;
+  padding:clamp(1.5rem,5vw,3rem);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  box-shadow:0 26px 70px rgba(0,20,30,.4)}
+.sheet p{margin:.85rem 0;color:var(--body);font-size:1rem}
+.sheet ul{list-style:none;margin:.7rem 0}
+.sheet li{position:relative;padding-left:1.25rem;margin:.5rem 0;color:var(--body)}
+.sheet li::before{content:"";position:absolute;left:.15rem;top:.72em;width:6px;height:6px;border-radius:50%;background:var(--aqua-d)}
+.sheet a{color:var(--aqua);text-decoration:none;border-bottom:1px solid rgba(98,182,198,.35)}
+.sheet a:hover{color:var(--foam);border-bottom-color:var(--foam)}
+.lead{font-size:1.06rem;color:var(--foam)}
+
+/* Parts + sections */
+.part{margin-top:2.9rem;padding-top:2.4rem;border-top:1px solid var(--line);scroll-margin-top:5rem}
+.part:first-of-type{margin-top:2.2rem}
+.part-eyebrow{font-family:var(--brand);font-size:.74rem;letter-spacing:.26em;text-transform:uppercase;color:var(--sand)}
+.part-title{font-family:var(--serif);font-weight:700;font-size:clamp(1.55rem,4.4vw,2.1rem);color:var(--foam);margin:.35rem 0 .2rem;line-height:1.12}
+.part-note{color:var(--mist);font-size:.95rem;margin:.35rem 0 1rem}
+h2.sec{font-family:var(--serif);font-weight:600;font-size:clamp(1.16rem,3vw,1.4rem);color:var(--foam);
+  margin:1.9rem 0 .3rem;padding-left:.85rem;border-left:3px solid var(--aqua-d);line-height:1.25;scroll-margin-top:5rem}
+h3.sub{font-family:var(--serif);font-weight:600;font-size:1.02rem;color:var(--sand);margin:1.2rem 0 .1rem}
+
+/* Reusable-template pill */
+.tag{display:inline-block;font-family:var(--sans);font-weight:700;font-size:.6rem;letter-spacing:.11em;text-transform:uppercase;
+  color:#052029;background:var(--aqua);padding:.22rem .55rem;border-radius:999px;vertical-align:middle;margin-left:.5rem;transform:translateY(-2px)}
+
+/* Fill-in template token, e.g. [BUSINESS NAME] */
+.tok{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82em;color:#f0d9a6;background:rgba(228,207,166,.1);
+  border:1px dashed rgba(228,207,166,.45);border-radius:6px;padding:.02em .4em;white-space:nowrap}
+
+/* Callout notes */
+.note{border-left:3px solid var(--aqua-d);background:rgba(46,126,144,.14);padding:.95rem 1.15rem;border-radius:0 12px 12px 0;margin:1.3rem 0}
+.note--warn{border-left-color:#e0b25a;background:rgba(224,178,90,.11)}
+.note--entity{border-left-color:var(--warm);background:rgba(228,207,166,.08);font-size:.92rem}
+.note--entity p,.note p:last-child{margin-bottom:0}
+.note-label{display:block;font-family:var(--brand);letter-spacing:.16em;text-transform:uppercase;font-size:.64rem;color:var(--sand);margin-bottom:.4rem}
+
+/* ALL-CAPS legalese blocks */
+.legalese{font-size:.86rem;letter-spacing:.015em;color:var(--mist);background:rgba(255,255,255,.03);
+  border:1px solid var(--line);border-radius:12px;padding:1.05rem 1.2rem;margin:1.15rem 0;line-height:1.75}
+
+/* Table of contents */
+.toc{margin:1.8rem 0 .4rem;border:1px solid var(--line);border-radius:14px;padding:1.15rem 1.3rem;background:rgba(255,255,255,.025)}
+.toc h2{font-family:var(--brand);font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--sand);margin-bottom:.7rem;border:0;padding:0}
+.toc-group{margin-top:.7rem}
+.toc-group>span{display:block;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mist);margin:.35rem 0 .35rem}
+.toc ol{list-style:none;columns:2;column-gap:1.6rem}
+.toc li{margin:.18rem 0;font-size:.86rem;break-inside:avoid}
+.toc a{color:var(--body);text-decoration:none;border:0}
+.toc a:hover{color:var(--aqua)}
+
+.totop{display:inline-block;margin-top:1.6rem;font-size:.78rem;letter-spacing:.06em;color:var(--mist);text-decoration:none;border:0}
+.totop:hover{color:var(--aqua)}
+
+/* Cross-link footer inside sheet */
+.crosslink{margin-top:2.6rem;padding-top:1.8rem;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:space-between}
+.crosslink p{margin:0;color:var(--mist);font-size:.92rem}
+.btn{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--sans);font-weight:700;font-size:.82rem;letter-spacing:.03em;
+  color:#052029;background:var(--sand);padding:.6rem 1.1rem;border-radius:999px;text-decoration:none;border:0;transition:transform .2s ease,box-shadow .2s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(246,232,206,.16);color:#052029}
+
+/* Page footer */
+.site-foot{text-align:center;padding:1.8rem 1.5rem 2.6rem;font-size:.76rem;letter-spacing:.06em;color:rgba(174,195,201,.7)}
+.site-foot a{color:rgba(174,195,201,.85);text-decoration:none}
+.site-foot a:hover{color:var(--foam)}
+
+@media (max-width:620px){
+  .toc ol{columns:1}
+  .doc-title{font-size:2rem}
+  .nav-links{font-size:.78rem}
+  .brand{width:104px;height:34px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Print-friendly */
+@media print{
+  body{background:#fff;color:#111}
+  .nav,.toc,.crosslink,.site-foot,.totop{display:none}
+  .sheet{background:#fff;border:0;box-shadow:none;padding:0}
+  .doc-title,.part-title,.part-eyebrow,.kicker,h2.sec,h3.sub,.lead{color:#111}
+  .sheet p,.sheet li,.doc-tagline,.part-note{color:#222}
+  .note,.legalese{border:1px solid #ccc;background:#f6f6f6;color:#222}
+  .tok{color:#333;background:#eee;border-color:#999}
+  a{color:#111}
+}
+</style>
+</head>
+<body id="top">
+
+<nav class="nav">
+  <a class="brand" href="/" aria-label="WebSharke — home"></a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/terms">Terms</a>
+    <a href="/privacy" aria-current="page">Privacy</a>
+    <a href="/login">Sign in <span class="arw">&#8599;</span></a>
+  </div>
+</nav>
+
+<header class="doc-head">
+  <div class="kicker">WebSharke &middot; Websites, handled.</div>
+  <h1 class="doc-title">Privacy Policy</h1>
+  <p class="doc-tagline">What data WebSharke collects through websharke.com and the client dashboard, how it is used, and your rights over it &mdash; plus a reusable Privacy template for client sites.</p>
+  <div class="doc-meta">
+    <span>Effective&nbsp;<b>July 12, 2026</b></span>
+    <span>Last updated&nbsp;<b>July 12, 2026</b></span>
+    <span>Reno, Nevada</span>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="sheet">
+
+  <p class="lead">This page covers <b>Part&nbsp;2 — WebSharke&rsquo;s own Privacy Policy</b> and <b>Part&nbsp;4 — a reusable Privacy Policy template</b> for the websites WebSharke builds for clients. WebSharke&rsquo;s <a href="/terms">Terms of Service (Part&nbsp;1)</a> and the <a href="/terms">client Terms template (Part&nbsp;3)</a> live on the Terms page.</p>
+
+  <div class="note">
+    <span class="note-label">How this document is organized</span>
+    <p style="margin-top:0">The full WebSharke legal document has four parts. Sections marked <span class="tag" style="margin-left:0">Reusable for client sites</span> are safe to hand to a client with light editing (business name, contact info, what data their specific site collects). Sections without that tag are WebSharke-specific and should not be copied into a client&rsquo;s own site policy.</p>
+    <ul style="margin-bottom:0">
+      <li><b>Part 1</b> — WebSharke Terms of Service &mdash; <a href="/terms">on the Terms page</a></li>
+      <li><b>Part 2</b> — WebSharke Privacy Policy (data WebSharke collects directly) &mdash; <i>on this page</i></li>
+      <li><b>Part 3</b> — Client Website Terms of Service Template (reusable) &mdash; <a href="/terms">on the Terms page</a></li>
+      <li><b>Part 4</b> — Client Website Privacy Policy Template (reusable) &mdash; <i>on this page</i></li>
+    </ul>
+  </div>
+
+  <div class="note note--warn">
+    <span class="note-label">Important legal notice — read first</span>
+    <p style="margin:0">This document was prepared with AI assistance as a starting template, not by a licensed attorney. It is not a substitute for legal advice. Before relying on this document with real clients or real money on the line, have it reviewed by a Nevada-licensed attorney, particularly the liability, indemnification, and payment sections. Laws vary by state and change over time.</p>
+  </div>
+
+  <!-- ── Table of contents ─────────────────────────────────────────────── -->
+  <nav class="toc" aria-label="On this page">
+    <h2>On this page</h2>
+    <div class="toc-group">
+      <span>Part 2 &mdash; WebSharke Privacy Policy</span>
+      <ol>
+        <li><a href="#p1">1. Information We Collect</a></li>
+        <li><a href="#p2">2. How We Use Information</a></li>
+        <li><a href="#p3">3. Third Parties We Share Data With</a></li>
+        <li><a href="#p4">4. Data Security</a></li>
+        <li><a href="#p5">5. Data Retention</a></li>
+        <li><a href="#p6">6. Your Rights</a></li>
+        <li><a href="#p7">7. Cookies</a></li>
+        <li><a href="#p8">8. Contact</a></li>
+        <li><a href="#p9">9. Changes to This Policy</a></li>
+      </ol>
+    </div>
+    <div class="toc-group">
+      <span>Part 4 &mdash; Client Website Privacy (Template)</span>
+      <ol>
+        <li><a href="#cp1">1. Information We Collect</a></li>
+        <li><a href="#cp2">2. How We Use Information</a></li>
+        <li><a href="#cp3">3. Third-Party Services</a></li>
+        <li><a href="#cp4">4. Data Security</a></li>
+        <li><a href="#cp5">5. Your Rights</a></li>
+        <li><a href="#cp6">6. Cookies</a></li>
+        <li><a href="#cp7">7. Children&rsquo;s Privacy</a></li>
+        <li><a href="#cp8">8. Changes to This Policy</a></li>
+        <li><a href="#cp9">9. Contact</a></li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- ════════════════ PART 2 — WEBSHARKE PRIVACY POLICY ════════════════ -->
+  <section class="part" id="part2">
+    <div class="part-eyebrow">Part 2</div>
+    <h2 class="part-title">WebSharke Privacy Policy</h2>
+    <p class="part-note">Governs the data WebSharke collects directly through websharke.com and the client dashboard.</p>
+
+    <p>This Privacy Policy explains what information WebSharke (&ldquo;we,&rdquo; &ldquo;us,&rdquo; operated by Wyatt Eldridge d/b/a WebSharke) collects through websharke.com and its client dashboard, how it&rsquo;s used, and your rights regarding it.</p>
+    <div class="note note--entity">
+      <span class="note-label">Entity note &middot; [ENTITY]</span>
+      <p style="margin:0">To be updated to &ldquo;WebSharke&nbsp;LLC&rdquo; once the entity is formed.</p>
+    </div>
+
+    <h2 class="sec" id="p1">1. Information We Collect</h2>
+    <h3 class="sub">1.1 Information You Provide Directly</h3>
+    <p>When you sign up, submit a project inquiry, or use the client dashboard, we may collect:</p>
+    <ul>
+      <li><b>Account information:</b> email address, password (stored securely, never in plain text)</li>
+      <li><b>Business intake information:</b> business name, business description, products/services, website goals, visitor actions, websites you like, preferred styles, color preferences, design notes, and any additional information you submit</li>
+      <li><b>Contact information:</b> name, phone number, business address (where applicable)</li>
+      <li><b>Payment-related information:</b> billing name and email (full card numbers are handled by Stripe directly &mdash; see Section&nbsp;3)</li>
+    </ul>
+    <h3 class="sub">1.2 Information Collected Automatically</h3>
+    <p>We may collect limited technical information such as IP address, browser type, and general usage data to operate and secure the site. WebSharke does not currently use third-party advertising trackers.</p>
+
+    <h2 class="sec" id="p2">2. How We Use Information</h2>
+    <p>We use collected information to:</p>
+    <ul>
+      <li>Create and manage your account and client dashboard</li>
+      <li>Design, build, and host your website</li>
+      <li>Process payments and manage billing/subscriptions</li>
+      <li>Communicate with you about your project, invoices, or account</li>
+      <li>Maintain security and prevent fraud</li>
+      <li>Improve WebSharke&rsquo;s services</li>
+    </ul>
+
+    <h2 class="sec" id="p3">3. Third Parties We Share Data With</h2>
+    <p>WebSharke does not sell your personal information. We share information with the following service providers, only as needed to operate our services:</p>
+    <ul>
+      <li><b>Stripe</b> &mdash; processes payments and stores payment card data. WebSharke does not store full card numbers. See Stripe&rsquo;s privacy policy at <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">stripe.com/privacy</a>.</li>
+      <li><b>Supabase</b> &mdash; hosts our database (account data, business intake data, subscription records) and provides authentication.</li>
+      <li><b>Vercel</b> &mdash; hosts the website and serverless backend functions that power the dashboard and checkout process.</li>
+    </ul>
+    <p>These providers process data on WebSharke&rsquo;s behalf and are not permitted to use it for their own independent purposes.</p>
+
+    <h2 class="sec" id="p4">4. Data Security</h2>
+    <p>We use reasonable technical and organizational measures to protect your information, including database access controls (Row-Level Security) that restrict users to viewing only their own data, and secure processing of payments through Stripe rather than storing card data ourselves. No method of storage or transmission is 100% secure, and WebSharke cannot guarantee absolute security.</p>
+
+    <h2 class="sec" id="p5">5. Data Retention</h2>
+    <p>We retain account and business intake data for as long as your account is active or as needed to provide services. If you cancel services or request deletion, we will delete or anonymize your data within a reasonable period, except where we are required to retain records (e.g., payment records) for legal or tax purposes.</p>
+
+    <h2 class="sec" id="p6">6. Your Rights</h2>
+    <p>You may request to:</p>
+    <ul>
+      <li>Access the personal information we hold about you</li>
+      <li>Correct inaccurate information</li>
+      <li>Request deletion of your account and associated data, subject to legal retention requirements</li>
+    </ul>
+    <p>To make a request, contact us using the information in Section&nbsp;8 below.</p>
+
+    <h2 class="sec" id="p7">7. Cookies</h2>
+    <p>WebSharke may use essential cookies necessary for login sessions and site functionality.</p>
+    <div class="note note--entity">
+      <span class="note-label">Note &middot; [UPDATE]</span>
+      <p style="margin:0">If analytics or marketing cookies are added later, this section will need to expand to describe them and, depending on use, may require a cookie consent banner.</p>
+    </div>
+
+    <h2 class="sec" id="p8">8. Contact</h2>
+    <p>Questions about this Privacy Policy or your data can be directed to:</p>
+    <p style="margin-top:.2rem">
+      <b>WebSharke — Wyatt Eldridge</b><br>
+      Phone: <a href="tel:+17752506891">775-250-6891</a><br>
+      Email: <a href="mailto:eldridgewebdesigns@gmail.com">eldridgewebdesigns@gmail.com</a><br>
+      Reno, Nevada
+    </p>
+
+    <h2 class="sec" id="p9">9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Material changes will be posted on websharke.com with an updated &ldquo;Last Updated&rdquo; date.</p>
+    <a class="totop" href="#top">&uarr; Back to top</a>
+  </section>
+
+  <!-- ════════════ PART 4 — CLIENT WEBSITE PRIVACY (TEMPLATE) ════════════ -->
+  <section class="part" id="part4">
+    <div class="part-eyebrow">Part 4 &middot; Reusable template</div>
+    <h2 class="part-title">Client Website Privacy Policy <span class="tag">Template</span></h2>
+    <p class="part-note">Reusable template for client sites. Same rules as the Terms template: fill brackets, delete sections that don&rsquo;t apply to that client&rsquo;s actual site, and note this is a starting point, not tailored legal advice.</p>
+
+    <div class="note">
+      <span class="note-label">Reusable for client sites</span>
+      <p style="margin:0">Bracketed tokens like <span class="tok">[BUSINESS NAME]</span> and <span class="tok">[WEBSITE URL]</span> are fill-in blanks. Delete any section that doesn&rsquo;t apply to the client&rsquo;s actual site.</p>
+    </div>
+
+    <p><b>Privacy Policy</b></p>
+    <p>This Privacy Policy explains how <span class="tok">[BUSINESS NAME]</span> (&ldquo;we,&rdquo; &ldquo;us&rdquo;) collects, uses, and protects information collected through <span class="tok">[WEBSITE URL]</span> (the &ldquo;Site&rdquo;).</p>
+
+    <h2 class="sec" id="cp1">1. Information We Collect <span class="tag">Reusable &middot; edit per client</span></h2>
+    <p>Depending on how you use this Site, we may collect:</p>
+    <ul>
+      <li>Contact information you submit (name, email, phone number)</li>
+      <li>Information submitted through contact forms, booking forms, or inquiries</li>
+      <li>Payment information, if you make a purchase (processed by a third-party payment processor)</li>
+      <li>Basic technical information (such as browser type) to operate the Site</li>
+    </ul>
+
+    <h2 class="sec" id="cp2">2. How We Use Information <span class="tag">Reusable</span></h2>
+    <p>We use the information we collect to respond to inquiries, provide products or services you request, process payments, and improve this Site. We do not sell your personal information.</p>
+
+    <h2 class="sec" id="cp3">3. Third-Party Services <span class="tag">Reusable &middot; list only services used</span></h2>
+    <p>This Site may use third-party services to operate, which may process information on our behalf, such as:</p>
+    <ul>
+      <li>A payment processor (e.g., Stripe), if this Site accepts online payments</li>
+      <li>A hosting provider, to serve this website</li>
+      <li><span class="tok">[ADD OTHER TOOLS — e.g., booking software, email service, analytics — as applicable]</span></li>
+    </ul>
+
+    <h2 class="sec" id="cp4">4. Data Security <span class="tag">Reusable</span></h2>
+    <p>We use reasonable measures to protect information submitted through this Site. No method of transmission or storage is completely secure, and we cannot guarantee absolute security.</p>
+
+    <h2 class="sec" id="cp5">5. Your Rights <span class="tag">Reusable</span></h2>
+    <p>You may contact us to request access to, correction of, or deletion of personal information we hold about you, subject to any legal retention requirements.</p>
+
+    <h2 class="sec" id="cp6">6. Cookies <span class="tag">Reusable &middot; only if site uses cookies</span></h2>
+    <p><span class="tok">[DESCRIBE COOKIES USED, IF ANY — e.g., essential session cookies, analytics cookies. If none beyond basic site function, state that plainly.]</span></p>
+
+    <h2 class="sec" id="cp7">7. Children&rsquo;s Privacy <span class="tag">Reusable</span></h2>
+    <p>This Site is not directed at children under 13, and we do not knowingly collect personal information from children under 13.</p>
+
+    <h2 class="sec" id="cp8">8. Changes to This Policy <span class="tag">Reusable</span></h2>
+    <p>We may update this Privacy Policy from time to time by posting a revised version on this Site.</p>
+
+    <h2 class="sec" id="cp9">9. Contact <span class="tag">Reusable &middot; fill in per client</span></h2>
+    <p>
+      <span class="tok">[BUSINESS NAME]</span><br>
+      <span class="tok">[BUSINESS ADDRESS]</span><br>
+      <span class="tok">[BUSINESS PHONE]</span><br>
+      <span class="tok">[BUSINESS EMAIL]</span>
+    </p>
+    <a class="totop" href="#top">&uarr; Back to top</a>
+  </section>
+
+  <div class="crosslink">
+    <p>Looking for the terms that govern our services and the client sites we build? Read the Terms of Service &mdash; it also includes the reusable client Terms template (Part&nbsp;3).</p>
+    <a class="btn" href="/terms">Terms of Service &rarr;</a>
+  </div>
+
+</div>
+</div>
+
+<footer class="site-foot">© 2026 WebSharke. All rights reserved. &middot; <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/">Home</a></footer>
+
+</body>
+</html>

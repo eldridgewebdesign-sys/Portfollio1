@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="images/Tab-Logo.png" type="image/png">
+<title>Terms of Service — WebSharke</title>
+<meta name="description" content="WebSharke Terms of Service — the terms that govern websharke.com, our design and hosting services, plus a reusable Terms template for client websites.">
+<meta name="robots" content="index,follow">
+<style>
+/* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
+@font-face{font-family:'Distillery Display';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/distillery-display/DistilleryDisplay-Regular.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/playfair-display/latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/playfair-display/latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/playfair-display/latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Playfair Display';font-style:italic;font-weight:500;font-display:swap;src:url(fonts/playfair-display/latin-500-italic.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/mulish-400.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/mulish-600.woff2) format('woff2')}
+@font-face{font-family:'Mulish';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/mulish-700.woff2) format('woff2')}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sand:#f6e8ce; --foam:#ecf4f3; --mist:#aec3c9; --body:#dcebe9;
+  --deep:#030d16; --surf:#0a3d50; --aqua:#62b6c6; --aqua-d:#2c7e90; --warm:#e4cfa6;
+  --panel:rgba(9,26,36,.58); --panel-bd:rgba(126,178,190,.22); --line:rgba(126,178,190,.15);
+  --serif:'Playfair Display',Georgia,'Times New Roman',serif;
+  --sans:'Mulish',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --brand:'Distillery Display','Playfair Display',serif;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);color:var(--body);min-height:100vh;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  background:
+    radial-gradient(1100px 620px at 50% -8%,rgba(46,126,144,.30),transparent 62%),
+    linear-gradient(180deg,#06212d 0%,#04151f 42%,var(--deep) 100%);
+  background-attachment:fixed;line-height:1.6;
+}
+
+/* ── Top nav ─────────────────────────────────────────────────────────────── */
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:.65rem clamp(1rem,4vw,2.4rem);background:rgba(4,17,25,.72);border-bottom:1px solid var(--line);
+  backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2)}
+.brand{display:block;width:120px;height:40px;flex:0 0 auto;background:var(--foam);
+  -webkit-mask:url(images/Main-Logo.png) left center/contain no-repeat;mask:url(images/Main-Logo.png) left center/contain no-repeat}
+.nav-links{display:flex;align-items:center;gap:.25rem;flex-wrap:wrap;justify-content:flex-end;font-size:.82rem}
+.nav-links a{color:var(--mist);text-decoration:none;padding:.4rem .75rem;border-radius:999px;letter-spacing:.02em;
+  transition:color .2s ease,background .2s ease;white-space:nowrap}
+.nav-links a:hover{color:var(--foam);background:rgba(98,182,198,.12)}
+.nav-links a[aria-current="page"]{color:#052029;background:var(--sand)}
+.nav-links a .arw{opacity:.7}
+
+/* ── Document head ───────────────────────────────────────────────────────── */
+.doc-head{max-width:820px;margin:0 auto;padding:clamp(2.4rem,6vw,4rem) clamp(1.15rem,4vw,2rem) .6rem}
+.kicker{font-family:var(--brand);font-size:.82rem;letter-spacing:.34em;text-transform:uppercase;color:var(--sand);margin-bottom:.9rem}
+.doc-title{font-family:var(--serif);font-weight:700;line-height:1.04;font-size:clamp(2.2rem,6.4vw,3.5rem);color:var(--foam);letter-spacing:-.01em}
+.doc-tagline{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--mist);font-size:clamp(1rem,2.5vw,1.2rem);margin-top:.7rem;max-width:44ch}
+.doc-meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.3rem}
+.doc-meta span{font-size:.74rem;letter-spacing:.05em;color:var(--mist);background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:999px;padding:.32rem .8rem}
+.doc-meta b{color:var(--foam);font-weight:700}
+
+/* ── Sheet (reading column) ──────────────────────────────────────────────── */
+.wrap{max-width:820px;margin:0 auto;padding:1rem clamp(1.15rem,4vw,2rem) 3.5rem}
+.sheet{background:var(--panel);border:1px solid var(--panel-bd);border-radius:18px;
+  padding:clamp(1.5rem,5vw,3rem);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  box-shadow:0 26px 70px rgba(0,20,30,.4)}
+.sheet p{margin:.85rem 0;color:var(--body);font-size:1rem}
+.sheet ul{list-style:none;margin:.7rem 0}
+.sheet li{position:relative;padding-left:1.25rem;margin:.5rem 0;color:var(--body)}
+.sheet li::before{content:"";position:absolute;left:.15rem;top:.72em;width:6px;height:6px;border-radius:50%;background:var(--aqua-d)}
+.sheet a{color:var(--aqua);text-decoration:none;border-bottom:1px solid rgba(98,182,198,.35)}
+.sheet a:hover{color:var(--foam);border-bottom-color:var(--foam)}
+.lead{font-size:1.06rem;color:var(--foam)}
+
+/* Parts + sections */
+.part{margin-top:2.9rem;padding-top:2.4rem;border-top:1px solid var(--line);scroll-margin-top:5rem}
+.part:first-of-type{margin-top:2.2rem}
+.part-eyebrow{font-family:var(--brand);font-size:.74rem;letter-spacing:.26em;text-transform:uppercase;color:var(--sand)}
+.part-title{font-family:var(--serif);font-weight:700;font-size:clamp(1.55rem,4.4vw,2.1rem);color:var(--foam);margin:.35rem 0 .2rem;line-height:1.12}
+.part-note{color:var(--mist);font-size:.95rem;margin:.35rem 0 1rem}
+h2.sec{font-family:var(--serif);font-weight:600;font-size:clamp(1.16rem,3vw,1.4rem);color:var(--foam);
+  margin:1.9rem 0 .3rem;padding-left:.85rem;border-left:3px solid var(--aqua-d);line-height:1.25;scroll-margin-top:5rem}
+h3.sub{font-family:var(--serif);font-weight:600;font-size:1.02rem;color:var(--sand);margin:1.2rem 0 .1rem}
+
+/* Reusable-template pill */
+.tag{display:inline-block;font-family:var(--sans);font-weight:700;font-size:.6rem;letter-spacing:.11em;text-transform:uppercase;
+  color:#052029;background:var(--aqua);padding:.22rem .55rem;border-radius:999px;vertical-align:middle;margin-left:.5rem;transform:translateY(-2px)}
+
+/* Fill-in template token, e.g. [BUSINESS NAME] */
+.tok{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82em;color:#f0d9a6;background:rgba(228,207,166,.1);
+  border:1px dashed rgba(228,207,166,.45);border-radius:6px;padding:.02em .4em;white-space:nowrap}
+
+/* Callout notes */
+.note{border-left:3px solid var(--aqua-d);background:rgba(46,126,144,.14);padding:.95rem 1.15rem;border-radius:0 12px 12px 0;margin:1.3rem 0}
+.note--warn{border-left-color:#e0b25a;background:rgba(224,178,90,.11)}
+.note--entity{border-left-color:var(--warm);background:rgba(228,207,166,.08);font-size:.92rem}
+.note--entity p,.note p:last-child{margin-bottom:0}
+.note-label{display:block;font-family:var(--brand);letter-spacing:.16em;text-transform:uppercase;font-size:.64rem;color:var(--sand);margin-bottom:.4rem}
+
+/* ALL-CAPS legalese blocks */
+.legalese{font-size:.86rem;letter-spacing:.015em;color:var(--mist);background:rgba(255,255,255,.03);
+  border:1px solid var(--line);border-radius:12px;padding:1.05rem 1.2rem;margin:1.15rem 0;line-height:1.75}
+
+/* Table of contents */
+.toc{margin:1.8rem 0 .4rem;border:1px solid var(--line);border-radius:14px;padding:1.15rem 1.3rem;background:rgba(255,255,255,.025)}
+.toc h2{font-family:var(--brand);font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--sand);margin-bottom:.7rem;border:0;padding:0}
+.toc-group{margin-top:.7rem}
+.toc-group>span{display:block;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mist);margin:.35rem 0 .35rem}
+.toc ol{list-style:none;columns:2;column-gap:1.6rem}
+.toc li{margin:.18rem 0;font-size:.86rem;break-inside:avoid}
+.toc a{color:var(--body);text-decoration:none;border:0}
+.toc a:hover{color:var(--aqua)}
+
+.totop{display:inline-block;margin-top:1.6rem;font-size:.78rem;letter-spacing:.06em;color:var(--mist);text-decoration:none;border:0}
+.totop:hover{color:var(--aqua)}
+
+/* Cross-link footer inside sheet */
+.crosslink{margin-top:2.6rem;padding-top:1.8rem;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:space-between}
+.crosslink p{margin:0;color:var(--mist);font-size:.92rem}
+.btn{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--sans);font-weight:700;font-size:.82rem;letter-spacing:.03em;
+  color:#052029;background:var(--sand);padding:.6rem 1.1rem;border-radius:999px;text-decoration:none;border:0;transition:transform .2s ease,box-shadow .2s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(246,232,206,.16);color:#052029}
+
+/* Page footer */
+.site-foot{text-align:center;padding:1.8rem 1.5rem 2.6rem;font-size:.76rem;letter-spacing:.06em;color:rgba(174,195,201,.7)}
+.site-foot a{color:rgba(174,195,201,.85);text-decoration:none}
+.site-foot a:hover{color:var(--foam)}
+
+@media (max-width:620px){
+  .toc ol{columns:1}
+  .doc-title{font-size:2rem}
+  .nav-links{font-size:.78rem}
+  .brand{width:104px;height:34px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Print-friendly */
+@media print{
+  body{background:#fff;color:#111}
+  .nav,.toc,.crosslink,.site-foot,.totop{display:none}
+  .sheet{background:#fff;border:0;box-shadow:none;padding:0}
+  .doc-title,.part-title,.part-eyebrow,.kicker,h2.sec,h3.sub,.lead{color:#111}
+  .sheet p,.sheet li,.doc-tagline,.part-note{color:#222}
+  .note,.legalese{border:1px solid #ccc;background:#f6f6f6;color:#222}
+  .tok{color:#333;background:#eee;border-color:#999}
+  a{color:#111}
+}
+</style>
+</head>
+<body id="top">
+
+<nav class="nav">
+  <a class="brand" href="/" aria-label="WebSharke — home"></a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/terms" aria-current="page">Terms</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/login">Sign in <span class="arw">&#8599;</span></a>
+  </div>
+</nav>
+
+<header class="doc-head">
+  <div class="kicker">WebSharke &middot; Websites, handled.</div>
+  <h1 class="doc-title">Terms of Service</h1>
+  <p class="doc-tagline">The terms that govern websharke.com, our design and hosting work, plus a reusable Terms template for the client sites we build.</p>
+  <div class="doc-meta">
+    <span>Effective&nbsp;<b>July 12, 2026</b></span>
+    <span>Last updated&nbsp;<b>July 12, 2026</b></span>
+    <span>Reno, Nevada</span>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="sheet">
+
+  <p class="lead">This page covers <b>Part&nbsp;1 — WebSharke&rsquo;s own Terms of Service</b> and <b>Part&nbsp;3 — a reusable Terms of Service template</b> for the websites WebSharke builds for clients. WebSharke&rsquo;s <a href="/privacy">Privacy Policy (Part&nbsp;2)</a> and the <a href="/privacy">client Privacy Policy template (Part&nbsp;4)</a> live on the Privacy page.</p>
+
+  <div class="note">
+    <span class="note-label">How this document is organized</span>
+    <p style="margin-top:0">The full WebSharke legal document has four parts. Sections marked <span class="tag" style="margin-left:0">Reusable for client sites</span> are safe to hand to a client with light editing (business name, contact info, what data their specific site collects). Sections without that tag are WebSharke-specific and should not be copied into a client&rsquo;s own site terms.</p>
+    <ul style="margin-bottom:0">
+      <li><b>Part 1</b> — WebSharke Terms of Service (governs websharke.com, hosting, and design services) &mdash; <i>on this page</i></li>
+      <li><b>Part 2</b> — WebSharke Privacy Policy (data WebSharke collects directly) &mdash; <a href="/privacy">on the Privacy page</a></li>
+      <li><b>Part 3</b> — Client Website Terms of Service Template (reusable) &mdash; <i>on this page</i></li>
+      <li><b>Part 4</b> — Client Website Privacy Policy Template (reusable) &mdash; <a href="/privacy">on the Privacy page</a></li>
+    </ul>
+  </div>
+
+  <div class="note note--warn">
+    <span class="note-label">Important legal notice — read first</span>
+    <p style="margin:0">This document was prepared with AI assistance as a starting template, not by a licensed attorney. It is not a substitute for legal advice. Before relying on this document with real clients or real money on the line, have it reviewed by a Nevada-licensed attorney, particularly the liability, indemnification, and payment sections. Laws vary by state and change over time.</p>
+  </div>
+
+  <div class="note note--entity">
+    <span class="note-label">Entity status</span>
+    <p style="margin:0">WebSharke is currently a sole proprietorship. There is no separate legal entity yet &mdash; &ldquo;WebSharke&rdquo; is a trade name (d/b/a) for Wyatt Eldridge as an individual, and this document is written to reflect that accurately. Placeholders marked <span class="tok">[ENTITY]</span> appear throughout &mdash; when WebSharke&nbsp;LLC is filed, those sections are updated and any active clients are notified in writing that the contracting party has changed from Wyatt Eldridge individually to WebSharke&nbsp;LLC.</p>
+  </div>
+
+  <!-- ── Table of contents ─────────────────────────────────────────────── -->
+  <nav class="toc" aria-label="On this page">
+    <h2>On this page</h2>
+    <div class="toc-group">
+      <span>Part 1 &mdash; WebSharke Terms of Service</span>
+      <ol>
+        <li><a href="#t1">1. Who You Are Contracting With</a></li>
+        <li><a href="#t2">2. Services</a></li>
+        <li><a href="#t3">3. Payment Terms</a></li>
+        <li><a href="#t4">4. Client Responsibilities</a></li>
+        <li><a href="#t5">5. Ownership and Intellectual Property</a></li>
+        <li><a href="#t6">6. Hosting Services</a></li>
+        <li><a href="#t7">7. Disclaimer of Warranties</a></li>
+        <li><a href="#t8">8. Limitation of Liability</a></li>
+        <li><a href="#t9">9. Indemnification</a></li>
+        <li><a href="#t10">10. Term and Termination</a></li>
+        <li><a href="#t11">11. Changes to These Terms</a></li>
+        <li><a href="#t12">12. Governing Law and Disputes</a></li>
+        <li><a href="#t13">13. Severability</a></li>
+        <li><a href="#t14">14. Contact</a></li>
+      </ol>
+    </div>
+    <div class="toc-group">
+      <span>Part 3 &mdash; Client Website Terms (Template)</span>
+      <ol>
+        <li><a href="#ct1">1. Use of the Site</a></li>
+        <li><a href="#ct2">2. Products, Services, and Pricing</a></li>
+        <li><a href="#ct3">3. Bookings, Orders, and Payments</a></li>
+        <li><a href="#ct4">4. User Content</a></li>
+        <li><a href="#ct5">5. Intellectual Property</a></li>
+        <li><a href="#ct6">6. Disclaimer of Warranties</a></li>
+        <li><a href="#ct7">7. Limitation of Liability</a></li>
+        <li><a href="#ct8">8. Third-Party Links</a></li>
+        <li><a href="#ct9">9. Changes to These Terms</a></li>
+        <li><a href="#ct10">10. Governing Law</a></li>
+        <li><a href="#ct11">11. Contact</a></li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- ════════════════ PART 1 — WEBSHARKE TERMS OF SERVICE ════════════════ -->
+  <section class="part" id="part1">
+    <div class="part-eyebrow">Part 1</div>
+    <h2 class="part-title">WebSharke Terms of Service</h2>
+    <p class="part-note">Governs websharke.com, hosting, and design services.</p>
+
+    <p>These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of websharke.com and any design, development, or hosting services provided by WebSharke (&ldquo;WebSharke,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;). By engaging WebSharke&rsquo;s services or using our website, you (&ldquo;Client,&rdquo; &ldquo;you&rdquo;) agree to these Terms.</p>
+
+    <h2 class="sec" id="t1">1. Who You Are Contracting With</h2>
+    <p>WebSharke is currently operated as a sole proprietorship by Wyatt Eldridge, an individual doing business as &ldquo;WebSharke&rdquo; (&ldquo;d/b/a WebSharke&rdquo;), based in Reno, Nevada. Because no separate legal entity currently exists, any contract formed under these Terms is a contract with Wyatt Eldridge personally, operating under the WebSharke name.</p>
+    <div class="note note--entity">
+      <span class="note-label">Entity note &middot; [ENTITY]</span>
+      <p style="margin:0">If WebSharke&nbsp;LLC has since been formed, this section should instead read: &ldquo;WebSharke&nbsp;LLC, a Nevada limited liability company.&rdquo;</p>
+    </div>
+
+    <h2 class="sec" id="t2">2. Services</h2>
+    <p>WebSharke provides website design, development, and related hosting services to small businesses. The specific services, deliverables, timeline, and price for a given project will be described in a written proposal, invoice, or order confirmation (the &ldquo;Order&rdquo;), which is incorporated into these Terms by reference. In the event of a conflict between an Order and these Terms, the Order controls for that specific engagement.</p>
+    <p>Current service categories (subject to change; the Order governs pricing for any specific project):</p>
+    <ul>
+      <li>One-time website design (up to a defined number of pages, per the Order)</li>
+      <li>Add-on features (logins, payment processing, additional pages, custom functionality) &mdash; priced separately per the Order</li>
+      <li>Recurring hosting and maintenance, billed monthly or annually</li>
+    </ul>
+
+    <h2 class="sec" id="t3">3. Payment Terms</h2>
+    <h3 class="sub">3.1 One-Time Fees</h3>
+    <p>Design and build fees are one-time charges due according to the schedule in the Order (commonly: a deposit before work begins, with the balance due before final launch/handoff, unless the Order states otherwise).</p>
+    <h3 class="sub">3.2 Recurring Hosting Fees</h3>
+    <p>Hosting is billed on a recurring basis (monthly or annually, per the Order) starting on the date hosting begins. Recurring charges continue until canceled by either party in accordance with Section&nbsp;8 (Term and Termination).</p>
+    <h3 class="sub">3.3 Late or Failed Payment</h3>
+    <p>If a payment fails or is not received by its due date, WebSharke may suspend the affected website, hosting, or services until payment is made current. WebSharke is not responsible for any downtime, data loss, or business impact resulting from suspension due to non-payment.</p>
+    <h3 class="sub">3.4 Payment Processing</h3>
+    <p>Payments are processed by Stripe, a third-party payment processor. WebSharke does not directly store your full payment card details. Use of Stripe is subject to Stripe&rsquo;s own terms and privacy policy.</p>
+    <h3 class="sub">3.5 Refunds</h3>
+    <p>Fees for work already performed are non-refundable. Refund eligibility, if any, for work not yet started will be addressed on a case-by-case basis and is not guaranteed.</p>
+
+    <h2 class="sec" id="t4">4. Client Responsibilities</h2>
+    <p>You agree to:</p>
+    <ul>
+      <li>Provide accurate business information, content, and assets (text, images, logos) needed to complete the project in a timely manner</li>
+      <li>Respond to requests for feedback or approval within a reasonable time; delays on your end may delay project timelines without penalty to WebSharke</li>
+      <li>Have the legal right to use any content, images, trademarks, or materials you provide to WebSharke for inclusion in your website</li>
+      <li>Keep your account credentials confidential and notify WebSharke promptly of any suspected unauthorized access</li>
+    </ul>
+
+    <h2 class="sec" id="t5">5. Ownership and Intellectual Property</h2>
+    <h3 class="sub">5.1 Final Deliverables</h3>
+    <p>Upon full payment for a project, WebSharke assigns to Client ownership of the final website design and custom code created specifically for that Client as part of the Order, excluding any pre-existing WebSharke tools, templates, frameworks, or reusable components, which WebSharke retains ownership of and may reuse for other clients.</p>
+    <h3 class="sub">5.2 Content Provided by Client</h3>
+    <p>Client retains ownership of all content, images, logos, and materials Client provides. Client grants WebSharke a license to use those materials solely to build and operate Client&rsquo;s website.</p>
+    <h3 class="sub">5.3 Non-Payment</h3>
+    <p>If a project is not paid in full, WebSharke retains ownership of all work product, including any partially completed designs or code, and is not obligated to deliver or transfer any files.</p>
+    <h3 class="sub">5.4 Portfolio Use</h3>
+    <p>WebSharke may display completed client websites in its portfolio and marketing materials unless Client requests otherwise in writing.</p>
+
+    <h2 class="sec" id="t6">6. Hosting Services</h2>
+    <p>Where Client purchases hosting through WebSharke:</p>
+    <ul>
+      <li>WebSharke hosts Client&rsquo;s website on third-party infrastructure (currently Vercel) and stores associated data using a third-party database provider (currently Supabase).</li>
+      <li>WebSharke does not guarantee uninterrupted, error-free, or 100% uptime hosting. WebSharke will make commercially reasonable efforts to maintain availability but is not liable for outages caused by third-party providers, internet infrastructure, or events outside WebSharke&rsquo;s reasonable control.</li>
+      <li>If hosting is canceled or lapses due to non-payment, WebSharke may take Client&rsquo;s website offline. WebSharke is not obligated to retain website files or data indefinitely after cancellation and may delete them after a reasonable notice period.</li>
+    </ul>
+
+    <h2 class="sec" id="t7">7. Disclaimer of Warranties</h2>
+    <div class="legalese">EXCEPT AS EXPRESSLY STATED IN AN ORDER, ALL SERVICES AND DELIVERABLES ARE PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE,&rdquo; WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING WITHOUT LIMITATION IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WEBSHARKE DOES NOT WARRANT THAT THE WEBSITE, HOSTING, OR ANY SOFTWARE WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE, OR THAT ANY RESULTS (INCLUDING BUSINESS OUTCOMES, TRAFFIC, OR SALES) WILL MEET CLIENT&rsquo;S EXPECTATIONS.</div>
+
+    <h2 class="sec" id="t8">8. Limitation of Liability</h2>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:</p>
+    <ul>
+      <li>WebSharke&rsquo;s total liability arising out of or related to these Terms, any Order, or the services provided, whether in contract, tort, or otherwise, shall not exceed the total amount actually paid by Client to WebSharke for the specific service giving rise to the claim in the twelve (12) months preceding the event giving rise to liability.</li>
+      <li>In no event shall WebSharke be liable for any indirect, incidental, consequential, special, exemplary, or punitive damages, including but not limited to loss of profits, revenue, data, business opportunity, or goodwill, even if WebSharke has been advised of the possibility of such damages.</li>
+      <li>These limitations apply regardless of the legal theory on which the claim is based and even if a remedy fails its essential purpose.</li>
+    </ul>
+    <div class="note note--entity">
+      <span class="note-label">Why this section matters</span>
+      <p style="margin:0">Because WebSharke currently operates as a sole proprietorship (see Section&nbsp;1), this liability cap is doing important work: it is one of the primary ways Wyatt Eldridge&rsquo;s personal financial exposure is limited in the absence of an LLC. Keep this section intact and have it reviewed by an attorney.</p>
+    </div>
+
+    <h2 class="sec" id="t9">9. Indemnification</h2>
+    <p>Client agrees to indemnify, defend, and hold harmless WebSharke (and Wyatt Eldridge individually) from and against any claims, damages, losses, liabilities, and expenses (including reasonable attorneys&rsquo; fees) arising out of or related to: (a)&nbsp;content or materials Client provides; (b)&nbsp;Client&rsquo;s use of the website or services in violation of these Terms or applicable law; or (c)&nbsp;Client&rsquo;s violation of any third party&rsquo;s rights.</p>
+
+    <h2 class="sec" id="t10">10. Term and Termination</h2>
+    <p>Either party may terminate an ongoing hosting or service relationship with written notice (email is sufficient), subject to any minimum term stated in the Order. Recurring fees already billed are non-refundable. Upon termination, WebSharke may take Client&rsquo;s website offline and, after a reasonable notice period, delete associated data and files.</p>
+
+    <h2 class="sec" id="t11">11. Changes to These Terms</h2>
+    <p>WebSharke may update these Terms from time to time. Material changes will be communicated to active clients by email or posted on websharke.com with an updated &ldquo;Last Updated&rdquo; date. Continued use of WebSharke&rsquo;s services after changes take effect constitutes acceptance of the revised Terms.</p>
+
+    <h2 class="sec" id="t12">12. Governing Law and Disputes</h2>
+    <p>These Terms are governed by the laws of the State of Nevada, without regard to its conflict of laws principles. Any dispute arising out of these Terms shall be resolved in the state or federal courts located in Washoe County, Nevada, and both parties consent to the jurisdiction of those courts.</p>
+
+    <h2 class="sec" id="t13">13. Severability</h2>
+    <p>If any provision of these Terms is found unenforceable, the remaining provisions will remain in full force and effect, and the unenforceable provision will be modified to the minimum extent necessary to make it enforceable.</p>
+
+    <h2 class="sec" id="t14">14. Contact</h2>
+    <p>Questions about these Terms can be directed to:</p>
+    <p style="margin-top:.2rem">
+      <b>WebSharke — Wyatt Eldridge</b><br>
+      Phone: <a href="tel:+17752506891">775-250-6891</a><br>
+      Email: <a href="mailto:eldridgewebdesigns@gmail.com">eldridgewebdesigns@gmail.com</a><br>
+      Reno, Nevada
+    </p>
+    <a class="totop" href="#top">&uarr; Back to top</a>
+  </section>
+
+  <!-- ════════════ PART 3 — CLIENT WEBSITE TERMS (TEMPLATE) ════════════ -->
+  <section class="part" id="part3">
+    <div class="part-eyebrow">Part 3 &middot; Reusable template</div>
+    <h2 class="part-title">Client Website Terms of Service <span class="tag">Template</span></h2>
+    <p class="part-note">A generic Terms of Service WebSharke can hand to clients for their own websites (e.g., a barber shop&rsquo;s or contractor&rsquo;s site). It is intentionally generic and is not specific to WebSharke&rsquo;s own hosting/billing relationship &mdash; that&rsquo;s Part&nbsp;1. Bracketed items like <span class="tok">[BUSINESS NAME]</span> must be filled in per client. This template covers general small-business website use; it does <b>not</b> cover industry-specific requirements (e.g., medical, legal, financial services) &mdash; flag that to clients in those industries so they can get tailored review.</p>
+
+    <div class="note">
+      <span class="note-label">Reusable for client sites</span>
+      <p style="margin:0">Sections below are tagged <span class="tag" style="margin-left:0">Reusable for client sites</span> because they are safe to reuse with light editing. Bracketed tokens like <span class="tok">[WEBSITE URL]</span> are fill-in blanks.</p>
+    </div>
+
+    <p><b>Terms of Service</b></p>
+    <p>These Terms of Service govern your use of the <span class="tok">[BUSINESS NAME]</span> website located at <span class="tok">[WEBSITE URL]</span> (the &ldquo;Site&rdquo;). By using this Site, you agree to these Terms.</p>
+
+    <h2 class="sec" id="ct1">1. Use of the Site <span class="tag">Reusable</span></h2>
+    <p>You may use this Site for lawful purposes only. You agree not to use the Site in any way that could damage, disable, or impair it, or interfere with any other party&rsquo;s use of the Site.</p>
+
+    <h2 class="sec" id="ct2">2. Products, Services, and Pricing <span class="tag">Reusable &middot; edit per client</span></h2>
+    <p><span class="tok">[BUSINESS NAME]</span> offers <span class="tok">[DESCRIPTION OF PRODUCTS/SERVICES]</span> as described on this Site. Prices, availability, and details are subject to change without notice. We make reasonable efforts to ensure information on this Site is accurate but do not guarantee it is error-free.</p>
+
+    <h2 class="sec" id="ct3">3. Bookings, Orders, and Payments <span class="tag">Reusable &middot; if site takes payments</span></h2>
+    <p>If this Site allows you to book appointments, place orders, or make payments, additional terms may apply regarding cancellation, rescheduling, or refunds, which will be described at the time of booking or purchase. Payments made through this Site are processed by a third-party payment processor; <span class="tok">[BUSINESS NAME]</span> does not store your full payment card details.</p>
+
+    <h2 class="sec" id="ct4">4. User Content <span class="tag">Reusable &middot; if site accepts reviews/uploads</span></h2>
+    <p>If this Site allows you to submit reviews, comments, or other content, you grant <span class="tok">[BUSINESS NAME]</span> a non-exclusive, royalty-free license to use, display, and reproduce that content in connection with operating the Site. You are solely responsible for content you submit and confirm you have the right to submit it.</p>
+
+    <h2 class="sec" id="ct5">5. Intellectual Property <span class="tag">Reusable</span></h2>
+    <p>All content on this Site, including text, images, logos, and design, is the property of <span class="tok">[BUSINESS NAME]</span> or its licensors and is protected by applicable intellectual property laws. You may not copy, reproduce, or distribute content from this Site without permission.</p>
+
+    <h2 class="sec" id="ct6">6. Disclaimer of Warranties <span class="tag">Reusable</span></h2>
+    <div class="legalese">THIS SITE AND ITS CONTENT ARE PROVIDED &ldquo;AS IS&rdquo; WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. <span class="tok">[BUSINESS NAME]</span> DOES NOT WARRANT THAT THE SITE WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE.</div>
+
+    <h2 class="sec" id="ct7">7. Limitation of Liability <span class="tag">Reusable</span></h2>
+    <div class="legalese">TO THE MAXIMUM EXTENT PERMITTED BY LAW, <span class="tok">[BUSINESS NAME]</span> SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THIS SITE.</div>
+
+    <h2 class="sec" id="ct8">8. Third-Party Links <span class="tag">Reusable</span></h2>
+    <p>This Site may contain links to third-party websites. <span class="tok">[BUSINESS NAME]</span> is not responsible for the content, policies, or practices of any third-party sites.</p>
+
+    <h2 class="sec" id="ct9">9. Changes to These Terms <span class="tag">Reusable</span></h2>
+    <p><span class="tok">[BUSINESS NAME]</span> may update these Terms at any time by posting a revised version on this Site. Continued use of the Site after changes are posted constitutes acceptance.</p>
+
+    <h2 class="sec" id="ct10">10. Governing Law <span class="tag">Reusable &middot; confirm state per client</span></h2>
+    <p>These Terms are governed by the laws of the State of <span class="tok">[STATE — default Nevada unless client is elsewhere]</span>, without regard to conflict of laws principles.</p>
+
+    <h2 class="sec" id="ct11">11. Contact <span class="tag">Reusable &middot; fill in per client</span></h2>
+    <p>
+      <span class="tok">[BUSINESS NAME]</span><br>
+      <span class="tok">[BUSINESS ADDRESS]</span><br>
+      <span class="tok">[BUSINESS PHONE]</span><br>
+      <span class="tok">[BUSINESS EMAIL]</span>
+    </p>
+
+    <div class="note note--entity">
+      <span class="note-label">Delivery note for WebSharke</span>
+      <p style="margin:0">When handing this to a client, fill every bracket, delete Section&nbsp;3 if they don&rsquo;t take bookings/payments online, and delete Section&nbsp;4 if they don&rsquo;t accept user content. Consider a short cover note that this is a starting template, not attorney-reviewed advice specific to their business.</p>
+    </div>
+    <a class="totop" href="#top">&uarr; Back to top</a>
+  </section>
+
+  <div class="crosslink">
+    <p>Looking for how we handle data? Read the Privacy Policy &mdash; it also includes the reusable client Privacy template (Part&nbsp;4).</p>
+    <a class="btn" href="/privacy">Privacy Policy &rarr;</a>
+  </div>
+
+</div>
+</div>
+
+<footer class="site-foot">© 2026 WebSharke. All rights reserved. &middot; <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/">Home</a></footer>
+
+</body>
+</html>

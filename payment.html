@@ -296,6 +296,24 @@
 
   <a class="ws-logo" href="/" aria-label="WebSharke home"></a>
 
+  <!-- Purchase gate — shown instead of the invoices page when the client has
+       not accepted the Terms of Service + Privacy Policy. Enforced here so a
+       direct /payment link can't bypass the dashboard's contracts gate. -->
+  <main class="page hidden" id="contract-gate-page">
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">Billing</p>
+        <h1>One quick step</h1>
+        <p class="subhead">You must accept the Terms of Service and Privacy Policy before making a purchase.</p>
+      </div>
+      <a class="back-link" href="/dashboard">Back to Dashboard</a>
+    </div>
+    <section class="shell">
+      <p class="cinv-empty" style="margin:0 0 1.1rem">Please review and accept the <a href="/terms" target="_blank" rel="noopener" style="color:#0f6b79;text-decoration:underline">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener" style="color:#0f6b79;text-decoration:underline">Privacy Policy</a>. Open the <strong>Contracts</strong> tab on your dashboard to accept — then return here to pay.</p>
+      <a class="ws-btn" href="/dashboard">Go to Dashboard</a>
+    </section>
+  </main>
+
   <main class="page hidden" id="invoices-page">
     <div class="topbar">
       <div>
@@ -896,6 +914,19 @@
       }
 
       const user = authData.user;
+
+      // ---- Contracts gate: no purchases until Terms + Privacy accepted ----
+      // Acceptance lives on the user's auth metadata (set at onboarding or via
+      // the dashboard Contracts tab). Without it, block the purchase flow
+      // entirely. The admin is exempt (mirrors the dashboard admin gate).
+      const ADMIN_EMAIL = "weeldridge09@gmail.com";
+      const meta = user.user_metadata || {};
+      const contractsAccepted = !!(meta.tos_accepted && meta.privacy_accepted);
+      if (!contractsAccepted && (user.email || "").trim().toLowerCase() !== ADMIN_EMAIL) {
+        document.getElementById("contract-gate-page").classList.remove("hidden");
+        return;
+      }
+
       sessionNote.textContent = user.email ? "Signed in as " + user.email + "." : "";
       page.classList.remove("hidden");
       loadClientInvoices(user);

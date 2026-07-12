@@ -143,6 +143,19 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: "Your session is invalid. Please sign in again." });
   }
 
+  // ---- 1b. Contracts gate: the caller must have accepted the Terms of Service
+  // + Privacy Policy (recorded on their auth metadata at onboarding or via the
+  // dashboard Contracts tab). Mirrors the client-side gate so a direct API call
+  // can't create a charge without acceptance. The admin is exempt.
+  {
+    const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com").trim().toLowerCase();
+    const callerMeta = (caller && caller.user_metadata) || {};
+    const contractsAccepted = !!(callerMeta.tos_accepted && callerMeta.privacy_accepted);
+    if (!contractsAccepted && (caller.email || "").trim().toLowerCase() !== ADMIN_EMAIL) {
+      return res.status(403).json({ error: "You must accept the Terms of Service and Privacy Policy before making a payment." });
+    }
+  }
+
   // ---- 2. Parse + validate the body. ----
   let body;
   try {

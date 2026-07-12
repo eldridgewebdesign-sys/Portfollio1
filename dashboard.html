@@ -600,6 +600,25 @@
       font-size:clamp(1.8rem,5vw,2.4rem);color:#11364c;margin-bottom:.7rem}
     .maint-card p{font-family:'Playfair Display',sans-serif;color:#2c5468;font-size:1rem;line-height:1.65;margin:0}
 
+    /* ── Contracts acceptance (Privacy/Contracts tabs + blocking gate) ─────── */
+    /* The gate reveals over the (already-shown) dashboard, so unlike the
+       maintenance screen it needs its own scrim to fully obscure it. */
+    #contractsGate{overflow-y:auto;background:rgba(11,40,55,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+    .cg-card{max-width:560px;text-align:left}
+    .cg-card h1{text-align:center}
+    .cg-links{font-family:'Playfair Display',sans-serif;color:#2c5468;font-size:.9rem;line-height:1.6;margin:.4rem 0 0}
+    .cg-links a,.cx-check a,#tab-contracts .f-link{color:#0f6b79}
+    .cg-actions{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.1rem}
+    .cg-actions .ws-btn{margin-top:0}
+    .cx-checks{display:flex;flex-direction:column;gap:.55rem;margin:1rem 0}
+    .cx-check{display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;font-size:1rem;color:var(--ink);
+      background:rgba(255,255,255,.5);border:1px solid rgba(17,54,76,.18);border-radius:10px;padding:.7rem .85rem;line-height:1.5}
+    .cx-check:hover{border-color:var(--turq)}
+    .cx-check input{accent-color:#15707f;width:1.15rem;height:1.15rem;flex-shrink:0;margin-top:.15rem}
+    .cx-check:has(input:checked){border-color:#15707f;background:rgba(16,182,204,.16)}
+    .cx-check:has(input:focus-visible){outline:2px solid var(--turq);outline-offset:2px}
+    body.contracts-locked{overflow:hidden}
+
     /* ── Toolbar (search + filters + export) ──────────────────────────────── */
     .adm-toolbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
     .adm-toolbar input.adm-tsearch,.adm-toolbar select{background:var(--adm-input);
@@ -871,6 +890,27 @@
     </div>
   </div>
 
+  <!-- Contracts gate — blocks the whole dashboard until the client accepts the
+       Terms of Service + Privacy Policy. Mirrors the maintenance-screen pattern.
+       Acceptance is stored on the user's Supabase auth metadata (see
+       initContractsGate); the admin never reaches this (admin gate returns first). -->
+  <div class="maint-screen hidden" id="contractsGate" role="alertdialog" aria-modal="true" aria-labelledby="cg-title" aria-hidden="true">
+    <div class="maint-card cg-card">
+      <h1 id="cg-title">One quick step</h1>
+      <p>You must accept the Terms of Service and Privacy Policy to continue using the application and any other products and services.</p>
+      <div class="cx-checks">
+        <label class="cx-check"><input type="checkbox" id="cg-tos" /> <span>I have read and accept the Terms of Service.</span></label>
+        <label class="cx-check"><input type="checkbox" id="cg-privacy" /> <span>I have read and accept the Privacy Policy.</span></label>
+      </div>
+      <p class="cg-links">Read the documents: <a href="/terms" target="_blank" rel="noopener">Terms of Service</a> &middot; <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></p>
+      <p class="bill-error hidden" id="cg-err" role="alert"></p>
+      <div class="cg-actions">
+        <button class="ws-btn" id="cg-accept" type="button" disabled>Accept &amp; Continue</button>
+        <button class="ws-btn ghost" id="cg-signout" type="button">Sign out</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Stays hidden until a logged-in session is confirmed (no flash of the
        dashboard before the redirect to login.html runs). -->
   <main class="portal hidden" id="dash">
@@ -887,6 +927,7 @@
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="domain">Domain</button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="messages">Messages<span class="nav-badge hidden" id="msg-badge">0</span></button>
         <button class="nav-item"        role="tab" aria-selected="false" data-tab="privacy">Privacy</button>
+        <button class="nav-item"        role="tab" aria-selected="false" data-tab="contracts">Contracts</button>
       </nav>
       <button class="signout" id="signout">Sign Out</button>
     </aside>
@@ -1082,7 +1123,33 @@
         <h2 class="tab-title">Privacy</h2>
         <p class="field" id="priv-status">…</p>
         <p class="warn hidden" id="priv-warning">If terms of service are not agreed upon, WebSharke reserves the right to take down any and every product regardless of payment.</p>
-        <a class="ws-btn" id="tos-btn" role="button">terms of service</a>
+        <p class="field">Read our <a class="f-link" href="/terms" target="_blank" rel="noopener">Terms of Service</a> and <a class="f-link" href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. You can accept or review your acceptance under the <a class="f-link" href="#" id="go-contracts" role="button">Contracts</a> tab.</p>
+        <a class="ws-btn" id="tos-btn" role="button">View Terms of Service</a>
+      </div>
+
+      <!-- 5b ── Contracts — accept / review the Terms of Service + Privacy Policy.
+           Acceptance is stored on the user's auth metadata. Until accepted, the
+           blocking gate above covers the dashboard and purchases are blocked. -->
+      <div class="tab" id="tab-contracts" role="tabpanel">
+        <h2 class="tab-title">Contracts</h2>
+
+        <!-- Shown once accepted: the record. -->
+        <div id="cx-done" class="hidden">
+          <p class="field" id="cx-done-text">You have accepted the Terms of Service and Privacy Policy.</p>
+          <p class="field">Review the documents any time: <a class="f-link" href="/terms" target="_blank" rel="noopener">Terms of Service</a> &middot; <a class="f-link" href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+        </div>
+
+        <!-- Shown until accepted: the acceptance form. -->
+        <div id="cx-form">
+          <p class="field">You must accept the Terms of Service and Privacy Policy to continue using the application and any other products and services.</p>
+          <div class="cx-checks">
+            <label class="cx-check"><input type="checkbox" id="cx-tos" /> <span>I have read and accept the Terms of Service.</span></label>
+            <label class="cx-check"><input type="checkbox" id="cx-privacy" /> <span>I have read and accept the Privacy Policy.</span></label>
+          </div>
+          <p class="field">Read: <a class="f-link" href="/terms" target="_blank" rel="noopener">Terms of Service</a> &middot; <a class="f-link" href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></p>
+          <p class="bill-error hidden" id="cx-err" role="alert"></p>
+          <button class="ws-btn" id="cx-accept" type="button" disabled>Accept &amp; Continue</button>
+        </div>
       </div>
 
       <!-- 6 ── Messages — edit-request updates + direct messages from the team.
@@ -1447,6 +1514,117 @@
       });
     });
 
+    // ---- Contracts (Terms of Service + Privacy Policy) acceptance -------
+    // Acceptance is stored on the user's Supabase auth metadata
+    // (tos_accepted + privacy_accepted). New signups set it at onboarding;
+    // anyone without it is blocked by the gate below until they accept, and
+    // purchases (payment.html) are refused too. The admin never reaches this
+    // (the admin gate returns earlier in the page-load flow).
+    let contractsOK = false;
+    let contractsUser = null;
+
+    function contractsAccepted(u) {
+      const m = (u && u.user_metadata) || {};
+      return !!(m.tos_accepted && m.privacy_accepted);
+    }
+
+    // Reflect the current acceptance state in the Contracts + Privacy tabs.
+    function refreshContractsUI() {
+      const accepted = contractsOK;
+      const cxForm = $("cx-form"), cxDone = $("cx-done");
+      if (cxForm && cxDone) {
+        cxForm.classList.toggle("hidden", accepted);
+        cxDone.classList.toggle("hidden", !accepted);
+        if (accepted && $("cx-done-text")) {
+          const when = contractsUser && contractsUser.user_metadata && contractsUser.user_metadata.contracts_accepted_at;
+          let txt = "You have accepted the Terms of Service and Privacy Policy.";
+          if (when) { const d = new Date(when); if (!isNaN(d.getTime())) txt = "You accepted the Terms of Service and Privacy Policy on " + d.toLocaleDateString() + "."; }
+          $("cx-done-text").textContent = txt;
+        }
+      }
+      if ($("priv-status")) {
+        $("priv-status").textContent = accepted
+          ? "You are currently up to date on the Terms of Service and Privacy Policy."
+          : "You have not yet accepted the Terms of Service and Privacy Policy.";
+        $("priv-warning").classList.toggle("hidden", accepted);
+      }
+    }
+
+    // Persist acceptance to auth metadata, then unlock the app.
+    async function acceptContracts(btn, tosId, privId, errEl) {
+      if (errEl) { errEl.textContent = ""; errEl.classList.add("hidden"); }
+      if (!$(tosId).checked || !$(privId).checked) {
+        if (errEl) { errEl.textContent = "Please check both boxes to accept the Terms of Service and Privacy Policy."; errEl.classList.remove("hidden"); }
+        return;
+      }
+      const original = btn.textContent;
+      btn.disabled = true; btn.textContent = "Saving…";
+      try {
+        const meta = (contractsUser && contractsUser.user_metadata) || {};
+        const { data, error } = await db.auth.updateUser({
+          data: Object.assign({}, meta, {
+            tos_accepted: true,
+            privacy_accepted: true,
+            contracts_accepted_at: new Date().toISOString(),
+          }),
+        });
+        if (error) throw error;
+        if (data && data.user) contractsUser = data.user;
+        contractsOK = true;
+        const gate = $("contractsGate");
+        if (gate) { gate.classList.add("hidden"); gate.setAttribute("aria-hidden", "true"); }
+        document.body.classList.remove("contracts-locked");
+        refreshContractsUI();
+      } catch (err) {
+        btn.disabled = false; btn.textContent = original;
+        if (errEl) { errEl.textContent = (err && err.message) || "Could not save your acceptance right now. Please try again."; errEl.classList.remove("hidden"); }
+      }
+    }
+
+    function initContractsGate(user) {
+      contractsUser = user;
+      contractsOK = contractsAccepted(user);
+
+      // Contracts tab form.
+      const cxAccept = $("cx-accept");
+      if (cxAccept) {
+        const enable = () => { cxAccept.disabled = !($("cx-tos").checked && $("cx-privacy").checked); };
+        ["cx-tos", "cx-privacy"].forEach((id) => $(id).addEventListener("change", enable));
+        enable();
+        cxAccept.addEventListener("click", () => acceptContracts(cxAccept, "cx-tos", "cx-privacy", $("cx-err")));
+      }
+      // Blocking gate form.
+      const cgAccept = $("cg-accept");
+      if (cgAccept) {
+        const enableG = () => { cgAccept.disabled = !($("cg-tos").checked && $("cg-privacy").checked); };
+        ["cg-tos", "cg-privacy"].forEach((id) => $(id).addEventListener("change", enableG));
+        enableG();
+        cgAccept.addEventListener("click", () => acceptContracts(cgAccept, "cg-tos", "cg-privacy", $("cg-err")));
+      }
+      // Gate's "Sign out" (so a user who won't accept isn't trapped).
+      const cgOut = $("cg-signout");
+      if (cgOut) cgOut.addEventListener("click", async () => {
+        try { await db.auth.signOut(); } catch (e) { /* ignore */ }
+        document.cookie = "ws_session=; path=/; SameSite=Lax; Secure; max-age=0";
+        window.location.replace("/login");
+      });
+      // Privacy tab → Contracts tab shortcut.
+      const goC = $("go-contracts");
+      if (goC) goC.addEventListener("click", (e) => {
+        e.preventDefault();
+        const b = document.querySelector('.nav-item[data-tab="contracts"]');
+        if (b) b.click();
+      });
+
+      // Not accepted → show the blocking gate over the dashboard.
+      if (!contractsOK) {
+        const gate = $("contractsGate");
+        if (gate) { gate.classList.remove("hidden"); gate.setAttribute("aria-hidden", "false"); }
+        document.body.classList.add("contracts-locked");
+      }
+      refreshContractsUI();
+    }
+
     // ---- Sign out -------------------------------------------------------
     $("signout").addEventListener("click", async () => {
       try { await db.auth.signOut(); } catch (e) { /* ignore */ }
@@ -1560,11 +1738,10 @@
       $("domReqSend").addEventListener("click", submit);
     })();
 
-    // ---- Terms of service: contact support (no self-serve flow yet). ------
+    // ---- Terms of service: open the live document in a new tab. ----------
     $("tos-btn").addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href =
-        "mailto:" + SUPPORT_EMAIL + "?subject=" + encodeURIComponent("WebSharke — terms of service request");
+      window.open("/terms", "_blank", "noopener");
     });
 
     // ---- Subscription management now lives on the Subscriptions tab --------
@@ -2016,14 +2193,10 @@
         domEmpty.classList.remove("hidden");
       }
 
-      // 5) Privacy ------------------------------------------------------
-      // No terms column exists yet; default optimistic (they agreed at
-      // onboarding). Reads inquiry.terms_agreed if/when that column exists.
-      const upToDate = inquiry.terms_agreed === undefined ? true : !!inquiry.terms_agreed;
-      $("priv-status").textContent = upToDate
-        ? "You are currently up to date on the terms of service."
-        : "You are currently not up to date on the terms of service.";
-      $("priv-warning").classList.toggle("hidden", upToDate);
+      // 5) Privacy / Contracts -----------------------------------------
+      // Acceptance state comes from the user's auth metadata (see the
+      // contracts gate). Reflect it in the Privacy + Contracts tabs.
+      refreshContractsUI();
     }
 
     // ---- Render the Business info section from project_inquiries --------
@@ -2512,6 +2685,11 @@
       } catch (e) { /* fail open */ }
 
       document.getElementById("dash").classList.remove("hidden");
+
+      // ---- Contracts gate -------------------------------------------
+      // Block the dashboard + purchases until the client has accepted the
+      // Terms of Service + Privacy Policy (stored on their auth metadata).
+      initContractsGate(user);
 
       // Most-recent intake row for this user (business + contact details).
       // Track a load failure separately so the Project details section can

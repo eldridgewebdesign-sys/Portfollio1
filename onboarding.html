@@ -462,6 +462,22 @@
           </div>
         </section>
 
+        <!-- ============ SECTION 5 — TERMS & PRIVACY (required) ============ -->
+        <!-- Both must be accepted to create the account. The acceptance is written
+             into the new user's Supabase Auth metadata at signUp (see below), which
+             the dashboard + payment pages read to gate the app and purchases. -->
+        <section class="section" id="agree-section">
+          <div class="section-head">
+            <h2 class="section-title">Terms &amp; Privacy</h2>
+          </div>
+          <span class="hint">You must accept both to create your account.</span>
+          <div class="checks" id="agreements" style="grid-template-columns:1fr;gap:.55rem">
+            <label class="check"><input type="checkbox" id="agree_tos" /> I have read and accept the Terms of Service.</label>
+            <label class="check"><input type="checkbox" id="agree_privacy" /> I have read and accept the Privacy Policy.</label>
+          </div>
+          <span class="hint" style="margin-top:.55rem">Read the full documents: <a href="/terms" target="_blank" rel="noopener" style="color:#0f6b79;text-decoration:underline">Terms of Service</a> &middot; <a href="/privacy" target="_blank" rel="noopener" style="color:#0f6b79;text-decoration:underline">Privacy Policy</a></span>
+        </section>
+
         <!-- ---------- Submit + status message ---------- -->
         <div class="submit-row">
           <button type="submit" id="submit-btn" class="btn">Create Account &amp; Submit</button>
@@ -607,6 +623,7 @@
       // Clear previous highlights everywhere we might mark.
       document.querySelectorAll(".fi.invalid").forEach((el) => el.classList.remove("invalid"));
       document.getElementById("payment_embedded").classList.remove("invalid");
+      document.getElementById("agreements").classList.remove("invalid");
 
       const pw = document.getElementById("password").value;   // not trimmed
       const cpw = document.getElementById("confirm_password").value;
@@ -670,6 +687,17 @@
         }
       }
 
+      // Terms of Service + Privacy Policy — both must be accepted.
+      const tosOk = document.getElementById("agree_tos").checked;
+      const privOk = document.getElementById("agree_privacy").checked;
+      if (!tosOk || !privOk) {
+        document.getElementById("agreements").classList.add("invalid");
+        const el = document.getElementById(!tosOk ? "agree_tos" : "agree_privacy");
+        if (!firstInvalid) firstInvalid = el;
+        if (message === "Please fill in all required fields with valid information.")
+          message = "Please accept the Terms of Service and Privacy Policy to continue.";
+      }
+
       if (firstInvalid) {
         try { firstInvalid.focus(); firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
         showMessage(message, "error");
@@ -677,6 +705,12 @@
       }
       return true;
     }
+
+    // Clear the agreement error highlight as soon as either box is ticked.
+    ["agree_tos", "agree_privacy"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", () => document.getElementById("agreements").classList.remove("invalid"));
+    });
 
     // ---- SUBMIT — create account, save intake, then route the client. ----
     form.addEventListener("submit", async (e) => {
@@ -688,9 +722,18 @@
       submitBtn.textContent = "Creating your account…";
 
       // 1. CREATE THE AUTH USER -------------------------------------
+      // Record the Terms + Privacy acceptance on the new user's auth metadata.
+      // The dashboard + payment pages read these to gate the app and purchases.
       const { data: auth, error: signUpError } = await db.auth.signUp({
         email: val("email"),
         password: document.getElementById("password").value,
+        options: {
+          data: {
+            tos_accepted: true,
+            privacy_accepted: true,
+            contracts_accepted_at: new Date().toISOString(),
+          },
+        },
       });
 
       if (signUpError) {
