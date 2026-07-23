@@ -6,4 +6,7 @@
 !.env.example
 
 .claude.md
-CLAUDE.md
+CLAUDE.mdnode_modules/
+.vercel/
+dist/
+.env
