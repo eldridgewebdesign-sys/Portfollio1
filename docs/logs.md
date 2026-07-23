@@ -6,6 +6,68 @@
 
 ---
 
+## 2026-07-17 - Developer (Optimization) - full-site-optimization-pass
+
+Action:
+Full-project optimization pass (multi-agent analysis; every change adversarially verified against the
+repo constraints before applying). Visuals, wording, routes, price IDs, and all live Stripe/Supabase
+flows unchanged.
+
+**Deploy hygiene — `.vercelignore`:** excluded ~15.5MB of unreferenced files from the deploy: `Examples/`
+(6.6MB design screenshots), `fonts/Examples/` (incl. a personal PDF that was publicly fetchable —
+privacy fix), the three unused wood-plank PNGs (7.7MB, leftovers of the glass-panel redesign),
+`images/Laptop/teardown-3.png`, unused root font weights (cormorantgaramond 500i/600/700, mulish-500),
+the Distillery Display dev/specimen files, the `prompt.md` scratch files, vendor READMEs, and
+`node_modules`. Files stay in git — only the deploy skips them.
+
+**Caching — `vercel.json`:** added Cache-Control blocks: `/fonts` woff2/otf + Animations vendor fonts
+1y immutable; `/images` 1d + 7d stale-while-revalidate; `/js/vendor` 7d; `/js/supabase-config.js` 1h.
+(Note: a future supabase.min.js version bump should rename the file + update the six script tags so the
+7d cache can't mask it.) Existing engineering + security headers untouched.
+
+**Homepage (`index.html`):** the LCP background now serves `images/Site_bkg.webp` (73KB) via
+`<picture>` with the 165KB `Site_bkg.jpg` kept as the non-WebP fallback (pixel-identical — verified by
+canvas sampling in-browser); the preload switched to the webp with a `type="image/webp"` guard; added
+preloads for the two above-the-fold fonts (Distillery Regular, Playfair 400); replaced the jsdelivr
+supabase-js CDN tag with the vendored `js/vendor/supabase.min.js` (this page was the site's only
+non-Stripe CDN holdout); `loading="lazy"` + `decoding="async"` + intrinsic `width`/`height` on the three
+Why-WebSharke icons; intrinsic dimensions on the loader logo and `#bg`.
+
+**Dashboard (`dashboard.html`):** Supabase preconnect + `supabase.min.js` preload in `<head>`; the two
+independent boot queries (`project_inquiries` + `subscriptions`) now start concurrently
+(`Promise.resolve()` on the builders, each still awaited in its own unchanged try/catch); removed the
+two author-marked TEMP debug console.logs and the dead `cinvDate()` copy (the payment/prev-inv copies
+are live and untouched); the admin website-preview `<img>` gained lazy/decoding attrs.
+
+**Other pages:** Supabase preconnect on `payment.html` (+ Stripe.js preload), `prev-inv.html`,
+`success.html`; the two extensionful links (`onboarding.html` ↔ `how-to-sheets.html`) now use the
+extensionless `/how-to-sheets` / `/onboarding` routes (they were 308-redirecting); removed the
+double-download `crossorigin` from the engineering demo's Main-Logo image preload; `loading="lazy"` on
+the Animations page's two static-fallback figures.
+
+**API (`api/checkout.js`):** additive `^price_[A-Za-z0-9]+$` format check before the Stripe call
+(reuses the existing 400 message). Every "memoize the per-request Supabase client" finding was
+**rejected, not applied** — `createClient` does no network I/O, so it's a zero-benefit refactor of live
+payment code.
+
+**Verified:** homepage driven in Chrome against a local server — webp background renders
+pixel-identically, fonts load, the vendored supabase client initializes, lazy icons fetch, zero console
+errors; every inline `<script>` on all edited pages passes `node --check`; `vercel.json` is valid JSON
+(non-capturing regex groups only — path-to-regexp-safe); `node --check api/checkout.js` passes.
+No commit (none requested).
+
+### Deliberately NOT done (owner decisions — for Wyatt)
+- `Animations/` + `images/Laptop/` still deploy (~1.1MB): retiring the 2D teardown prototype is the
+  D-002 owner decision, and excluding one without the other would 404 the page's images.
+- The personal PDF no longer deploys but remains in **git history**; scrubbing history is a separate,
+  destructive operation.
+- Report-only findings left alone: the webhook's unreachable `checkout.session.completed` branch (kept
+  as a harmless backstop), the dead `countRows()` helper in `api/admin.js`, the dormant GLB/KTX2
+  decoder stack in `engineering/vendor/` (kept for the Blender pipeline), and the unused
+  `RoomEnvironment.js` addon.
+
+---
+
 ## 2026-07-02 18:20 - Developer (Implementation) - homepage-featured-engineering
 
 Action:

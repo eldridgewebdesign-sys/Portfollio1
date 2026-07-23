@@ -43,7 +43,10 @@
       --ink-soft:#463c33;
       --cta-ink:#102536;
       --scrim:rgba(242,232,218,.72);
-      --wall-grad:linear-gradient(180deg, var(--wall-lit) 0%, var(--wall) 62%, var(--wall-shade) 100%);
+      /* Warm cream → beige with controlled depth: a soft light pool upper-right
+         (matching the key light's bearing) falling to a deeper corner lower-left.
+         Radial, not flat, so the machine sits in a lit space, not on a swatch. */
+      --wall-grad:radial-gradient(circle at 70% 35%, var(--wall-lit) 0%, var(--wall) 48%, var(--wall-shade) 100%);
     }
     /* ---- Fonts (D-004: the site's two families, self-hosted — no third family). ---- */
     @font-face{font-family:'Distillery Display';src:url('/fonts/distillery-display/DistilleryDisplay-Regular.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
@@ -125,7 +128,7 @@
   </script>
 
   <!-- 4. Preloads: the wordmark + the 2 font files (05 §8.2). -->
-  <link rel="preload" href="/images/Main-Logo.png" as="image" crossorigin>
+  <link rel="preload" href="/images/Main-Logo.png" as="image">
   <link rel="preload" href="/fonts/distillery-display/DistilleryDisplay-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/playfair-display/latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
 

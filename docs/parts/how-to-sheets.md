@@ -39,9 +39,12 @@ on phones. That's the whole page — nothing to break at runtime.
 
 ## Last five changes
 
-Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`. This page has one real
-change — its creation — so only that is listed.
+Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`. This page has two real
+changes, both listed.
 
+- **2026-07-17** — The back button now points to the extensionless `/onboarding`
+  route (was `onboarding.html`, which 308-redirected). _(Session:
+  `full-site-optimization-pass`.)_
 - **2026-06-30** — Created the file: a client-friendly, non-technical explainer of
   spreadsheet integrations (heading, lede, six example tiles, four "how it comes
   together" steps, and a back button to the onboarding form), matching the

@@ -6,6 +6,8 @@
   <link rel="icon" href="images/Tab-Logo.png" type="image/png" />
   <title>Dashboard — WebSharke</title>
   <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://pvamosrjqgzeuymwkruv.supabase.co" crossorigin />
+  <link rel="preload" href="js/vendor/supabase.min.js" as="script" />
 
   <style>
     /* Brand fonts — vendored locally in /fonts, no CDN (see docs/performance-log.md → google-fonts-cdn). */
@@ -1024,7 +1026,7 @@
              OWN rows only and NO insert/update/delete, and there are no editable
              controls here. Payment NEVER happens on the dashboard: "Pay Invoice"
              LINKS to /payment?invoice_id=… (payment.html), which runs the Stripe
-             Payment Element. The full history lives at /prev-inv. Classes/ids are
+             Payment Element. The full history lives at /payment. Classes/ids are
              namespaced `cinv-*` so they never collide with the admin builder's
              `.inv-*` (same file). Populated by loadClientInvoices(); independent of
              the subscription/hosting states above. -->
@@ -1046,7 +1048,7 @@
           <!-- Always available, even with no current invoice: the full invoice /
                payment history page. -->
           <div class="cinv-prev-wrap">
-            <a class="ws-btn ghost" id="cinv-prev-link" href="/prev-inv">View Previous Payments</a>
+            <a class="ws-btn ghost" id="cinv-prev-link" href="/payment">View Previous Payments</a>
           </div>
         </div>
       </div>
@@ -1059,7 +1061,7 @@
              • Change Payment Info → Stripe Customer Portal (secure card update).
              • Cancel Subscription → /api/subscriptions/cancel (ownership-checked
                server route; the browser never touches a Stripe secret key).
-             • Activate Subscription (pending only) → /payment?subscription_id=… .
+             • Activate Subscription (pending only) → /subscriptions?subscription_id=… .
            No subscriptions at all → "not hosting" + a "Request Hosting" PLACEHOLDER
            (client→admin messaging isn't built — it only shows an inline note). The
            Stripe portal is the one action here that can send the user off websharke.com. -->
@@ -2362,16 +2364,6 @@
       const n = Number(cents);
       return clientMoneyFmt.format((Number.isFinite(n) ? n : 0) / 100);
     }
-    // Format a date-only value ("YYYY-MM-DD") with no timezone shift.
-    function cinvDate(ymd) {
-      if (!ymd) return null;
-      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd));
-      if (!m) return fmtDate(ymd);
-      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-      return isNaN(d.getTime())
-        ? null
-        : d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-    }
     // Short human reference from the UUID (no invoice_number column exists yet).
     function cinvRef(id) {
       const s = String(id || "");
@@ -2602,7 +2594,7 @@
       const actions = cinvEl("div", "cinv-actions");
       if (SUB_PENDING.includes(status)) {
         const activate = cinvEl("a", "ws-btn cinv-pay", "Activate Subscription");
-        activate.href = "/payment?subscription_id=" + encodeURIComponent(sub.id);
+        activate.href = "/subscriptions?subscription_id=" + encodeURIComponent(sub.id);
         actions.appendChild(activate);
       } else if (SUB_CANCELABLE.includes(status)) {
         const changeBtn = cinvEl("button", "ws-btn", "Change Payment Info");
@@ -2659,7 +2651,6 @@
         return;
       }
       const user = authData.user;
-      console.log("[dashboard] logged-in user id:", user.id); // TEMP debug
 
       // ---- Admin gate ------------------------------------------------
       // Only the admin email gets the admin dashboard. This is a UX gate;
@@ -2694,15 +2685,28 @@
       // Most-recent intake row for this user (business + contact details).
       // Track a load failure separately so the Project details section can
       // show a clean error instead of an empty "none on file" state.
-      let inquiry = null;
-      let inquiryError = false;
-      try {
-        const { data: rows, error } = await db
+      // Both boot queries start together here — Promise.resolve() makes the
+      // thenable query builders execute immediately — and each is awaited in
+      // its existing try/catch below, so per-query error handling is unchanged.
+      const inquiryReq = Promise.resolve(
+        db
           .from("project_inquiries")
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-          .limit(1);
+          .limit(1)
+      );
+      const subsReq = Promise.resolve(
+        db
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+      );
+      let inquiry = null;
+      let inquiryError = false;
+      try {
+        const { data: rows, error } = await inquiryReq;
         if (error) throw error;
         inquiry = rows && rows[0] ? rows[0] : null;
       } catch (e) {
@@ -2718,11 +2722,7 @@
       let subRows = [];
       let subError = false;
       try {
-        const { data: rows, error } = await db
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
+        const { data: rows, error } = await subsReq;
         if (error) throw error;
         subRows = rows || [];
         sub = rows && rows[0] ? rows[0] : null;
@@ -2739,7 +2739,6 @@
           const withPrev = (rows || []).find((r) => r.preview_image && String(r.preview_image).trim());
           if (withPrev) sub.preview_image = withPrev.preview_image;
         }
-        console.log("[dashboard] subscription/domain query result:", { user_id: user.id, rows, domain: sub && sub.domain }); // TEMP debug
       } catch (e) { console.error("Could not load subscription:", e.message); subError = true; }
 
       // Project details read from the SAME `project_inquiries` row loaded above
@@ -3982,7 +3981,7 @@
       // Domain tab. Only offered for a saved website (needs an id to attach to).
       if (site.id) {
         const cur = site.preview_image
-          ? '<img src="' + esc(site.preview_image) + '" alt="" style="width:100%;max-width:340px;display:block;border-radius:10px;border:1px solid var(--adm-bd-2)" />'
+          ? '<img src="' + esc(site.preview_image) + '" alt="" loading="lazy" decoding="async" style="width:100%;max-width:340px;display:block;border-radius:10px;border:1px solid var(--adm-bd-2)" />'
           : '<p style="font-size:.78rem;color:var(--adm-muted);margin:0">No preview uploaded yet.</p>';
         h += '<div class="adm-section"><h4>Website preview image</h4>' +
           '<p style="font-size:.78rem;color:var(--adm-muted);line-height:1.5;margin:0 0 .7rem">Shown on the client’s Domain tab in place of the auto screenshot. Any size — it’s resized to ~1280px wide automatically.</p>' +

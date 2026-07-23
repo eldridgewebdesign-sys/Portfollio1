@@ -46,8 +46,10 @@ writes, no server calls.
 ## Last five changes
 
 Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`. This page is new and
-stable — only two real changes touch it; both are listed rather than padded.
+stable — only three real changes touch it; all are listed rather than padded.
 
+- **2026-07-17** — Added a `<head>` preconnect to the Supabase origin (hint only,
+  no behavior change). _(Session: `full-site-optimization-pass`.)_
 - **2026-06-27** — Read-only history card (`buildHistoryCard`) gained the shared
   billing-type / price-label helper block. _(Session: `recurring-invoice-price-labels`.)_
 - **2026-06-24** — Created the file: a new, login-gated read-only full

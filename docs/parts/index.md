@@ -30,8 +30,9 @@ Google Fonts CDN — vendored site-wide). A `:root` block defines an ocean palet
 (`--sand`, `--ink`, `--foam`, `--deep`, `--aqua`, `--warm`, etc.) "derived from
 the background image itself."
 
-**The ocean scene.** A single full-width background image (`#bg`,
-`images/Site_bkg.jpg`, preloaded `fetchpriority="high"` as the LCP) is anchored
+**The ocean scene.** A single full-width background image (`#bg`, a `<picture>`
+serving `images/Site_bkg.webp` with `Site_bkg.jpg` as the non-WebP fallback,
+preloaded `fetchpriority="high"` as the LCP) is anchored
 top and scrolled through. Layered on top are CSS-driven effects: `#snow` (marine
 snow motes, fixed, fade in only once `body.submerged`), `#fish` (fish + one shark
 silhouette built from two reusable inline SVG `<symbol>`s), and a drifting
@@ -65,8 +66,9 @@ parallax; a "fit background to content" IIFE that clamps `#bg` height to the
 footer bottom (so the tall image doesn't create a black void below the content);
 and a canvas-based favicon-glow generator.
 
-**Auth-aware nav (second script block).** Loads the supabase-js CDN then
-`js/supabase-config.js` (the shared `db` client), calls `db.auth.getSession()`,
+**Auth-aware nav (second script block).** Loads the vendored
+`js/vendor/supabase.min.js` then `js/supabase-config.js` (the shared `db`
+client), calls `db.auth.getSession()`,
 and sets `#auth-cta` to **Sign In** → `/login` for visitors or **View Dashboard**
 → `/dashboard` for a signed-in client; `db.auth.onAuthStateChange` keeps it in
 sync. This is the only dynamic/back-end touch on the page — no table reads,
@@ -76,6 +78,12 @@ no writes.
 
 Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`.
 
+- **2026-07-17** — Optimization pass: the LCP background now serves
+  `images/Site_bkg.webp` (73KB) via `<picture>` with `Site_bkg.jpg` kept as the
+  non-WebP fallback (pixel-identical, verified in-browser); the supabase-js CDN
+  tag was replaced with the vendored `js/vendor/supabase.min.js`; added preloads
+  for the two above-the-fold fonts; `loading="lazy"` + intrinsic `width`/`height`
+  on the Why-icons and logos. _(Session: `full-site-optimization-pass`.)_
 - **2026-07-02** — Added the `#featured` section (between `#why` and the footer):
   a single lazy, static preview card linking to `/engineering`, built from the
   demo's own opening-frame assets. _(Note: references `/engineering/assets/fallback/teardown-r0_*.v1.webp` read-only — if the demo re-captures stills under new names, update this card. Session: `homepage-featured-engineering`.)_
@@ -90,18 +98,13 @@ Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`.
 - **2026-06-27** — Gave the third "Why" column ("Honest") the same masked-wood
   plank frame as the Simplicity/Integration cards. _(Note: also removed by the
   frosted-glass redesign. Session: `honest-card-wood-frame`.)_
-- **2026-06-23** — Added a testing-disclaimer entry gate (four additive pieces,
-  no existing logic altered). _(Note: logged by a Designer session; the current
-  `index.html` no longer contains this gate, so it was removed in a later change
-  not captured in the log. Session: `testing-disclaimer-gate`.)_
-
 ## Notes & gotchas
 
 - This page's dynamic surface is tiny — only the auth-aware nav label. Don't
   refactor the `db.auth` logic without a clear bug; it's the same shared `db`
   client the auth pages use.
-- Load order matters in the last script block: supabase-js CDN before
-  `js/supabase-config.js` before any use of `db`.
+- Load order matters in the last script block: the vendored supabase bundle
+  before `js/supabase-config.js` before any use of `db`.
 - All images must live in `images/` and be referenced with the `images/` prefix
   (`Site_bkg.jpg`, `Main-Logo.png`, `Tab-Logo.png`, the `*-WW.png` icons).
 - The `#bg` height is clamped to content height by JS on load/resize/font-ready;

@@ -52,7 +52,7 @@ export function createMaterials() {
     color: 0xffffff, // the dark board tone lives entirely in the map
     metalness: 0.0, roughness: 0.55,
     map: T.pcbMap, roughnessMap: T.pcbRough,
-    envMapIntensity: 0.5,
+    envMapIntensity: 0.6, // a hair more room pickup so the board reads separate from the black internals
   });
 
   // -------- batteryMaterial: satin polymer pouch, soft against the metal --------
@@ -111,7 +111,9 @@ export function createMaterials() {
     aluShell: aluminumShellMaterial,
     aluDark: m(0x9fa2a6, 1.0, 0.40),          // hinge barrels, bosses, brackets
     glassBlack: glassMaterial,
-    panelDark: m(0x101214, 0.0, 0.40, 0.5),
+    // Display panel: still a dark surface, but a step smoother + more env so it
+    // carries a faint room reflection like a real screen, not flat black paint.
+    panelDark: m(0x101214, 0.0, 0.28, 0.9),
     wellDark: m(0x1f2124, 0.0, 0.65, 0.4),
     keycap: m(0x2b2d30, 0.0, 0.60, 0.5),
     button: m(0x3a3d42, 0.0, 0.45, 0.7),

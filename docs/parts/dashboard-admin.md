@@ -95,6 +95,9 @@ Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`. (Client-side changes
 are in [[dashboard-client]].) The four late-June admin sessions iterated on the
 same Payments/Invoices/Subscriptions tabs several times.
 
+- **2026-07-17** — The website-preview `<img>` in the admin drawer gained
+  `loading="lazy"` + `decoding="async"` (attributes only, markup string
+  otherwise unchanged). _(Session: `full-site-optimization-pass`.)_
 - **2026-06-30** — Admin drawer gained a read-only "Website Build Requirements"
   section (the onboarding extension answers) and the Onboarding CSV export gained
   the new intake columns. _(Session: `onboarding-feature-extensions-redesign`.)_
@@ -109,12 +112,6 @@ same Payments/Invoices/Subscriptions tabs several times.
 - **2026-06-30** — Reworked the "Payments" tab into a paid-only **Recent
   Payments** feed (paid invoices + subscriptions with a real charge). _(Note: also
   reworked by `invoice-status-workflow-recent-payments`. Session: `admin-recent-payments-paid-only`.)_
-- **2026-06-29** — Major declutter: Overview cut to three lists (removed the
-  Chart.js charts + `chart.umd.min.js`), Users/Onboarding/Payments preview rows
-  trimmed with full data kept via `exportColumns`, the drawer reorganised into
-  labelled sections with a red Danger Zone, and Settings replaced with the
-  reversible platform kill switch (`platform_settings` + `get_platform_status` /
-  `set_platform_disabled`). _(Session: admin declutter passes; see `docs/CHANGELOG.md`.)_
 
 ## Notes & gotchas
 

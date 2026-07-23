@@ -49,6 +49,10 @@ Stripe event back to the right Supabase user later.
 
 Newest first. From `docs/logs.md`.
 
+- **2026-07-17** — Additive input hardening: `priceId` must now match
+  `^price_[A-Za-z0-9]+$` before any Stripe call (same 400 + the existing error
+  message; saves a doomed Stripe API round-trip on garbage input). _(Session:
+  `full-site-optimization-pass`.)_
 - No recent diffs to this file are recorded — across the 2026-06-22→30 payment
   sessions it's repeatedly listed under "NOT touched" and used as the **baseline**
   that newer routes copy (e.g. `api/invoices/pay.js` "mirrors `api/checkout.js`";

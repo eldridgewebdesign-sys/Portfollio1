@@ -21,36 +21,51 @@ export function createRenderer(canvas, q, msaa, captureFlag) {
   return renderer;
 }
 
-// Lighting rig (05 §6.3): one warm key (the only shadow caster), one wall-colored
-// bounce fill, IBL as the ambient term. No AmbientLight, no rim, no cool fill.
+// Lighting rig (product-visualization pass): one warm key (the only shadow
+// caster), one subtle cool fill that rakes the aluminum chamfers, and a low
+// hemisphere term so the dark internals never crush into one black mass. IBL
+// still carries the metal reflections; these lights carry the diffuse read.
 export function createScene(q) {
   const scene = new THREE.Scene(); // background stays null — the wall is CSS
 
+  // Warm primary. Raised elevation (same right-rear azimuth as the env window)
+  // so the cast shadow is a short pool under the machine rather than a long
+  // hard streak across the page; shadow.radius softens the PCF edge.
   const keyLight = new THREE.DirectionalLight(0xfff3dd, 2.4);
-  keyLight.position.set(2.0, 2.05, -1.4);
+  keyLight.position.set(1.6, 2.9, -1.1);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(q.shadowMap, q.shadowMap);
-  keyLight.shadow.camera.left = -0.45;
-  keyLight.shadow.camera.right = 0.45;
-  keyLight.shadow.camera.top = 0.45;
-  keyLight.shadow.camera.bottom = -0.45;
+  keyLight.shadow.radius = 5;            // soft PCF penumbra (was the default 1 = crisp)
+  keyLight.shadow.camera.left = -0.55;
+  keyLight.shadow.camera.right = 0.55;   // a touch wider so lifted parts keep their
+  keyLight.shadow.camera.top = 0.55;     // contact shadow inside the frustum, and the
+  keyLight.shadow.camera.bottom = -0.55; // larger frustum spreads texels = softer still
   keyLight.shadow.camera.near = 0.05;
   keyLight.shadow.camera.far = 8;
   keyLight.shadow.bias = -0.0003;
-  keyLight.shadow.normalBias = 0.02;
+  keyLight.shadow.normalBias = 0.03;     // nudged up to keep the softer edge acne-free
   scene.add(keyLight);
   scene.add(keyLight.target); // target defaults to the origin = laptop_root
 
-  const bounceFill = new THREE.DirectionalLight(0xe9ddd1, 0.6);
+  // Cool fill — low, camera-front-left. Defines the aluminum edges with a
+  // subtle cool tint against the warm key without lifting the overall exposure.
+  const bounceFill = new THREE.DirectionalLight(0xd7dde4, 0.55);
   bounceFill.position.set(-1.6, 0.9, 1.2);
   scene.add(bounceFill);
 
-  // Ground rig (D-012 geometry; opacity graded 0.35 → 0.30 in the slimming
-  // pass — a lighter contact shadow reads the closed machine as sitting low
-  // and light on the surface).
+  // Soft ambient — warm sky over a cool-dark floor, kept low. Metals barely
+  // register it (no diffuse term), so the silver chassis is not washed out;
+  // the matte internals (board, battery, speakers, plastics) gain just enough
+  // floor to stay legible instead of blending into flat black.
+  const hemiFill = new THREE.HemisphereLight(0xf3ead9, 0x3a3f45, 0.35);
+  scene.add(hemiFill);
+
+  // Ground rig (D-012 geometry; opacity softened 0.30 → 0.20 in the product
+  // pass — a lighter contact shadow reads the machine as sitting low and light
+  // on the surface, and never darkens the beige behind the labels).
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(1.2, 1.2),
-    new THREE.ShadowMaterial({ opacity: 0.30 })
+    new THREE.ShadowMaterial({ opacity: 0.20 })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = 0;
@@ -58,7 +73,7 @@ export function createScene(q) {
   ground.name = 'ground_shadow';
   scene.add(ground);
 
-  return { scene, keyLight, bounceFill, ground };
+  return { scene, keyLight, bounceFill, hemiFill, ground };
 }
 
 // Environment / IBL (05 §6.4). The production path loads studio-warm.v1.hdr;

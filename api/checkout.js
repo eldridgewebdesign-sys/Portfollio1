@@ -84,6 +84,9 @@ module.exports = async (req, res) => {
     if (!priceId || typeof priceId !== "string") {
       return res.status(400).json({ error: "A valid priceId is required." });
     }
+    if (!/^price_[A-Za-z0-9]+$/.test(priceId)) {
+      return res.status(400).json({ error: "A valid priceId is required." });
+    }
 
     // Identity comes from the verified token, not the request body. If the body
     // carries a userId it must match the caller (defence in depth).

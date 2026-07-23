@@ -95,6 +95,11 @@ or service-role key is ever on this page.**
 Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`. (This is the
 client-side history; admin-side changes are in [[dashboard-admin]].)
 
+- **2026-07-17** — Perf pass: Supabase preconnect + vendored `supabase.min.js`
+  preload in `<head>`; the two boot queries (`project_inquiries` +
+  `subscriptions`) now start concurrently (each still awaited in its own
+  unchanged try/catch); removed the two TEMP debug console.logs and the dead
+  `cinvDate()` copy. _(Session: `full-site-optimization-pass`.)_
 - **2026-06-30** — Project details + Business info tabs now surface the new
   onboarding-extension fields, with a hide-empty helper so answered questions
   show and removed/legacy ones collapse. _(Session: `onboarding-feature-extensions-redesign`.)_
@@ -109,8 +114,6 @@ client-side history; admin-side changes are in [[dashboard-admin]].)
   `invoice-status-workflow-recent-payments`.)_
 - **2026-06-27** — Client Invoices-tab summary (`buildCurrentInvoiceCard`) gained
   shared billing-type / recurring price labels. _(Session: `recurring-invoice-price-labels`.)_
-- **2026-06-24** — Added the `recurringLabel()` helper and made the (then) Hosting
-  tab 3-state (active-with-recurring / pending / none). _(Session: `custom-recurring-subscriptions`.)_
 
 ## Notes & gotchas
 

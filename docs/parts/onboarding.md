@@ -79,6 +79,9 @@ Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`. This page has three
 real logged changes (an older bulk commit also touched it during the
 space-background → ocean rework, but isn't cleanly session-attributed).
 
+- **2026-07-17** — The "How spreadsheets work" help link now points to the
+  extensionless `/how-to-sheets` route (was `how-to-sheets.html`, which
+  308-redirected). _(Session: `full-site-optimization-pass`.)_
 - **2026-06-30** — Full rewrite into the feature-driven intake form: the four
   "extensions" checkboxes, the conditional Feature Details cards, the repeatable
   product blocks, and the rebuilt `validate()` + `inquiry` insert. Account

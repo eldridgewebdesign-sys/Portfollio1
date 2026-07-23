@@ -127,10 +127,8 @@ body.ready #hero .anim{opacity:1;transform:none}
 .why-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.5rem,2.6vw,2.4rem);max-width:1100px;margin:clamp(3rem,5vw,4.2rem) auto 0;align-items:stretch}
 /* frosted glass card — semi-transparent dark teal that blurs the ocean behind it */
 .why-col{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(2.2rem,3.2vw,3rem) clamp(1.5rem,2.4vw,2.2rem) clamp(2.4rem,3.4vw,3.2rem);border-radius:20px;background:linear-gradient(160deg,rgba(14,49,62,.46),rgba(6,27,37,.34));backdrop-filter:blur(15px) saturate(135%);-webkit-backdrop-filter:blur(15px) saturate(135%);box-shadow:inset 0 1px 0 rgba(173,224,233,.22),0 18px 48px rgba(2,12,20,.42);transition:transform .55s cubic-bezier(.16,1,.3,1),box-shadow .55s cubic-bezier(.16,1,.3,1)}
-/* 1px gradient frame — brighter at the top edge, softer toward the bottom, like light catching a submerged surface */
-.why-col::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(180deg,rgba(150,229,242,.62),rgba(98,182,198,.20) 42%,rgba(98,182,198,.07));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;pointer-events:none;transition:background .55s}
 /* thin-line underwater UI icon above each header */
-.why-ic{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;margin-bottom:1.15rem;color:var(--aqua)}
+.why-ic{display:inline-flex;align-items:center;justify-content:center;width:148px;height:148px;margin-bottom:1.15rem;color:var(--aqua)}
 .why-ic svg{width:100%;height:100%;display:block}
 /* headers: cream display type */
 .why-col h3{font-family:'Distillery Display','Playfair Display',serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(1.45rem,2.2vw,1.85rem);color:#efe6d2;margin-bottom:1.05rem}
@@ -138,7 +136,6 @@ body.ready #hero .anim{opacity:1;transform:none}
 .why-col p{font-family:'Playfair Display',sans-serif;font-weight:400;color:rgba(224,238,240,.82);font-size:.96rem;line-height:1.78;max-width:34ch;margin:0 auto;text-shadow:0 1px 2px rgba(2,12,20,.45)}
 /* hover: the card floats gently upward */
 .why-col:hover{transform:translateY(-8px);box-shadow:inset 0 1px 0 rgba(173,224,233,.3),0 30px 62px rgba(2,12,20,.5)}
-.why-col:hover::before{background:linear-gradient(180deg,rgba(170,236,247,.78),rgba(98,182,198,.26) 42%,rgba(98,182,198,.09))}
 
 /* ── FEATURED — a window into /engineering ──────────────────────────────────
    The card recreates the engineering demo's opening frame exactly: its wall
@@ -235,8 +232,8 @@ body.lock{overflow:hidden;height:100vh}
   <div class="wrap">
     <h2 class="sec-title rv">How It Works</h2>
     <div class="how-body">
-      <p class="rv d1">At WebSharke, we build your whole site and keep it running. Frontend, backend, security, all of it, all in one place. No agency price tag, no DIY headache.</p>
-      <p class="rv d2">Right now small businesses get two bad options. Option one: pay an agency two grand for a pretty site, then get stuck with a clunky backend and bills from some other company you've never met. Option two: wrestle with Wix or GoDaddy yourself, which always looks easy until you're deep in it and nothing lines up.</p>
+      <p class="rv d1">At WebSharke, we build your whole site and keep it running. Frontend, backend, security, all of it, all in one place.</p>
+      <p class="rv d2">Our sites don't just look pretty; they are built on functionality so that your clients get the best experience possible.</p>
       <p class="how-close rv d3">Fill out the form. Pick the plan. I take it from there.</p>
     </div>
   </div>
@@ -248,17 +245,17 @@ body.lock{overflow:hidden;height:100vh}
     <h2 class="sec-title rv">Why WebSharke</h2>
     <div class="why-cols">
       <div class="why-col rv d1">
-        <span class="why-ic" aria-hidden="true"><img src="images/Simplicity-WW.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+        <span class="why-ic" aria-hidden="true"><img src="images/Simplicity-WW-crop.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
         <h3>Simplicity</h3>
-        <p>Whether your a software developer or still own a phone, everything is designed to be as simple and as intuitive as possible</p>
+        <p>Whether your a software developer or still own a flip phone, everything is designed to be as simple and as intuitive as possible</p>
       </div>
       <div class="why-col rv d2">
-        <span class="why-ic" aria-hidden="true"><img src="images/Intigration-WW.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+        <span class="why-ic" aria-hidden="true"><img src="images/Intigration-WW-crop.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
         <h3>Integration</h3>
         <p>No need to scatter your site accross five different places. We do the heavy lifting for you so you can focus on what you do best.</p>
       </div>
       <div class="why-col rv d3">
-        <span class="why-ic" aria-hidden="true"><img src="images/Honesty-WW.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+        <span class="why-ic" aria-hidden="true"><img src="images/Honesty-WW-crop.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
         <h3>Honest</h3>
         <p>Not going to tell you to buy things that don't apply to your business. We tell you what everything does, the rest is up to you.</p>
       </div>

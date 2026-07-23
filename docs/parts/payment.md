@@ -68,6 +68,9 @@ the publishable key the server hands back at runtime.
 
 Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`.
 
+- **2026-07-17** — Added `<head>` hints only: preconnect to the Supabase origin +
+  a preload for Stripe.js (script order and behavior unchanged). _(Session:
+  `full-site-optimization-pass`.)_
 - **2026-06-30** — Corrected a stale comment claiming the invoice deep-link "also
   drives monthly/annual invoices" (invoices are one-time PaymentIntents; recurring
   is the separate `subscription_id` flow). _(Session: `separate-invoices-from-subscriptions`.)_
@@ -81,10 +84,6 @@ Newest first. From `docs/logs.md` and `docs/CHANGELOG.md`.
   from the old dashboard modal) and enabled the Pay button; a companion session
   added the `?invoice_id=` auto-open deep link. _(Note: "Pay invoice" was disabled
   until this. Session: `dashboard-pay-to-payment-page`, with `subscription-invoicing-gap`.)_
-- **2026-06-22** — Full page rewrite: replaced the entire Stripe **plan checkout**
-  (removed the publishable key, the `plans` array, and the live `price_…` IDs)
-  with the signed-in client's read-only invoices list. _(Note: this is when the
-  page stopped being the self-serve checkout. Session: `payment-page-invoices`.)_
 
 ## Notes & gotchas
 

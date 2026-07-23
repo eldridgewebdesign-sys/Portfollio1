@@ -430,7 +430,7 @@
                 <label class="lbl" for="spreadsheet_needs">What spreadsheets do you want connected to your site? <span class="req">*</span></label>
                 <span class="hint">Explain what data should be stored, displayed, edited, imported, exported, or synced.</span>
                 <textarea id="spreadsheet_needs" class="fi tall"></textarea>
-                <a class="help-link" href="how-to-sheets.html" target="_blank" rel="noopener">How spreadsheets work →</a>
+                <a class="help-link" href="/how-to-sheets" target="_blank" rel="noopener">How spreadsheets work →</a>
               </div>
             </div>
           </div>
@@ -480,7 +480,7 @@
 
         <!-- ---------- Submit + status message ---------- -->
         <div class="submit-row">
-          <button type="submit" id="submit-btn" class="btn">Create Account &amp; Submit</button>
+          <button type="submit" id="submit-btn" class="btn" disabled>Create Account &amp; Submit</button>
           <p id="message" class="msg" role="alert" aria-live="assertive"></p>
         </div>
       </form>
@@ -706,10 +706,15 @@
       return true;
     }
 
-    // Clear the agreement error highlight as soon as either box is ticked.
+    // Clear the agreement error highlight as soon as either box is ticked, and
+    // keep the submit button disabled until both are checked.
+    const updateAgreeState = () => {
+      document.getElementById("agreements").classList.remove("invalid");
+      submitBtn.disabled = !(document.getElementById("agree_tos").checked && document.getElementById("agree_privacy").checked);
+    };
     ["agree_tos", "agree_privacy"].forEach((id) => {
       const el = document.getElementById(id);
-      if (el) el.addEventListener("change", () => document.getElementById("agreements").classList.remove("invalid"));
+      if (el) el.addEventListener("change", updateAgreeState);
     });
 
     // ---- SUBMIT — create account, save intake, then route the client. ----

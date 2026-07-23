@@ -9,3 +9,45 @@ db
 
 # Local AI-assistant config (also gitignored) — belt-and-suspenders for CLI deploys.
 CLAUDE.md
+
+# Unused design-source screenshots — 6.6MB, referenced by nothing.
+/Examples
+
+# Font design sources incl. a personal PDF — must not be public.
+/fonts/Examples
+
+# Leftover "Why WebSharke" wood-plank frame images — removed in the glass-panel
+# redesign (see docs/logs.md), 7.7MB total, referenced by nothing in HTML/CSS/JS.
+/images/taller-plank.png
+/images/taller-plank2.png
+/images/long-plank.png
+
+# Unused reference art (see Animations/laptop-teardown/README.txt) — not loaded by any page.
+/images/Laptop/teardown-3.png
+
+# Unused font weights (the Animations page vendors its own copies).
+/fonts/cormorantgaramond-500i.woff2
+/fonts/cormorantgaramond-600.woff2
+/fonts/cormorantgaramond-700.woff2
+/fonts/mulish-500.woff2
+/Animations/laptop-teardown/vendor/fonts/cormorantgaramond-500i.woff2
+
+# Distillery Display dev/specimen files — pages load only Regular .woff2/.otf directly.
+/fonts/distillery-display/specimen.html
+/fonts/distillery-display/README.md
+/fonts/distillery-display/distillery-display.css
+/fonts/distillery-display/DistilleryDisplay-Regular.ttf
+/fonts/distillery-display/DistilleryDisplayAlt-Regular.ttf
+/fonts/distillery-display/DistilleryDisplayAlt-Regular.otf
+/fonts/distillery-display/DistilleryDisplayAlt-Regular.woff2
+
+# Local AI scratch notes — never deploy (unanchored: covers root and fonts/ copies).
+prompt.md
+
+# Vendor docs / dev notes — internal, no need to serve.
+/js/vendor/README.md
+/engineering/vendor/README.md
+/Animations/laptop-teardown/README.txt
+
+# Never deploy dependencies as static files (belt-and-suspenders; Vercel skips it anyway).
+node_modules

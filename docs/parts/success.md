@@ -44,6 +44,8 @@ plus the Supabase scripts and one IIFE.
 
 Newest first. From `docs/logs.md`.
 
+- **2026-07-17** — Added a `<head>` preconnect to the Supabase origin (hint only,
+  no behavior change). _(Session: `full-site-optimization-pass`.)_
 - **2026-06-23** — Rewritten from a static "Payment successful! Your plan is now
   active." (zero verification) into the neutral-by-default, verify-before-success page.
   Promotes to success only on Stripe's `?redirect_status=succeeded` or the in-page
