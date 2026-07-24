@@ -148,10 +148,13 @@ module.exports = async (req, res) => {
   // dashboard Contracts tab). Mirrors the client-side gate so a direct API call
   // can't create a charge without acceptance. The admin is exempt.
   {
-    const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com").trim().toLowerCase();
+    // Any admin (super or regular) is exempt. KEEP IN SYNC with api/admin.js.
+    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "wyatt@websharke.com,kaiden@websharke.com")
+      .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
+      .concat((process.env.SUPER_ADMIN_EMAILS || "wyatt@websharke.com").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean));
     const callerMeta = (caller && caller.user_metadata) || {};
     const contractsAccepted = !!(callerMeta.tos_accepted && callerMeta.privacy_accepted);
-    if (!contractsAccepted && (caller.email || "").trim().toLowerCase() !== ADMIN_EMAIL) {
+    if (!contractsAccepted && !ADMIN_EMAILS.includes((caller.email || "").trim().toLowerCase())) {
       return res.status(403).json({ error: "You must accept the Terms of Service and Privacy Policy before making a payment." });
     }
   }

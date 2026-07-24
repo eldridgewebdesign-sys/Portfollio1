@@ -921,10 +921,10 @@
       // Acceptance lives on the user's auth metadata (set at onboarding or via
       // the dashboard Contracts tab). Without it, block the purchase flow
       // entirely. The admin is exempt (mirrors the dashboard admin gate).
-      const ADMIN_EMAIL = "weeldridge09@gmail.com";
+      const ADMIN_EMAILS = ["wyatt@websharke.com", "kaiden@websharke.com"];
       const meta = user.user_metadata || {};
       const contractsAccepted = !!(meta.tos_accepted && meta.privacy_accepted);
-      if (!contractsAccepted && (user.email || "").trim().toLowerCase() !== ADMIN_EMAIL) {
+      if (!contractsAccepted && !ADMIN_EMAILS.includes((user.email || "").trim().toLowerCase())) {
         document.getElementById("contract-gate-page").classList.remove("hidden");
         return;
       }

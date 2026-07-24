@@ -145,6 +145,10 @@
     .check input{accent-color:#15707f;width:1.15rem;height:1.15rem;flex-shrink:0}
     .check:has(input:checked){border-color:#15707f;background:rgba(16,182,204,.2);color:#0e2f44}
     .check:has(input:focus-visible){outline:2px solid var(--turq);outline-offset:2px}
+    /* Locked until the matching document link has been opened (see agreements JS) */
+    .check:has(input:disabled){opacity:.55;cursor:not-allowed}
+    .check:has(input:disabled):hover{border-color:rgba(17,54,76,.18);background:rgba(255,255,255,.6)}
+    .check input:disabled{cursor:not-allowed}
     .checks.invalid .check,.yesno.invalid .check{border-color:#c2506a;background:rgba(255,235,238,.5)}
 
     /* Yes / No choice — inline pills */
@@ -472,10 +476,10 @@
           </div>
           <span class="hint">You must accept both to create your account.</span>
           <div class="checks" id="agreements" style="grid-template-columns:1fr;gap:.55rem">
-            <label class="check"><input type="checkbox" id="agree_tos" /> I have read and accept the Terms of Service.</label>
-            <label class="check"><input type="checkbox" id="agree_privacy" /> I have read and accept the Privacy Policy.</label>
+            <label class="check"><input type="checkbox" id="agree_tos" disabled /> I have read and accept the Terms of Service.</label>
+            <label class="check"><input type="checkbox" id="agree_privacy" disabled /> I have read and accept the Privacy Policy.</label>
           </div>
-          <span class="hint" style="margin-top:.55rem">Read the full documents: <a href="/terms" target="_blank" rel="noopener" style="color:#0f6b79;text-decoration:underline">Terms of Service</a> &middot; <a href="/privacy" target="_blank" rel="noopener" style="color:#0f6b79;text-decoration:underline">Privacy Policy</a></span>
+          <span class="hint" style="margin-top:.55rem">Read the full documents: <a href="/terms" id="terms-link" target="_blank" rel="noopener" style="color:#0f6b79;text-decoration:underline">Terms of Service</a> &middot; <a href="/privacy" id="privacy-link" target="_blank" rel="noopener" style="color:#0f6b79;text-decoration:underline">Privacy Policy</a></span>
         </section>
 
         <!-- ---------- Submit + status message ---------- -->
@@ -715,6 +719,15 @@
     ["agree_tos", "agree_privacy"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.addEventListener("change", updateAgreeState);
+    });
+
+    // Each agreement box ships disabled and is unlocked only by opening its own
+    // document — the Terms link enables agree_tos, the Privacy link agree_privacy.
+    [["terms-link", "agree_tos"], ["privacy-link", "agree_privacy"]].forEach(([linkId, boxId]) => {
+      const link = document.getElementById(linkId);
+      const box = document.getElementById(boxId);
+      if (!link || !box) return;
+      link.addEventListener("click", () => { box.disabled = false; });
     });
 
     // ---- SUBMIT — create account, save intake, then route the client. ----

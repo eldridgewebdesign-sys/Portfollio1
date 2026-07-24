@@ -6,6 +6,71 @@
 
 ---
 
+## 2026-07-24 - Developer (Implementation) - mobile-hero-and-camera-framing
+
+Action:
+Finished
+
+Task:
+Owner-directed mobile appearance pass, two items: (1) the homepage hero headline loaded *under
+the water* on phones instead of on the sand as it does on desktop; (2) in the `/engineering`
+demo the laptop sat far from the camera and off to one side. No copy, no colors, no desktop
+changes.
+
+Files claimed:
+
+- index.html (the `max-width:680px` block + one new portrait media query)
+- engineering/js/camera-rig.js (the viewport fit + the lateral framing offset)
+
+Files changed:
+
+- index.html — `#hero` on phones is anchored to the top of the viewport
+  (`justify-content:flex-start;padding-top:7.5rem`) instead of centred with `padding-top:30vh`.
+  `#bg` is `object-fit:cover` against a page far taller than the image, so the sand band ends
+  ≈330–360px down the viewport whatever the phone's height is; a centred hero landed the whole
+  headline below it. Added the same treatment for portrait tablets
+  (`min-width:681px and max-width:1024px and orientation:portrait`, `padding-top:10rem`).
+  Desktop and landscape are untouched.
+- engineering/js/camera-rig.js — two mobile framing fixes in `fit()`:
+  - **Distance.** On portrait the fit solved the full 16:9 reference box into a narrow frame,
+    which pushed every pose ≈3.4× back (P0 4.15W → 14.07W) and left the machine a thumbnail in a
+    mostly empty frame. Portrait now fits the *subject* — silhouette 0.370 m (envelope
+    304 × 212 mm at az 24–38°) filling 76% of the frame with the §9.2 ≥10% side margins — solved
+    once at the nearest pose (2.90W) and applied to all six as one factor, so B1 stays a pure
+    dolly and every pose ratio is preserved. Landscape keeps the 16:9 box fit exactly as it was.
+  - **Centre.** `shift` (the 12vw lateral look-at offset that reads the subject at 62vw) is now
+    dropped when the mobile composition is active — 05 §9.2 asks for 50vw/40vh on mobile, and the
+    mobile copy sits in the bottom block, not beside the machine. The 40vh vertical offset still
+    keys off P0–P4 via the pose's own `shift` (captured as `upper` before the override).
+    A portrait window that is *not* comp-mobile (a very narrow desktop window) keeps the 62vw
+    shift, so its pull-in target is reduced to what fits beside it.
+
+Summary:
+Phone hero now matches the desktop composition — headline on the sand, CTA meeting the water.
+Phone (390×844) engineering framing: subject centred at 50vw/40vh at every pose, 52vw wide at
+the P0 arrival and 75vw at the P1–P4 working distance (was 34vw and 49vw, both at 62vw).
+
+Testing:
+Headless Firefox against a local static server. Homepage screenshots at 320/360/390/428 (hero on
+the sand at all four), 768×1024 + 820×1180 (portrait-tablet rule), 1440×900 (unchanged).
+Engineering: the full page would not boot in this headless environment (it stalls before the
+loader hands off, unrelated to these files), so the rig was verified two ways — a node harness
+that imports the real `camera-rig.js` and reports per-pose distance / subject width / subject
+centre for seven viewports, and a browser harness that renders the real `model.js` + `scene.js`
+through the real rig. Measured from those renders at 390×844: P0 52.1vw @ 49.6vw/40.5vh, P1
+74.9vw @ 49.2vw/40.6vh, P5 tableau (parts at their final ranks) 63.3vw × 39.9vh centred, nothing
+cropped. Desktop 1440×900 P0 measured 38.5vw @ 61.7vw/51.1vh — the approved composition,
+byte-identical numbers to before the change.
+
+Risks / Notes:
+The portrait branch of the fit formula is a deliberate deviation from 05 §6.7's fit block (which
+fits the 16:9 reference box on both axes) — recorded here so it is not "corrected" back; a
+decisions.md entry is recommended alongside the earlier passes' pending entries. Label chips on
+phones now have less room beside the machine and fall back to the clamped 45° slot more often;
+the label system already did this at the old framing and degrades the same way. The homepage
+hero paddings are absolute (7.5rem / 10rem) on purpose — the sand band's position is set by the
+page's content height, not by viewport height, so a vh-based offset would drift.
+
 ## 2026-07-17 - Developer (Optimization) - full-site-optimization-pass
 
 Action:

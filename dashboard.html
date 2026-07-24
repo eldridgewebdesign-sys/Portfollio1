@@ -1279,6 +1279,7 @@
           <div class="adm-search-results" id="admSearchResults"></div>
         </div>
         <div class="adm-top-right">
+          <span class="badge b-unpaid" id="admLockNotice" style="display:none" title="The owner has locked admin changes">View only — changes locked</span>
           <span class="adm-admin-chip">Admin · <b id="admWho">—</b></span>
         </div>
       </header>
@@ -1433,6 +1434,13 @@
             <p class="set-warn">This action disables the WebSharke platform without deleting data. Users, payments, websites, and every record are kept — clients simply see a temporary maintenance notice. You can re-enable at any time.</p>
             <div class="set-status" id="setStatus" aria-live="polite">Checking platform status…</div>
             <button class="set-kill-btn" id="setKillBtn" type="button" disabled>Disable Everything</button>
+          </div>
+          <!-- Admin kill switch — owner (super-admin) only; revealed by initAdmin -->
+          <div class="adm-panel-box set-killbox" id="adminLockBox" style="display:none">
+            <h3>Admin access</h3>
+            <p class="set-warn">This freezes every other admin. They can still sign in and view, but cannot edit users, invoices, subscriptions, or anything else until you turn it back on. Your own access is never affected, and no data is deleted.</p>
+            <div class="set-status" id="lockStatus" aria-live="polite">Checking admin access…</div>
+            <button class="set-kill-btn" id="lockBtn" type="button" disabled>Lock Other Admins</button>
           </div>
         </section>
 
@@ -2653,11 +2661,12 @@
       const user = authData.user;
 
       // ---- Admin gate ------------------------------------------------
-      // Only the admin email gets the admin dashboard. This is a UX gate;
+      // Only an admin email gets the admin dashboard. This is a UX gate;
       // the real security is server-side (every /api/admin call re-verifies
-      // the signed-in user's email before doing anything).
-      const ADMIN_EMAIL = "weeldridge09@gmail.com";
-      if ((user.email || "").trim().toLowerCase() === ADMIN_EMAIL && window.initAdmin) {
+      // the signed-in user's email before doing anything). Keep this list in
+      // sync with the ADMIN_EMAILS roster in api/admin.js.
+      const ADMIN_EMAILS = ["wyatt@websharke.com", "kaiden@websharke.com"];
+      if (ADMIN_EMAILS.includes((user.email || "").trim().toLowerCase()) && window.initAdmin) {
         window.initAdmin(user);
         return; // skip the regular client dashboard entirely
       }
@@ -2800,6 +2809,9 @@
     const aq = (id) => document.getElementById(id);
     const ce = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
     let ADMIN_USER = null;
+    // Who this admin is, per the server: { role, is_super_admin, admins_locked, … }.
+    // Populated by get_admin_context in initAdmin; never trusted for security.
+    let ADMIN_CTX = { role: "admin", is_super_admin: false, admins_locked: false };
 
     // ---- Small utilities ------------------------------------------------
     function esc(s) {
@@ -4792,6 +4804,79 @@
     }
 
     // =====================================================================
+    // ADMIN KILL SWITCH (owner-only) — freeze other admins to view-only.
+    // Mirrors the platform switch above. Server is authoritative: every write
+    // re-checks the lock, so this UI is convenience + a clear read-only signal.
+    // =====================================================================
+    let adminsLocked = false;
+    let adminLockBusy = false;
+
+    // Reflect the lock everywhere: the owner's Settings control (if present)
+    // and the "View only" notice a regular admin sees in the top bar.
+    function applyAdminLock(st) {
+      adminsLocked = !!(st && st.admins_locked);
+      // Top-bar notice — only meaningful for a non-owner admin.
+      const notice = aq("admLockNotice");
+      if (notice) notice.style.display = (adminsLocked && !ADMIN_CTX.is_super_admin) ? "" : "none";
+      // Owner's Settings control.
+      const status = aq("lockStatus");
+      const btn = aq("lockBtn");
+      if (!status || !btn) return;
+      if (adminsLocked) {
+        const when = st && st.admins_locked_at ? " since " + fmtDate(st.admins_locked_at) : "";
+        status.innerHTML = '<span class="badge b-unpaid">Admins locked</span> Other admins are view-only' + esc(when) + ".";
+        btn.textContent = "Unlock Admins";
+        btn.classList.add("live");
+      } else {
+        status.innerHTML = '<span class="badge b-active">Admins active</span> All admins can make changes.';
+        btn.textContent = "Lock Other Admins";
+        btn.classList.remove("live");
+      }
+      btn.disabled = false;
+    }
+
+    async function loadAdminLock() {
+      const status = aq("lockStatus");
+      const btn = aq("lockBtn");
+      if (btn) btn.disabled = true;
+      if (status) status.textContent = "Checking admin access…";
+      try {
+        const ctx = await adminApi("get_admin_context");
+        ADMIN_CTX = ctx || ADMIN_CTX;
+        applyAdminLock(ctx);
+      } catch (e) {
+        if (status) status.innerHTML = '<span class="badge b-unpaid">Error</span> ' + esc(e.message);
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function toggleAdminLock() {
+      if (adminLockBusy) return;
+      const turnOn = !adminsLocked;
+      const ok = await confirmAction(
+        turnOn ? "Lock other admins?" : "Unlock other admins?",
+        turnOn
+          ? "Every other admin will be frozen to view-only. They can still sign in and look, but cannot edit users, invoices, subscriptions, or anything else until you unlock. Your own access is unchanged and NO data is deleted."
+          : "This lets all admins make changes again immediately.",
+        turnOn ? "Lock Other Admins" : "Unlock Admins"
+      );
+      if (!ok) return;
+      adminLockBusy = true;
+      const btn = aq("lockBtn");
+      if (btn) btn.disabled = true;
+      try {
+        const res = await adminApi("set_admin_lockdown", { locked: turnOn });
+        applyAdminLock({ admins_locked: res.admins_locked, admins_locked_at: res.row && res.row.admins_locked_at });
+        toast(turnOn ? "Admins locked" : "Admins unlocked", turnOn ? "Other admins are now view-only." : "All admins can make changes again.");
+      } catch (e) {
+        toast("Couldn’t update admin access", e.message, true);
+        loadAdminLock();
+      } finally {
+        adminLockBusy = false;
+      }
+    }
+
+    // =====================================================================
     // GLOBAL SEARCH
     // =====================================================================
     const searchInput = aq("admSearch");
@@ -4844,7 +4929,7 @@
       if (viewId === "overview") { loadOverview(); return; }
       if (viewId === "invoices") { initInvoices(); return; }
       if (viewId === "subscriptions") { initSubs(); return; }
-      if (viewId === "settings") { loadPlatformStatus(); return; }
+      if (viewId === "settings") { loadPlatformStatus(); if (ADMIN_CTX.is_super_admin) loadAdminLock(); return; }
       if (VIEWS[viewId]) {
         if (!state[viewId] || !state[viewId].built) buildView(viewId);
         loadView(viewId, true);
@@ -4869,6 +4954,15 @@
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
       aq("admSignout").addEventListener("click", async () => { try { await db.auth.signOut(); } catch (e) {} document.cookie = "ws_session=; path=/; SameSite=Lax; Secure; max-age=0"; window.location.replace("/login"); });
       aq("setKillBtn").addEventListener("click", togglePlatform);
+      aq("lockBtn").addEventListener("click", toggleAdminLock);
+
+      // Learn this admin's role from the server: reveal the owner's lock
+      // control, and show a "view only" notice to a locked regular admin.
+      adminApi("get_admin_context").then((ctx) => {
+        ADMIN_CTX = ctx || ADMIN_CTX;
+        if (ADMIN_CTX.is_super_admin) aq("adminLockBox").style.display = "";
+        applyAdminLock(ctx);
+      }).catch(() => {});
 
       loadOverview();
       loadAlertBadge();

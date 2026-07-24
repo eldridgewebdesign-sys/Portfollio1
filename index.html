@@ -183,11 +183,21 @@ body.lock{overflow:hidden;height:100vh}
 @media(max-width:900px){
   .why-cols{grid-template-columns:1fr;gap:1.7rem;max-width:440px}
 }
+/* Portrait tablets: same waterline problem as phones (the viewport is far
+   taller than the sand band), same fix — anchor the hero to the top. */
+@media(min-width:681px) and (max-width:1024px) and (orientation:portrait){
+  #hero{justify-content:flex-start;padding-top:10rem}
+}
 @media(max-width:680px){
   nav{padding:.8rem 1.4rem}
   .logo{width:160px;height:90px}
   .sx{min-height:auto;padding:clamp(5rem,14vh,7rem) 1.4rem}
-  #hero{padding-top:30vh}
+  /* The background is scaled to cover the (much taller) page, so on phones the
+     sand band ends ~330–360px down the viewport regardless of viewport height.
+     Anchor the hero to the top of the viewport instead of centring it, so the
+     headline sits on the sand and the CTA meets the water — the desktop
+     composition. */
+  #hero{justify-content:flex-start;padding-top:7.5rem}
 }
 </style>
 </head>

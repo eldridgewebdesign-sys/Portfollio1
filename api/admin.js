@@ -15,14 +15,63 @@
 //   body:    { action: "<name>", payload: { ... } }
 //
 // Env required: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   (optional)  ADMIN_EMAIL  — defaults to weeldridge09@gmail.com
+//   (optional)  SUPER_ADMIN_EMAILS — owner(s) who control the admin kill
+//               switch and are never blocked by it. Default wyatt@websharke.com
+//   (optional)  ADMIN_EMAILS       — all admin emails (comma-separated).
+//               Default wyatt@websharke.com,kaiden@websharke.com
 // =====================================================================
 
 const { createClient } = require("@supabase/supabase-js");
 
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com")
-  .trim()
-  .toLowerCase();
+// ---------------------------------------------------------------------
+// Admin roster. Super-admins control the admin kill switch and are never
+// blocked by it; regular admins are subject to it. Comma-separated env
+// vars override the defaults so you can change who's an admin — or restore
+// your own access — without a code change. These emails are NOT secret
+// (the dashboard's UX gate lists them too); the real security is the
+// Supabase token check below. KEEP THIS BLOCK IN SYNC across every admin
+// endpoint: api/admin.js, api/admin/invoices.js, api/admin/subscriptions.js,
+// api/checkout.js, api/subscriptions/activate.js, api/invoices/pay.js.
+// ---------------------------------------------------------------------
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "wyatt@websharke.com")
+  .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "wyatt@websharke.com,kaiden@websharke.com")
+  .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+
+// Role for an email: "superadmin", "admin", or null (not an admin). A
+// super-admin is always treated as an admin even if left out of ADMIN_EMAILS.
+function roleFor(email) {
+  const e = (email || "").trim().toLowerCase();
+  if (!e) return null;
+  if (SUPER_ADMIN_EMAILS.includes(e)) return "superadmin";
+  if (ADMIN_EMAILS.includes(e)) return "admin";
+  return null;
+}
+
+// Read actions a locked regular admin is still allowed to run (view-only).
+// Anything NOT listed here is treated as a write, so new actions are blocked
+// during a lockdown by default (fail-closed).
+const READ_ACTIONS = new Set([
+  "overview", "list_users", "list_onboarding", "list_payments", "get_invoice",
+  "list_websites", "list_domains", "list_alerts", "list_requests",
+  "list_edit_requests", "list_user_messages", "list_activity", "search",
+  "get_user", "get_platform_status", "get_admin_context",
+]);
+
+// Is the admin kill switch on? Super-admins bypass it (see the gate below).
+// Fails OPEN on a read error — matching the platform maintenance switch — so a
+// transient DB hiccup can never wedge the dashboard. The flag is false by
+// default and only reads true once the owner deliberately turns it on.
+async function adminsLocked(supa) {
+  try {
+    const { data, error } = await supa
+      .from("platform_settings").select("admins_locked").eq("id", 1).maybeSingle();
+    if (error) return false;
+    return !!(data && data.admins_locked);
+  } catch (_) {
+    return false;
+  }
+}
 
 // Editable client fields the admin may change on a project_inquiries row.
 const USER_EDITABLE_FIELDS = [
@@ -105,8 +154,9 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: "Your session is invalid. Please sign in again." });
   }
 
-  // ---- 2. Authorize: only the admin email may proceed. ----
-  if (!caller.email || caller.email.trim().toLowerCase() !== ADMIN_EMAIL) {
+  // ---- 2. Authorize: only an admin (super or regular) may proceed. ----
+  const callerRole = roleFor(caller.email);
+  if (!callerRole) {
     return res.status(403).json({ error: "Forbidden: admin access required." });
   }
 
@@ -114,6 +164,17 @@ module.exports = async (req, res) => {
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
   const action = body.action;
   const p = body.payload || {};
+
+  // ---- 3b. Admin kill switch. The owner (super-admin) can freeze every other
+  //      admin into view-only mode. Super-admins are never affected. Regular
+  //      admins may still run READ_ACTIONS while locked, but any write is
+  //      refused. Changing the lock itself is owner-only, regardless of state.
+  if (action === "set_admin_lockdown" && callerRole !== "superadmin") {
+    return res.status(403).json({ error: "Only the owner can change the admin lock." });
+  }
+  if (callerRole !== "superadmin" && !READ_ACTIONS.has(action) && await adminsLocked(supa)) {
+    return res.status(403).json({ error: "Admin actions are locked by the owner right now. You can still view, but changes are turned off." });
+  }
 
   try {
     switch (action) {
@@ -134,6 +195,8 @@ module.exports = async (req, res) => {
       case "get_user":          return res.status(200).json(await getUser(supa, p));
       case "get_platform_status":   return res.status(200).json(await getPlatformStatus(supa));
       case "set_platform_disabled": return res.status(200).json(await setPlatformDisabled(supa, caller, p));
+      case "get_admin_context":     return res.status(200).json(await getAdminContext(supa, caller, callerRole));
+      case "set_admin_lockdown":    return res.status(200).json(await setAdminLockdown(supa, caller, p));
 
       case "update_user":       return res.status(200).json(await updateUser(supa, caller, p));
       case "set_user_status":   return res.status(200).json(await setUserStatus(supa, caller, p));
@@ -939,6 +1002,60 @@ async function setPlatformDisabled(supa, caller, p) {
     changed_field: "disabled", old_value: String(!disabled), new_value: String(disabled),
   });
   return { row: data, disabled };
+}
+
+// ---------------------------------------------------------------------
+// Who am I? Lets the dashboard show the right UI: the owner (super-admin)
+// gets the admin-lock control, regular admins get a read-only notice when
+// locked. Never trusted for security — every write re-checks server-side.
+// ---------------------------------------------------------------------
+async function getAdminContext(supa, caller, callerRole) {
+  let info = null;
+  try {
+    const { data } = await supa
+      .from("platform_settings")
+      .select("admins_locked, admins_locked_at, admins_locked_by")
+      .eq("id", 1)
+      .maybeSingle();
+    info = data || null;
+  } catch (_) { /* fall through to defaults */ }
+  return {
+    email: caller.email,
+    role: callerRole,
+    is_super_admin: callerRole === "superadmin",
+    admins_locked: !!(info && info.admins_locked),
+    admins_locked_at: info ? info.admins_locked_at : null,
+    admins_locked_by: info ? info.admins_locked_by : null,
+  };
+}
+
+// Flip the admin kill switch. Owner-only (enforced at the auth gate above).
+// Reversible; deletes nothing — it only freezes other admins into view-only
+// mode. Reuses the singleton platform_settings row; leaves `disabled` (the
+// separate maintenance switch) untouched.
+async function setAdminLockdown(supa, caller, p) {
+  const locked = !!p.locked;
+  const now = new Date().toISOString();
+  const { data, error } = await supa
+    .from("platform_settings")
+    .upsert({
+      id: 1,
+      admins_locked: locked,
+      admins_locked_at: locked ? now : null,
+      admins_locked_by: locked ? caller.email : null,
+      updated_at: now,
+    }, { onConflict: "id" })
+    .select("admins_locked, admins_locked_at, admins_locked_by")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+
+  await logActivity(supa, {
+    admin_email: caller.email,
+    action: locked ? "admins_locked" : "admins_unlocked",
+    entity_type: "platform", entity_id: "1", affected_user_id: null,
+    changed_field: "admins_locked", old_value: String(!locked), new_value: String(locked),
+  });
+  return { admins_locked: locked, row: data };
 }
 
 // =====================================================================

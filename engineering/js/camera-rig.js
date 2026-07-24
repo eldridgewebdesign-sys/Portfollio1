@@ -8,6 +8,20 @@ export const W = 0.304; // the subject unit: laptop width in metres
 
 const DEG = Math.PI / 180;
 
+// Widest silhouette across the film: envelope 304 × 212 mm seen at the pose
+// azimuths (24°–38°) — `W·cos(az) + 0.212·sin(az)`, maximal at 38°.
+const SUBJECT_W = 0.370;
+// The nearest pose distance (P1/P4). The portrait pull-in is solved here once
+// and applied to every pose as one factor.
+const D_NEAR = 2.90 * W;
+// Portrait target: the silhouette fills 76% of the frame at the nearest pose —
+// the ≥10% side margins of 05 §9.2 with a little slack for the label chips.
+// A portrait viewport that is NOT the mobile composition (a very narrow desktop
+// window) still carries the 62vw lateral shift, so there the subject may only
+// fill what is left before the same 10% margin.
+const PORTRAIT_FILL = 0.76;
+const MARGIN = 0.10;
+
 // Named positions (05 §6.7): spherical about the scene origin. Azimuth 0° faces
 // the laptop's front edge (+Z); positive swings toward +X (screen-right side).
 // ty = target height in W; shift = subject-center offset (0.12 → 62vw, 0 → 50vw).
@@ -44,10 +58,11 @@ export function createRig(camera) {
       this.tx = p.tx; this.ty = p.ty; this.tz = p.tz;
     },
     // Viewport fit (05 §6.7): per pose, at load and accepted resize only.
-    // The reference frame box (16:9 at vFOV 24°) must stay visible; on
-    // portrait (< 0.75) the vFOV widens to 30° and the horizontal fit keeps
-    // a 10% margin (the mobile ≥10%-margin rule). Azimuth/elevation/targets
-    // are never touched — offsets are screen-space look-at shifts.
+    // Landscape: the reference frame box (16:9 at vFOV 24°) must stay visible.
+    // Portrait (< 0.75): the vFOV widens to 30° and the fit is solved on the
+    // subject instead of that box, so the machine keeps its size on a phone
+    // (see the pull-in below) with the ≥10% side margins. Azimuth/elevation/
+    // targets are never touched — offsets are screen-space look-at shifts.
     fit(width, height, compMobile) {
       const aspect = width / height;
       const portrait = aspect < 0.75;
@@ -60,14 +75,27 @@ export function createRig(camera) {
 
       const tanV = Math.tan((vfov / 2) * DEG);
       const tanH = tanV * aspect;
-      const marginH = portrait ? 0.9 : 1.0;
+
+      // Portrait pull-in: fitting the whole 16:9 reference box into a phone's
+      // narrow frame pushed every pose ~3.4× back and the machine read as a
+      // distant thumbnail. Portrait instead fits the *subject* — the silhouette
+      // sits inside the frame with the §9.2 side margins — solved once at the
+      // nearest pose so all six poses scale by the same factor and B1 stays a
+      // true dolly. Landscape keeps the 16:9 box fit unchanged.
+      const maxShift = Math.max(...Object.keys(POSE_DATA).map(k => POSE_DATA[k].shift));
+      const fill = compMobile ? PORTRAIT_FILL : 2 * (0.5 - maxShift - MARGIN);
+      const pull = portrait
+        ? Math.max(1, (SUBJECT_W / (2 * fill * tanH)) / D_NEAR)
+        : 1;
 
       for (const k in POSE_DATA) {
         const d0 = POSE_DATA[k];
         const dRef = d0.d * W;
         const halfHRef = dRef * Math.tan(12 * DEG);
         const halfWRef = halfHRef * (16 / 9);
-        const dEff = Math.max(dRef, halfWRef / (marginH * tanH), halfHRef / tanV);
+        const dEff = portrait
+          ? Math.max(dRef * pull, halfHRef / tanV)
+          : Math.max(dRef, halfWRef / tanH, halfHRef / tanV);
 
         const az = d0.az * DEG, el = d0.el * DEG;
         const px = dEff * Math.cos(el) * Math.sin(az);
@@ -84,15 +112,21 @@ export function createRig(camera) {
         rx /= rl; rz /= rl;
 
         // Lateral offset: 12vw shift in world units at the live distance —
-        // the look-at moves screen-left so the subject reads at 62vw.
-        const offLat = d0.shift * (2 * dEff * tanH);
+        // the look-at moves screen-left so the subject reads at 62vw. The
+        // mobile composition (05 §9.2) centers the machine at 50vw instead —
+        // its copy sits in the bottom block, not beside the machine — so the
+        // shift is dropped there. `upper` still marks P0–P4 (the poses that
+        // take the mobile 40vh vertical offset) whichever way it goes.
+        const upper = d0.shift > 0;
+        const shift = compMobile ? 0 : d0.shift;
+        const offLat = shift * (2 * dEff * tanH);
         let tx = 0 - rx * offLat;
         let tz = 0 - rz * offLat;
         let tyOut = ty;
 
         // Vertical framing offset (05 §14.3(p)): mobile upper stage centers
         // the subject at 40vh; the look-at drops below the subject center.
-        if (compMobile && d0.shift > 0) {
+        if (compMobile && upper) {
           tyOut -= 0.10 * (2 * dEff * tanV);
         }
 

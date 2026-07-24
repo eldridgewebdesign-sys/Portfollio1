@@ -45,7 +45,7 @@
 //   500 { error }                       — server / database error
 //
 // Env required: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   (optional)  ADMIN_EMAIL  — defaults to weeldridge09@gmail.com
+//   (optional)  SUPER_ADMIN_EMAILS / ADMIN_EMAILS — see api/admin.js
 //
 // Tables (see db/invoices-schema.sql):
 //   public.invoices       (id, client_user_id, title, notes, due_date, status,
@@ -58,9 +58,35 @@
 
 const { createClient } = require("@supabase/supabase-js");
 
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com")
-  .trim()
-  .toLowerCase();
+// ---------------------------------------------------------------------
+// Admin roster — KEEP IN SYNC with api/admin.js (see the full note there).
+// Super-admins control the admin kill switch and are never blocked by it;
+// regular admins are. Env vars override the defaults without a code change.
+// ---------------------------------------------------------------------
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "wyatt@websharke.com")
+  .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "wyatt@websharke.com,kaiden@websharke.com")
+  .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+
+function roleFor(email) {
+  const e = (email || "").trim().toLowerCase();
+  if (!e) return null;
+  if (SUPER_ADMIN_EMAILS.includes(e)) return "superadmin";
+  if (ADMIN_EMAILS.includes(e)) return "admin";
+  return null;
+}
+
+// Is the admin kill switch on? Fails open on a read error (see api/admin.js).
+async function adminsLocked(supa) {
+  try {
+    const { data, error } = await supa
+      .from("platform_settings").select("admins_locked").eq("id", 1).maybeSingle();
+    if (error) return false;
+    return !!(data && data.admins_locked);
+  } catch (_) {
+    return false;
+  }
+}
 
 // Invoice lifecycle + build-workflow states the system accepts. Creation only
 // uses draft/issued; the later stages (in_progress/finished/live) are set from
@@ -286,9 +312,15 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: "Your session is invalid. Please sign in again." });
   }
 
-  // ---- 2. Authorize: only the admin email may proceed. ----
-  if (!caller.email || caller.email.trim().toLowerCase() !== ADMIN_EMAIL) {
+  // ---- 2. Authorize: only an admin may proceed. This route only ever
+  //      writes invoices (create / update / delete), so a locked regular
+  //      admin is blocked outright; the owner (super-admin) is never blocked.
+  const callerRole = roleFor(caller.email);
+  if (!callerRole) {
     return res.status(403).json({ error: "Forbidden: admin access required." });
+  }
+  if (callerRole !== "superadmin" && await adminsLocked(supa)) {
+    return res.status(403).json({ error: "Admin actions are locked by the owner right now. You can still view, but changes are turned off." });
   }
 
   // ---- 3. Parse the body + pick the operation (create | update | delete). ----

@@ -36,7 +36,7 @@
 //
 // Env required: STRIPE_SECRET_KEY (for cancel), SUPABASE_URL,
 //               SUPABASE_SERVICE_ROLE_KEY
-//   (optional)  ADMIN_EMAIL — defaults to weeldridge09@gmail.com
+//   (optional)  SUPER_ADMIN_EMAILS / ADMIN_EMAILS — see api/admin.js
 //
 // Responses:
 //   200 { subscription } | { subscriptions } | { canceled: true }
@@ -50,9 +50,35 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require("@supabase/supabase-js");
 
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "weeldridge09@gmail.com")
-  .trim()
-  .toLowerCase();
+// ---------------------------------------------------------------------
+// Admin roster — KEEP IN SYNC with api/admin.js (see the full note there).
+// Super-admins control the admin kill switch and are never blocked by it;
+// regular admins are. Env vars override the defaults without a code change.
+// ---------------------------------------------------------------------
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "wyatt@websharke.com")
+  .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "wyatt@websharke.com,kaiden@websharke.com")
+  .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+
+function roleFor(email) {
+  const e = (email || "").trim().toLowerCase();
+  if (!e) return null;
+  if (SUPER_ADMIN_EMAILS.includes(e)) return "superadmin";
+  if (ADMIN_EMAILS.includes(e)) return "admin";
+  return null;
+}
+
+// Is the admin kill switch on? Fails open on a read error (see api/admin.js).
+async function adminsLocked(supa) {
+  try {
+    const { data, error } = await supa
+      .from("platform_settings").select("admins_locked").eq("id", 1).maybeSingle();
+    if (error) return false;
+    return !!(data && data.admins_locked);
+  } catch (_) {
+    return false;
+  }
+}
 
 // Money sanity cap (cents): same as the invoices route. $50,000,000.00.
 const MAX_CENTS = 5_000_000_000;
@@ -172,8 +198,11 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: "Your session is invalid. Please sign in again." });
   }
 
-  // ---- 2. Authorize: only the admin email may proceed. ----
-  if (!caller.email || caller.email.trim().toLowerCase() !== ADMIN_EMAIL) {
+  // ---- 2. Authorize: only an admin may proceed. The kill-switch check
+  //      runs just below, once we know which action was requested (a locked
+  //      regular admin may still "list", but not create / update / cancel).
+  const callerRole = roleFor(caller.email);
+  if (!callerRole) {
     return res.status(403).json({ error: "Forbidden: admin access required." });
   }
 
@@ -186,6 +215,12 @@ module.exports = async (req, res) => {
   }
   const action = typeof body.action === "string" ? body.action : "";
   const payload = body.payload && typeof body.payload === "object" ? body.payload : {};
+
+  // ---- 2b. Admin kill switch: a locked regular admin can still "list"
+  //      (view) but cannot create / update / cancel. The owner is never blocked.
+  if (callerRole !== "superadmin" && action !== "list" && await adminsLocked(supa)) {
+    return res.status(403).json({ error: "Admin actions are locked by the owner right now. You can still view, but changes are turned off." });
+  }
 
   try {
     // ================= CREATE =================
