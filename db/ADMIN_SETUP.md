@@ -97,6 +97,9 @@ Past Due / Cancel / Edit Plan) — every change is written to
   the drawer) + assigned domain; edit / suspend / ban / delete; filters, sort,
   search, infinite scroll, CSV export, skeletons, empty states.
 - **Onboarding Forms** — editable intake answers via the drawer; CSV export.
+- **Prospects** — the shared lead list imported from the Client Gather desktop
+  app (see §5); open a lead for its verified owner name + phone, the site's
+  security/visual problems with screenshots, and a free-typed status; CSV export.
 - **Payments** — per-client subscription state, amount, billing, dates, linked
   website/domain; mark active/unpaid, cancel, edit plan; CSV export.
 - **Websites** — view / create / edit site records (user, domain, type, status,
@@ -110,3 +113,39 @@ Past Due / Cancel / Edit Plan) — every change is written to
 Dangerous actions (delete, ban, suspend, cancel subscription, mark unpaid) show a
 confirmation modal first. Success/error toasts surface the real API/Supabase
 message on failure.
+
+## 5. Prospects — leads from the Client Gather app
+
+The **Prospects** tab is the Client Gather desktop app's twin on the site. It does
+everything that app does *except find new businesses* — no Claude runs here. One
+admin imports the app's export file and every admin sees the same list.
+
+**One-off setup:** run **`db/prospects-schema.sql`** in the Supabase SQL editor.
+It is idempotent and creates:
+
+1. The **`prospects`** table (one row per lead).
+2. The public **`prospect-screenshots`** Storage bucket for the screenshots.
+3. Admin-only RLS. Prospects are internal sales leads, so unlike other tables
+   there is **no client-facing policy at all** — no signed-in client can read them.
+
+No new environment variables: `/api/admin/prospects` reuses `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`, and the same admin roster + admin-lock rules as
+`/api/admin` (a locked regular admin can still view prospects but not change them).
+
+**Day-to-day use:**
+
+1. In the Client Gather app, click **Export for Dashboard** — it writes one JSON
+   file holding every client and its screenshots.
+2. In the dashboard, go to **Prospects → Import from Client Gather** and pick that
+   file. Records upload in batches and each screenshot is sent separately (a
+   serverless request body is capped near 4.5 MB), with progress shown above the
+   table. A screenshot that fails is skipped; the lead still imports.
+3. Click any row to open the full research: which public page the owner's name and
+   phone were each confirmed on, the site's problems with cropped screenshots, the
+   full-page screenshot, and the raw JSON the model returned.
+
+**Statuses are site-only and free text.** An admin types whatever stage they use
+("called", "quoted", "not interested") plus optional notes, and edits them at any
+time. Re-importing an export refreshes the research but **never** touches a status:
+the server's `IMPORT_FIELDS` list simply doesn't include those columns. Screenshots
+already uploaded are also kept when a lead is re-imported.

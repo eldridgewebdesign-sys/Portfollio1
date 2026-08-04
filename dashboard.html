@@ -676,6 +676,10 @@
     /* ── Badges ───────────────────────────────────────────────────────────── */
     .badge{display:inline-block;padding:.2rem .55rem;border-radius:20px;font-size:.7rem;font-weight:800;
       letter-spacing:.03em;white-space:nowrap;border:1px solid transparent}
+    /* Prospect statuses are typed free-hand by an admin, so most will never match a
+       known b-* colour. This gives any of them a readable chip; it sits BEFORE the
+       colour variants below so a status that does match one (e.g. "paid") still wins. */
+    .badge.b-prospect{background:rgba(16,182,204,.10);color:var(--adm-turq-deep);border-color:rgba(16,182,204,.30);text-transform:none;letter-spacing:0}
     .badge.b-active,.badge.b-live,.badge.b-complete,.badge.b-paid,.badge.b-finished{background:rgba(31,140,99,.16);color:#177a55;border-color:rgba(31,140,99,.42)}
     .badge.b-unpaid,.badge.b-banned{background:rgba(192,57,47,.14);color:#b3322a;border-color:rgba(192,57,47,.42)}
     .badge.b-past_due,.badge.b-suspended,.badge.b-waiting_on_client,.badge.b-overdue{background:rgba(181,116,10,.16);color:#9a6406;border-color:rgba(181,116,10,.42)}
@@ -1255,6 +1259,7 @@
         <button class="active" data-view="overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="adm-nav-label">Overview</span></button>
         <button data-view="users"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg><span class="adm-nav-label">Users</span></button>
         <button data-view="onboarding"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg><span class="adm-nav-label">Onboarding Forms</span></button>
+        <button data-view="prospects"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5L21 21"/><path d="M7.5 10l1.8 1.8L12.5 8.5"/></svg><span class="adm-nav-label">Prospects</span></button>
         <button data-view="payments"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="adm-nav-label">Recent Payments</span></button>
         <button data-view="invoices"><svg viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span class="adm-nav-label">Invoices</span></button>
         <button data-view="subscriptions"><svg viewBox="0 0 24 24"><path d="M3 4h18v6H3z"/><path d="M3 14h11v6H3z"/><path d="M18 13.5v7M14.5 17h7"/></svg><span class="adm-nav-label">Subscriptions</span></button>
@@ -1318,6 +1323,7 @@
         <!-- Generic data views (toolbar + table injected by JS) -->
         <section class="adm-view" id="view-users"></section>
         <section class="adm-view" id="view-onboarding"></section>
+        <section class="adm-view" id="view-prospects"></section>
         <section class="adm-view" id="view-payments"></section>
         <section class="adm-view" id="view-websites"></section>
         <section class="adm-view" id="view-domains"></section>
@@ -3075,6 +3081,50 @@
         ],
         emptyTitle: "No onboarding forms yet", emptyMsg: "New project intake submissions will show up here.",
       },
+      // Leads imported from the Client Gather desktop app. Reads from its own
+      // route (/api/admin/prospects) via cfg.fetch instead of the shared
+      // /api/admin action list — see prospectsApi below.
+      prospects: {
+        title: "Prospects", subtitle: "Leads from Client Gather — shared by every admin",
+        searchPlaceholder: "Search business, owner, phone, email, website, status…",
+        fetch: (params) => prospectsApi("list", params),
+        rowClick: (r) => openProspectDrawer(r),
+        toolbarBtn: { label: "Import from Client Gather", onClick: () => pickProspectFile() },
+        filters: [
+          { key: "verified", label: "Contact", options: [["yes", "Verified"], ["no", "Unverified"]] },
+          // Static "no status" choice plus every status an admin has actually
+          // typed (filled in from the loaded rows by populateDynamicFilters).
+          { key: "status", label: "Status", options: [["__none__", "No status yet"]], dynamicFrom: "status" },
+        ],
+        columns: [
+          { key: "business_name", label: "Business", sortable: true, render: (r) => esc(r.business_name || "—") },
+          { key: "owner_name", label: "Owner", sortable: true, render: (r) => prospectOwnerCell(r) },
+          { key: "phone", label: "Phone", sortable: true, render: (r) => esc(r.phone || "—") },
+          { key: "website", label: "Website", render: (r) => prospectSiteCell(r) },
+          { key: "status", label: "Status", sortable: true, render: (r) => prospectStatusCell(r) },
+          { key: "_actions", label: "", render: () => '<div class="adm-row-actions"><button class="adm-mini" data-act="view">Open</button></div>' },
+        ],
+        exportColumns: [
+          { key: "business_name", label: "Business" },
+          { key: "owner_name", label: "Owner" },
+          { key: "phone", label: "Phone" },
+          { key: "email", label: "Email" },
+          { key: "website", label: "Website" },
+          { key: "status", label: "Status" },
+          { key: "status_note", label: "Status note" },
+          { key: "contact_verified", label: "Contact verified" },
+          { key: "owner_verified_on", label: "Owner verified on" },
+          { key: "phone_verified_on", label: "Phone verified on" },
+          { key: "what_they_sell", label: "What they sell" },
+          { key: "overall_look_rating", label: "Look rating" },
+          { key: "ai_generated_rating", label: "AI-generated rating" },
+          { key: "security_risks", label: "Security risks" },
+          { key: "date_found", label: "Found" },
+          { key: "imported_at", label: "Imported" },
+        ],
+        emptyTitle: "No prospects yet",
+        emptyMsg: "Export your clients from the Client Gather app, then use “Import from Client Gather” above.",
+      },
       payments: {
         action: "list_payments", title: "Recent Payments", subtitle: "Every invoice & subscription — edit or delete any, newest first",
         searchPlaceholder: "Search client, email, plan, domain…",
@@ -3284,7 +3334,7 @@
         b.addEventListener("click", cfg.toolbarBtn.onClick);
         tb.appendChild(b);
       }
-      if (viewId === "users" || viewId === "payments" || viewId === "websites" || viewId === "onboarding") {
+      if (viewId === "users" || viewId === "payments" || viewId === "websites" || viewId === "onboarding" || viewId === "prospects") {
         const exp = ce("div", "adm-export");
         exp.innerHTML = '<button class="adm-btn">Export CSV ▾</button>' +
           '<div class="adm-export-menu"><button data-scope="current">Export current results</button><button data-scope="all">Export all records</button></div>';
@@ -3345,6 +3395,11 @@
       return html;
     }
 
+    // A view's data source: its own fetcher if it has one, else the shared admin API.
+    function viewFetch(cfg, params) {
+      return cfg.fetch ? cfg.fetch(params) : adminApi(cfg.action, params);
+    }
+
     async function loadView(viewId, reset) {
       const cfg = VIEWS[viewId];
       const st = state[viewId];
@@ -3359,7 +3414,10 @@
       }
 
       try {
-        const resp = await adminApi(cfg.action, {
+        // Most views read through /api/admin {action,payload}; a view may instead
+        // supply cfg.fetch to read from its own route (Prospects uses
+        // /api/admin/prospects). Both return the same { rows, hasMore }.
+        const resp = await viewFetch(cfg, {
           search: st.search, filters: st.filters, sortBy: st.sortBy, sortDir: st.sortDir,
           limit: PAGE, offset: st.offset,
         });
@@ -3429,7 +3487,8 @@
       }
       if (act === "review") { openEditRequestDrawer(r); return; }
       if (act === "edit" || act === "view") {
-        if (viewId === "websites") openWebsiteDrawer(r);
+        if (viewId === "prospects") openProspectDrawer(r);
+        else if (viewId === "websites") openWebsiteDrawer(r);
         else openUserDrawer(r.user_id, r.id);
         return;
       }
@@ -3527,7 +3586,7 @@
       try {
         if (scope === "all") {
           toast("Preparing export", "Fetching all records…");
-          const resp = await adminApi(cfg.action, { search: scope === "all" ? "" : st.search, filters: scope === "all" ? {} : st.filters, sortBy: st.sortBy, sortDir: st.sortDir, limit: 100000, offset: 0 });
+          const resp = await viewFetch(cfg, { search: scope === "all" ? "" : st.search, filters: scope === "all" ? {} : st.filters, sortBy: st.sortBy, sortDir: st.sortDir, limit: 100000, offset: 0 });
           rows = resp.rows || [];
         }
       } catch (e) { toast("Export failed", e.message, true); return; }
@@ -4910,6 +4969,391 @@
       if (sel.hasAttribute("data-reqid")) setRequestStatusUI(sel);
       else setInvoiceStatusUI(sel);
     });
+
+    // =====================================================================
+    // PROSPECTS — leads found by the Client Gather desktop app.
+    //
+    // This tab is the desktop app's twin on the site: it does everything the
+    // app does EXCEPT find new businesses (no Claude runs here). An admin
+    // exports one JSON file from the app, imports it here, and every admin
+    // sees the same shared list with the full research — verified owner name
+    // and phone, security + visual problems, and the screenshots.
+    //
+    // Statuses are a SITE-ONLY concept: an admin types whatever stage they
+    // want ("called", "quoted", "not interested"…) and can edit it any time.
+    // The desktop app has no such field, and re-importing an export refreshes
+    // the research WITHOUT touching a status (the server leaves those columns
+    // alone — see IMPORT_FIELDS in api/admin/prospects.js).
+    //
+    // Posts to the admin-only POST /api/admin/prospects route (separate from
+    // the adminApi /api/admin {action,payload} helper), whose body is
+    // { op, ...params }.
+    // =====================================================================
+    const PROSPECTS = { importing: false };
+
+    // Records per import request, and how many screenshots ride along per call.
+    // Kept small because a Vercel function body is capped near 4.5 MB: text
+    // records go in batches, and every screenshot is its own request.
+    const PROSPECT_BATCH = 25;
+
+    async function prospectsApi(op, params) {
+      const { data: sess } = await db.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) throw new Error("Your session expired. Please sign in again.");
+      const res = await fetch("/api/admin/prospects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify(Object.assign({ op: op }, params || {})),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")."));
+      return data;
+    }
+
+    // ---- Table cells ----------------------------------------------------
+    function prospectOwnerCell(r) {
+      const name = esc(r.owner_name || "—");
+      const mark = r.contact_verified
+        ? '<span title="Owner name and phone confirmed on a public page by the app" style="color:#2fae7c">✓</span> '
+        : '<span title="Not verified by the app" style="color:#d1a33a">⚠</span> ';
+      return mark + name;
+    }
+    function prospectSiteCell(r) {
+      if (!r.website) return "—";
+      const href = /^https?:\/\//i.test(r.website) ? r.website : "https://" + r.website;
+      const label = String(r.website).replace(/^https?:\/\//i, "").replace(/\/$/, "");
+      return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer" ' +
+        'onclick="event.stopPropagation()">' + esc(truncate(label, 34)) + "</a>";
+    }
+    function prospectStatusCell(r) {
+      const s = (r.status || "").trim();
+      if (!s) return '<span class="badge b-none">No status</span>';
+      // b-prospect is the readable fallback for any typed word; the derived class
+      // lets a status that happens to match a known one keep its usual colour.
+      return '<span class="badge b-prospect b-' + esc(s.toLowerCase().replace(/[^a-z0-9]+/g, "_")) + '">' + esc(s) + "</span>";
+    }
+
+    // ---- Import ---------------------------------------------------------
+    // Progress line under the Prospects toolbar (created on first use).
+    function prospectProgress(msg, tone) {
+      const sec = aq("view-prospects");
+      if (!sec) return;
+      let bar = document.getElementById("prospImportBar");
+      if (!bar) {
+        bar = ce("div");
+        bar.id = "prospImportBar";
+        bar.style.cssText = "margin:0 0 .8rem;padding:.6rem .8rem;border-radius:10px;border:1px solid var(--adm-bd-2);" +
+          "background:var(--adm-panel);font-size:.82rem;color:var(--adm-muted)";
+        const wrap = sec.querySelector(".adm-table-wrap");
+        if (wrap) sec.insertBefore(bar, wrap); else sec.appendChild(bar);
+      }
+      bar.style.display = msg ? "" : "none";
+      bar.style.color = tone === "err" ? "#e07a72" : tone === "ok" ? "#2fae7c" : "var(--adm-muted)";
+      bar.textContent = msg || "";
+    }
+
+    // Opens the file picker for a Client Gather export (Export for Dashboard
+    // in the desktop app writes exactly this file).
+    function pickProspectFile() {
+      if (PROSPECTS.importing) { toast("Import already running", "Let the current import finish first.", true); return; }
+      const input = ce("input");
+      input.type = "file";
+      input.accept = "application/json,.json";
+      input.style.display = "none";
+      input.addEventListener("change", () => {
+        const f = input.files && input.files[0];
+        input.remove();
+        if (f) runProspectImport(f);
+      });
+      document.body.appendChild(input);
+      input.click();
+    }
+
+    function readFileText(file) {
+      return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result || ""));
+        fr.onerror = () => reject(new Error("Couldn’t read that file."));
+        fr.readAsText(file);
+      });
+    }
+
+    // Strip the inline screenshots out of a record — those are uploaded one at a
+    // time afterwards, and would blow the request size limit if sent together.
+    function prospectMetaOnly(c) {
+      const out = Object.assign({}, c);
+      delete out.screenshot;
+      out.problems = (Array.isArray(c.problems) ? c.problems : []).map((p) => {
+        const q = Object.assign({}, p);
+        delete q.image;
+        return q;
+      });
+      return out;
+    }
+
+    // Every image in one export record, flattened to upload jobs.
+    function prospectImageJobs(c) {
+      const jobs = [];
+      if (c.screenshot && c.screenshot.dataBase64) {
+        jobs.push({ kind: "fullpage", index: 0, image: c.screenshot });
+      }
+      (Array.isArray(c.problems) ? c.problems : []).forEach((p, i) => {
+        if (p && p.image && p.image.dataBase64) jobs.push({ kind: "problem", index: i, image: p.image });
+      });
+      return jobs;
+    }
+
+    async function runProspectImport(file) {
+      PROSPECTS.importing = true;
+      prospectProgress("Reading " + file.name + "…");
+      try {
+        let doc;
+        try {
+          doc = JSON.parse(await readFileText(file));
+        } catch (e) {
+          throw new Error("That file isn’t valid JSON. Use the file the Client Gather app writes with “Export for Dashboard”.");
+        }
+        if (!doc || doc.format !== "client-gather-export" || !Array.isArray(doc.clients)) {
+          throw new Error("That doesn’t look like a Client Gather export. Use “Export for Dashboard” in the app.");
+        }
+        const clients = doc.clients.filter((c) => c && c.id);
+        if (!clients.length) throw new Error("That export has no clients in it.");
+
+        const withImages = clients.reduce((n, c) => n + prospectImageJobs(c).length, 0);
+        const ok = await confirmAction(
+          "Import " + clients.length + " prospect" + (clients.length === 1 ? "" : "s") + "?",
+          "Every admin will see them. Prospects already in the list are refreshed with the newest research — " +
+          "the statuses and notes you’ve typed here are never overwritten." +
+          (withImages ? " " + withImages + " screenshot(s) will upload afterwards." : ""),
+          "Import");
+        if (!ok) { prospectProgress(""); return; }
+
+        // ---- 1. Records, in batches. ----
+        const ids = {};
+        let inserted = 0, updated = 0;
+        for (let i = 0; i < clients.length; i += PROSPECT_BATCH) {
+          const batch = clients.slice(i, i + PROSPECT_BATCH);
+          prospectProgress("Importing records " + (i + 1) + "–" + (i + batch.length) + " of " + clients.length + "…");
+          const resp = await prospectsApi("import", { clients: batch.map(prospectMetaOnly) });
+          inserted += resp.inserted || 0;
+          updated += resp.updated || 0;
+          Object.assign(ids, resp.ids || {});
+        }
+
+        // ---- 2. Screenshots, one request each. ----
+        let sent = 0, failed = 0;
+        const total = withImages;
+        for (const c of clients) {
+          const pid = ids[c.id];
+          if (!pid) continue;
+          for (const job of prospectImageJobs(c)) {
+            prospectProgress("Uploading screenshots " + (sent + failed + 1) + " of " + total + "…");
+            try {
+              await prospectsApi("upload_image", {
+                prospect_id: pid, kind: job.kind, index: job.index,
+                contentType: job.image.contentType || "image/png",
+                dataBase64: job.image.dataBase64,
+              });
+              sent++;
+            } catch (e) {
+              failed++; // one bad screenshot must not abort the whole import
+            }
+            // Drop the base64 as soon as it's sent. A full export with screenshots
+            // runs to ~100 MB; holding every image in memory for the whole run is
+            // what would make a big import stall the tab.
+            job.image.dataBase64 = "";
+          }
+          if (c.screenshot) c.screenshot = null;
+          (Array.isArray(c.problems) ? c.problems : []).forEach((pr) => { if (pr) pr.image = null; });
+        }
+
+        const summary = inserted + " added, " + updated + " refreshed" +
+          (total ? " · " + sent + "/" + total + " screenshots" : "") +
+          (failed ? " (" + failed + " screenshot(s) skipped)" : "");
+        prospectProgress("Import finished — " + summary, "ok");
+        toast("Prospects imported", summary);
+        if (state.prospects && state.prospects.built) loadView("prospects", true);
+      } catch (e) {
+        prospectProgress("Import failed — " + e.message, "err");
+        toast("Import failed", e.message, true);
+      } finally {
+        PROSPECTS.importing = false;
+      }
+    }
+
+    // ---- Detail drawer --------------------------------------------------
+    function prospectRow(label, value) {
+      if (value === null || value === undefined || String(value).trim() === "") return "";
+      return '<div style="margin:0 0 .7rem"><div style="font-size:.7rem;color:var(--adm-muted);text-transform:uppercase;letter-spacing:.04em">' +
+        esc(label) + '</div><div style="font-size:.86rem;line-height:1.55;white-space:pre-wrap">' + esc(value) + "</div></div>";
+    }
+    function prospectLink(url) {
+      if (!url) return "";
+      const href = /^https?:\/\//i.test(url) ? url : "https://" + url;
+      return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + esc(truncate(url, 60)) + "</a>";
+    }
+    function prospectShot(url, alt) {
+      if (!url) return "";
+      return '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' +
+        '<img src="' + esc(url) + '" alt="' + esc(alt || "") + '" loading="lazy" decoding="async" ' +
+        'style="width:100%;display:block;border-radius:8px;border:1px solid var(--adm-bd-2);margin:.5rem 0" /></a>';
+    }
+
+    async function openProspectDrawer(row) {
+      openDrawer();
+      aq("admDrawerTitle").innerHTML = esc(row.business_name || "Prospect") +
+        "<small>" + esc(row.owner_name || "") + "</small>";
+      aq("admDrawerBody").innerHTML = drawerSkeleton();
+      aq("admDrawerFoot").style.display = "none";
+
+      // The list row is enough to render, but re-reading gives the freshest
+      // status/screenshots if another admin changed something.
+      let p = row;
+      try {
+        const resp = await prospectsApi("get", { id: row.id });
+        if (resp && resp.row) p = resp.row;
+      } catch (e) { /* fall back to the row we already have */ }
+
+      renderProspectDrawer(p);
+    }
+
+    function renderProspectDrawer(p) {
+      const verified = !!p.contact_verified;
+      const problems = Array.isArray(p.problems) ? p.problems : [];
+
+      let h = "";
+
+      // ---- Verified contact ----
+      h += '<div class="adm-section"><h4>' +
+        (verified ? "Verified contact" : "Contact (not verified)") + "</h4>";
+      h += '<p style="font-size:.78rem;color:' + (verified ? "#2fae7c" : "#d1a33a") + ';margin:0 0 .8rem;line-height:1.5">' +
+        (verified
+          ? "The app fetched a public page itself and found this name and number on it."
+          : "The app couldn’t confirm these details on a public page — treat them as unchecked.") +
+        "</p>";
+      h += prospectRow("Owner", p.owner_name || "—");
+      if (p.owner_verified_on) h += '<div style="margin:-.4rem 0 .7rem;font-size:.72rem;color:var(--adm-muted)">Confirmed on ' + prospectLink(p.owner_verified_on) + "</div>";
+      h += prospectRow("Phone", p.phone || "—");
+      if (p.phone_verified_on) h += '<div style="margin:-.4rem 0 .7rem;font-size:.72rem;color:var(--adm-muted)">Confirmed on ' + prospectLink(p.phone_verified_on) + "</div>";
+      h += prospectRow("Email (if published)", p.email || "—");
+      if (!verified && p.verification_note) h += prospectRow("Why not", p.verification_note);
+      h += "</div>";
+
+      // ---- Status: typed here, by an admin, for the site only ----
+      h += '<div class="adm-section"><h4>Status</h4>' +
+        '<p style="font-size:.78rem;color:var(--adm-muted);margin:0 0 .7rem;line-height:1.5">' +
+        'Type whatever stage fits — “called”, “quoted”, “not interested”. Only used here; the desktop app never sees or overwrites it.</p>' +
+        field("pr-status", "Status", p.status || "") +
+        field("pr-status-note", "Notes", p.status_note || "", "textarea");
+      if (p.status_updated_at) {
+        h += '<p style="font-size:.72rem;color:var(--adm-muted);margin:.2rem 0 0">Last changed ' +
+          esc(fmtDateTime(p.status_updated_at)) + (p.status_updated_by ? " by " + esc(p.status_updated_by) : "") + "</p>";
+      }
+      h += "</div>";
+
+      // ---- The business ----
+      h += '<div class="adm-section"><h4>Business</h4>';
+      h += prospectRow("Business name", p.business_name);
+      if (p.website) h += '<div style="margin:0 0 .7rem"><div style="font-size:.7rem;color:var(--adm-muted);text-transform:uppercase;letter-spacing:.04em">Website</div><div style="font-size:.86rem">' + prospectLink(p.website) + "</div></div>";
+      h += prospectRow("What they sell", p.what_they_sell);
+      h += prospectRow("Overall look rating", p.overall_look_rating);
+      h += prospectRow("AI-generated rating", p.ai_generated_rating);
+      h += prospectRow("Examples", p.examples);
+      h += prospectRow("Found", p.date_found);
+      h += "</div>";
+
+      // ---- Findings ----
+      if (p.security_risks || p.visual_details) {
+        h += '<div class="adm-section"><h4>What’s wrong with their site</h4>';
+        h += prospectRow("Security risks", p.security_risks);
+        h += prospectRow("Visual details", p.visual_details);
+        h += "</div>";
+      }
+
+      // ---- Problems, each with its cropped screenshot ----
+      if (problems.length) {
+        h += '<div class="adm-section"><h4>Problems found (' + problems.length + ")</h4>";
+        problems.forEach((pr) => {
+          h += '<div style="border:1px solid var(--adm-bd-2);border-radius:10px;padding:.7rem;margin:0 0 .7rem">' +
+            '<div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.35rem">' +
+            '<span class="badge b-none" style="font-size:.65rem">' + esc(pr.type || "issue") + "</span>" +
+            '<b style="font-size:.84rem">' + esc(pr.title || "—") + "</b></div>" +
+            (pr.detail ? '<div style="font-size:.82rem;line-height:1.55;color:var(--adm-muted)">' + esc(pr.detail) + "</div>" : "") +
+            (pr.location ? '<div style="font-size:.72rem;color:var(--adm-muted);margin-top:.3rem"><i>Where:</i> ' + esc(pr.location) + "</div>" : "") +
+            prospectShot(pr.image_url, pr.title) +
+            "</div>";
+        });
+        h += "</div>";
+      }
+
+      // ---- Full-page screenshot ----
+      if (p.screenshot_url) {
+        h += '<div class="adm-section"><h4>Full-page screenshot</h4>' + prospectShot(p.screenshot_url, p.business_name) + "</div>";
+      }
+
+      // ---- Raw research ----
+      if (p.raw_json) {
+        h += '<div class="adm-section"><h4>Raw JSON from Claude</h4>' +
+          '<details><summary style="cursor:pointer;font-size:.8rem;color:var(--adm-muted)">Show the original record</summary>' +
+          '<pre style="max-height:280px;overflow:auto;font-size:.72rem;line-height:1.5;white-space:pre-wrap;word-break:break-word">' +
+          esc(p.raw_json) + "</pre></details></div>";
+      }
+
+      h += '<div class="adm-section"><h4>Imported</h4>' +
+        '<p style="font-size:.78rem;color:var(--adm-muted);margin:0">' +
+        esc(fmtDateTime(p.imported_at)) + (p.imported_by ? " by " + esc(p.imported_by) : "") +
+        " · app id " + esc(p.source_id || "—") + "</p></div>";
+
+      aq("admDrawerBody").innerHTML = h;
+
+      const foot = aq("admDrawerFoot");
+      foot.style.display = "flex";
+      foot.innerHTML = '<button class="adm-btn primary" id="pr-save" style="flex:1">Save Status</button>' +
+        '<button class="adm-btn danger" id="pr-delete">Delete</button>' +
+        '<button class="adm-btn" id="pr-close">Close</button>';
+
+      aq("pr-close").onclick = closeDrawer;
+
+      aq("pr-save").onclick = async () => {
+        const btn = aq("pr-save");
+        btn.disabled = true;
+        try {
+          const resp = await prospectsApi("set_status", {
+            id: p.id,
+            status: aq("pr-status").value,
+            status_note: aq("pr-status-note").value,
+          });
+          toast("Status saved", (resp.row && resp.row.status) ? "Now: " + resp.row.status : "Status cleared");
+          // Keep the open drawer and the table row in step with what was saved.
+          if (resp.row) {
+            const st = state.prospects;
+            if (st && st.rows) {
+              const i = st.rows.findIndex((x) => x.id === p.id);
+              if (i >= 0) st.rows[i] = resp.row;
+            }
+            renderProspectDrawer(resp.row);
+          }
+          if (state.prospects && state.prospects.built) loadView("prospects", true);
+        } catch (e) {
+          btn.disabled = false;
+          toast("Couldn’t save status", e.message, true);
+        }
+      };
+
+      aq("pr-delete").onclick = async () => {
+        const ok = await confirmAction("Delete prospect",
+          "This removes " + (p.business_name || "this prospect") + " and its screenshots for every admin. " +
+          "It can be imported again from the app’s export file.", "Delete");
+        if (!ok) return;
+        try {
+          await prospectsApi("delete", { id: p.id });
+          toast("Prospect deleted");
+          closeDrawer();
+          if (state.prospects && state.prospects.built) loadView("prospects", true);
+        } catch (e) { toast("Couldn’t delete prospect", e.message, true); }
+      };
+    }
 
     // =====================================================================
     // NAV / SHELL
