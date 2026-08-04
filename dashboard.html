@@ -811,6 +811,45 @@
         font-weight:700;font-size:.78rem;letter-spacing:.02em;color:var(--adm-muted);
       }
     }
+    /* ── Prospect page (a full view, not a drawer) ────────────────────────────
+       A lead carries far more than a slide-out can hold — the research, the
+       problem list and a full-page screenshot — so opening one swaps the whole
+       main column to its own page with its own URL (#/prospect/<id>). */
+    .pp-back{display:inline-flex;align-items:center;gap:.4rem;background:none;border:0;cursor:pointer;
+      color:var(--adm-muted);font-family:'Playfair Display',sans-serif;font-size:.84rem;font-weight:700;
+      padding:.2rem 0;margin-bottom:.5rem}
+    .pp-back:hover{color:var(--adm-turq-deep)}
+    .pp-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:1rem;align-items:start}
+    .pp-main{display:flex;flex-direction:column;gap:1rem;min-width:0}
+    .pp-side{display:flex;flex-direction:column;gap:1rem;position:sticky;top:1.4rem}
+    .pp-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+    .pp-ratings{margin:.9rem 0}
+    .pp-field .lbl{font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+      color:var(--adm-muted);margin-bottom:.18rem}
+    .pp-field .val{font-size:.95rem;line-height:1.5;word-break:break-word;white-space:pre-wrap}
+    .pp-field .src{font-size:.72rem;color:var(--adm-faint);margin-top:.2rem;word-break:break-all}
+    .pp-field+.pp-field{margin-top:.85rem}
+    .pp-verdict{display:flex;align-items:center;gap:.45rem;font-size:.8rem;font-weight:700;line-height:1.45;
+      padding:.5rem .65rem;border-radius:9px;margin-bottom:.9rem}
+    .pp-verdict.ok{background:rgba(31,140,99,.12);color:#177a55;border:1px solid rgba(31,140,99,.34)}
+    .pp-verdict.warn{background:rgba(181,116,10,.12);color:#9a6406;border:1px solid rgba(181,116,10,.34)}
+    .pp-problem{border:1px solid var(--adm-bd-2);border-radius:11px;padding:.85rem;margin-bottom:.85rem}
+    .pp-problem-head{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem}
+    .pp-problem-head b{font-size:.95rem}
+    .pp-problem p{font-size:.86rem;line-height:1.6;color:var(--adm-muted);margin:0}
+    .pp-where{font-size:.74rem;color:var(--adm-faint);margin-top:.35rem}
+    .pp-shot{display:block;width:100%;border-radius:9px;border:1px solid var(--adm-bd-2);margin-top:.7rem}
+    .pp-shot-full{max-height:640px;object-fit:cover;object-position:top}
+    .pp-raw{max-height:340px;overflow:auto;font-size:.72rem;line-height:1.5;white-space:pre-wrap;
+      word-break:break-word;background:var(--adm-input);border:1px solid var(--adm-bd-2);
+      border-radius:9px;padding:.7rem;margin:.6rem 0 0}
+    .pp-meta{font-size:.74rem;color:var(--adm-faint);line-height:1.6;word-break:break-word}
+    @media(max-width:1040px){
+      .pp-layout{grid-template-columns:1fr}
+      .pp-side{position:static}
+    }
+    @media(max-width:560px){ .pp-grid-2{grid-template-columns:1fr} }
+
     .adm-kv{display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0;
       border-bottom:1px solid var(--adm-bd);font-size:.86rem}
     .adm-kv .k{color:var(--adm-muted)}
@@ -1324,6 +1363,8 @@
         <section class="adm-view" id="view-users"></section>
         <section class="adm-view" id="view-onboarding"></section>
         <section class="adm-view" id="view-prospects"></section>
+        <!-- One prospect, as its own page (rendered by renderProspectPage). -->
+        <section class="adm-view" id="view-prospect"></section>
         <section class="adm-view" id="view-payments"></section>
         <section class="adm-view" id="view-websites"></section>
         <section class="adm-view" id="view-domains"></section>
@@ -3088,7 +3129,7 @@
         title: "Prospects", subtitle: "Leads from Client Gather — shared by every admin",
         searchPlaceholder: "Search business, owner, phone, email, website, status…",
         fetch: (params) => prospectsApi("list", params),
-        rowClick: (r) => openProspectDrawer(r),
+        rowClick: (r) => openProspectPage(r),
         toolbarBtn: { label: "Import from Client Gather", onClick: () => pickProspectFile() },
         filters: [
           { key: "verified", label: "Contact", options: [["yes", "Verified"], ["no", "Unverified"]] },
@@ -3487,7 +3528,7 @@
       }
       if (act === "review") { openEditRequestDrawer(r); return; }
       if (act === "edit" || act === "view") {
-        if (viewId === "prospects") openProspectDrawer(r);
+        if (viewId === "prospects") openProspectPage(r);
         else if (viewId === "websites") openWebsiteDrawer(r);
         else openUserDrawer(r.user_id, r.id);
         return;
@@ -4989,7 +5030,9 @@
     // the adminApi /api/admin {action,payload} helper), whose body is
     // { op, ...params }.
     // =====================================================================
-    const PROSPECTS = { importing: false };
+    // suppressHash: set right before we change location.hash ourselves, so the
+    // resulting hashchange isn't treated as the admin navigating.
+    const PROSPECTS = { importing: false, suppressHash: false };
 
     // Records per import request, and how many screenshots ride along per call.
     // Kept small because a Vercel function body is capped near 4.5 MB: text
@@ -5182,138 +5225,197 @@
       }
     }
 
-    // ---- Detail drawer --------------------------------------------------
+    // ---- Detail page ----------------------------------------------------
+    // A lead opens as its OWN page (#/prospect/<id>) rather than a slide-out:
+    // there's a full research write-up, a problem list and full-page screenshots
+    // to show, and a real URL means an admin can link a colleague straight to it.
     function prospectRow(label, value) {
       if (value === null || value === undefined || String(value).trim() === "") return "";
-      return '<div style="margin:0 0 .7rem"><div style="font-size:.7rem;color:var(--adm-muted);text-transform:uppercase;letter-spacing:.04em">' +
-        esc(label) + '</div><div style="font-size:.86rem;line-height:1.55;white-space:pre-wrap">' + esc(value) + "</div></div>";
+      return '<div class="pp-field"><div class="lbl">' + esc(label) + '</div>' +
+        '<div class="val">' + esc(value) + "</div></div>";
     }
     function prospectLink(url) {
       if (!url) return "";
       const href = /^https?:\/\//i.test(url) ? url : "https://" + url;
       return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + esc(truncate(url, 60)) + "</a>";
     }
-    function prospectShot(url, alt) {
+    function prospectShot(url, alt, cls) {
       if (!url) return "";
       return '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' +
-        '<img src="' + esc(url) + '" alt="' + esc(alt || "") + '" loading="lazy" decoding="async" ' +
-        'style="width:100%;display:block;border-radius:8px;border:1px solid var(--adm-bd-2);margin:.5rem 0" /></a>';
+        '<img class="pp-shot' + (cls ? " " + cls : "") + '" src="' + esc(url) + '" alt="' + esc(alt || "") +
+        '" loading="lazy" decoding="async" /></a>';
     }
 
-    async function openProspectDrawer(row) {
-      openDrawer();
-      aq("admDrawerTitle").innerHTML = esc(row.business_name || "Prospect") +
-        "<small>" + esc(row.owner_name || "") + "</small>";
-      aq("admDrawerBody").innerHTML = drawerSkeleton();
-      aq("admDrawerFoot").style.display = "none";
+    // Shows the prospect page in the main column while leaving "Prospects" lit in
+    // the sidebar — the page is a detail OF that section, not a section of its own.
+    function showProspectShell() {
+      document.querySelectorAll(".adm-nav button").forEach((b) => b.classList.toggle("active", b.dataset.view === "prospects"));
+      document.querySelectorAll(".adm-view").forEach((v) => v.classList.toggle("active", v.id === "view-prospect"));
+      const views = aq("admViews");
+      if (views) views.scrollTop = 0;
+      window.scrollTo(0, 0);
+    }
 
-      // The list row is enough to render, but re-reading gives the freshest
-      // status/screenshots if another admin changed something.
+    // Open a lead's page. `row` may be a full record from the table or just { id }
+    // when we're restoring from the URL on a reload.
+    async function openProspectPage(row, opts) {
+      const id = row && row.id;
+      if (!id) return;
+      if (!opts || !opts.fromHash) setProspectHash(id);
+
+      showProspectShell();
+      const sec = aq("view-prospect");
+      sec.innerHTML = '<button class="pp-back" type="button" id="pp-back-skel">← Back to prospects</button>' +
+        '<div class="adm-panel-box">' + drawerSkeleton() + "</div>";
+      aq("pp-back-skel").onclick = () => backToProspects();
+
+      // The table row is enough to render, but re-reading gives the freshest
+      // status/screenshots if another admin changed something — and it's the only
+      // source we have when the page was opened straight from a link.
       let p = row;
       try {
-        const resp = await prospectsApi("get", { id: row.id });
+        const resp = await prospectsApi("get", { id: id });
         if (resp && resp.row) p = resp.row;
-      } catch (e) { /* fall back to the row we already have */ }
+      } catch (e) {
+        if (!p || !p.source_id) {
+          sec.innerHTML = '<button class="pp-back" type="button" id="pp-back-err">← Back to prospects</button>' +
+            '<div class="adm-empty"><h4>Couldn’t load this prospect</h4><p>' + esc(e.message) + "</p></div>";
+          aq("pp-back-err").onclick = () => backToProspects();
+          return;
+        }
+        // else: fall back to the row we already have
+      }
 
-      renderProspectDrawer(p);
+      // A late-arriving fetch must not paint over a page the admin has left.
+      if (currentProspectId() !== String(id)) return;
+      renderProspectPage(p);
     }
 
-    function renderProspectDrawer(p) {
+    function setProspectHash(id) {
+      const want = "#/prospect/" + id;
+      if (location.hash !== want) {
+        PROSPECTS.suppressHash = true;   // our own change; don't re-handle it
+        location.hash = want;
+      }
+    }
+    function currentProspectId() {
+      const m = /^#\/prospect\/([0-9a-f-]+)$/i.exec(location.hash || "");
+      return m ? m[1] : null;
+    }
+    function backToProspects() {
+      // Only arm the suppress flag when we actually change the hash, or it would
+      // swallow the next genuine back/forward navigation instead.
+      if (location.hash) { PROSPECTS.suppressHash = true; location.hash = ""; }
+      switchView("prospects");
+    }
+
+    function renderProspectPage(p) {
       const verified = !!p.contact_verified;
       const problems = Array.isArray(p.problems) ? p.problems : [];
+      const sec = aq("view-prospect");
 
-      let h = "";
+      let h = '<button class="pp-back" type="button" id="pp-back">← Back to prospects</button>';
 
-      // ---- Verified contact ----
-      h += '<div class="adm-section"><h4>' +
-        (verified ? "Verified contact" : "Contact (not verified)") + "</h4>";
-      h += '<p style="font-size:.78rem;color:' + (verified ? "#2fae7c" : "#d1a33a") + ';margin:0 0 .8rem;line-height:1.5">' +
-        (verified
-          ? "The app fetched a public page itself and found this name and number on it."
-          : "The app couldn’t confirm these details on a public page — treat them as unchecked.") +
-        "</p>";
-      h += prospectRow("Owner", p.owner_name || "—");
-      if (p.owner_verified_on) h += '<div style="margin:-.4rem 0 .7rem;font-size:.72rem;color:var(--adm-muted)">Confirmed on ' + prospectLink(p.owner_verified_on) + "</div>";
-      h += prospectRow("Phone", p.phone || "—");
-      if (p.phone_verified_on) h += '<div style="margin:-.4rem 0 .7rem;font-size:.72rem;color:var(--adm-muted)">Confirmed on ' + prospectLink(p.phone_verified_on) + "</div>";
-      h += prospectRow("Email (if published)", p.email || "—");
-      if (!verified && p.verification_note) h += prospectRow("Why not", p.verification_note);
-      h += "</div>";
+      h += '<div class="adm-view-head"><h1 class="adm-h1">' + esc(p.business_name || "Prospect") +
+        '<span class="adm-sub">' +
+        esc(p.owner_name || "Unknown owner") + (p.phone ? " · " + esc(p.phone) : "") +
+        (p.date_found ? " · found " + esc(p.date_found) : "") +
+        "</span></h1></div>";
 
-      // ---- Status: typed here, by an admin, for the site only ----
-      h += '<div class="adm-section"><h4>Status</h4>' +
-        '<p style="font-size:.78rem;color:var(--adm-muted);margin:0 0 .7rem;line-height:1.5">' +
-        'Type whatever stage fits — “called”, “quoted”, “not interested”. Only used here; the desktop app never sees or overwrites it.</p>' +
-        field("pr-status", "Status", p.status || "") +
-        field("pr-status-note", "Notes", p.status_note || "", "textarea");
-      if (p.status_updated_at) {
-        h += '<p style="font-size:.72rem;color:var(--adm-muted);margin:.2rem 0 0">Last changed ' +
-          esc(fmtDateTime(p.status_updated_at)) + (p.status_updated_by ? " by " + esc(p.status_updated_by) : "") + "</p>";
-      }
-      h += "</div>";
+      h += '<div class="pp-layout"><div class="pp-main">';
 
-      // ---- The business ----
-      h += '<div class="adm-section"><h4>Business</h4>';
-      h += prospectRow("Business name", p.business_name);
-      if (p.website) h += '<div style="margin:0 0 .7rem"><div style="font-size:.7rem;color:var(--adm-muted);text-transform:uppercase;letter-spacing:.04em">Website</div><div style="font-size:.86rem">' + prospectLink(p.website) + "</div></div>";
-      h += prospectRow("What they sell", p.what_they_sell);
-      h += prospectRow("Overall look rating", p.overall_look_rating);
-      h += prospectRow("AI-generated rating", p.ai_generated_rating);
-      h += prospectRow("Examples", p.examples);
-      h += prospectRow("Found", p.date_found);
-      h += "</div>";
-
-      // ---- Findings ----
-      if (p.security_risks || p.visual_details) {
-        h += '<div class="adm-section"><h4>What’s wrong with their site</h4>';
+      // ---- What's wrong with their site (the pitch) ----
+      if (p.security_risks || p.visual_details || p.overall_look_rating || p.ai_generated_rating || p.examples) {
+        h += '<div class="adm-panel-box"><div class="adm-section"><h4>What’s wrong with their site</h4>';
         h += prospectRow("Security risks", p.security_risks);
         h += prospectRow("Visual details", p.visual_details);
-        h += "</div>";
+        h += '<div class="pp-grid-2 pp-ratings">' +
+          '<div>' + (prospectRow("Overall look rating", p.overall_look_rating) || "") + "</div>" +
+          '<div>' + (prospectRow("AI-generated rating", p.ai_generated_rating) || "") + "</div></div>";
+        h += prospectRow("Examples", p.examples);
+        h += "</div></div>";
       }
 
       // ---- Problems, each with its cropped screenshot ----
       if (problems.length) {
-        h += '<div class="adm-section"><h4>Problems found (' + problems.length + ")</h4>";
+        h += '<div class="adm-panel-box"><div class="adm-section"><h4>Problems found (' + problems.length + ")</h4>";
         problems.forEach((pr) => {
-          h += '<div style="border:1px solid var(--adm-bd-2);border-radius:10px;padding:.7rem;margin:0 0 .7rem">' +
-            '<div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.35rem">' +
-            '<span class="badge b-none" style="font-size:.65rem">' + esc(pr.type || "issue") + "</span>" +
-            '<b style="font-size:.84rem">' + esc(pr.title || "—") + "</b></div>" +
-            (pr.detail ? '<div style="font-size:.82rem;line-height:1.55;color:var(--adm-muted)">' + esc(pr.detail) + "</div>" : "") +
-            (pr.location ? '<div style="font-size:.72rem;color:var(--adm-muted);margin-top:.3rem"><i>Where:</i> ' + esc(pr.location) + "</div>" : "") +
+          h += '<div class="pp-problem"><div class="pp-problem-head">' +
+            '<span class="badge b-none">' + esc(pr.type || "issue") + "</span>" +
+            "<b>" + esc(pr.title || "—") + "</b></div>" +
+            (pr.detail ? "<p>" + esc(pr.detail) + "</p>" : "") +
+            (pr.location ? '<div class="pp-where"><i>Where:</i> ' + esc(pr.location) + "</div>" : "") +
             prospectShot(pr.image_url, pr.title) +
             "</div>";
         });
-        h += "</div>";
+        h += "</div></div>";
       }
 
       // ---- Full-page screenshot ----
       if (p.screenshot_url) {
-        h += '<div class="adm-section"><h4>Full-page screenshot</h4>' + prospectShot(p.screenshot_url, p.business_name) + "</div>";
+        h += '<div class="adm-panel-box"><div class="adm-section"><h4>Full-page screenshot</h4>' +
+          '<p style="font-size:.78rem;color:var(--adm-muted);margin:0">How the whole site looks today — click to open it full size.</p>' +
+          prospectShot(p.screenshot_url, p.business_name, "pp-shot-full") + "</div></div>";
       }
 
       // ---- Raw research ----
       if (p.raw_json) {
-        h += '<div class="adm-section"><h4>Raw JSON from Claude</h4>' +
-          '<details><summary style="cursor:pointer;font-size:.8rem;color:var(--adm-muted)">Show the original record</summary>' +
-          '<pre style="max-height:280px;overflow:auto;font-size:.72rem;line-height:1.5;white-space:pre-wrap;word-break:break-word">' +
-          esc(p.raw_json) + "</pre></details></div>";
+        h += '<div class="adm-panel-box"><div class="adm-section"><h4>Raw JSON from Claude</h4>' +
+          '<details><summary style="cursor:pointer;font-size:.82rem;color:var(--adm-muted)">Show the original record</summary>' +
+          '<pre class="pp-raw">' + esc(p.raw_json) + "</pre></details></div></div>";
       }
 
-      h += '<div class="adm-section"><h4>Imported</h4>' +
-        '<p style="font-size:.78rem;color:var(--adm-muted);margin:0">' +
-        esc(fmtDateTime(p.imported_at)) + (p.imported_by ? " by " + esc(p.imported_by) : "") +
-        " · app id " + esc(p.source_id || "—") + "</p></div>";
+      h += '</div><div class="pp-side">'; // close .pp-main, open the sidebar column
 
-      aq("admDrawerBody").innerHTML = h;
+      // ---- Contact (sidebar, first thing an admin needs) ----
+      h += '<div class="adm-panel-box"><div class="adm-section"><h4>Contact</h4>';
+      h += '<div class="pp-verdict ' + (verified ? "ok" : "warn") + '">' +
+        (verified
+          ? "<span>✓</span><span>The app fetched a public page itself and found this name and number on it.</span>"
+          : "<span>⚠</span><span>The app couldn’t confirm these on a public page — treat them as unchecked.</span>") +
+        "</div>";
 
-      const foot = aq("admDrawerFoot");
-      foot.style.display = "flex";
-      foot.innerHTML = '<button class="adm-btn primary" id="pr-save" style="flex:1">Save Status</button>' +
-        '<button class="adm-btn danger" id="pr-delete">Delete</button>' +
-        '<button class="adm-btn" id="pr-close">Close</button>';
+      h += '<div class="pp-field"><div class="lbl">Owner</div><div class="val">' + esc(p.owner_name || "—") + "</div>" +
+        (p.owner_verified_on ? '<div class="src">Confirmed on ' + prospectLink(p.owner_verified_on) + "</div>" : "") + "</div>";
+      h += '<div class="pp-field"><div class="lbl">Phone</div><div class="val">' +
+        (p.phone ? '<a href="tel:' + esc(String(p.phone).replace(/[^0-9+]/g, "")) + '">' + esc(p.phone) + "</a>" : "—") + "</div>" +
+        (p.phone_verified_on ? '<div class="src">Confirmed on ' + prospectLink(p.phone_verified_on) + "</div>" : "") + "</div>";
+      h += '<div class="pp-field"><div class="lbl">Email (if published)</div><div class="val">' +
+        (p.email ? '<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + "</a>" : "—") + "</div></div>";
+      if (!verified && p.verification_note) h += prospectRow("Why not", p.verification_note);
+      h += "</div></div>";
 
-      aq("pr-close").onclick = closeDrawer;
+      // ---- Status: typed here, by an admin, for the site only ----
+      h += '<div class="adm-panel-box"><div class="adm-section"><h4>Status</h4>' +
+        '<p style="font-size:.78rem;color:var(--adm-muted);margin:0 0 .8rem;line-height:1.5">' +
+        'Type whatever stage fits — “called”, “quoted”, “not interested”. Only used here; the desktop app never sees or overwrites it.</p>' +
+        field("pr-status", "Status", p.status || "") +
+        field("pr-status-note", "Notes", p.status_note || "", "textarea") +
+        '<div class="adm-actions-row"><button class="adm-btn primary" id="pr-save" style="flex:1">Save status</button></div>';
+      if (p.status_updated_at) {
+        h += '<p style="font-size:.72rem;color:var(--adm-faint);margin:.6rem 0 0">Last changed ' +
+          esc(fmtDateTime(p.status_updated_at)) + (p.status_updated_by ? " by " + esc(p.status_updated_by) : "") + "</p>";
+      }
+      h += "</div></div>";
+
+      // ---- The business ----
+      h += '<div class="adm-panel-box"><div class="adm-section"><h4>Business</h4>';
+      h += prospectRow("Business name", p.business_name);
+      if (p.website) h += '<div class="pp-field"><div class="lbl">Website</div><div class="val">' + prospectLink(p.website) + "</div></div>";
+      h += prospectRow("What they sell", p.what_they_sell);
+      h += "</div></div>";
+
+      // ---- Record meta + delete ----
+      h += '<div class="adm-panel-box"><div class="adm-section"><h4>Record</h4>' +
+        '<p class="pp-meta">Imported ' + esc(fmtDateTime(p.imported_at)) +
+        (p.imported_by ? " by " + esc(p.imported_by) : "") + "<br>App id " + esc(p.source_id || "—") + "</p>" +
+        '<div class="adm-actions-row"><button class="adm-btn danger" id="pr-delete">Delete prospect</button></div>' +
+        "</div></div>";
+
+      h += "</div></div>"; // close .pp-side, .pp-layout
+
+      sec.innerHTML = h;
+      aq("pp-back").onclick = () => backToProspects();
 
       aq("pr-save").onclick = async () => {
         const btn = aq("pr-save");
@@ -5325,14 +5427,14 @@
             status_note: aq("pr-status-note").value,
           });
           toast("Status saved", (resp.row && resp.row.status) ? "Now: " + resp.row.status : "Status cleared");
-          // Keep the open drawer and the table row in step with what was saved.
+          // Keep the open page and the list behind it in step with what was saved.
           if (resp.row) {
             const st = state.prospects;
             if (st && st.rows) {
               const i = st.rows.findIndex((x) => x.id === p.id);
               if (i >= 0) st.rows[i] = resp.row;
             }
-            renderProspectDrawer(resp.row);
+            renderProspectPage(resp.row);
           }
           if (state.prospects && state.prospects.built) loadView("prospects", true);
         } catch (e) {
@@ -5349,10 +5451,19 @@
         try {
           await prospectsApi("delete", { id: p.id });
           toast("Prospect deleted");
-          closeDrawer();
+          backToProspects();
           if (state.prospects && state.prospects.built) loadView("prospects", true);
         } catch (e) { toast("Couldn’t delete prospect", e.message, true); }
       };
+    }
+
+    // Deep links: /dashboard#/prospect/<id> opens that lead's page directly, so a
+    // reload (or a link pasted to another admin) lands on the same place.
+    function handleProspectHash() {
+      if (PROSPECTS.suppressHash) { PROSPECTS.suppressHash = false; return; }
+      const id = currentProspectId();
+      if (id) openProspectPage({ id: id }, { fromHash: true });
+      else if (document.querySelector("#view-prospect.active")) switchView("prospects");
     }
 
     // =====================================================================
@@ -5369,6 +5480,9 @@
       // Any normal navigation leaves invoice/subscription edit mode (back to create).
       if (INV.editingId) exitInvoiceEdit();
       if (SUBS.editingId) exitSubEdit();
+      // Leaving a prospect's page: drop its deep link so a reload doesn't bounce
+      // back to it. (backToProspects() has already cleared it when it sent us here.)
+      if (location.hash && currentProspectId()) { PROSPECTS.suppressHash = true; location.hash = ""; }
       activateViewShell(viewId);
       if (viewId === "overview") { loadOverview(); return; }
       if (viewId === "invoices") { initInvoices(); return; }
@@ -5408,7 +5522,15 @@
         applyAdminLock(ctx);
       }).catch(() => {});
 
-      loadOverview();
+      // A prospect's page has its own URL, so honour one that's already in the
+      // address bar (a reload, or a link from another admin) and keep listening.
+      window.addEventListener("hashchange", handleProspectHash);
+      if (currentProspectId()) {
+        openProspectPage({ id: currentProspectId() }, { fromHash: true });
+      } else {
+        loadOverview();
+      }
+
       loadAlertBadge();
       loadRequestBadge();
       loadEditReqBadge();

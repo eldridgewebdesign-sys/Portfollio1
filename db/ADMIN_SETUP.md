@@ -98,8 +98,9 @@ Past Due / Cancel / Edit Plan) — every change is written to
   search, infinite scroll, CSV export, skeletons, empty states.
 - **Onboarding Forms** — editable intake answers via the drawer; CSV export.
 - **Prospects** — the shared lead list imported from the Client Gather desktop
-  app (see §5); open a lead for its verified owner name + phone, the site's
-  security/visual problems with screenshots, and a free-typed status; CSV export.
+  app (see §5). Each lead opens as its own full page with a shareable URL, showing
+  the verified owner name + phone, the site's security/visual problems with
+  screenshots, and a free-typed status; CSV export.
 - **Payments** — per-client subscription state, amount, billing, dates, linked
   website/domain; mark active/unpaid, cancel, edit plan; CSV export.
 - **Websites** — view / create / edit site records (user, domain, type, status,
@@ -140,9 +141,11 @@ No new environment variables: `/api/admin/prospects` reuses `SUPABASE_URL` and
    file. Records upload in batches and each screenshot is sent separately (a
    serverless request body is capped near 4.5 MB), with progress shown above the
    table. A screenshot that fails is skipped; the lead still imports.
-3. Click any row to open the full research: which public page the owner's name and
-   phone were each confirmed on, the site's problems with cropped screenshots, the
-   full-page screenshot, and the raw JSON the model returned.
+3. Click any row to open that lead's **own page** (not a slide-out) at
+   `/dashboard#/prospect/<id>`: which public page the owner's name and phone were
+   each confirmed on, the site's problems with cropped screenshots, the full-page
+   screenshot, and the raw JSON the model returned. The URL is real — reload it,
+   bookmark it, or paste it to another admin and they land on the same lead.
 
 **Statuses are site-only and free text.** An admin types whatever stage they use
 ("called", "quoted", "not interested") plus optional notes, and edits them at any
